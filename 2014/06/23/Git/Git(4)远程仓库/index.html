@@ -1,0 +1,228 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>四.远程仓库 | shouliang&#39;s blog</title>
+  <meta name="author" content="shouliang">
+  
+  <meta name="description" content="Node">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="四.远程仓库"/>
+  <meta property="og:site_name" content="shouliang&#39;s blog"/>
+
+  
+    <meta property="og:image" content=""/>
+  
+
+  <link href="/favicon.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="shouliang&#39;s blog" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+
+</head>
+
+
+<body>
+  <header id="header" class="inner"><div class="alignleft">
+  <h1><a href="/">shouliang&#39;s blog</a></h1>
+  <h2><a href="/"></a></h2>
+</div>
+<nav id="main-nav" class="alignright">
+  <ul>
+    
+      <li><a href="/">首页</a></li>
+    
+      <li><a href="/archives">归档</a></li>
+    
+      <li><a href="/about">关于</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+<div class="clearfix"></div></header>
+  <div id="content" class="inner">
+    <div id="main-col" class="alignleft"><div id="wrapper"><article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2014-06-23T09:45:23.000Z"><a href="/2014/06/23/Git/Git(4)远程仓库/">2014-06-23</a></time>
+      
+      
+  
+    <h1 class="title">四.远程仓库</h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-远程仓库简介"><a href="#1-远程仓库简介" class="headerlink" title="1.远程仓库简介"></a>1.远程仓库简介</h3><hr>
+<p>到目前为止，我们已经掌握了如何在Git仓库里对一个文件进行时光穿梭，你再也不用担心文件备份或者丢失的问题了。</p>
+<p>　　开始介绍Git的远程仓库功能。我们现在借用GitHub神奇的网站，这个网站就是提供Git仓库托管服务的，所以只要注册一个GitHub账号，就可以免费获得Git远程仓库。</p>
+<p>　　由于你的本地Git仓库和GitHub仓库之间的传输是通过SSH加密的，所以，需要一点设置：</p>
+<p>　　第1步：创建SSH Key。在当前目录下，看看有没有.ssh目录，如果有，再看看这个目录下有没有id_rsa和id_rsa.pub这两个文件，如果已经有了，可直接跳到下一步。如果没有，打开Shell（Windows下打开Git Bash），创建SSH Key：</p>
+<p>$ ssh-keygen -t rsa -C “<a href="mailto:youremail@example.com" target="_blank" rel="noopener">youremail@example.com</a>“<br>　　你需要把邮件地址换成你自己的邮件地址，然后一路回车，使用默认值即可，可以在用户主目录里找到.ssh目录，里面有id_rsa和id_rsa.pub两个文件，这两个就是SSH Key的秘钥对，id_rsa是私钥，不能泄露出去，id_rsa.pub是公钥，可以放心地告诉任何人。</p>
+<p>　　第2步：登陆GitHub，打开“Account settings”，“SSH Keys”页面：</p>
+<p>　　然后，点“Add SSH Key”，填上任意Title，在Key文本框里粘贴id_rsa.pub文件的内容：<br>　　<img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgitsshkey.png" alt=""></p>
+<h3 id="2-GitHub创建新仓库"><a href="#2-GitHub创建新仓库" class="headerlink" title="2.GitHub创建新仓库"></a>2.GitHub创建新仓库</h3><hr>
+<p>GitHub创建一个Git仓库,并且本地仓库与此仓库进行远程同步，此仓库既可以作为备份，又可以让其他人通过该仓库来协作。</p>
+<p>　　首先，登陆GitHub，然后，在右上角找到“Create a new repo”按钮，创建一个新的仓库：<br>　　<br>　　<img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgithub1.png" alt=""><br>　　<br>　在Repository name填入learngit，其他保持默认设置，点击“Create repository”按钮，就成功地创建了一个新的Git仓库。</p>
+<p>　　目前，在GitHub上的这个learngit仓库还是空的，GitHub告诉我们，可以从这个仓库克隆出新的仓库，也可以把一个已有的本地仓库与之关联，然后，把本地仓库的内容推送到GitHub仓库。</p>
+<p>　　现在，我们根据GitHub的提示，在本地的learngit仓库下运行命令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git remote add origin git@github.com:onlyone/learngit.git</span><br></pre></td></tr></table></figure></p>
+<p>　　请千万注意，把上面的onlyone替换成你自己的GitHub账户名，否则，你在本地关联的就是我的远程库，关联没有问题，但是你以后推送是推不上去的，因为你的SSH Key公钥不在我的账户列表中。</p>
+<p>　　添加后，远程库的名字就是origin，这是Git默认的叫法，也可以改成别的，但是origin这个名字一看就知道是远程库。</p>
+<p>　　注意：要关联一个远程库，使用命令git remote add origin git@server-name:path/repo-name.git。　
+　　</p>
+<h3 id="3-本地库推送到远程库"><a href="#3-本地库推送到远程库" class="headerlink" title="3.本地库推送到远程库"></a>3.本地库推送到远程库</h3><hr>
+<p>本地库的所有内容推送到远程库上：</p>
+<p>$ git push -u origin master<br>　　把本地库的内容推送到远程，用git push命令，实际上是把当前分支master推送到远程。</p>
+<p>　　由于远程库是空的，我们第一次推送master分支时，加上了-u参数，Git不但会把本地的master分支内容推送的远程新的master分支，还会把本地的master分支和远程的master分支关联起来，在以后的推送或者拉取时就可以简化命令。</p>
+<p>　　推送成功，github内容与当前目录中readme.txt一致：<br>　　<br>　　<img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgithubremote.png" alt=""><br>　　<br>从现在起，只要本地作了提交，就可以通过命令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git push origin master</span><br></pre></td></tr></table></figure></p>
+<p>　　把本地master分支的最新修改推送至GitHub，现在，你就拥有了真正的分布式版本库！</p>
+<p>　　注意：要关联一个远程库，使用命令git remote add origin git@server-name:path/repo-name.git；关联后，使用命令git push -u origin master第一次推送master分支的所有内容；此后，每次本地提交后，只要有必要，就可以使用命令git push origin master推送最新修改；
+　　</p>
+<h3 id="4-SSH警告"><a href="#4-SSH警告" class="headerlink" title="4.SSH警告"></a>4.SSH警告</h3><hr>
+<p>当你第一次使用Git的clone或者push命令连接GitHub时，会得到一个警告：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">The authenticity of host &apos;github.com (xx.xx.xx.xx)&apos; can&apos;t be established.</span><br><span class="line">RSA key fingerprint is xx.xx.xx.xx.xx.</span><br><span class="line">Are you sure you want to continue connecting (yes/no)?</span><br></pre></td></tr></table></figure></p>
+<p>　　这是因为Git使用SSH连接，而SSH连接在第一次验证GitHub服务器的Key时，需要你确认GitHub的Key的指纹信息是否真的来自GitHub的服务器，输入yes回车即可。</p>
+<p>　　Git会输出一个警告，告诉你已经把GitHub的Key添加到本机的一个信任列表里了：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Warning: Permanently added &apos;github.com&apos; (RSA) to the list of known hosts.</span><br></pre></td></tr></table></figure></p>
+<p>　　这个警告只会出现一次，后面的操作就不会有任何警告了。</p>
+<p>　　如果你实在担心有人冒充GitHub服务器，输入yes前可以对照GitHub的RSA Key的指纹信息是否与SSH连接给出的一致。</p>
+<h3 id="5-从远程库克隆"><a href="#5-从远程库克隆" class="headerlink" title="5.从远程库克隆"></a>5.从远程库克隆</h3><hr>
+<p>从远程库克隆,就需要我们先创建远程库，在github创建一个新的gitskills仓库，我们勾选Initialize this repository with a README，这样GitHub会自动为我们创建一个README.md文件。创建完毕后，可以看到README.md文件：</p>
+<p>　　现在，远程库已经准备好了，下一步是用命令git clone克隆一个本地库：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ git clone git@github.com:michaelliao/gitskills.git</span><br><span class="line"> </span><br><span class="line">$ cd gitskills</span><br><span class="line">$ ls</span><br><span class="line">README.md</span><br></pre></td></tr></table></figure></p>
+<p>　　注意把Git库的地址换成你自己的，然后进入gitskills目录看看，已经有README.md文件了。</p>
+<p>　　你也许还注意到，GitHub给出的地址不止一个，还可以用github.com/onlyone/gitskills.git这样的地址。实际上，Git支持多种协议，默认的git://使用ssh，但也可以使用https等其他协议。</p>
+<p>　　注意：要克隆一个仓库，首先必须知道仓库的地址，然后使用git clone命令克隆。</p>
+<p>　　Git支持多种协议，包括https，但通过ssh支持的原生git协议速度最快。</p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+  
+  <div class="tags">
+    <a href="/tags/Git/">Git</a>
+  </div>
+
+        
+  <div class="addthis addthis_toolbox addthis_default_style">
+    
+      <a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+    
+    
+      <a class="addthis_button_tweet"></a>
+    
+    
+      <a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+    
+    
+      <a class="addthis_button_pinterest_pinit" pi:pinit:layout="horizontal"></a>
+    
+    <a class="addthis_counter addthis_pill_style"></a>
+  </div>
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js"></script>
+
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">留言</h1>
+
+  
+      <div id="fb-root"></div>
+<script>
+  (function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=shouliang0816";
+    fjs.parentNode.insertBefore(js, fjs);
+  }(document, 'script', 'facebook-jssdk'));
+</script>
+
+<div class="fb-comments" data-href="https://shouliang.github.io/2014/06/23/Git/Git(4)远程仓库/index.html" data-num-posts="5" data-width="840" data-colorscheme="light"></div>
+      
+  
+</section>
+
+</div></div>
+    <aside id="sidebar" class="alignright">
+  <div class="search">
+  <form action="//google.com/search" method="get" accept-charset="utf-8">
+    <input type="search" name="q" results="0" placeholder="搜索">
+    <input type="hidden" name="q" value="site:shouliang.github.io">
+  </form>
+</div>
+
+  
+
+  
+<div class="widget tag">
+  <h3 class="title">标签</h3>
+  <ul class="entry">
+  
+    <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
+  
+    <li><a href="/tags/Git/">Git</a><small>7</small></li>
+  
+    <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
+  
+    <li><a href="/tags/Javascript/">Javascript</a><small>2</small></li>
+  
+    <li><a href="/tags/Mocha/">Mocha</a><small>4</small></li>
+  
+    <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
+  
+    <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
+  
+    <li><a href="/tags/Node-js入门/">Node.js入门</a><small>9</small></li>
+  
+    <li><a href="/tags/express/">express</a><small>2</small></li>
+  
+    <li><a href="/tags/redis/">redis</a><small>2</small></li>
+  
+    <li><a href="/tags/shell/">shell</a><small>1</small></li>
+  
+    <li><a href="/tags/异步编程/">异步编程</a><small>3</small></li>
+  
+  </ul>
+</div>
+
+</aside>
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div class="alignleft">
+  
+  &copy; 2018 shouliang
+  
+</div>
+<div class="clearfix"></div></footer>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+</body>
+</html>

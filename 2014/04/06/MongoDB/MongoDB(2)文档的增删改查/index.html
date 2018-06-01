@@ -1,0 +1,236 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>二.文档的增删改查 | shouliang&#39;s blog</title>
+  <meta name="author" content="shouliang">
+  
+  <meta name="description" content="Node">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="二.文档的增删改查"/>
+  <meta property="og:site_name" content="shouliang&#39;s blog"/>
+
+  
+    <meta property="og:image" content=""/>
+  
+
+  <link href="/favicon.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="shouliang&#39;s blog" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+
+</head>
+
+
+<body>
+  <header id="header" class="inner"><div class="alignleft">
+  <h1><a href="/">shouliang&#39;s blog</a></h1>
+  <h2><a href="/"></a></h2>
+</div>
+<nav id="main-nav" class="alignright">
+  <ul>
+    
+      <li><a href="/">首页</a></li>
+    
+      <li><a href="/archives">归档</a></li>
+    
+      <li><a href="/about">关于</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+<div class="clearfix"></div></header>
+  <div id="content" class="inner">
+    <div id="main-col" class="alignleft"><div id="wrapper"><article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2014-04-06T07:45:23.000Z"><a href="/2014/04/06/MongoDB/MongoDB(2)文档的增删改查/">2014-04-06</a></time>
+      
+      
+  
+    <h1 class="title">二.文档的增删改查</h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-简单插入文档"><a href="#1-简单插入文档" class="headerlink" title="1.简单插入文档"></a>1.简单插入文档</h3><hr>
+<p>在数据库中，数据插入是最基本的操作，在MongoDB使用db.collection.insert(document)语句来插入文档，如下图：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkinsert1.png" alt=""></p>
+<p>document是文档数据，collection是存放文档数据的集合。</p>
+<p>例如：所有用户的信息存放在users集合中，每个用户的信息为一个user文档，插入数据:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">db.users.insert(user);</span><br></pre></td></tr></table></figure></p>
+<p>如果collection存在，document会添加到collection目录下， 如果collection不存在，数据库会先创建collection，然后再保存document。</p>
+<h3 id="2-批量插入文档"><a href="#2-批量插入文档" class="headerlink" title="2.批量插入文档"></a>2.批量插入文档</h3><hr>
+<p>nsert语句不但可以插入单个文档，还可以一次性插入多个文档。</p>
+<p>插入多个文档时，insert命令的参数为一个数组，数组元素为BSON格式的文档。</p>
+<p>多个文档可以放在一个数组内，一次插入多条数据，例如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">db.users.insert([&#123;name:&quot;tommy&quot;&#125;,&#123;name:&quot;xiaoming&quot;&#125;])</span><br></pre></td></tr></table></figure></p>
+<p>文档批量插入非常方便，但是使用批量插入时也有一些问题需要注意，因为BSON格式的限制，一次插入的数据量不能超过16M，在一个insert命令中插入多条数据时，MongoDB不保证完全成功或完全失败。</p>
+<h3 id="3-查询与投影"><a href="#3-查询与投影" class="headerlink" title="3.查询与投影"></a>3.查询与投影</h3><hr>
+<p>在MongoDB中，查询指向特定的文档集合，查询设定条件，指明MongoDB需要返回的文档；查询也可以包含一个投影，指定返回的字段。</p>
+<p>如下图，在查询过程指定了一个查询条件和一个排序修饰。</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkquery.jpg" alt=""></p>
+<p>在关系型数据库中，投影指的是对列的筛选，类似的，在MongoDB中，投影指的是对出现在结果集中的对象属性的筛选。</p>
+<h3 id="4-find-方法"><a href="#4-find-方法" class="headerlink" title="4.find()方法"></a>4.find()方法</h3><hr>
+<p>MongoDB中查询检索数据时使用find命令，使用方法如下：</p>
+<p>语法：<br>db.collection.find(criteria,projection);<br>参数：<br>criteria – 查询条件，文档类型，可选。</p>
+<p>projection– 返回的字段，文档类型，可选,若需返回所有字段，则忽略此参数。</p>
+<p>find命令两个可选参数，criteria为查询条件，projection为返回的字段，如果不传入条件数据库会返回该集合的所有文档。</p>
+<p>如下图简单示例：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkfind.jpg" alt=""></p>
+<h3 id="5-修改文档-update命令"><a href="#5-修改文档-update命令" class="headerlink" title="5.修改文档 - update命令"></a>5.修改文档 - update命令</h3><hr>
+<p>update命令可以更新指定文档的特定字段值，也可以替换整个文档，如果更新操作会增加文档大小，MongoDB将重新分配空间并重新定位。</p>
+<p>语法：<br>db.collection.update(query,update,{upsert:boolean,multi:boolean});<br>参数：<br>query：查询条件，文档，和find中的查询条件写法一致。</p>
+<p>update：修改内容，文档。</p>
+<p>upsert(可选)：如果值为true，那么当集合中没有匹配文档时，创建文档。默认false。</p>
+<p>multi(可选)：如果值为true，那么将更新全部符合条件的文档，否则仅更新一个文档，默认false。</p>
+<p>如下示例：将users集合中所有符合条件”age&gt;18”文档的status字段更新为”A”。</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkupdate.jpg" alt=""></p>
+<h3 id="6-修改文档-save命令"><a href="#6-修改文档-save命令" class="headerlink" title="6.修改文档 - save命令"></a>6.修改文档 - save命令</h3><hr>
+<p>save命令可以更新或插入一个新文档，与update命令不同的是，save只能对一个文档进行操作。</p>
+<p>语法：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">db.collection.save();</span><br></pre></td></tr></table></figure></p>
+<p>参数：<br>document：新的文档；</p>
+<h3 id="7-删除文档-remove命令"><a href="#7-删除文档-remove命令" class="headerlink" title="7.删除文档 - remove命令"></a>7.删除文档 - remove命令</h3><hr>
+<p>需要删除文档时使用remove命令，删除文档可以清理掉不需要的数据，释放存储空间，提升检索效率，但是错误的删除会是一场灾难，因此在执行数据删除操作时需要非常的谨慎！</p>
+<p>语法：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">db.collection.remove(</span><br><span class="line">    query,</span><br><span class="line">    justOne</span><br><span class="line"> )</span><br></pre></td></tr></table></figure></p>
+<p>参数：<br>query：BSON类型，删除文档的条件。</p>
+<p>justOne：布尔类型，true：只删除一个文档，false：默认值，删除所有符合条件的文档。</p>
+<p>下面是一个是将users集合中所有status=”D”的文档删除操作，对比一下MongoDB和传统SQL数据库删除的操作，看看有哪些不同之处。</p>
+<p>与传统SQL比较 - 删除文档</p>
+<p>MongoDB</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkremove.jpg" alt=""></p>
+<p>传统SQL</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkremove-sql.jpg" alt=""></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+  
+  <div class="tags">
+    <a href="/tags/MongoDB/">MongoDB</a>
+  </div>
+
+        
+  <div class="addthis addthis_toolbox addthis_default_style">
+    
+      <a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+    
+    
+      <a class="addthis_button_tweet"></a>
+    
+    
+      <a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+    
+    
+      <a class="addthis_button_pinterest_pinit" pi:pinit:layout="horizontal"></a>
+    
+    <a class="addthis_counter addthis_pill_style"></a>
+  </div>
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js"></script>
+
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">留言</h1>
+
+  
+      <div id="fb-root"></div>
+<script>
+  (function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=shouliang0816";
+    fjs.parentNode.insertBefore(js, fjs);
+  }(document, 'script', 'facebook-jssdk'));
+</script>
+
+<div class="fb-comments" data-href="https://shouliang.github.io/2014/04/06/MongoDB/MongoDB(2)文档的增删改查/index.html" data-num-posts="5" data-width="840" data-colorscheme="light"></div>
+      
+  
+</section>
+
+</div></div>
+    <aside id="sidebar" class="alignright">
+  <div class="search">
+  <form action="//google.com/search" method="get" accept-charset="utf-8">
+    <input type="search" name="q" results="0" placeholder="搜索">
+    <input type="hidden" name="q" value="site:shouliang.github.io">
+  </form>
+</div>
+
+  
+
+  
+<div class="widget tag">
+  <h3 class="title">标签</h3>
+  <ul class="entry">
+  
+    <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
+  
+    <li><a href="/tags/Git/">Git</a><small>7</small></li>
+  
+    <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
+  
+    <li><a href="/tags/Javascript/">Javascript</a><small>2</small></li>
+  
+    <li><a href="/tags/Mocha/">Mocha</a><small>4</small></li>
+  
+    <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
+  
+    <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
+  
+    <li><a href="/tags/Node-js入门/">Node.js入门</a><small>9</small></li>
+  
+    <li><a href="/tags/express/">express</a><small>2</small></li>
+  
+    <li><a href="/tags/redis/">redis</a><small>2</small></li>
+  
+    <li><a href="/tags/shell/">shell</a><small>1</small></li>
+  
+    <li><a href="/tags/异步编程/">异步编程</a><small>3</small></li>
+  
+  </ul>
+</div>
+
+</aside>
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div class="alignleft">
+  
+  &copy; 2018 shouliang
+  
+</div>
+<div class="clearfix"></div></footer>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+</body>
+</html>

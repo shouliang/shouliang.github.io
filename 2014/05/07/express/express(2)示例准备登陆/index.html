@@ -1,0 +1,228 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>二.准备登陆 | shouliang&#39;s blog</title>
+  <meta name="author" content="shouliang">
+  
+  <meta name="description" content="Node">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="二.准备登陆"/>
+  <meta property="og:site_name" content="shouliang&#39;s blog"/>
+
+  
+    <meta property="og:image" content=""/>
+  
+
+  <link href="/favicon.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="shouliang&#39;s blog" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+
+</head>
+
+
+<body>
+  <header id="header" class="inner"><div class="alignleft">
+  <h1><a href="/">shouliang&#39;s blog</a></h1>
+  <h2><a href="/"></a></h2>
+</div>
+<nav id="main-nav" class="alignright">
+  <ul>
+    
+      <li><a href="/">首页</a></li>
+    
+      <li><a href="/archives">归档</a></li>
+    
+      <li><a href="/about">关于</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+<div class="clearfix"></div></header>
+  <div id="content" class="inner">
+    <div id="main-col" class="alignleft"><div id="wrapper"><article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2014-05-07T07:45:23.000Z"><a href="/2014/05/07/express/express(2)示例准备登陆/">2014-05-07</a></time>
+      
+      
+  
+    <h1 class="title">二.准备登陆</h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-安装模板"><a href="#1-安装模板" class="headerlink" title="1.安装模板"></a>1.安装模板</h3><hr>
+<p>我们要使用express框架实现一个简单的用户登陆功能，先准备一下相关资源。</p>
+<p>在nodejs中使用express框架，它默认的是ejs和jade渲染模板，以ejs模板为例，讲述模板渲染网页模板的基础功能。</p>
+<p>ejs模板安装方法<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install ejs</span><br></pre></td></tr></table></figure></p>
+<p>1.目录下安装好了之后，如何调用呢，如下所示：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">// 指定渲染模板文件的后缀名为ejs</span><br><span class="line">app.set(&apos;view engine&apos;, &apos;ejs&apos;);</span><br></pre></td></tr></table></figure></p>
+<p>2.默认ejs模板只支持渲染以ejs为扩展名的文件，可能在使用的时候会觉得它的代码书写方式很不爽还是想用html的形式去书写，该怎么办呢，这时就得去修改模板引擎了，也就会用到express的engine函数。</p>
+<p>3.engine注册模板引擎的函数，处理指定的后缀名文件。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">// 修改模板文件的后缀名为html</span><br><span class="line">app.set( &apos;view engine&apos;, &apos;html&apos; );</span><br><span class="line">// 运行ejs模块</span><br><span class="line">app.engine( &apos;.html&apos;, require( &apos;ejs&apos; ).__express );</span><br></pre></td></tr></table></figure></p>
+<p>“__express”，ejs模块的一个公共属性，表示要渲染的文件扩展名。</p>
+<h3 id="2-静态资源"><a href="#2-静态资源" class="headerlink" title="2.静态资源"></a>2.静态资源</h3><hr>
+<p>如果要在网页中加载静态文件（css、js、img），就需要另外指定一个存放静态文件的目录，当浏览器发出非HTML文件请求时，服务器端就会到这个目录下去寻找相关文件。</p>
+<p>项目目录下添加一个存放静态文件的目录为public。</p>
+<p>在public目录下在添加三个存放js、css、img的目录，相应取名为javascripts、stylesheets、images。</p>
+<p>然后就可以把相关文件放到相应的目录下了。</p>
+<p>比如，浏览器发出如下的样式表请求：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;link href=<span class="string">"/stylesheets/bootstrap.min.css"</span> rel=<span class="string">"stylesheet"</span> media=<span class="string">"screen"</span>&gt;</span><br></pre></td></tr></table></figure></p>
+<p>服务器端就到public/stylesheets/目录中寻找bootstrap.min.css文件。</p>
+<p>有了静态目录文件，我们还得在启动文件里告诉它这个静态文件路径，需要指定一下，如下所示：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">app.use(express.static(require(&apos;path&apos;).join(__dirname, &apos;public&apos;)));</span><br></pre></td></tr></table></figure></p>
+<p>PS：express.static —— 指定静态文件的查找目录。</p>
+<p>使用use函数调用中间件指定express静态访问目录，’public’就是我们我们新建的用来存放静态文件的总目录。</p>
+<h3 id="3-添加视图"><a href="#3-添加视图" class="headerlink" title="3.添加视图"></a>3.添加视图</h3><hr>
+<p>下面我们就来添加网页模板了，项目中我们会新建一个目录用来单独存放模板文件，这里我们就统一放到根路径上了。</p>
+<p>下面开始新建index.html、login.html、home.html三个页面。</p>
+<p>1.index.html页面参考内容如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;div style=&quot;height:400px;width:550px;margin:50px auto;margin-left:auto;border:solid 1px;background: rgb(246, 246, 253);&quot;&gt;</span><br><span class="line">    &lt;div style=&quot;margin-left: 35px;&quot;&gt;</span><br><span class="line">        # 首页</span><br><span class="line">        &lt;form action=&quot;#&quot;  role=&quot;form&quot; style=&quot;margin-top: 90px;margin-left: 60px;&quot;&gt; </span><br><span class="line">            # 欢迎进入首页！</span><br><span class="line">            &lt;div style=&quot;margin-top: 145px;&quot;&gt;</span><br><span class="line">                &lt;input type=&quot;button&quot; value=&quot;登 陆&quot; /&gt;</span><br><span class="line">            &lt;/div&gt;</span><br><span class="line">        &lt;/form&gt;</span><br><span class="line">    &lt;/div&gt;</span><br><span class="line">&lt;/div&gt;</span><br></pre></td></tr></table></figure></p>
+<p>2.login.html页面参考内容如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line">    &lt;title&gt;用户登录&lt;/title&gt;</span><br><span class="line">    &lt;meta charset=&quot;utf-8&quot;&gt;</span><br><span class="line">    &lt;script src=&quot;http://code.jquery.com/jquery-2.1.1.min.js&quot;&gt;&lt;/script&gt;</span><br><span class="line">... </span><br><span class="line">&lt;div style=&quot;height:300px;width:350px;margin:100px auto;margin-left:auto;border:solid 1px;background: rgb(246, 246, 253);&quot;&gt;</span><br><span class="line">    &lt;div style=&quot;width:200px;margin:auto;margin-top:50px;&quot;&gt; </span><br><span class="line">        # 用户登录</span><br><span class="line">        &lt;form action=&quot;#&quot;  role=&quot;form&quot; method=&quot;post&quot; &gt;</span><br><span class="line">            &lt;input id=&quot;username&quot; type=&quot;text&quot; name=&quot;username&quot; style=&quot;margin: 20px 0px;&quot; /&gt;</span><br><span class="line">            &lt;input id=&quot;password&quot; type=&quot;password&quot; name=&quot;password&quot; /&gt;</span><br><span class="line">            &lt;div style=&quot;margin-top:30px;margin-left:125px;&quot;&gt;</span><br><span class="line">                &lt;input type=&quot;button&quot; value=&quot;登 陆&quot; /&gt;</span><br><span class="line">            &lt;/div&gt;</span><br><span class="line">        &lt;/form&gt;</span><br><span class="line">    &lt;/div&gt;</span><br><span class="line">&lt;/div&gt;</span><br></pre></td></tr></table></figure></p>
+<p>3.home.html页面参考内容如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;div style=&quot;height:400px;width:550px;margin:50px auto;margin-left:auto;border:solid 1px;background: rgb(246, 246, 253);&quot;&gt;</span><br><span class="line">    &lt;div style=&quot;margin-left: 45px;&quot;&gt;</span><br><span class="line">        # 主页</span><br><span class="line">        &lt;form action=&quot;#&quot;  role=&quot;form&quot; style=&quot;margin-top: 90px;&quot;&gt;</span><br><span class="line">            # 登陆成功！</span><br><span class="line">            &lt;div style=&quot;margin-top: 145px;&quot;&gt;</span><br><span class="line">                &lt;input  type=&quot;button&quot; value=&quot;退 出&quot; /&gt;</span><br><span class="line">            &lt;/div&gt;</span><br><span class="line">        &lt;/form&gt;</span><br><span class="line">    &lt;/div&gt;</span><br><span class="line">&lt;/div&gt;</span><br></pre></td></tr></table></figure></p>
+<p>和静态文件一样，我们也要设置views存放的目录，如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">// 设定views变量，意为视图存放的目录</span><br><span class="line">app.set(&apos;views&apos;, __dirname);</span><br></pre></td></tr></table></figure></p>
+<p>有了网页模板和指定目录，下面就可以访问它们了。</p>
+<h3 id="4-渲染视图"><a href="#4-渲染视图" class="headerlink" title="4.渲染视图"></a>4.渲染视图</h3><hr>
+<p>我们要如何对网页模板进行访问呢，这就要用到res对象的render函数了。</p>
+<p>render函数，对网页模板进行渲染。</p>
+<p>格式：res.render(view, [locals], callback);</p>
+<p>参数view就是模板的文件名callback用来处理返回的渲染后的字符串，options、callback可省略，在渲染模板时locals可为其模板传入变量值，在模板中就可以调用所传变量了。</p>
+<p>比如渲染我们刚刚添加的index.html页面，我们就可以在app.js中写入如下内容：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">ar express = require(&apos;express&apos;);</span><br><span class="line">var app = express();</span><br><span class="line">var path = require(&apos;path&apos;);</span><br><span class="line">app.set(&apos;views&apos;, __dirname);</span><br><span class="line">app.set( &apos;view engine&apos;, &apos;html&apos; );</span><br><span class="line">app.engine( &apos;.html&apos;, require( &apos;ejs&apos; ).__express );</span><br><span class="line">app.get(&apos;/&apos;, function(req, res) &#123;</span><br><span class="line">    res.render(&apos;index&apos;);</span><br><span class="line">&#125;);</span><br><span class="line">app.listen(80);</span><br></pre></td></tr></table></figure></p>
+<h3 id="5-url重定向"><a href="#5-url重定向" class="headerlink" title="5.url重定向"></a>5.url重定向</h3><hr>
+<h4 id="redirect基本用法"><a href="#redirect基本用法" class="headerlink" title="redirect基本用法"></a>redirect基本用法</h4><p>redirect方法允许网址的重定向，跳转到指定的url并且可以指定status，默认为302方式。</p>
+<p>格式：res.redirect([status], url);</p>
+<p>例1：使用一个完整的url跳转到一个完全不同的域名。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">res.redirect(&quot;http://www.hubwiz.com&quot;);</span><br></pre></td></tr></table></figure></p>
+<p>例2：跳转指定页面，比如登陆页，如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">res.redirect(&quot;login&quot;);</span><br></pre></td></tr></table></figure></p>
+<p>后面我们开始实现登陆功能，先试一下redirect重定向</p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+  
+  <div class="tags">
+    <a href="/tags/express/">express</a>
+  </div>
+
+        
+  <div class="addthis addthis_toolbox addthis_default_style">
+    
+      <a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+    
+    
+      <a class="addthis_button_tweet"></a>
+    
+    
+      <a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+    
+    
+      <a class="addthis_button_pinterest_pinit" pi:pinit:layout="horizontal"></a>
+    
+    <a class="addthis_counter addthis_pill_style"></a>
+  </div>
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js"></script>
+
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">留言</h1>
+
+  
+      <div id="fb-root"></div>
+<script>
+  (function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=shouliang0816";
+    fjs.parentNode.insertBefore(js, fjs);
+  }(document, 'script', 'facebook-jssdk'));
+</script>
+
+<div class="fb-comments" data-href="https://shouliang.github.io/2014/05/07/express/express(2)示例准备登陆/index.html" data-num-posts="5" data-width="840" data-colorscheme="light"></div>
+      
+  
+</section>
+
+</div></div>
+    <aside id="sidebar" class="alignright">
+  <div class="search">
+  <form action="//google.com/search" method="get" accept-charset="utf-8">
+    <input type="search" name="q" results="0" placeholder="搜索">
+    <input type="hidden" name="q" value="site:shouliang.github.io">
+  </form>
+</div>
+
+  
+
+  
+<div class="widget tag">
+  <h3 class="title">标签</h3>
+  <ul class="entry">
+  
+    <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
+  
+    <li><a href="/tags/Git/">Git</a><small>7</small></li>
+  
+    <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
+  
+    <li><a href="/tags/Javascript/">Javascript</a><small>2</small></li>
+  
+    <li><a href="/tags/Mocha/">Mocha</a><small>4</small></li>
+  
+    <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
+  
+    <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
+  
+    <li><a href="/tags/Node-js入门/">Node.js入门</a><small>9</small></li>
+  
+    <li><a href="/tags/express/">express</a><small>2</small></li>
+  
+    <li><a href="/tags/redis/">redis</a><small>2</small></li>
+  
+    <li><a href="/tags/shell/">shell</a><small>1</small></li>
+  
+    <li><a href="/tags/异步编程/">异步编程</a><small>3</small></li>
+  
+  </ul>
+</div>
+
+</aside>
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div class="alignleft">
+  
+  &copy; 2018 shouliang
+  
+</div>
+<div class="clearfix"></div></footer>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,204 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>六.属性方法 | shouliang&#39;s blog</title>
+  <meta name="author" content="shouliang">
+  
+  <meta name="description" content="Node">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="六.属性方法"/>
+  <meta property="og:site_name" content="shouliang&#39;s blog"/>
+
+  
+    <meta property="og:image" content=""/>
+  
+
+  <link href="/favicon.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="shouliang&#39;s blog" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+
+</head>
+
+
+<body>
+  <header id="header" class="inner"><div class="alignleft">
+  <h1><a href="/">shouliang&#39;s blog</a></h1>
+  <h2><a href="/"></a></h2>
+</div>
+<nav id="main-nav" class="alignright">
+  <ul>
+    
+      <li><a href="/">首页</a></li>
+    
+      <li><a href="/archives">归档</a></li>
+    
+      <li><a href="/about">关于</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+<div class="clearfix"></div></header>
+  <div id="content" class="inner">
+    <div id="main-col" class="alignleft"><div id="wrapper"><article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2014-03-27T12:45:23.000Z"><a href="/2014/03/27/Mongoose/Mongoose(6)属性方法/">2014-03-27</a></time>
+      
+      
+  
+    <h1 class="title">六.属性方法</h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-ObjectId类型"><a href="#1-ObjectId类型" class="headerlink" title="1.ObjectId类型"></a>1.ObjectId类型</h3><hr>
+<h4 id="ObjectId简述"><a href="#ObjectId简述" class="headerlink" title="ObjectId简述"></a>ObjectId简述</h4><p>存储在mongodb集合中的每个文档（document）都有一个默认的主键_id，这个主键名称是固定的，它可以是mongodb支持的任何数据类型，默认是ObjectId。该类型的值由系统自己生成，从某种意义上几乎不会重复，生成过程比较复杂，有兴趣的朋友可以查看源码。</p>
+<p>使用过MySQL等关系型数据库的友友们都知道，主键都是设置成自增的。但在分布式环境下，这种方法就不可行了，会产生冲突。为此，MongoDB采用了一个称之为ObjectId的类型来做主键。ObjectId是一个12字节的 BSON 类型字符串。按照字节顺序，一次代表：</p>
+<p>4字节：UNIX时间戳<br>3字节：表示运行MongoDB的机器<br>2字节：表示生成此_id的进程<br>3字节：由一个随机数开始的计数器生成的值<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">var mongoose = require(&apos;mongoose&apos;);</span><br><span class="line">var tSchema = new mongoose.Schema(&#123;&#125;); //默认_id:ObjectId类型</span><br></pre></td></tr></table></figure></p>
+<p>每一个文档都有一个特殊的键“_id”，这个键在文档所属的集合中是唯一的。</p>
+<h3 id="2-添加属性"><a href="#2-添加属性" class="headerlink" title="2.添加属性"></a>2.添加属性</h3><hr>
+<h4 id="Schema添加属性值"><a href="#Schema添加属性值" class="headerlink" title="Schema添加属性值"></a>Schema添加属性值</h4><p>前面我们已经讲述了如何定义一个Schema并赋予某些属性值,那能不能先定义后添加属性呢，答案是可以的，如下所示：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">var mongoose = require(&apos;mongoose&apos;);</span><br><span class="line">var TempSchema = new mongoose.Schema;</span><br><span class="line">TempSchema.add(&#123; name: &apos;String&apos;, email: &apos;String&apos;, age: &apos;Number&apos; &#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="3-实例方法"><a href="#3-实例方法" class="headerlink" title="3.实例方法"></a>3.实例方法</h3><hr>
+<h4 id="实例方法"><a href="#实例方法" class="headerlink" title="实例方法"></a>实例方法</h4><p>有的时候，我们创造的Schema不仅要为后面的Model和Entity提供公共的属性，还要提供公共的方法.那怎么在Schema下创建一个实例方法呢，请看示例：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">var mongoose = require(&apos;mongoose&apos;);</span><br><span class="line">var saySchema = new mongoose.Schema(&#123;name : String&#125;);</span><br><span class="line">saySchema.method(&apos;say&apos;, function () &#123;</span><br><span class="line">  console.log(&apos;Trouble Is A Friend&apos;);</span><br><span class="line">&#125;)</span><br><span class="line">var say = mongoose.model(&apos;say&apos;, saySchema);</span><br><span class="line">var lenka = new say();</span><br><span class="line">lenka.say(); //Trouble Is A Friend</span><br></pre></td></tr></table></figure></p>
+<h3 id="4-静态方法"><a href="#4-静态方法" class="headerlink" title="4.静态方法"></a>4.静态方法</h3><hr>
+<h4 id="Schema静态方法"><a href="#Schema静态方法" class="headerlink" title="Schema静态方法"></a>Schema静态方法</h4><p>接下来将讲述怎么为Schema创建静态方法。如下示例：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">var mongoose = require(&quot;mongoose&quot;);</span><br><span class="line">var db = mongoose.connect(&quot;mongodb://127.0.0.1:27017/test&quot;); </span><br><span class="line">var TestSchema = new mongoose.Schema(&#123;</span><br><span class="line">    name : &#123; type:String &#125;,</span><br><span class="line">    age  : &#123; type:Number, default:0 &#125;,</span><br><span class="line">    email: &#123; type:String, default:&quot;&quot; &#125;,</span><br><span class="line">    time : &#123; type:Date, default:Date.now &#125;</span><br><span class="line">&#125;);</span><br><span class="line">TestSchema.static(&apos;findByName&apos;, function (name, callback) &#123;</span><br><span class="line">    return this.find(&#123; name: name &#125;, callback);</span><br><span class="line">&#125;);</span><br><span class="line">var TestModel = db.model(&quot;test1&quot;, TestSchema );</span><br><span class="line">TestModel.findByName(&apos;tom&apos;, function (err, docs) &#123;</span><br><span class="line"> //docs所有名字叫tom的文档结果集</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="5-追加方法"><a href="#5-追加方法" class="headerlink" title="5.追加方法"></a>5.追加方法</h3><hr>
+<h4 id="Schema追加方法"><a href="#Schema追加方法" class="headerlink" title="Schema追加方法"></a>Schema追加方法</h4><p>有时场景的需要，我们甚至可以为Schema模型追加方法。</p>
+<p>为Schema模型追加speak方法，如下示例：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">var mongoose = require(&quot;mongoose&quot;);</span><br><span class="line">var db = mongoose.connect(&quot;mongodb://127.0.0.1:27017/test&quot;);</span><br><span class="line">var TestSchema = new mongoose.Schema(&#123;</span><br><span class="line">    name : &#123; type:String &#125;,</span><br><span class="line">    age  : &#123; type:Number, default:0 &#125;,</span><br><span class="line">    email: &#123; type:String, default:&quot;&quot; &#125;,</span><br><span class="line">    time : &#123; type:Date, default:Date.now &#125;</span><br><span class="line">&#125;);</span><br><span class="line">TestSchema.methods.speak = function()&#123;</span><br><span class="line">  console.log(&apos;我的名字叫&apos;+this.name);</span><br><span class="line">&#125;</span><br><span class="line">var TestModel = db.model(&apos;test1&apos;,TestSchema);</span><br><span class="line">var TestEntity = new TestModel(&#123;name:&apos;Lenka&apos;&#125;);</span><br><span class="line">TestEntity.speak();//我的名字叫Lenka</span><br></pre></td></tr></table></figure></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+  
+  <div class="tags">
+    <a href="/tags/Mongoose/">Mongoose</a>
+  </div>
+
+        
+  <div class="addthis addthis_toolbox addthis_default_style">
+    
+      <a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+    
+    
+      <a class="addthis_button_tweet"></a>
+    
+    
+      <a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+    
+    
+      <a class="addthis_button_pinterest_pinit" pi:pinit:layout="horizontal"></a>
+    
+    <a class="addthis_counter addthis_pill_style"></a>
+  </div>
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js"></script>
+
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">留言</h1>
+
+  
+      <div id="fb-root"></div>
+<script>
+  (function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=shouliang0816";
+    fjs.parentNode.insertBefore(js, fjs);
+  }(document, 'script', 'facebook-jssdk'));
+</script>
+
+<div class="fb-comments" data-href="https://shouliang.github.io/2014/03/27/Mongoose/Mongoose(6)属性方法/index.html" data-num-posts="5" data-width="840" data-colorscheme="light"></div>
+      
+  
+</section>
+
+</div></div>
+    <aside id="sidebar" class="alignright">
+  <div class="search">
+  <form action="//google.com/search" method="get" accept-charset="utf-8">
+    <input type="search" name="q" results="0" placeholder="搜索">
+    <input type="hidden" name="q" value="site:shouliang.github.io">
+  </form>
+</div>
+
+  
+
+  
+<div class="widget tag">
+  <h3 class="title">标签</h3>
+  <ul class="entry">
+  
+    <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
+  
+    <li><a href="/tags/Git/">Git</a><small>7</small></li>
+  
+    <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
+  
+    <li><a href="/tags/Javascript/">Javascript</a><small>2</small></li>
+  
+    <li><a href="/tags/Mocha/">Mocha</a><small>4</small></li>
+  
+    <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
+  
+    <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
+  
+    <li><a href="/tags/Node-js入门/">Node.js入门</a><small>9</small></li>
+  
+    <li><a href="/tags/express/">express</a><small>2</small></li>
+  
+    <li><a href="/tags/redis/">redis</a><small>2</small></li>
+  
+    <li><a href="/tags/shell/">shell</a><small>1</small></li>
+  
+    <li><a href="/tags/异步编程/">异步编程</a><small>3</small></li>
+  
+  </ul>
+</div>
+
+</aside>
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div class="alignleft">
+  
+  &copy; 2018 shouliang
+  
+</div>
+<div class="clearfix"></div></footer>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+</body>
+</html>
