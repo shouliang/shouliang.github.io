@@ -62,7 +62,7 @@
     </header>
     <div class="entry">
       
-        <h1 id="动态修改-NodeJS-程序中的变量值"><a href="#动态修改-NodeJS-程序中的变量值" class="headerlink" title="动态修改 NodeJS 程序中的变量值"></a>动态修改 NodeJS 程序中的变量值</h1><h6 id="原文：http-code-oneapm-com-nodejs-2015-06-27-intereference"><a href="#原文：http-code-oneapm-com-nodejs-2015-06-27-intereference" class="headerlink" title="原文：http://code.oneapm.com/nodejs/2015/06/27/intereference/"></a>原文：<a href="http://code.oneapm.com/nodejs/2015/06/27/intereference/" target="_blank" rel="noopener">http://code.oneapm.com/nodejs/2015/06/27/intereference/</a></h6><h2 id="启动一个-HTTP-Server"><a href="#启动一个-HTTP-Server" class="headerlink" title="启动一个 HTTP Server"></a>启动一个 HTTP Server</h2><p>用简单的 Hello World 做例子吧，不过略作修改。在 <code>global</code> 下放一个变量 <code>message</code>， 然后打印出来：</p>
+        <h6 id="原文：http-code-oneapm-com-nodejs-2015-06-27-intereference"><a href="#原文：http-code-oneapm-com-nodejs-2015-06-27-intereference" class="headerlink" title="原文：http://code.oneapm.com/nodejs/2015/06/27/intereference/"></a>原文：<a href="http://code.oneapm.com/nodejs/2015/06/27/intereference/" target="_blank" rel="noopener">http://code.oneapm.com/nodejs/2015/06/27/intereference/</a></h6><h2 id="启动一个-HTTP-Server"><a href="#启动一个-HTTP-Server" class="headerlink" title="启动一个 HTTP Server"></a>启动一个 HTTP Server</h2><p>用简单的 Hello World 做例子吧，不过略作修改。在 <code>global</code> 下放一个变量 <code>message</code>， 然后打印出来：</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// message content will be modified !</span></span><br><span class="line">global.message = <span class="string">"hello world!"</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> server = <span class="built_in">require</span>(<span class="string">'http'</span>).createServer(<span class="function"><span class="keyword">function</span> (<span class="params">req, res</span>) </span>&#123;</span><br><span class="line">  res.end(global.message);</span><br><span class="line">&#125;).listen(<span class="number">8001</span>);</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'pid = %d'</span>, process.pid);</span><br></pre></td></tr></table></figure>
 <p>用命令启动 Server，此时，通过用浏览器访问 <code>http://localhost:8001</code> 可以看到网页内容是 <code>hello world!</code>。 接下来我们将尝试在不改变代码，不重启进程的情况下把 <code>message</code> 换成 “hello bugs!”。</p>
 <h2 id="使-Server-进程进入-Debug-模式"><a href="#使-Server-进程进入-Debug-模式" class="headerlink" title="使 Server 进程进入 Debug 模式"></a>使 Server 进程进入 Debug 模式</h2><p>V8 引擎在实现的时候留了 Debugger 接口。 通过命令 <code>node --debug-brk=5858 [filename]</code> 可以启动一个脚本，并且立即进入 Debug 模式。</p>
@@ -197,7 +197,7 @@
   
     <li><a href="/tags/Node-js入门/">Node.js入门</a><small>9</small></li>
   
-    <li><a href="/tags/Node错误处理和调试/">Node错误处理和调试</a><small>4</small></li>
+    <li><a href="/tags/Node错误处理和调试/">Node错误处理和调试</a><small>5</small></li>
   
     <li><a href="/tags/express/">express</a><small>2</small></li>
   
