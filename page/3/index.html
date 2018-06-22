@@ -53,6 +53,222 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2014-06-27T09:45:23.000Z"><a href="/2014/06/27/Git/Git(6)标签管理/">2014-06-27</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2014/06/27/Git/Git(6)标签管理/">六.标签管理</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-标签的简介"><a href="#1-标签的简介" class="headerlink" title="1.标签的简介"></a>1.标签的简介</h3><hr>
+<p>本节主要记录的Git标签的作用、标签的多种创建方式，以及标签的删除，与推送，和使用GitHub的Fork参与别人的项目。</p>
+<p><strong>标签的作用</strong><br>　　发布版本时，通常先在版本库中打一个标签，这样，就唯一确定了打标签时刻的版本。无论什么时候，取某个标签的版本，就是把那个打标签的时刻的历史版本取出来。所以，标签也是版本库的一个快照。Git的标签虽然是版本库的快照，但其实它就是指向某个commit的指针（跟分支很像，但是分支可以移动，标签不能移动），所以，创建和删除标签都是瞬间完成的。
+　　</p>
+<h3 id="2-创建标签"><a href="#2-创建标签" class="headerlink" title="2.创建标签"></a>2.创建标签</h3><hr>
+<p>在Git中打标签非常简单，首先，切换到需要打标签的分支上：</p>
+<p>$ git branch<br>*dev<br>  master<br>$ git checkout master<br>Switched to branch ‘master’<br>然后，敲命令git tag <name>就可以打一个新标签：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git tag v1.0</span><br></pre></td></tr></table></figure></name></p>
+<p>　　默认标签是打在最新提交的commit上的。还可以对历史提交打上标签，只要找到历史提交的commit id，然后打上就可以了，例如要对add merge这次提交打标签，它对应的commit id是6224937，输入命令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git tag v0.9 6224937</span><br></pre></td></tr></table></figure></p>
+<p>　　还可以创建带有说明的标签，用-a指定标签名，-m指定说明文字：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git tag -a v0.1 -m &quot;version 0.1 released&quot; 3628164</span><br></pre></td></tr></table></figure></p>
+<p>　　用命令git show 可以看到说明文字：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ git show v0.1</span><br><span class="line">tag v0.1</span><br><span class="line">Tagger: hubwiz &lt;hubwiz@163.com&gt;</span><br><span class="line">Date:   Mon Aug 26 07:28:11 2015 +0800</span><br><span class="line">version 0.1 released</span><br></pre></td></tr></table></figure></p>
+<p>　　签名采用PGP签名，因此，必须首先安装gpg（GnuPG），如果没有找到gpg，或者没有gpg密钥对，就会报错：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">gpg: signing failed: secret key not available</span><br><span class="line">error: gpg failed to sign the data</span><br><span class="line">error: unable to sign the tag</span><br></pre></td></tr></table></figure></p>
+<p>　　如果报错，请参考GnuPG帮助文档配置Key。</p>
+<ul>
+<li>命令git tag <name>用于新建一个标签，默认为HEAD，也可以指定一个commit id；</name></li>
+<li>git tag -a <tagname> -m “blablabla…”可以指定标签信息；</tagname></li>
+<li>git tag -s <tagname> -m “blablabla…”可以用PGP签名标签；</tagname></li>
+<li>命令git tag可以查看所有标签。</li>
+</ul>
+<h3 id="3-操作标签"><a href="#3-操作标签" class="headerlink" title="3.操作标签"></a>3.操作标签</h3><hr>
+<p>如果标签打错了，也可以删除：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git tag -d v0.1</span><br><span class="line">Deleted tag &apos;v0.1&apos; (was e078af9)</span><br></pre></td></tr></table></figure></p>
+<p>因为创建的标签都只存储在本地，不会自动推送到远程。所以，打错的标签可以在本地安全删除。</p>
+<p>如果要推送某个标签到远程，使用命令it push origin <tagname>:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ git push origin v1.0</span><br><span class="line">Total 0 (delta 0), reused 0 (delta 0)</span><br><span class="line">To git@github.com:michaelliao/learngit.git</span><br><span class="line"> * [new tag]         v1.0 -&gt; v1.0</span><br></pre></td></tr></table></figure></tagname></p>
+<p>或者，一次性推送全部尚未推送到远程的本地标签：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ git push origin --tags</span><br><span class="line">Counting objects: 1, done.</span><br><span class="line">Writing objects: 100% (1/1), 554 bytes, done.</span><br><span class="line">Total 1 (delta 0), reused 0 (delta 0)</span><br><span class="line">To git@github.com:michaelliao/learngit.git</span><br><span class="line">* [new tag]         v0.2 -&gt; v0.2</span><br><span class="line">* [new tag]         v0.9 -&gt; v0.9</span><br></pre></td></tr></table></figure></p>
+<p>如果标签已经推送到远程，要删除远程标签就麻烦一点，先从本地删除：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git tag -d v0.9</span><br><span class="line">Deleted tag &apos;v0.9&apos; (was 6224937)</span><br></pre></td></tr></table></figure></p>
+<p>然后，从远程删除。删除命令也是push，但是格式如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git push origin :refs/tags/v0.9</span><br><span class="line">To git@github.com:michaelliao/learngit.git</span><br><span class="line"> - [deleted]         v0.9</span><br></pre></td></tr></table></figure></p>
+<p>要看看是否真的从远程库删除了标签，可以登陆GitHub查看。</p>
+<p>本节知识点主要学习点：</p>
+<ul>
+<li>git push origin <tagname>可以推送一个本地标签；</tagname></li>
+<li>git push origin –tags可以推送全部未推送过的本地标签；</li>
+<li>git tag -d <tagname>可以删除一个本地标签；</tagname></li>
+<li>git push origin :refs/tags/<tagname>可以删除一个远程标签。</tagname></li>
+</ul>
+<h3 id="4-GitHub的使用"><a href="#4-GitHub的使用" class="headerlink" title="4.GitHub的使用"></a>4.GitHub的使用</h3><hr>
+<p>GitHub不仅是免费的远程仓库，个人的开源项目，可以放到GitHub上，而且GitHub还是一个开源协作社区，通过GitHub，既可以让别人参与你的开源项目，也可以参与别人的开源项目。</p>
+<p>　　在GitHub上，利用Git极其强大的克隆和分支功能，人们可以自由参与各种开源项目。比如人气极高的bootstrap项目，这是一个非常强大的CSS框架，在它的项目主页，点“Fork”就在自己的账号下克隆了一个bootstrap仓库，然后，从自己的账号下clone。一定要从自己的账号下clone仓库，这样你才能推送修改。如果从bootstrap的作者的仓库地址<a href="mailto:git@github.com" target="_blank" rel="noopener">git@github.com</a>:twbs/bootstrap.git克隆，因为没有权限，你将不能推送修改。</p>
+<p>　　Bootstrap的官方仓库twbs/bootstrap、你在GitHub上克隆的仓库my/bootstrap，以及你自己克隆到本地电脑的仓库，他们的关系就像下图显示的那样：<br>　　<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbootstrap.png" alt=""></p>
+<p>如果你希望bootstrap的官方库能接受你的修改，你就可以在GitHub上发起一个pull request。</p>
+<p>本节主要内容：</p>
+<ul>
+<li>在GitHub上，可以任意Fork开源仓库；</li>
+<li>自己拥有Fork后的仓库的读写权限；</li>
+<li>可以推送pull request给官方仓库来贡献代码。</li>
+</ul>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2014-06-24T09:45:23.000Z"><a href="/2014/06/24/Git/Git(5)分支管理/">2014-06-24</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2014/06/24/Git/Git(5)分支管理/">五.分支管理</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-分支管理图文详解一"><a href="#1-分支管理图文详解一" class="headerlink" title="1.分支管理图文详解一"></a>1.分支管理图文详解一</h3><hr>
+<p>在版本回退里，你已经知道，每次提交，Git都把它们串成一条时间线，这条时间线就是一个分支。截止到目前，只有一条时间线，在Git里，这个分支叫主分支，即master分支。HEAD严格来说不是指向提交，而是指向master，master才是指向提交的，所以，HEAD指向的就是当前分支。</p>
+<p>　　一开始的时候，master分支是一条线，Git用master指向最新的提交，再用HEAD指向master，就能确定当前分支，以及当前分支的提交点：<br>　　<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbranch01.png" alt=""></p>
+<p>每次提交，master分支都会向前移动一步，这样，随着你不断提交，master分支的线也越来越长，当我们创建新的分支，例如dev时，Git新建了一个指针叫dev，指向master相同的提交，再把HEAD指向dev，就表示当前分支在dev上：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbranch02.png" alt=""></p>
+<p>你看，Git创建一个分支很快，因为除了增加一个dev指针，改改HEAD的指向，工作区的文件都没有任何变化！</p>
+<h3 id="2-分支管理图文详解二"><a href="#2-分支管理图文详解二" class="headerlink" title="2.分支管理图文详解二"></a>2.分支管理图文详解二</h3><hr>
+<p>接着分支管理图文详解一，现在对工作区的修改和提交就是针对dev分支了，比如新提交一次后，dev指针往前移动一步，而master指针不变：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbranch03.png" alt=""></p>
+<p>假如我们在dev上的工作完成了，就可以把dev合并到master上。Git怎么合并呢？最简单的方法，就是直接把master指向dev的当前提交，就完成了合并：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbranch04.png" alt=""></p>
+<p>所以Git合并分支也很快！就改改指针，工作区内容也不变！</p>
+<p>合并完分支后，甚至可以删除dev分支。删除dev分支就是把dev指针给删掉，删掉后，我们就剩下了一条master分支：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbranch05.png" alt=""></p>
+<h3 id="3-创建分支"><a href="#3-创建分支" class="headerlink" title="3.创建分支"></a>3.创建分支</h3><hr>
+<p>首先，我们创建dev分支，然后切换到dev分支：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout -b dev</span><br><span class="line">Switched to a new branch &apos;dev&apos;</span><br></pre></td></tr></table></figure></p>
+<p>git checkout命令加上-b参数表示创建并切换，相当于以下两条命令：</p>
+<p>$ git branch dev<br>$ git checkout dev<br>Switched to branch ‘dev’</p>
+<p>然后，用git branch命令查看当前分支：</p>
+<p>$ git branch<br>*dev<br>  master</p>
+<p>git branch命令会列出所有分支，当前分支前面会标一个*号。</p>
+<p>然后，我们就可以在dev分支上正常提交，比如对readme.txt做个修改，加上一行：</p>
+<p>Creating a new branch is quick.</p>
+<p>然后提交：</p>
+<p>$ git add readme.txt<br>$ git commit -m “branch test”<br>[dev fec145a] branch test<br>1 file changed, 1 insertion(+)</p>
+<p>现在，dev分支的工作完成，我们就可以切换回master分支：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout master</span><br><span class="line">Switched to branch &apos;master&apos;</span><br></pre></td></tr></table></figure>
+<p>切换回master分支后，再查看一个readme.txt文件，刚才添加的内容不见了！因为那个提交是在dev分支上，而master分支此刻的提交点并没有变：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkdev.png" alt=""></p>
+<h3 id="4-合并分支"><a href="#4-合并分支" class="headerlink" title="4.合并分支"></a>4.合并分支</h3><hr>
+<p>我们把前面dev分支的工作成果合并到master分支上：</p>
+<p>$ git merge dev<br>Updating d17efd8..fec145a<br>Fast-forward<br> readme.txt |    1 +<br> 1 file changed, 1 insertion(+)</p>
+<p>　　git merge命令用于合并指定分支到当前分支。合并后，再查看readme.txt的内容，就可以看到，和dev分支的最新提交是完全一样的。</p>
+<p>　　注意到上面的Fast-forward信息，Git告诉我们，这次合并是“快进模式”，也就是直接把master指向dev的当前提交，所以合并速度非常快。</p>
+<p>　　当然，也不是每次合并都能Fast-forward，我们后面会将其他方式的合并。</p>
+<h3 id="5-删除分支"><a href="#5-删除分支" class="headerlink" title="5.删除分支"></a>5.删除分支</h3><hr>
+<p>合并完成后，就可以放心地删除dev分支了：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git branch -d dev</span><br><span class="line">Deleted branch dev (was 5659891).</span><br></pre></td></tr></table></figure></p>
+<p>删除后，查看branch，就只剩下master分支了：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git branch</span><br><span class="line">* master</span><br></pre></td></tr></table></figure></p>
+<p>因为创建、合并和删除分支非常快，所以Git鼓励你使用分支完成某个任务，合并后再删掉分支，这和直接在master分支上工作效果是一样的，但过程更安全。</p>
+<p>前面所讲知识：汇总下这些使用命令：</p>
+<p>查看分支：git branch</p>
+<p>创建分支：git branch <name></name></p>
+<p>切换分支：git checkout <name></name></p>
+<p>创建+切换分支：git checkout -b <name></name></p>
+<p>合并某分支到当前分支：git merge <name></name></p>
+<p>删除分支：git branch -d <name></name></p>
+<h3 id="6-产生冲突"><a href="#6-产生冲突" class="headerlink" title="6.产生冲突"></a>6.产生冲突</h3><hr>
+<p>当我们进行合并分支往往会产生冲突。</p>
+<p>在准备新的feature1分支，继续我们的新分支开发<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout -b feature1</span><br></pre></td></tr></table></figure></p>
+<p>修改readme.txt最后一行，改为Creating a new branch is quick AND simple.</p>
+<p>在feature1分支上提交<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git add readme.txt </span><br><span class="line">$ git commit -m &quot;AND simple&quot;</span><br></pre></td></tr></table></figure></p>
+<p>切换到master分支<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout master</span><br><span class="line">Switched to branch &apos;master&apos;</span><br><span class="line">Your branch is ahead of &apos;origin/master&apos; by 1 commit.</span><br></pre></td></tr></table></figure></p>
+<p>Git还会自动提示我们当前master分支比远程的master分支要超前1个提交。</p>
+<p>在master分支上把readme.txt文件的最后一行改为Creating a new branch is quick &amp; simple.提交：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git add readme.txt </span><br><span class="line">$ git commit -m &quot;&amp; simple&quot;</span><br></pre></td></tr></table></figure></p>
+<h3 id="7-解决冲突"><a href="#7-解决冲突" class="headerlink" title="7.解决冲突"></a>7.解决冲突</h3><hr>
+<p>在上节中master分支和feature1分支各自都分别有新的提交，变成了这样：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkresolve01.png" alt=""></p>
+<p>这种情况下，Git无法执行“快速合并”，只能试图把各自的修改合并起来，但这种合并就可能会有冲突，执行git merge feature1,在看readme.txt：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span><br><span class="line">Creating a new branch is quick &amp; simple.</span><br><span class="line">=======</span><br><span class="line">Creating a new branch is quick AND simple.</span><br><span class="line">&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature1</span><br></pre></td></tr></table></figure></p>
+<p>我们把冲突的内容修改为Creating a new branch is quick and simple.，提交：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git add readme.txt </span><br><span class="line">$ git commit -m &quot;conflict fixed&quot;</span><br></pre></td></tr></table></figure></p>
+<p>现在，master分支和feature1分支变成了下图所示：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkresolve02.png" alt=""></p>
+<p>用带参数的git log也可以看到分支的合并情况：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git log --graph --pretty=oneline --abbrev-commit</span><br></pre></td></tr></table></figure></p>
+<p>最后，删除feature1分支：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git branch -d feature1</span><br><span class="line">Deleted branch feature1.</span><br></pre></td></tr></table></figure></p>
+<p>冲突解决，最后，删除feature1分支 git branch -d feature1。当Git无法自动合并分支时，就必须首先解决冲突。解决冲突后，再提交，合并完成。</p>
+<p>用git log –graph命令可以看到分支合并图。</p>
+<h3 id="8-Bug分支"><a href="#8-Bug分支" class="headerlink" title="8.Bug分支"></a>8.Bug分支</h3><hr>
+<p>如果你有一个bug任务，你想创建一个分支issue-101来修复它，但是你当前正在dev上进行的工作还没有完成而不能提交，bug需要现在修复，所以现在你需要暂停dev上工作，Git提供了一个stash功能，可以把当前工作现场“储藏”起来，等以后恢复现场后继续工作：$ git stash。</p>
+<p>　　假定需要在master分支上修复，就从master创建临时分支：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout master</span><br><span class="line">Switched to branch &apos;master&apos;</span><br><span class="line">$ git checkout -b issue-101</span><br><span class="line">Switched to a new branch &apos;issue-101&apos;</span><br></pre></td></tr></table></figure></p>
+<p>　　现在修复bug，需要把“Git is free software …”改为“Git is a free software …”，然后提交：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git add readme.txt </span><br><span class="line">$ git commit -m &quot;fix bug 101&quot;</span><br></pre></td></tr></table></figure></p>
+<p>　　修复完成后，切换到master分支，并完成合并，最后删除issue-101分支：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout master</span><br><span class="line">...</span><br><span class="line">$ git merge --no-ff -m &quot;merged bug fix 101&quot; issue-101</span><br><span class="line">...</span><br><span class="line">$ git branch -d issue-101</span><br><span class="line">Deleted branch issue-101 (...).</span><br></pre></td></tr></table></figure></p>
+<p>　　Git把stash内容存在某个地方了，但是需要恢复一下，有两个办法：</p>
+<ul>
+<li>一是用git stash apply恢复，但是恢复后，stash内容并不删除，你需要用git stash drop来删除；</li>
+<li>另一种方式是用git stash pop，恢复的同时把stash内容也删了：</li>
+</ul>
+<h3 id="9-Feature分支"><a href="#9-Feature分支" class="headerlink" title="9.Feature分支"></a>9.Feature分支</h3><hr>
+<p>　在软件开发中，总会添加一个新功能时，你肯定不希望因为一些实验性质的代码，把主分支搞乱了，所以每添加一个新功能，最好新建一个feature分支，在上面开发，完成后，合并，最后，删除该feature分支。</p>
+<p>　　现在新功能开发代号为Vulcan:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout -b feature-vulcan</span><br><span class="line">Switched to a new branch &apos;feature-vulcan&apos;</span><br></pre></td></tr></table></figure></p>
+<p>　　开发完毕，添加并提交：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git add vulcan.py</span><br><span class="line">$ git commit -m &quot;add feature vulcan&quot;</span><br></pre></td></tr></table></figure></p>
+<p>切回dev，准备合并：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout dev</span><br></pre></td></tr></table></figure></p>
+<p>　　一切顺利的话，feature分支和bug分支是类似的，合并，然后删除。</p>
+<p>　　由于种种原因，此功能又不需要了，现在这个分支需要就地销毁：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git branch -d feature-vulcan</span><br><span class="line">error: The branch &apos;feature-vulcan&apos; is not fully merged.</span><br><span class="line">If you are sure you want to delete it, run &apos;git branch -D feature-vulcan&apos;.</span><br></pre></td></tr></table></figure></p>
+<p>　　销毁失败。Git友情提醒，feature-vulcan分支还没有被合并，如果删除，将丢失掉修改，如果要强行删除，需要使用命令git branch -D feature-vulcan。</p>
+<p>　　现在我们强行删除：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git branch -D feature-vulcan</span><br><span class="line">Deleted branch feature-vulcan (was 756d4af).</span><br></pre></td></tr></table></figure></p>
+<p>　　注意：开发一个新feature，最好新建一个分支；如果要丢弃一个没有被合并过的分支，可以通过git branch -D <name>强行删除。</name></p>
+<h3 id="10-推送分支"><a href="#10-推送分支" class="headerlink" title="10.推送分支"></a>10.推送分支</h3><hr>
+<p>当你从远程仓库克隆时，实际上Git自动把本地的master分支和远程的master分支对应起来了，并且远程仓库的默认名称是origin。</p>
+<p>　　要查看远程库的信息，用git remote<br> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git remote</span><br><span class="line">origin</span><br></pre></td></tr></table></figure></p>
+<p>　　或者，用git remote -v显示更详细的信息：<br> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git remote -v</span><br></pre></td></tr></table></figure></p>
+<p>推送分支<br>　　推送分支，就是把该分支上的所有本地提交推送到远程库。推送时，要指定本地分支，这样，Git就会把该分支推送到远程库对应的远程分支上：<br> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git push origin master</span><br></pre></td></tr></table></figure></p>
+<p>　　如果要推送其他分支，比如dev，就改成<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git push origin dev</span><br></pre></td></tr></table></figure></p>
+<ul>
+<li>master分支是主分支，因此要时刻与远程同步；</li>
+<li>dev分支是开发分支，团队所有成员都需要在上面工作，所以也需要与远程同步；</li>
+<li>bug分支只用于在本地修复bug，就没必要推到远程了，除非老板要看看你每周到底修复了几个bug；</li>
+<li>feature分支是否推到远程，取决于你是否和你的小伙伴合作在上面开发。
+　　<h3 id="11-多人协助"><a href="#11-多人协助" class="headerlink" title="11.多人协助"></a>11.多人协助</h3></li>
+</ul>
+<hr>
+<p>多人协作时，大家都会往master和dev分支上推送各自的修改。当你的同事也克隆一份此项目从远程库，默认情况下，只能看到本地的master分支。现在，你的同事要在dev分支上开发，就必须创建远程origin的dev分支到本地，于是他用这个命令创建本地dev分支：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout -b dev origin/dev</span><br></pre></td></tr></table></figure></p>
+<p>　　现在，他就可以在dev上继续修改，然后，时不时地把dev分支push到远程，并且已经向origin/dev分支推送了他的提交，这时你也对同样的文件作了修改，并试图推送，推送失败，因为你的同事的最新提交和你试图推送的提交有冲突，解决办法也很简单，Git已经提示我们，先用git pull把最新的提交从origin/dev抓下来，然后，在本地合并，解决冲突，再推送，git pull也失败了，原因是没有指定本地dev分支与远程origin/dev分支的链接，根据提示，设置dev和origin/dev的链接。</p>
+<p>　　这回git pull成功，但是是合并有冲突，需要手动解决，解决的方法和分支管理中的解决冲突完全一样。解决后，提交，再push：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git commit -m &quot;merge &amp; fix hello.py&quot;</span><br><span class="line">[dev adca45d] merge &amp; fix hello.py</span><br><span class="line">$ git push origin dev</span><br></pre></td></tr></table></figure></p>
+<p>　　因此，多人协作的工作模式通常是这样：</p>
+<ul>
+<li>首先，可以试图用git push origin branch-name推送自己的修改；</li>
+<li>如果推送失败，则因为远程分支比你的本地更新，需要先用git pull试图合并；</li>
+<li>如果合并有冲突，则解决冲突，并在本地提交；</li>
+<li>没有冲突或者解决掉冲突后，再用git push origin branch-name推送就能成功！<br>　　如果git pull提示“no tracking information”，则说明本地分支和远程分支的链接关系没有创建，用命令git branch –set-upstream branch-name origin/branch-name。</li>
+</ul>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2014-06-23T09:45:23.000Z"><a href="/2014/06/23/Git/Git(4)远程仓库/">2014-06-23</a></time>
       
       
@@ -627,180 +843,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2014-05-07T07:45:23.000Z"><a href="/2014/05/07/express/express(2)示例准备登陆/">2014-05-07</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2014/05/07/express/express(2)示例准备登陆/">二.准备登陆</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-安装模板"><a href="#1-安装模板" class="headerlink" title="1.安装模板"></a>1.安装模板</h3><hr>
-<p>我们要使用express框架实现一个简单的用户登陆功能，先准备一下相关资源。</p>
-<p>在nodejs中使用express框架，它默认的是ejs和jade渲染模板，以ejs模板为例，讲述模板渲染网页模板的基础功能。</p>
-<p>ejs模板安装方法<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install ejs</span><br></pre></td></tr></table></figure></p>
-<p>1.目录下安装好了之后，如何调用呢，如下所示：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">// 指定渲染模板文件的后缀名为ejs</span><br><span class="line">app.set(&apos;view engine&apos;, &apos;ejs&apos;);</span><br></pre></td></tr></table></figure></p>
-<p>2.默认ejs模板只支持渲染以ejs为扩展名的文件，可能在使用的时候会觉得它的代码书写方式很不爽还是想用html的形式去书写，该怎么办呢，这时就得去修改模板引擎了，也就会用到express的engine函数。</p>
-<p>3.engine注册模板引擎的函数，处理指定的后缀名文件。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">// 修改模板文件的后缀名为html</span><br><span class="line">app.set( &apos;view engine&apos;, &apos;html&apos; );</span><br><span class="line">// 运行ejs模块</span><br><span class="line">app.engine( &apos;.html&apos;, require( &apos;ejs&apos; ).__express );</span><br></pre></td></tr></table></figure></p>
-<p>“__express”，ejs模块的一个公共属性，表示要渲染的文件扩展名。</p>
-<h3 id="2-静态资源"><a href="#2-静态资源" class="headerlink" title="2.静态资源"></a>2.静态资源</h3><hr>
-<p>如果要在网页中加载静态文件（css、js、img），就需要另外指定一个存放静态文件的目录，当浏览器发出非HTML文件请求时，服务器端就会到这个目录下去寻找相关文件。</p>
-<p>项目目录下添加一个存放静态文件的目录为public。</p>
-<p>在public目录下在添加三个存放js、css、img的目录，相应取名为javascripts、stylesheets、images。</p>
-<p>然后就可以把相关文件放到相应的目录下了。</p>
-<p>比如，浏览器发出如下的样式表请求：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;link href=<span class="string">"/stylesheets/bootstrap.min.css"</span> rel=<span class="string">"stylesheet"</span> media=<span class="string">"screen"</span>&gt;</span><br></pre></td></tr></table></figure></p>
-<p>服务器端就到public/stylesheets/目录中寻找bootstrap.min.css文件。</p>
-<p>有了静态目录文件，我们还得在启动文件里告诉它这个静态文件路径，需要指定一下，如下所示：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">app.use(express.static(require(&apos;path&apos;).join(__dirname, &apos;public&apos;)));</span><br></pre></td></tr></table></figure></p>
-<p>PS：express.static —— 指定静态文件的查找目录。</p>
-<p>使用use函数调用中间件指定express静态访问目录，’public’就是我们我们新建的用来存放静态文件的总目录。</p>
-<h3 id="3-添加视图"><a href="#3-添加视图" class="headerlink" title="3.添加视图"></a>3.添加视图</h3><hr>
-<p>下面我们就来添加网页模板了，项目中我们会新建一个目录用来单独存放模板文件，这里我们就统一放到根路径上了。</p>
-<p>下面开始新建index.html、login.html、home.html三个页面。</p>
-<p>1.index.html页面参考内容如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;div style=&quot;height:400px;width:550px;margin:50px auto;margin-left:auto;border:solid 1px;background: rgb(246, 246, 253);&quot;&gt;</span><br><span class="line">    &lt;div style=&quot;margin-left: 35px;&quot;&gt;</span><br><span class="line">        # 首页</span><br><span class="line">        &lt;form action=&quot;#&quot;  role=&quot;form&quot; style=&quot;margin-top: 90px;margin-left: 60px;&quot;&gt; </span><br><span class="line">            # 欢迎进入首页！</span><br><span class="line">            &lt;div style=&quot;margin-top: 145px;&quot;&gt;</span><br><span class="line">                &lt;input type=&quot;button&quot; value=&quot;登 陆&quot; /&gt;</span><br><span class="line">            &lt;/div&gt;</span><br><span class="line">        &lt;/form&gt;</span><br><span class="line">    &lt;/div&gt;</span><br><span class="line">&lt;/div&gt;</span><br></pre></td></tr></table></figure></p>
-<p>2.login.html页面参考内容如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line">    &lt;title&gt;用户登录&lt;/title&gt;</span><br><span class="line">    &lt;meta charset=&quot;utf-8&quot;&gt;</span><br><span class="line">    &lt;script src=&quot;http://code.jquery.com/jquery-2.1.1.min.js&quot;&gt;&lt;/script&gt;</span><br><span class="line">... </span><br><span class="line">&lt;div style=&quot;height:300px;width:350px;margin:100px auto;margin-left:auto;border:solid 1px;background: rgb(246, 246, 253);&quot;&gt;</span><br><span class="line">    &lt;div style=&quot;width:200px;margin:auto;margin-top:50px;&quot;&gt; </span><br><span class="line">        # 用户登录</span><br><span class="line">        &lt;form action=&quot;#&quot;  role=&quot;form&quot; method=&quot;post&quot; &gt;</span><br><span class="line">            &lt;input id=&quot;username&quot; type=&quot;text&quot; name=&quot;username&quot; style=&quot;margin: 20px 0px;&quot; /&gt;</span><br><span class="line">            &lt;input id=&quot;password&quot; type=&quot;password&quot; name=&quot;password&quot; /&gt;</span><br><span class="line">            &lt;div style=&quot;margin-top:30px;margin-left:125px;&quot;&gt;</span><br><span class="line">                &lt;input type=&quot;button&quot; value=&quot;登 陆&quot; /&gt;</span><br><span class="line">            &lt;/div&gt;</span><br><span class="line">        &lt;/form&gt;</span><br><span class="line">    &lt;/div&gt;</span><br><span class="line">&lt;/div&gt;</span><br></pre></td></tr></table></figure></p>
-<p>3.home.html页面参考内容如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;div style=&quot;height:400px;width:550px;margin:50px auto;margin-left:auto;border:solid 1px;background: rgb(246, 246, 253);&quot;&gt;</span><br><span class="line">    &lt;div style=&quot;margin-left: 45px;&quot;&gt;</span><br><span class="line">        # 主页</span><br><span class="line">        &lt;form action=&quot;#&quot;  role=&quot;form&quot; style=&quot;margin-top: 90px;&quot;&gt;</span><br><span class="line">            # 登陆成功！</span><br><span class="line">            &lt;div style=&quot;margin-top: 145px;&quot;&gt;</span><br><span class="line">                &lt;input  type=&quot;button&quot; value=&quot;退 出&quot; /&gt;</span><br><span class="line">            &lt;/div&gt;</span><br><span class="line">        &lt;/form&gt;</span><br><span class="line">    &lt;/div&gt;</span><br><span class="line">&lt;/div&gt;</span><br></pre></td></tr></table></figure></p>
-<p>和静态文件一样，我们也要设置views存放的目录，如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">// 设定views变量，意为视图存放的目录</span><br><span class="line">app.set(&apos;views&apos;, __dirname);</span><br></pre></td></tr></table></figure></p>
-<p>有了网页模板和指定目录，下面就可以访问它们了。</p>
-<h3 id="4-渲染视图"><a href="#4-渲染视图" class="headerlink" title="4.渲染视图"></a>4.渲染视图</h3><hr>
-<p>我们要如何对网页模板进行访问呢，这就要用到res对象的render函数了。</p>
-<p>render函数，对网页模板进行渲染。</p>
-<p>格式：res.render(view, [locals], callback);</p>
-<p>参数view就是模板的文件名callback用来处理返回的渲染后的字符串，options、callback可省略，在渲染模板时locals可为其模板传入变量值，在模板中就可以调用所传变量了。</p>
-<p>比如渲染我们刚刚添加的index.html页面，我们就可以在app.js中写入如下内容：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">ar express = require(&apos;express&apos;);</span><br><span class="line">var app = express();</span><br><span class="line">var path = require(&apos;path&apos;);</span><br><span class="line">app.set(&apos;views&apos;, __dirname);</span><br><span class="line">app.set( &apos;view engine&apos;, &apos;html&apos; );</span><br><span class="line">app.engine( &apos;.html&apos;, require( &apos;ejs&apos; ).__express );</span><br><span class="line">app.get(&apos;/&apos;, function(req, res) &#123;</span><br><span class="line">    res.render(&apos;index&apos;);</span><br><span class="line">&#125;);</span><br><span class="line">app.listen(80);</span><br></pre></td></tr></table></figure></p>
-<h3 id="5-url重定向"><a href="#5-url重定向" class="headerlink" title="5.url重定向"></a>5.url重定向</h3><hr>
-<h4 id="redirect基本用法"><a href="#redirect基本用法" class="headerlink" title="redirect基本用法"></a>redirect基本用法</h4><p>redirect方法允许网址的重定向，跳转到指定的url并且可以指定status，默认为302方式。</p>
-<p>格式：res.redirect([status], url);</p>
-<p>例1：使用一个完整的url跳转到一个完全不同的域名。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">res.redirect(&quot;http://www.hubwiz.com&quot;);</span><br></pre></td></tr></table></figure></p>
-<p>例2：跳转指定页面，比如登陆页，如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">res.redirect(&quot;login&quot;);</span><br></pre></td></tr></table></figure></p>
-<p>后面我们开始实现登陆功能，先试一下redirect重定向</p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2014-05-04T06:45:23.000Z"><a href="/2014/05/04/express/express(1)基础知识/">2014-05-04</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2014/05/04/express/express(1)基础知识/">一.基础知识</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-认识express"><a href="#1-认识express" class="headerlink" title="1.认识express"></a>1.认识express</h3><hr>
-<p>npm提供了大量的第三方模块，其中不乏许多Web框架，比如其中的一个轻量级的Web框架 ——— Express。</p>
-<p>Express是一个简洁、灵活的node.js Web应用开发框架, 它提供一系列强大的功能，比如：模板解析、静态文件服务、中间件、路由控制等等,并且还可以使用插件或整合其他模块来帮助你创建各种 Web和移动设备应用,是目前最流行的基于Node.js的Web开发框架，并且支持Ejs、jade等多种模板，可以快速地搭建一个具有完整功能的网站。</p>
-<p>好，下面开始吧！</p>
-<p>1.NPM安装<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install express</span><br></pre></td></tr></table></figure></p>
-<p>2.获取、引用<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> express = <span class="built_in">require</span>(<span class="string">'express'</span>);</span><br><span class="line"><span class="keyword">var</span> app = express();</span><br></pre></td></tr></table></figure></p>
-<p>通过变量“app”我们就可以调用express的各种方法了。</p>
-<h3 id="2-创建应用"><a href="#2-创建应用" class="headerlink" title="2.创建应用"></a>2.创建应用</h3><hr>
-<p>认识了Express框架，我们开始创建我们的第一个express应用。</p>
-<p>在我们的默认项目主文件app.js添加如下内容：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> express = <span class="built_in">require</span>(<span class="string">'express'</span>);</span><br><span class="line"><span class="keyword">var</span> app = express();</span><br><span class="line">app.get(<span class="string">'/'</span>, <span class="function"><span class="keyword">function</span> (<span class="params">request, response</span>) </span>&#123;  </span><br><span class="line">   response.send(<span class="string">'Hello World!'</span>);</span><br><span class="line">&#125;); </span><br><span class="line">app.listen(<span class="number">80</span>);</span><br></pre></td></tr></table></figure></p>
-<h3 id="3-get请求"><a href="#3-get请求" class="headerlink" title="3.get请求"></a>3.get请求</h3><hr>
-<p>前面我们实现了一个简单的express应用，下面我们就开始具体讲述它的具体实现，首先我们先来学习Express的常用方法。</p>
-<p>get方法 —— 根据请求路径来处理客户端发出的GET请求。</p>
-<p>格式：app.get(path,function(request, response));</p>
-<p>path为请求的路径，第二个参数为处理请求的回调函数，有两个参数分别是request和response，代表请求信息和响应信息。</p>
-<p>如下示例：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> express = <span class="built_in">require</span>(<span class="string">'express'</span>);</span><br><span class="line"><span class="keyword">var</span> app = express();</span><br><span class="line">app.get(<span class="string">'/'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">request, response</span>) </span>&#123;</span><br><span class="line">   response.send(<span class="string">'Welcome to the homepage!'</span>);</span><br><span class="line">&#125;);</span><br><span class="line">app.get(<span class="string">'/about'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">request, response</span>) </span>&#123;</span><br><span class="line">   response.send(<span class="string">'Welcome to the about page!'</span>);</span><br><span class="line">&#125;);</span><br><span class="line">app.get(<span class="string">"*"</span>, <span class="function"><span class="keyword">function</span>(<span class="params">request, response</span>) </span>&#123;</span><br><span class="line">    response.send(<span class="string">"404 error!"</span>);</span><br><span class="line">&#125;);</span><br><span class="line">app.listen(<span class="number">80</span>);</span><br></pre></td></tr></table></figure></p>
-<p>上面示例中，指定了about页面路径、根路径和所有路径的处理方法。并且在回调函数内部，使用HTTP回应的send方法，表示向浏览器发送一个字符串。</p>
-<h3 id="4-中间件"><a href="#4-中间件" class="headerlink" title="4.中间件"></a>4.中间件</h3><hr>
-<p>1.什么是中间件？</p>
-<p>中间件(middleware)就是处理HTTP请求的函数，用来完成各种特定的任务，比如检查用户是否登录、分析数据、以及其他在需要最终将数据发送给用户之前完成的任务。 它最大的特点就是，一个中间件处理完，可以把相应数据再传递给下一个中间件。</p>
-<p>2.一个不进行任何操作、只传递request对象的中间件，大概是这样：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Middleware</span>(<span class="params">request, response, next</span>) </span>&#123; </span><br><span class="line">   next();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>上面代码的next为中间件的回调函数。如果它带有参数，则代表抛出一个错误，参数为错误文本。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Middleware</span>(<span class="params">request, response, next</span>) </span>&#123; </span><br><span class="line">   next(<span class="string">'出错了！'</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>抛出错误以后，后面的中间件将不再执行，直到发现一个错误处理函数为止。如果没有调用next方法,后面注册的函数也是不会执行的。</p>
-<h3 id="5-all方法"><a href="#5-all方法" class="headerlink" title="5.all方法"></a>5.all方法</h3><hr>
-<h4 id="all函数的基本用法"><a href="#all函数的基本用法" class="headerlink" title="all函数的基本用法"></a>all函数的基本用法</h4><p>和get函数不同app.all()函数可以匹配所有的HTTP动词，也就是说它可以过滤所有路径的请求，如果使用all函数定义中间件，那么就相当于所有请求都必须先通过此该中间件。</p>
-<p>格式：app.all(path,function(request, response));</p>
-<p>如下所示，我们使用all函数在请求之前设置响应头属性。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> express = <span class="built_in">require</span>(<span class="string">"express"</span>);</span><br><span class="line"><span class="keyword">var</span> app = express();</span><br><span class="line">app.all(<span class="string">"*"</span>, <span class="function"><span class="keyword">function</span>(<span class="params">request, response, next</span>) </span>&#123;</span><br><span class="line">    response.writeHead(<span class="number">200</span>, &#123; <span class="string">"Content-Type"</span>: <span class="string">"text/html;charset=utf-8"</span> &#125;);      <span class="comment">//设置响应头属性值</span></span><br><span class="line">    next();</span><br><span class="line">&#125;);</span><br><span class="line">app.get(<span class="string">"/"</span>, <span class="function"><span class="keyword">function</span>(<span class="params">request, response</span>) </span>&#123;</span><br><span class="line">    response.end(<span class="string">"欢迎来到首页!"</span>);</span><br><span class="line">&#125;);</span><br><span class="line">app.get(<span class="string">"/about"</span>, <span class="function"><span class="keyword">function</span>(<span class="params">request, response</span>) </span>&#123;</span><br><span class="line">    response.end(<span class="string">"欢迎来到about页面!"</span>);</span><br><span class="line">&#125;);</span><br><span class="line">app.get(<span class="string">"*"</span>, <span class="function"><span class="keyword">function</span>(<span class="params">request, response</span>) </span>&#123;</span><br><span class="line">    response.end(<span class="string">"404 - 未找到!"</span>);</span><br><span class="line">&#125;);</span><br><span class="line">app.listen(<span class="number">80</span>);</span><br></pre></td></tr></table></figure></p>
-<p>上面代码参数中的“*”表示对所有路径有效，这个方法在给特定前缀路径或者任意路径上处理时会特别有用，不管我们请求任何路径都会事先经过all函数。</p>
-<h3 id="6-use方法1"><a href="#6-use方法1" class="headerlink" title="6.use方法1"></a>6.use方法1</h3><hr>
-<h4 id="use基本用法1"><a href="#use基本用法1" class="headerlink" title="use基本用法1"></a>use基本用法1</h4><p>use是express调用中间件的方法，它返回一个函数。</p>
-<p>格式：app.use([path], function(request, response, next){});</p>
-<p>可选参数path默认为”/“。</p>
-<p>1.使用中间件<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">app.use(express.static(path.join(__dirname, <span class="string">'/'</span>)));</span><br></pre></td></tr></table></figure></p>
-<p>如上，我们就使用use函数调用express中间件设定了静态文件目录的访问路径(这里假设为根路径)。</p>
-<p>如何连续调用两个中间件呢，如下示例：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> express = <span class="built_in">require</span>(<span class="string">'express'</span>);</span><br><span class="line"><span class="keyword">var</span> app = express();</span><br><span class="line">app.use(<span class="function"><span class="keyword">function</span>(<span class="params">request, response, next</span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">"method："</span>+request.method+<span class="string">" ==== "</span>+<span class="string">"url："</span>+request.url);</span><br><span class="line">    next();</span><br><span class="line">&#125;);</span><br><span class="line">app.use(<span class="function"><span class="keyword">function</span>(<span class="params">request, response</span>)</span>&#123;</span><br><span class="line">    response.writeHead(<span class="number">200</span>, &#123; <span class="string">"Content-Type"</span>: <span class="string">"text/html;charset=utf-8"</span> &#125;);</span><br><span class="line">    response.end(<span class="string">'示例：连续调用两个中间件'</span>);</span><br><span class="line">&#125;);</span><br><span class="line">app.listen(<span class="number">80</span>);</span><br></pre></td></tr></table></figure></p>
-<p>回调函数的next参数，表示接受其他中间件的调用，函数体中的next()，表示将请求数据传递给下一个中间件。</p>
-<p>上面代码先调用第一个中间件，在控制台输出一行信息，然后通过next()，调用第二个中间件，输出HTTP回应。由于第二个中间件没有调用next方法，所以req对象就不再向后传递了。</p>
-<h3 id="7-use方法2"><a href="#7-use方法2" class="headerlink" title="7.use方法2"></a>7.use方法2</h3><hr>
-<h4 id="use基本用法2"><a href="#use基本用法2" class="headerlink" title="use基本用法2"></a>use基本用法2</h4><p>use方法不仅可以调用中间件，还可以根据请求的网址，返回不同的网页内容，如下示例：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> express = <span class="built_in">require</span>(<span class="string">"express"</span>);</span><br><span class="line"><span class="keyword">var</span> app = express();</span><br><span class="line">app.use(<span class="function"><span class="keyword">function</span>(<span class="params">request, response, next</span>) </span>&#123;</span><br><span class="line">   <span class="keyword">if</span>(request.url == <span class="string">"/"</span>) &#123;</span><br><span class="line">      response.send(<span class="string">"Welcome to the homepage!"</span>);</span><br><span class="line">   &#125;<span class="keyword">else</span> &#123;</span><br><span class="line">      next();</span><br><span class="line">   &#125;</span><br><span class="line">&#125;);</span><br><span class="line">app.use(<span class="function"><span class="keyword">function</span>(<span class="params">request, response, next</span>) </span>&#123;</span><br><span class="line">   <span class="keyword">if</span>(request.url == <span class="string">"/about"</span>) &#123;</span><br><span class="line">     response.send(<span class="string">"Welcome to the about page!"</span>);</span><br><span class="line">   &#125;<span class="keyword">else</span> &#123;</span><br><span class="line">     next();</span><br><span class="line">   &#125;</span><br><span class="line">&#125;);</span><br><span class="line">app.use(<span class="function"><span class="keyword">function</span>(<span class="params">request, response</span>) </span>&#123;</span><br><span class="line">  response.send(<span class="string">"404 error!"</span>);</span><br><span class="line">&#125;);</span><br><span class="line">app.listen(<span class="number">80</span>);</span><br></pre></td></tr></table></figure></p>
-<p>上面代码通过request.url属性，判断请求的网址，从而返回不同的内容。</p>
-<h3 id="8-回调函数"><a href="#8-回调函数" class="headerlink" title="8.回调函数"></a>8.回调函数</h3><hr>
-<p>Express回调函数有两个参数，分别是request(简称req)和response(简称res)，request代表客户端发来的HTTP请求，response代表发向客户端的HTTP回应，这两个参数都是对象。示例如下:<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span>(<span class="params">req, res</span>) </span>&#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<h3 id="9-获取主机、路径名"><a href="#9-获取主机、路径名" class="headerlink" title="9.获取主机、路径名"></a>9.获取主机、路径名</h3><hr>
-<p>如何使用req对象来处理客户端发来的HTTP请求。</p>
-<p>1.req.host返回请求头里取的主机名(不包含端口号)。</p>
-<p>2.req.path返回请求的URL的路径名。</p>
-<p>如下示例：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> express = <span class="built_in">require</span>(<span class="string">'express'</span>);</span><br><span class="line"><span class="keyword">var</span> app = express();</span><br><span class="line">app.get(<span class="string">"*"</span>, <span class="function"><span class="keyword">function</span>(<span class="params">req, res</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(req.path);</span><br><span class="line">    res.send(<span class="string">"req.host获取主机名，req.path获取请求路径名!"</span>);</span><br><span class="line">&#125;);</span><br><span class="line">app.listen(<span class="number">80</span>);</span><br></pre></td></tr></table></figure></p>
-<h3 id="10-Get请求-query"><a href="#10-Get请求-query" class="headerlink" title="10.Get请求 - query"></a>10.Get请求 - query</h3><hr>
-<p>query是一个可获取客户端get请求路径参数的对象属性，包含着被解析过的请求参数对象，默认为{}。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> express = <span class="built_in">require</span>(<span class="string">'express'</span>);</span><br><span class="line"><span class="keyword">var</span> app = express();</span><br><span class="line">app.get(<span class="string">"*"</span>, <span class="function"><span class="keyword">function</span>(<span class="params">req, res</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(req.query.参数名);</span><br><span class="line">    res.send(<span class="string">"测试query属性!"</span>);</span><br><span class="line">&#125;);</span><br><span class="line">app.listen(<span class="number">80</span>);</span><br></pre></td></tr></table></figure></p>
-<p>通过req.query获取get请求路径的对象参数值。</p>
-<p>格式：req.query.参数名；请求路径如下示例：</p>
-<p>例1： /search?n=Hanmeimei<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">req.query.n  <span class="comment">// "Hanmeimei"</span></span><br></pre></td></tr></table></figure></p>
-<p>例2： /shoes?order=desc&amp;shoe[color]=blue&amp;shoe[type]=converse<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">req.query.order  <span class="comment">// "desc"</span></span><br><span class="line">req.query.shoe.color  <span class="comment">// "blue"</span></span><br><span class="line">req.query.shoe.type  <span class="comment">// "converse"</span></span><br></pre></td></tr></table></figure></p>
-<h3 id="11-Get请求-param"><a href="#11-Get请求-param" class="headerlink" title="11.Get请求 - param"></a>11.Get请求 - param</h3><hr>
-<p>和属性query一样，通过req.param我们也可以获取被解析过的请求参数对象的值。</p>
-<p>格式：req.param(“参数名”)；请求路径如下示例：</p>
-<p>例1： 获取请求根路径的参数值，如/?n=Lenka，方法如下：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> express = <span class="built_in">require</span>(<span class="string">'express'</span>);</span><br><span class="line"><span class="keyword">var</span> app = express();</span><br><span class="line">app.get(<span class="string">"/"</span>, <span class="function"><span class="keyword">function</span>(<span class="params">req, res</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(req.param(<span class="string">"n"</span>)); <span class="comment">//Lenka</span></span><br><span class="line">    res.send(<span class="string">"使用req.param属性获取请求根路径的参数对象值!"</span>);</span><br><span class="line">&#125;);</span><br><span class="line">app.listen(<span class="number">80</span>);</span><br></pre></td></tr></table></figure></p>
-<p>例2：我们也可以获取具有相应路由规则的请求对象，假设路由规则为 /user/:name/，请求路径/user/mike,如下：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">app.get(<span class="string">"/user/:name/"</span>, <span class="function"><span class="keyword">function</span>(<span class="params">req, res</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(req.param(<span class="string">"name"</span>)); <span class="comment">//mike</span></span><br><span class="line">    res.send(<span class="string">"使用req.param属性获取具有路由规则的参数对象值!"</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>PS：所谓“路由”，就是指为不同的访问路径，指定不同的处理方法。</p>
-<h3 id="12-Get请求-params"><a href="#12-Get请求-params" class="headerlink" title="12.Get请求 - params"></a>12.Get请求 - params</h3><hr>
-<p>和param相似，但params是一个可以解析包含着有复杂命名路由规则的请求对象的属性。</p>
-<p>格式：req.params.参数名；</p>
-<p>例1. 如上课时请求根路径的例子，我们就可以这样获取，如下：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> express = <span class="built_in">require</span>(<span class="string">'express'</span>);</span><br><span class="line"><span class="keyword">var</span> app = express();</span><br><span class="line">app.get(<span class="string">"/user/:name/"</span>, <span class="function"><span class="keyword">function</span>(<span class="params">req, res</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(req.params.name); <span class="comment">//mike</span></span><br><span class="line">    res.send(<span class="string">"使用req.params属性获取具有路由规则的参数对象值!"</span>);</span><br><span class="line">&#125;);</span><br><span class="line">app.listen(<span class="number">80</span>);</span><br></pre></td></tr></table></figure></p>
-<p>查看运行结果，和param属性功能是一样的，同样获取name参数值。</p>
-<p>例2：当然我们也可以请求复杂的路由规则，如/user/:name/:id，假设请求地址为：/user/mike/123，如下：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">app.get(<span class="string">"/user/:name/:id"</span>, <span class="function"><span class="keyword">function</span>(<span class="params">req, res</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(req.params.id); <span class="comment">//"123"</span></span><br><span class="line">    res.send(<span class="string">"使用req.params属性复杂路由规则的参数对象值!"</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>对于请求地址具有路由规则的路径来说，属性params比param属性是不是又强大了那么一点点呢！</p>
-<h3 id="13-send"><a href="#13-send" class="headerlink" title="13.send"></a>13.send</h3><hr>
-<p>send()方法向浏览器发送一个响应信息，并可以智能处理不同类型的数据。格式如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">res.send([body|status], [body]);</span><br></pre></td></tr></table></figure></p>
-<p>1.当参数为一个String时，Content-Type默认设置为”text/html”。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">res.send(&apos;Hello World&apos;); //Hello World</span><br></pre></td></tr></table></figure></p>
-<p>2.当参数为Array或Object时，Express会返回一个JSON。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">res.send(&#123; user: &apos;tobi&apos; &#125;); //&#123;&quot;user&quot;:&quot;tobi&quot;&#125;</span><br><span class="line">res.send([1,2,3]); //[1,2,3]</span><br></pre></td></tr></table></figure></p>
-<p>3.当参数为一个Number时，并且没有上面提到的任何一条在响应体里，Express会帮你设置一个响应体，比如：200会返回字符”OK”。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">res.send(200); // OK</span><br><span class="line">res.send(404); // Not Found</span><br><span class="line">res.send(500); // Internal Server Error</span><br></pre></td></tr></table></figure></p>
-<p>send方法在输出响应时会自动进行一些设置，比如HEAD信息、HTTP缓存支持等等。</p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -842,7 +884,7 @@
   
     <li><a href="/tags/Node-js入门/">Node.js入门</a><small>9</small></li>
   
-    <li><a href="/tags/Node-js错误处理-调试/">Node.js错误处理&amp;调试</a><small>3</small></li>
+    <li><a href="/tags/Node错误处理和调试/">Node错误处理和调试</a><small>4</small></li>
   
     <li><a href="/tags/express/">express</a><small>2</small></li>
   
