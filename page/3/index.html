@@ -53,6 +53,76 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2014-06-23T09:45:23.000Z"><a href="/2014/06/23/Git/Git(4)远程仓库/">2014-06-23</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2014/06/23/Git/Git(4)远程仓库/">四.远程仓库</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-远程仓库简介"><a href="#1-远程仓库简介" class="headerlink" title="1.远程仓库简介"></a>1.远程仓库简介</h3><hr>
+<p>到目前为止，我们已经掌握了如何在Git仓库里对一个文件进行时光穿梭，你再也不用担心文件备份或者丢失的问题了。</p>
+<p>　　开始介绍Git的远程仓库功能。我们现在借用GitHub神奇的网站，这个网站就是提供Git仓库托管服务的，所以只要注册一个GitHub账号，就可以免费获得Git远程仓库。</p>
+<p>　　由于你的本地Git仓库和GitHub仓库之间的传输是通过SSH加密的，所以，需要一点设置：</p>
+<p>　　第1步：创建SSH Key。在当前目录下，看看有没有.ssh目录，如果有，再看看这个目录下有没有id_rsa和id_rsa.pub这两个文件，如果已经有了，可直接跳到下一步。如果没有，打开Shell（Windows下打开Git Bash），创建SSH Key：</p>
+<p>$ ssh-keygen -t rsa -C “<a href="mailto:youremail@example.com" target="_blank" rel="noopener">youremail@example.com</a>“<br>　　你需要把邮件地址换成你自己的邮件地址，然后一路回车，使用默认值即可，可以在用户主目录里找到.ssh目录，里面有id_rsa和id_rsa.pub两个文件，这两个就是SSH Key的秘钥对，id_rsa是私钥，不能泄露出去，id_rsa.pub是公钥，可以放心地告诉任何人。</p>
+<p>　　第2步：登陆GitHub，打开“Account settings”，“SSH Keys”页面：</p>
+<p>　　然后，点“Add SSH Key”，填上任意Title，在Key文本框里粘贴id_rsa.pub文件的内容：<br>　　<img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgitsshkey.png" alt=""></p>
+<h3 id="2-GitHub创建新仓库"><a href="#2-GitHub创建新仓库" class="headerlink" title="2.GitHub创建新仓库"></a>2.GitHub创建新仓库</h3><hr>
+<p>GitHub创建一个Git仓库,并且本地仓库与此仓库进行远程同步，此仓库既可以作为备份，又可以让其他人通过该仓库来协作。</p>
+<p>　　首先，登陆GitHub，然后，在右上角找到“Create a new repo”按钮，创建一个新的仓库：<br>　　<br>　　<img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgithub1.png" alt=""><br>　　<br>　在Repository name填入learngit，其他保持默认设置，点击“Create repository”按钮，就成功地创建了一个新的Git仓库。</p>
+<p>　　目前，在GitHub上的这个learngit仓库还是空的，GitHub告诉我们，可以从这个仓库克隆出新的仓库，也可以把一个已有的本地仓库与之关联，然后，把本地仓库的内容推送到GitHub仓库。</p>
+<p>　　现在，我们根据GitHub的提示，在本地的learngit仓库下运行命令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git remote add origin git@github.com:onlyone/learngit.git</span><br></pre></td></tr></table></figure></p>
+<p>　　请千万注意，把上面的onlyone替换成你自己的GitHub账户名，否则，你在本地关联的就是我的远程库，关联没有问题，但是你以后推送是推不上去的，因为你的SSH Key公钥不在我的账户列表中。</p>
+<p>　　添加后，远程库的名字就是origin，这是Git默认的叫法，也可以改成别的，但是origin这个名字一看就知道是远程库。</p>
+<p>　　注意：要关联一个远程库，使用命令git remote add origin git@server-name:path/repo-name.git。　
+　　</p>
+<h3 id="3-本地库推送到远程库"><a href="#3-本地库推送到远程库" class="headerlink" title="3.本地库推送到远程库"></a>3.本地库推送到远程库</h3><hr>
+<p>本地库的所有内容推送到远程库上：</p>
+<p>$ git push -u origin master<br>　　把本地库的内容推送到远程，用git push命令，实际上是把当前分支master推送到远程。</p>
+<p>　　由于远程库是空的，我们第一次推送master分支时，加上了-u参数，Git不但会把本地的master分支内容推送的远程新的master分支，还会把本地的master分支和远程的master分支关联起来，在以后的推送或者拉取时就可以简化命令。</p>
+<p>　　推送成功，github内容与当前目录中readme.txt一致：<br>　　<br>　　<img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgithubremote.png" alt=""><br>　　<br>从现在起，只要本地作了提交，就可以通过命令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git push origin master</span><br></pre></td></tr></table></figure></p>
+<p>　　把本地master分支的最新修改推送至GitHub，现在，你就拥有了真正的分布式版本库！</p>
+<p>　　注意：要关联一个远程库，使用命令git remote add origin git@server-name:path/repo-name.git；关联后，使用命令git push -u origin master第一次推送master分支的所有内容；此后，每次本地提交后，只要有必要，就可以使用命令git push origin master推送最新修改；
+　　</p>
+<h3 id="4-SSH警告"><a href="#4-SSH警告" class="headerlink" title="4.SSH警告"></a>4.SSH警告</h3><hr>
+<p>当你第一次使用Git的clone或者push命令连接GitHub时，会得到一个警告：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">The authenticity of host &apos;github.com (xx.xx.xx.xx)&apos; can&apos;t be established.</span><br><span class="line">RSA key fingerprint is xx.xx.xx.xx.xx.</span><br><span class="line">Are you sure you want to continue connecting (yes/no)?</span><br></pre></td></tr></table></figure></p>
+<p>　　这是因为Git使用SSH连接，而SSH连接在第一次验证GitHub服务器的Key时，需要你确认GitHub的Key的指纹信息是否真的来自GitHub的服务器，输入yes回车即可。</p>
+<p>　　Git会输出一个警告，告诉你已经把GitHub的Key添加到本机的一个信任列表里了：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Warning: Permanently added &apos;github.com&apos; (RSA) to the list of known hosts.</span><br></pre></td></tr></table></figure></p>
+<p>　　这个警告只会出现一次，后面的操作就不会有任何警告了。</p>
+<p>　　如果你实在担心有人冒充GitHub服务器，输入yes前可以对照GitHub的RSA Key的指纹信息是否与SSH连接给出的一致。</p>
+<h3 id="5-从远程库克隆"><a href="#5-从远程库克隆" class="headerlink" title="5.从远程库克隆"></a>5.从远程库克隆</h3><hr>
+<p>从远程库克隆,就需要我们先创建远程库，在github创建一个新的gitskills仓库，我们勾选Initialize this repository with a README，这样GitHub会自动为我们创建一个README.md文件。创建完毕后，可以看到README.md文件：</p>
+<p>　　现在，远程库已经准备好了，下一步是用命令git clone克隆一个本地库：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ git clone git@github.com:michaelliao/gitskills.git</span><br><span class="line"> </span><br><span class="line">$ cd gitskills</span><br><span class="line">$ ls</span><br><span class="line">README.md</span><br></pre></td></tr></table></figure></p>
+<p>　　注意把Git库的地址换成你自己的，然后进入gitskills目录看看，已经有README.md文件了。</p>
+<p>　　你也许还注意到，GitHub给出的地址不止一个，还可以用github.com/onlyone/gitskills.git这样的地址。实际上，Git支持多种协议，默认的git://使用ssh，但也可以使用https等其他协议。</p>
+<p>　　注意：要克隆一个仓库，首先必须知道仓库的地址，然后使用git clone命令克隆。</p>
+<p>　　Git支持多种协议，包括https，但通过ssh支持的原生git协议速度最快。</p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2014-06-20T06:45:23.000Z"><a href="/2014/06/20/Git/Git(3)操作Git/">2014-06-20</a></time>
       
       
@@ -731,84 +801,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2014-04-06T07:45:23.000Z"><a href="/2014/04/06/MongoDB/MongoDB(2)文档的增删改查/">2014-04-06</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2014/04/06/MongoDB/MongoDB(2)文档的增删改查/">二.文档的增删改查</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-简单插入文档"><a href="#1-简单插入文档" class="headerlink" title="1.简单插入文档"></a>1.简单插入文档</h3><hr>
-<p>在数据库中，数据插入是最基本的操作，在MongoDB使用db.collection.insert(document)语句来插入文档，如下图：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkinsert1.png" alt=""></p>
-<p>document是文档数据，collection是存放文档数据的集合。</p>
-<p>例如：所有用户的信息存放在users集合中，每个用户的信息为一个user文档，插入数据:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">db.users.insert(user);</span><br></pre></td></tr></table></figure></p>
-<p>如果collection存在，document会添加到collection目录下， 如果collection不存在，数据库会先创建collection，然后再保存document。</p>
-<h3 id="2-批量插入文档"><a href="#2-批量插入文档" class="headerlink" title="2.批量插入文档"></a>2.批量插入文档</h3><hr>
-<p>nsert语句不但可以插入单个文档，还可以一次性插入多个文档。</p>
-<p>插入多个文档时，insert命令的参数为一个数组，数组元素为BSON格式的文档。</p>
-<p>多个文档可以放在一个数组内，一次插入多条数据，例如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">db.users.insert([&#123;name:&quot;tommy&quot;&#125;,&#123;name:&quot;xiaoming&quot;&#125;])</span><br></pre></td></tr></table></figure></p>
-<p>文档批量插入非常方便，但是使用批量插入时也有一些问题需要注意，因为BSON格式的限制，一次插入的数据量不能超过16M，在一个insert命令中插入多条数据时，MongoDB不保证完全成功或完全失败。</p>
-<h3 id="3-查询与投影"><a href="#3-查询与投影" class="headerlink" title="3.查询与投影"></a>3.查询与投影</h3><hr>
-<p>在MongoDB中，查询指向特定的文档集合，查询设定条件，指明MongoDB需要返回的文档；查询也可以包含一个投影，指定返回的字段。</p>
-<p>如下图，在查询过程指定了一个查询条件和一个排序修饰。</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkquery.jpg" alt=""></p>
-<p>在关系型数据库中，投影指的是对列的筛选，类似的，在MongoDB中，投影指的是对出现在结果集中的对象属性的筛选。</p>
-<h3 id="4-find-方法"><a href="#4-find-方法" class="headerlink" title="4.find()方法"></a>4.find()方法</h3><hr>
-<p>MongoDB中查询检索数据时使用find命令，使用方法如下：</p>
-<p>语法：<br>db.collection.find(criteria,projection);<br>参数：<br>criteria – 查询条件，文档类型，可选。</p>
-<p>projection– 返回的字段，文档类型，可选,若需返回所有字段，则忽略此参数。</p>
-<p>find命令两个可选参数，criteria为查询条件，projection为返回的字段，如果不传入条件数据库会返回该集合的所有文档。</p>
-<p>如下图简单示例：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkfind.jpg" alt=""></p>
-<h3 id="5-修改文档-update命令"><a href="#5-修改文档-update命令" class="headerlink" title="5.修改文档 - update命令"></a>5.修改文档 - update命令</h3><hr>
-<p>update命令可以更新指定文档的特定字段值，也可以替换整个文档，如果更新操作会增加文档大小，MongoDB将重新分配空间并重新定位。</p>
-<p>语法：<br>db.collection.update(query,update,{upsert:boolean,multi:boolean});<br>参数：<br>query：查询条件，文档，和find中的查询条件写法一致。</p>
-<p>update：修改内容，文档。</p>
-<p>upsert(可选)：如果值为true，那么当集合中没有匹配文档时，创建文档。默认false。</p>
-<p>multi(可选)：如果值为true，那么将更新全部符合条件的文档，否则仅更新一个文档，默认false。</p>
-<p>如下示例：将users集合中所有符合条件”age&gt;18”文档的status字段更新为”A”。</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkupdate.jpg" alt=""></p>
-<h3 id="6-修改文档-save命令"><a href="#6-修改文档-save命令" class="headerlink" title="6.修改文档 - save命令"></a>6.修改文档 - save命令</h3><hr>
-<p>save命令可以更新或插入一个新文档，与update命令不同的是，save只能对一个文档进行操作。</p>
-<p>语法：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">db.collection.save();</span><br></pre></td></tr></table></figure></p>
-<p>参数：<br>document：新的文档；</p>
-<h3 id="7-删除文档-remove命令"><a href="#7-删除文档-remove命令" class="headerlink" title="7.删除文档 - remove命令"></a>7.删除文档 - remove命令</h3><hr>
-<p>需要删除文档时使用remove命令，删除文档可以清理掉不需要的数据，释放存储空间，提升检索效率，但是错误的删除会是一场灾难，因此在执行数据删除操作时需要非常的谨慎！</p>
-<p>语法：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">db.collection.remove(</span><br><span class="line">    query,</span><br><span class="line">    justOne</span><br><span class="line"> )</span><br></pre></td></tr></table></figure></p>
-<p>参数：<br>query：BSON类型，删除文档的条件。</p>
-<p>justOne：布尔类型，true：只删除一个文档，false：默认值，删除所有符合条件的文档。</p>
-<p>下面是一个是将users集合中所有status=”D”的文档删除操作，对比一下MongoDB和传统SQL数据库删除的操作，看看有哪些不同之处。</p>
-<p>与传统SQL比较 - 删除文档</p>
-<p>MongoDB</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkremove.jpg" alt=""></p>
-<p>传统SQL</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkremove-sql.jpg" alt=""></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -858,7 +850,7 @@
   
     <li><a href="/tags/shell/">shell</a><small>1</small></li>
   
-    <li><a href="/tags/存储/">存储</a><small>2</small></li>
+    <li><a href="/tags/存储/">存储</a><small>3</small></li>
   
     <li><a href="/tags/异步编程/">异步编程</a><small>3</small></li>
   

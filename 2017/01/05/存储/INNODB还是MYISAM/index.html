@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   
-  <title>一.简单介绍 | shouliang&#39;s blog</title>
+  <title>INNODB还是MYISAM | shouliang&#39;s blog</title>
   <meta name="author" content="shouliang">
   
   <meta name="description" content="Node">
@@ -11,7 +11,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
-  <meta property="og:title" content="一.简单介绍"/>
+  <meta property="og:title" content="INNODB还是MYISAM"/>
   <meta property="og:site_name" content="shouliang&#39;s blog"/>
 
   
@@ -52,26 +52,32 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2014-04-03T06:45:23.000Z"><a href="/2014/04/03/MongoDB/MongoDB(1)简单介绍/">2014-04-03</a></time>
+        <time datetime="2017-01-05T06:45:23.000Z"><a href="/2017/01/05/存储/INNODB还是MYISAM/">2017-01-05</a></time>
       
       
   
-    <h1 class="title">一.简单介绍</h1>
+    <h1 class="title">INNODB还是MYISAM</h1>
   
 
     </header>
     <div class="entry">
       
-        <h3 id="1-什么是MongoDB"><a href="#1-什么是MongoDB" class="headerlink" title="1.什么是MongoDB"></a>1.什么是MongoDB</h3><hr>
-<p>MongoDB是一个基于分布式文件存储的数据库，由C++语言编写，旨在为WEB应用提供可扩展的高性能数据存储解决方案。</p>
-<p>MongoDB是一个高性能，开源，无模式的文档型数据库，官方给自己的定义是Key-value存储(高性能和高扩展)和传统RDBMS(丰富的查询和功能)之间的一座桥梁。</p>
-<h3 id="2-Document和BSON"><a href="#2-Document和BSON" class="headerlink" title="2.Document和BSON"></a>2.Document和BSON</h3><hr>
-<p>MongoDB中保存的数据格式为BSON，如：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbson.jpg" alt=""></p>
-<p>MongoDB中数据的基本单元称为文档(Document)，它是MongoDB的核心概念，由多个键极其关联的值有序的放置在一起组成，数据库中它对应于关系型数据库的行。</p>
-<p>数据在MongoDB中以BSON（Binary-JSON）文档的格式存储在磁盘上。</p>
-<p>BSON（Binary Serialized Document Format）是一种类json的一种二进制形式的存储格式，简称Binary JSON，BSON和JSON一样，支持内嵌的文档对象和数组对象，但是BSON有JSON没有的一些数据类型，如Date和BinData类型。</p>
-<p>BSON的优点是灵活性高，但它的缺点是空间利用率不是很理想，BSON有三个特点：轻量性、可遍历性、高效性。</p>
+        <h6 id="原文：https-coolshell-cn-articles-652-html"><a href="#原文：https-coolshell-cn-articles-652-html" class="headerlink" title="原文：https://coolshell.cn/articles/652.html"></a>原文：<a href="https://coolshell.cn/articles/652.html" target="_blank" rel="noopener">https://coolshell.cn/articles/652.html</a></h6><ol>
+<li><p>MyISAM 是MySQL中默认的存储引擎，一般来说不是有太多人关心这个东西。决定使用什么样的存储引擎是一个很tricky的事情，但是还是值我们去研究一下，这里的文章只考虑 MyISAM 和InnoDB这两个，因为这两个是最常见的。</p>
+<p>下面先让我们回答一些问题：</p>
+<ul>
+<li>你的数据库有外键吗？</li>
+<li>你需要事务支持吗？</li>
+<li>你需要全文索引吗？</li>
+<li>你经常使用什么样的查询模式？</li>
+<li>你的数据有多大？</li>
+</ul>
+<p>思考上面这些问题可以让你找到合适的方向，但那并不是绝对的。如果你需要事务处理或是外键，那么InnoDB 可能是比较好的方式。如果你需要全文索引，那么通常来说 MyISAM是好的选择，因为这是系统内建的，然而，我们其实并不会经常地去测试两百万行记录。所以，就算是慢一点，我们可以通过使用Sphinx从InnoDB中获得全文索引。</p>
+<p>数据的大小，是一个影响你选择什么样存储引擎的重要因素，大尺寸的数据集趋向于选择InnoDB方式，因为其支持事务处理和故障恢复。数据库的在小决定了故障恢复的时间长短，InnoDB可以利用事务日志进行数据恢复，这会比较快。而MyISAM可能会需要几个小时甚至几天来干这些事，InnoDB只需要几分钟。</p>
+<p>您操作数据库表的习惯可能也会是一个对性能影响很大的因素。比如： COUNT() 在 MyISAM 表中会非常快，而在InnoDB 表下可能会很痛苦。而主键查询则在InnoDB下会相当相当的快，但需要小心的是如果我们的主键太长了也会导致性能问题。大批的inserts 语句在MyISAM下会快一些，但是updates 在InnoDB 下会更快一些——尤其在并发量大的时候。</p>
+<p>所以，到底你检使用哪一个呢？根据经验来看，如果是一些小型的应用或项目，那么MyISAM 也许会更适合。当然，在大型的环境下使用MyISAM 也会有很大成功的时候，但却不总是这样的。如果你正在计划使用一个超大数据量的项目，而且需要事务处理或外键支持，那么你真的应该直接使用InnoDB方式。但需要记住InnoDB 的表需要更多的内存和存储，转换100GB 的MyISAM 表到InnoDB 表可能会让你有非常坏的体验。</p>
+</li>
+</ol>
 
       
     </div>
@@ -81,7 +87,7 @@
         
   
   <div class="tags">
-    <a href="/tags/MongoDB/">MongoDB</a>
+    <a href="/tags/存储/">存储</a>
   </div>
 
         
@@ -124,7 +130,7 @@
   }(document, 'script', 'facebook-jssdk'));
 </script>
 
-<div class="fb-comments" data-href="https://shouliang.github.io/2014/04/03/MongoDB/MongoDB(1)简单介绍/index.html" data-num-posts="5" data-width="840" data-colorscheme="light"></div>
+<div class="fb-comments" data-href="https://shouliang.github.io/2017/01/05/存储/INNODB还是MYISAM/index.html" data-num-posts="5" data-width="840" data-colorscheme="light"></div>
       
   
 </section>
