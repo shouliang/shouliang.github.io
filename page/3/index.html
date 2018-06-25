@@ -53,6 +53,83 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2014-07-05T06:45:23.000Z"><a href="/2014/07/05/shell/shell入门/">2014-07-05</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2014/07/05/shell/shell入门/">shell入门(1)</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h2 id="shell简介"><a href="#shell简介" class="headerlink" title="shell简介"></a>shell简介</h2><p>Shell本身是一个用C语言编写的程序，它是用户使用Unix/Linux的桥梁，用户的大部分工作都是通过Shell完成的。Shell既是一种命令语言，又是一种程序设计语言。作为命令语言，它交互式地解释和执行用户输入的命令；作为程序设计语言，它定义了各种变量和参数，并提供了许多在高级语言中才具有的控制结构，包括循环和分支。</p>
+<p>它虽然不是Unix/Linux系统内核的一部分，但它调用了系统核心的大部分功能来执行程序、建立文件并以并行的方式协调各个程序的运行。因此，对于用户来说，shell是最重要的实用程序，深入了解和熟练掌握shell的特性极其使用方法，是用好Unix/Linux系统的关键。</p>
+<p>可以说，shell使用的熟练程度反映了用户对Unix/Linux使用的熟练程度。</p>
+<p>Shell有两种执行命令的方式：</p>
+<ul>
+<li>交互式（Interactive）：解释执行用户的命令，用户输入一条命令，Shell就解释执行一条。</li>
+<li>批处理（Batch）：用户事先写一个Shell脚本(Script)，其中有很多条命令，让Shell一次把这些命令执行完，而不必一条一条地敲命令。</li>
+</ul>
+<p>Shell脚本和编程语言很相似，也有变量和流程控制语句，但Shell脚本是解释执行的，不需要编译，Shell程序从脚本中一行一行读取并执行这些命令，相当于一个用户把脚本中的命令一行一行敲到Shell提示符下执行。</p>
+<p>Unix/Linux上常见的Shell脚本解释器有bash、sh、csh、ksh等，习惯上把它们称作一种Shell。我们常说有多少种Shell，其实说的是Shell脚本解释器。由于bash是最常见的脚本解释器，如无特殊说明，shell默认都是bash shell。</p>
+<p>注意：bash是linux标准的默认shell，bash完全兼容sh，也就是说，用sh写的脚本可以不加修改的在bash中执行。</p>
+<h2 id="什么时候使用shell"><a href="#什么时候使用shell" class="headerlink" title="什么时候使用shell"></a>什么时候使用shell</h2><p>因为Shell是各UNIX系统之间通用的功能，并且经过了POSIX的标准化。因此，Shell脚本只要“用心写”一次，即可应用到很多系统上。因此，之所以要使用Shell脚本是基于：</p>
+<ul>
+<li>简单性：Shell是一个高级语言；通过它，你可以简洁地表达复杂的操作。</li>
+<li>可移植性：使用POSIX所定义的功能，可以做到脚本无须修改就可在不同的系统上执行。</li>
+<li>开发容易：可以在短时间内完成一个功能强大又实用的脚本。</li>
+</ul>
+<p>但是，考虑到Shell脚本的命令限制和效率问题，下列情况一般不使用Shell：</p>
+<ol>
+<li>资源密集型的任务，尤其在需要考虑效率时（比如，排序，hash等等）。</li>
+<li>需要处理大任务的数学操作，尤其是浮点运算，精确运算，或者复杂的算术运算（这种情况一般使用C++或FORTRAN 来处理）。</li>
+<li>有跨平台（操作系统）移植需求（一般使用C 或Java）。</li>
+<li>复杂的应用，在必须使用结构化编程的时候（需要变量的类型检查，函数原型，等等）。</li>
+<li>对于影响系统全局性的关键任务应用。</li>
+<li>对于安全有很高要求的任务，比如你需要一个健壮的系统来防止入侵、破解、恶意破坏等等。</li>
+<li>项目由连串的依赖的各个部分组成。</li>
+<li>需要大规模的文件操作。 需要多维数组的支持。</li>
+<li>需要数据结构的支持，比如链表或数等数据结构。</li>
+<li>需要产生或操作图形化界面 GUI。</li>
+<li>需要直接操作系统硬件。</li>
+<li>需要 I/O 或socket 接口。</li>
+<li>需要使用库或者遗留下来的老代码的接口。</li>
+<li>私人的、闭源的应用（shell 脚本把代码就放在文本文件中，全世界都能看到）。<br>如果你的应用符合上边的任意一条，那么就考虑一下更强大的语言吧——或许是Perl、Tcl、Python、Ruby——或者是更高层次的编译语言比如C/C++，或者是Java。即使如此，你会发现，使用shell来原型开发你的应用，在开发步骤中也是非常有用的。</li>
+</ol>
+<h2 id="第一个shell脚本"><a href="#第一个shell脚本" class="headerlink" title="第一个shell脚本"></a>第一个shell脚本</h2><p>打开文本编辑器vim，新建一个文件test，扩展名为sh（sh代表shell），全名是test.sh。扩展名并不影响脚本执行，见名知意就好，如果你用 php 写shell 脚本，扩展名就用 php 好了。</p>
+<p>输入一些代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">#!/bin/sh</span><br><span class="line">#echo &quot;123456&quot;</span><br><span class="line">echo &quot;Hello World !&quot;</span><br></pre></td></tr></table></figure></p>
+<p>第一行“#!” 是一个约定的标记，它告诉系统这个脚本需要什么解释器来执行，即使用哪一种Shell。通常/bin/sh是指向/bin/bash的。<br>但后面的字符 # 表示注释，#后面的内容将被忽略。<br>echo命令用于向窗口输出文本。</p>
+<p>运行Shell脚本有两种方法。</p>
+<h3 id="作为可执行程序"><a href="#作为可执行程序" class="headerlink" title="作为可执行程序"></a>作为可执行程序</h3><p>将上面的代码保存为test.sh，并 cd 到相应目录：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ chmod +x ./test.sh  #使脚本具有执行权限</span><br><span class="line">$ ./test.sh  #执行脚本</span><br><span class="line">Hello World !</span><br></pre></td></tr></table></figure></p>
+<p>注意，一定要写成./test.sh，而不是test.sh。运行其它二进制的程序也一样，直接写test.sh，linux系统会去PATH里寻找有没有叫test.sh的，而只有/bin, /sbin, /usr/bin，/usr/sbin等在PATH里，你的当前目录通常不在PATH里，所以写成test.sh是会找不到命令的，要用./test.sh告诉系统说，就在当前目录找。<br>通过这种方式运行bash脚本，第一行一定要写对，好让系统查找到正确的解释器。</p>
+<p>###作为解释器参数</p>
+<p>这种运行方式是，直接运行解释器，其参数就是shell脚本的文件名，如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ /bin/sh test.sh</span><br><span class="line">$ /bin/php test.php</span><br></pre></td></tr></table></figure></p>
+<p>这种方式运行的脚本，不需要在第一行指定解释器信息，写了也没用。</p>
+<p>再看一个例子。下面的脚本使用 read 命令从 stdin 获取输入并赋值给 PERSON 变量，最后在 stdout 上输出：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">#!/bin/bash</span><br><span class="line"># Author : shouliang</span><br><span class="line">echo &quot;What is your name?&quot;</span><br><span class="line">read PERSON</span><br><span class="line">echo &quot;Hello, $PERSON&quot;</span><br></pre></td></tr></table></figure></p>
+<p>运行脚本：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ chmod +x ./test.sh</span><br><span class="line">$ ./test.sh</span><br><span class="line">What is your name?</span><br><span class="line">shouliang</span><br><span class="line">Hello, shouliang</span><br></pre></td></tr></table></figure></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2014-06-29T11:45:23.000Z"><a href="/2014/06/29/Git/Git(7)自定义Git/">2014-06-29</a></time>
       
       
@@ -779,82 +856,6 @@ warning: You appear to have cloned an empty repository.
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2014-06-08T07:45:23.000Z"><a href="/2014/06/08/Mocha/Mocha(2)mocha接口/">2014-06-08</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2014/06/08/Mocha/Mocha(2)mocha接口/">二.mocha接口</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-BDD行为驱动开发"><a href="#1-BDD行为驱动开发" class="headerlink" title="1.BDD行为驱动开发"></a>1.BDD行为驱动开发</h3><hr>
-<p>mocha “接口” 系统允许开发者选择自身喜爱的特定领域语言风格, mocha 提供 TDD（测试驱动开发）、BDD (行为驱动开发) 和 exports 风格的接口。</p>
-<p>BDD是“行为驱动的开发”（Behavior-Driven Development）的简称，指的是写出优秀测试的最佳实践的总称。</p>
-<p>BDD认为，不应该针对代码的实现细节写测试，而是要针对行为写测试。BDD测试的是行为，即软件应该怎样运行。</p>
-<p>BDD接口提供以下方法：</p>
-<ul>
-<li>describe()：测试套件</li>
-<li>it()：测试用例</li>
-<li>before()：所有测试用例的统一前置动作</li>
-<li>after()：所有测试用例的统一后置动作</li>
-<li>beforeEach()：每个测试用例的前置动作</li>
-<li>afterEach()：每个测试用例的后置动作<br>BDD的特征就是使用describe()和it() 这两个方法。</li>
-</ul>
-<p>before()、after()、beforeEach()和afterEach() 是为测试做辅助的作用域，它们合起来组成了hook的概念。</p>
-<h3 id="2-方法解析"><a href="#2-方法解析" class="headerlink" title="2.方法解析"></a>2.方法解析</h3><hr>
-<h4 id="descript"><a href="#descript" class="headerlink" title="descript()"></a>descript()</h4><p>describe()方法接收两个参数：第一个参数是一个字符串，表示测试套件的名字或标题，表示将要测试什么。第二个参数是一个函数，用来实现这个测试套件。</p>
-<p>上述中引出了一个概念：测试套件。那什么是测试套件呢？</p>
-<p>测试套件（test suite）指的是，一组针对软件规格的某个方面的测试用例。也可以看作，对软件的某个方面的描述（describe）。结构如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">describe(&quot;A suite&quot;, function() &#123;</span><br><span class="line">  // ...</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<h4 id="it"><a href="#it" class="headerlink" title="it()"></a>it()</h4><p>要想理解it()，首先我们要知道什么是测试用例? 测试用例（test case）指的是，针对软件一个功能点的测试，是软件测试的最基本单位。一组相关的测试用例，构成一个测试套件。</p>
-<p>测试用例由it函数构成，它与describe函数一样，接受两个参数：第一个参数是字符串，表示测试用例的标题；第二个参数是函数，用来实现这个测试用例。</p>
-<h4 id="BDD风格用例"><a href="#BDD风格用例" class="headerlink" title="BDD风格用例"></a>BDD风格用例</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">var expect = require(&apos;chai&apos;).expect;</span><br><span class="line">describe(&apos;Array&apos;, function()&#123;</span><br><span class="line">  before(function()&#123;</span><br><span class="line">    console.log(&apos;在测试之前运行&apos;);</span><br><span class="line">  &#125;);</span><br><span class="line">  describe(&apos;#indexOf()&apos;, function()&#123;</span><br><span class="line">    it(&apos;当值不存在时应该返回 -1&apos;, function()&#123;</span><br><span class="line">      expect([1,2,3].indexOf(4)).to.equal(-1);</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<h3 id="3-TDD测试驱动开发"><a href="#3-TDD测试驱动开发" class="headerlink" title="3.TDD测试驱动开发"></a>3.TDD测试驱动开发</h3><hr>
-<h4 id="TDD风格"><a href="#TDD风格" class="headerlink" title="TDD风格"></a>TDD风格</h4><p>TDD（测试驱动开发）组织方式是使用测试集（suite）和测试（test）。</p>
-<p>每个测试集都有 setup 和 teardown 函数。这些方法会在测试集中的测试执行前执行，它们的作用是为了避免代码重复以及最大限度使得测试之间相互独立。</p>
-<p>TDD接口：</p>
-<ul>
-<li>suite：类似BDD中 describe()</li>
-<li>test：类似BDD中 it()</li>
-<li>setup：类似BDD中 before()</li>
-<li>teardown：类似BDD中 after()</li>
-<li>suiteSetup：类似BDD中 beforeEach()</li>
-<li>suiteTeardown：类似BDD中 afterEach()<br>示例<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">var assert = require(&quot;assert&quot;);</span><br><span class="line"></span><br><span class="line">suite(&apos;Array&apos;, function()&#123;</span><br><span class="line">  setup(function()&#123;</span><br><span class="line">    console.log(&apos;测试执行前执行&apos;);</span><br><span class="line">  &#125;);</span><br><span class="line">  </span><br><span class="line">  suite(&apos;#indexOf()&apos;, function()&#123;</span><br><span class="line">    test(&apos;当值不存在时应该返回 -1&apos;, function()&#123;</span><br><span class="line">      assert.equal(-1, [1,2,3].indexOf(4));</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-</li>
-</ul>
-<p>运行mocha：</p>
-<p> <strong>mocha –ui tdd *.js</strong> (*表示的是文件名)</p>
-<p>PS：mocha 默认是使用 bdd 的接口，所以在这里我们告诉mocha我们用的是tdd.</p>
-<h3 id="4-exports风格"><a href="#4-exports风格" class="headerlink" title="4.exports风格"></a>4.exports风格</h3><hr>
-<p>exports类似于nodejs里的模块语法,关键字 before, after, beforeEach, 和 afterEach 是特殊保留的，值为对象时是一个测试套件，为函数时则是一个测试用例。</p>
-<h4 id="示例如下："><a href="#示例如下：" class="headerlink" title="示例如下："></a>示例如下：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">module.exports = &#123;</span><br><span class="line">  before: function()&#123;</span><br><span class="line">    // ...</span><br><span class="line">  &#125;, </span><br><span class="line">  </span><br><span class="line">  &apos;Array&apos;: &#123;</span><br><span class="line">     &apos;#indexOf()&apos;: &#123;</span><br><span class="line">        &apos;当值不存在时应该返回 -1&apos;: function()&#123;</span><br><span class="line">          expect([1,2,3].indexOf(4)).to.equal(-1);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<h4 id="运行-mocha"><a href="#运行-mocha" class="headerlink" title="运行 mocha"></a>运行 mocha</h4><p>mocha –ui exports *.js</p>
-<h3 id="5-小结"><a href="#5-小结" class="headerlink" title="5.小结"></a>5.小结</h3><hr>
-<p>我们在前文中讲到了 mocha 提供 TDD（测试驱动开发）、BDD (行为驱动开发) 和 exports 风格的接口。其实还有 QUnit 和 require 风格的接口。</p>
-<p>但是比较常用就是 BDD 和 TDD，mocha 默认的也是BDD，且 BDD 是 TDD 的一个专业版本，它指定了从业务需求的角度出发需要哪些单元测试。</p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -904,7 +905,7 @@ warning: You appear to have cloned an empty repository.
   
     <li><a href="/tags/shell/">shell</a><small>1</small></li>
   
-    <li><a href="/tags/存储/">存储</a><small>2</small></li>
+    <li><a href="/tags/存储/">存储</a><small>3</small></li>
   
     <li><a href="/tags/安全/">安全</a><small>3</small></li>
   

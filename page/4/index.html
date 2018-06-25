@@ -53,6 +53,82 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2014-06-08T07:45:23.000Z"><a href="/2014/06/08/Mocha/Mocha(2)mocha接口/">2014-06-08</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2014/06/08/Mocha/Mocha(2)mocha接口/">二.mocha接口</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-BDD行为驱动开发"><a href="#1-BDD行为驱动开发" class="headerlink" title="1.BDD行为驱动开发"></a>1.BDD行为驱动开发</h3><hr>
+<p>mocha “接口” 系统允许开发者选择自身喜爱的特定领域语言风格, mocha 提供 TDD（测试驱动开发）、BDD (行为驱动开发) 和 exports 风格的接口。</p>
+<p>BDD是“行为驱动的开发”（Behavior-Driven Development）的简称，指的是写出优秀测试的最佳实践的总称。</p>
+<p>BDD认为，不应该针对代码的实现细节写测试，而是要针对行为写测试。BDD测试的是行为，即软件应该怎样运行。</p>
+<p>BDD接口提供以下方法：</p>
+<ul>
+<li>describe()：测试套件</li>
+<li>it()：测试用例</li>
+<li>before()：所有测试用例的统一前置动作</li>
+<li>after()：所有测试用例的统一后置动作</li>
+<li>beforeEach()：每个测试用例的前置动作</li>
+<li>afterEach()：每个测试用例的后置动作<br>BDD的特征就是使用describe()和it() 这两个方法。</li>
+</ul>
+<p>before()、after()、beforeEach()和afterEach() 是为测试做辅助的作用域，它们合起来组成了hook的概念。</p>
+<h3 id="2-方法解析"><a href="#2-方法解析" class="headerlink" title="2.方法解析"></a>2.方法解析</h3><hr>
+<h4 id="descript"><a href="#descript" class="headerlink" title="descript()"></a>descript()</h4><p>describe()方法接收两个参数：第一个参数是一个字符串，表示测试套件的名字或标题，表示将要测试什么。第二个参数是一个函数，用来实现这个测试套件。</p>
+<p>上述中引出了一个概念：测试套件。那什么是测试套件呢？</p>
+<p>测试套件（test suite）指的是，一组针对软件规格的某个方面的测试用例。也可以看作，对软件的某个方面的描述（describe）。结构如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">describe(&quot;A suite&quot;, function() &#123;</span><br><span class="line">  // ...</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h4 id="it"><a href="#it" class="headerlink" title="it()"></a>it()</h4><p>要想理解it()，首先我们要知道什么是测试用例? 测试用例（test case）指的是，针对软件一个功能点的测试，是软件测试的最基本单位。一组相关的测试用例，构成一个测试套件。</p>
+<p>测试用例由it函数构成，它与describe函数一样，接受两个参数：第一个参数是字符串，表示测试用例的标题；第二个参数是函数，用来实现这个测试用例。</p>
+<h4 id="BDD风格用例"><a href="#BDD风格用例" class="headerlink" title="BDD风格用例"></a>BDD风格用例</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">var expect = require(&apos;chai&apos;).expect;</span><br><span class="line">describe(&apos;Array&apos;, function()&#123;</span><br><span class="line">  before(function()&#123;</span><br><span class="line">    console.log(&apos;在测试之前运行&apos;);</span><br><span class="line">  &#125;);</span><br><span class="line">  describe(&apos;#indexOf()&apos;, function()&#123;</span><br><span class="line">    it(&apos;当值不存在时应该返回 -1&apos;, function()&#123;</span><br><span class="line">      expect([1,2,3].indexOf(4)).to.equal(-1);</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<h3 id="3-TDD测试驱动开发"><a href="#3-TDD测试驱动开发" class="headerlink" title="3.TDD测试驱动开发"></a>3.TDD测试驱动开发</h3><hr>
+<h4 id="TDD风格"><a href="#TDD风格" class="headerlink" title="TDD风格"></a>TDD风格</h4><p>TDD（测试驱动开发）组织方式是使用测试集（suite）和测试（test）。</p>
+<p>每个测试集都有 setup 和 teardown 函数。这些方法会在测试集中的测试执行前执行，它们的作用是为了避免代码重复以及最大限度使得测试之间相互独立。</p>
+<p>TDD接口：</p>
+<ul>
+<li>suite：类似BDD中 describe()</li>
+<li>test：类似BDD中 it()</li>
+<li>setup：类似BDD中 before()</li>
+<li>teardown：类似BDD中 after()</li>
+<li>suiteSetup：类似BDD中 beforeEach()</li>
+<li>suiteTeardown：类似BDD中 afterEach()<br>示例<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">var assert = require(&quot;assert&quot;);</span><br><span class="line"></span><br><span class="line">suite(&apos;Array&apos;, function()&#123;</span><br><span class="line">  setup(function()&#123;</span><br><span class="line">    console.log(&apos;测试执行前执行&apos;);</span><br><span class="line">  &#125;);</span><br><span class="line">  </span><br><span class="line">  suite(&apos;#indexOf()&apos;, function()&#123;</span><br><span class="line">    test(&apos;当值不存在时应该返回 -1&apos;, function()&#123;</span><br><span class="line">      assert.equal(-1, [1,2,3].indexOf(4));</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>运行mocha：</p>
+<p> <strong>mocha –ui tdd *.js</strong> (*表示的是文件名)</p>
+<p>PS：mocha 默认是使用 bdd 的接口，所以在这里我们告诉mocha我们用的是tdd.</p>
+<h3 id="4-exports风格"><a href="#4-exports风格" class="headerlink" title="4.exports风格"></a>4.exports风格</h3><hr>
+<p>exports类似于nodejs里的模块语法,关键字 before, after, beforeEach, 和 afterEach 是特殊保留的，值为对象时是一个测试套件，为函数时则是一个测试用例。</p>
+<h4 id="示例如下："><a href="#示例如下：" class="headerlink" title="示例如下："></a>示例如下：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">module.exports = &#123;</span><br><span class="line">  before: function()&#123;</span><br><span class="line">    // ...</span><br><span class="line">  &#125;, </span><br><span class="line">  </span><br><span class="line">  &apos;Array&apos;: &#123;</span><br><span class="line">     &apos;#indexOf()&apos;: &#123;</span><br><span class="line">        &apos;当值不存在时应该返回 -1&apos;: function()&#123;</span><br><span class="line">          expect([1,2,3].indexOf(4)).to.equal(-1);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h4 id="运行-mocha"><a href="#运行-mocha" class="headerlink" title="运行 mocha"></a>运行 mocha</h4><p>mocha –ui exports *.js</p>
+<h3 id="5-小结"><a href="#5-小结" class="headerlink" title="5.小结"></a>5.小结</h3><hr>
+<p>我们在前文中讲到了 mocha 提供 TDD（测试驱动开发）、BDD (行为驱动开发) 和 exports 风格的接口。其实还有 QUnit 和 require 风格的接口。</p>
+<p>但是比较常用就是 BDD 和 TDD，mocha 默认的也是BDD，且 BDD 是 TDD 的一个专业版本，它指定了从业务需求的角度出发需要哪些单元测试。</p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2014-06-05T06:45:23.000Z"><a href="/2014/06/05/Mocha/Mocha(1)快速开始/">2014-06-05</a></time>
       
       
@@ -647,73 +723,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2014-03-12T02:45:23.000Z"><a href="/2014/03/12/Mongoose/Mongoose(2)增删改查/">2014-03-12</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2014/03/12/Mongoose/Mongoose(2)增删改查/">二.增删改查</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-查询"><a href="#1-查询" class="headerlink" title="1.查询"></a>1.查询</h3><hr>
-<p>查询分很多种类型，如条件查询，过滤查询等等，先看最基本的find查询。<br>1.find查询： obj.find(查询条件,callback);<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Model.find(&#123;&#125;,function(error,docs)&#123;</span><br><span class="line">   //若没有向find传递参数，默认的是显示所有文档</span><br><span class="line">&#125;);</span><br><span class="line">Model.find(&#123; &quot;age&quot;: 28 &#125;, function (error, docs) &#123;</span><br><span class="line">  if(error)&#123;</span><br><span class="line">    console.log(&quot;error :&quot; + error);</span><br><span class="line">  &#125;else&#123;</span><br><span class="line">    console.log(docs); //docs: age为28的所有文档</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<h3 id="2-Model保存"><a href="#2-Model保存" class="headerlink" title="2.Model保存"></a>2.Model保存</h3><hr>
-<p>Model提供了一个create方法来对数据进行保存。下面我们来看一下示例：</p>
-<ol>
-<li>Model.create(文档数据, callback))<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Model.create(&#123; name:&quot;model_create&quot;, age:26&#125;, function(error,doc)&#123;</span><br><span class="line">    if(error) &#123;</span><br><span class="line">        console.log(error);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        console.log(doc);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-</li>
-</ol>
-<h3 id="3-Entity保存"><a href="#3-Entity保存" class="headerlink" title="3.Entity保存"></a>3.Entity保存</h3><hr>
-<p>entity的保存方法。如下示例：</p>
-<ol>
-<li>Entity.save(文档数据, callback))<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">var Entity = new Model(&#123;name:&quot;entity_save&quot;,age: 27&#125;);</span><br><span class="line">Entity.save(function(error,doc) &#123;</span><br><span class="line">    if(error) &#123;</span><br><span class="line">        console.log(error);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        console.log(doc);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-</li>
-</ol>
-<p>model调用的是create方法，entity调用的是save方法。</p>
-<h3 id="4-更新数据"><a href="#4-更新数据" class="headerlink" title="4.更新数据"></a>4.更新数据</h3><hr>
-<p>数据更新！</p>
-<p>1.示例：obj.update(查询条件,更新对象,callback);<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">var conditions = &#123;name : &apos;test_update&apos;&#125;;</span><br><span class="line">var update = &#123;$set : &#123; age : 16 &#125;&#125;;</span><br><span class="line">TestModel.update(conditions, update, function(error)&#123;</span><br><span class="line">    if(error) &#123;</span><br><span class="line">        console.log(error);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        console.log(&apos;Update success!&apos;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>更新后find一下，此时数据已经修改成功了！</p>
-<h3 id="5-删除数据"><a href="#5-删除数据" class="headerlink" title="5.删除数据"></a>5.删除数据</h3><hr>
-<p>有了数据的保存、更新，就差删除了。</p>
-<p>1.示例：obj.remove(查询条件,callback);<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">var conditions = &#123; name: &apos;tom&apos; &#125;;</span><br><span class="line">TestModel.remove(conditions, function(error)&#123;</span><br><span class="line">    if(error) &#123;</span><br><span class="line">        console.log(error);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        console.log(&apos;Delete success!&apos;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>和update类似吧，有了remove方法我们就可以进行删除操作了。</p>
-<h3 id="6-小结"><a href="#6-小结" class="headerlink" title="6.小结"></a>6.小结</h3><hr>
-<p>简单回顾：</p>
-<ol>
-<li><p>查询：find查询返回符合条件一个、多个或者空数组文档结果。</p>
-</li>
-<li><p>保存：model调用create方法，entity调用的save方法。</p>
-</li>
-<li><p>更新：obj.update(查询条件,更新对象,callback)，根据条件更新相关数据。</p>
-</li>
-<li><p>删除：obj.remove(查询条件,callback)，根据条件删除相关数据。</p>
-</li>
-</ol>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -763,7 +772,7 @@
   
     <li><a href="/tags/shell/">shell</a><small>1</small></li>
   
-    <li><a href="/tags/存储/">存储</a><small>2</small></li>
+    <li><a href="/tags/存储/">存储</a><small>3</small></li>
   
     <li><a href="/tags/安全/">安全</a><small>3</small></li>
   
