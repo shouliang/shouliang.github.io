@@ -79,14 +79,12 @@
 <h3 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h3><p>在以前的实现中,在生成块照时, <code>heapdump</code> 会fork一个新的node进程异步将老的内存快照信息写入文件. 通过这种方式生成的快照信息不能再chrome的开发者工具中进行比较, 并且和node.js v0.12 版本完全不兼容. 如果你确实想通过这种方式生成快照信息,可以通过添加参数来实现:</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">env NODE_HEAPDUMP_OPTIONS=fork node script.js</span><br></pre></td></tr></table></figure>
 <h3 id="分析快照信息"><a href="#分析快照信息" class="headerlink" title="分析快照信息"></a>分析快照信息</h3><ol>
-<li>打开chrome控制台</li>
+<li><p>打开chrome控制台<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/chrome-devtool-profile.png" alt=""></p>
+</li>
+<li><p>加载快照文件</p>
+</li>
 </ol>
-<p><img src="https://leokongwq.github.io/2016/11/08/nodejs-heapdump/chrome-devtool-profile.png" alt="chrome-devtool-profile.png"></p>
-<ol>
-<li>加载快照文件</li>
-</ol>
-<p>点击<code>load</code>按钮, 选择文件就可以加载快照文件了.</p>
-<p><img src="https://leokongwq.github.io/2016/11/08/nodejs-heapdump/chrome-nodejs-heapdump.png" alt="chrome-nodejs-heapdump.png"></p>
+<p>点击<code>load</code>按钮, 选择文件就可以加载快照文件了.<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/chrome-nodejs-heapdump.png" alt=""></p>
 <h3 id="配套工具-memwatch-next"><a href="#配套工具-memwatch-next" class="headerlink" title="配套工具 memwatch-next"></a>配套工具 memwatch-next</h3><p>线上运行的程序我们不会时不时的主动生产堆快照信息的, 如果能在发生内存泄露的时候生成快照信息,这样就最好了. 幸运的是有这种运行时内存<br>监控包:<code>memwatch-next</code></p>
 <h3 id="安装-memwatch"><a href="#安装-memwatch" class="headerlink" title="安装 memwatch"></a>安装 memwatch</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install memwatch-next --save</span><br></pre></td></tr></table></figure>
 <h3 id="使用-memwatch"><a href="#使用-memwatch" class="headerlink" title="使用 memwatch"></a>使用 memwatch</h3><h4 id="内存泄露监听"><a href="#内存泄露监听" class="headerlink" title="内存泄露监听"></a>内存泄露监听</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> memwatch = <span class="built_in">require</span>(<span class="string">'memwatch-next'</span>);</span><br><span class="line">memwatch.on(<span class="string">'leak'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">info</span>) </span>&#123; </span><br><span class="line">    <span class="comment">// 发生内存泄露时的回调函数</span></span><br><span class="line">    <span class="built_in">console</span>.error(<span class="string">'Memory leak detected: '</span>, info);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
@@ -199,7 +197,9 @@
   
     <li><a href="/tags/shell/">shell</a><small>1</small></li>
   
-    <li><a href="/tags/存储/">存储</a><small>3</small></li>
+    <li><a href="/tags/存储/">存储</a><small>2</small></li>
+  
+    <li><a href="/tags/安全/">安全</a><small>3</small></li>
   
     <li><a href="/tags/异步编程/">异步编程</a><small>3</small></li>
   

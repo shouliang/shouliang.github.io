@@ -53,58 +53,221 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2017-01-09T06:45:23.000Z"><a href="/2017/01/09/存储/数据库范式那些事/">2017-01-09</a></time>
+        <time datetime="2017-02-12T06:45:23.000Z"><a href="/2017/02/12/安全/数字证书的基础知识/">2017-02-12</a></time>
       
       
   
-    <h1 class="title"><a href="/2017/01/09/存储/数据库范式那些事/">数据库范式那些事</a></h1>
+    <h1 class="title"><a href="/2017/02/12/安全/数字证书的基础知识/">数字证书的基础知识</a></h1>
   
 
     </header>
     <div class="entry">
       
-        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a><strong>简介</strong></h2><p>​      数据库范式在数据库设计中的地位一直很暧昧，教科书中对于数据库范式倒是都给出了学术性的定义，但实际应用中范式的应用却不甚乐观，这篇文章会用简单的语言和一个简单的数据库DEMO将一个不符合范式的数据库一步步从第一范式实现到第四范式。</p>
-<h2 id="范式的目标"><a href="#范式的目标" class="headerlink" title="范式的目标"></a><strong>范式的目标</strong></h2><p>​      应用数据库范式可以带来许多好处，但是最重要的好处归结为三点：</p>
-<p>​      1.减少数据冗余（这是最主要的好处，其他好处都是由此而附带的）</p>
-<p>​      2.消除异常（插入异常，更新异常，删除异常）</p>
-<p>​      3.让数据组织的更加和谐…</p>
-<p>​       但剑是双刃的，应用数据库范式同样也会带来弊端，这会在文章后面说到。</p>
-<h2 id="什么是范式"><a href="#什么是范式" class="headerlink" title="什么是范式"></a><strong>什么是范式</strong></h2><p>​      简单的说，范式是为了消除重复数据减少冗余数据，从而让数据库内的数据更好的组织，让磁盘空间得到更有效利用的一种标准化标准，满足高等级的范式的先决条件是满足低等级范式。(比如满足2nf一定满足1nf)</p>
-<h2 id="DEMO"><a href="#DEMO" class="headerlink" title="DEMO"></a><strong>DEMO</strong></h2><p>​      让我们先从一个未经范式化的表看起,表如下：</p>
-<p><a href="http://images.cnblogs.com/cnblogs_com/CareySon/WindowsLiveWriter/ebfdc5eb7fff_14F19/0nf_2.png" target="_blank" rel="noopener"><img src="https://images.cnblogs.com/cnblogs_com/CareySon/WindowsLiveWriter/ebfdc5eb7fff_14F19/0nf_thumb.png" alt="0nf"></a></p>
-<p>先对表做一个简单说明，employeeId是员工id,departmentName是部门名称，job代表岗位，jobDescription是岗位说明，skill是员工技能，departmentDescription是部门说明，address是员工住址</p>
-<p><strong>对表进行第一范式(1NF)</strong></p>
-<p>​    <em>如果一个关系模式R的所有属性都是不可分的基本数据项，则R∈1NF。</em></p>
-<p>​    简单的说,第一范式就是每一个属性都不可再分。不符合第一范式则不能称为关系数据库。对于上表，不难看出Address是可以再分的，比如”北京市XX路XX小区XX号”，着显然不符合第一范式，对其应用第一范式则需要将此属性分解到另一个表,如下:</p>
-<p><a href="http://images.cnblogs.com/cnblogs_com/CareySon/WindowsLiveWriter/ebfdc5eb7fff_14F19/1nf_2.png" target="_blank" rel="noopener"><img src="https://images.cnblogs.com/cnblogs_com/CareySon/WindowsLiveWriter/ebfdc5eb7fff_14F19/1nf_thumb.png" alt="1nf"></a></p>
-<p><strong>对表进行第二范式(2NF)</strong></p>
-<p><em>若关系模式R∈1NF，并且每一个非主属性都</em><a href="http://baike.baidu.com/view/228997.htm" target="_blank" rel="noopener"><em>完全函数依赖</em></a><em>于R的码，则R∈2NF</em></p>
-<p>简单的说，是表中的属性必须完全依赖于全部主键，而不是部分主键.所以只有一个主键的表如果符合第一范式，那一定是第二范式。这样做的目的是进一步减少插入异常和更新异常。在上表中，departmentDescription是由主键DepartmentName所决定，但却不是由主键EmployeeID决定，所以departmentDescription只依赖于两个主键中的一个，故要departmentDescription对主键是部分依赖，对其应用第二范式如下表：</p>
-<p><a href="http://images.cnblogs.com/cnblogs_com/CareySon/WindowsLiveWriter/ebfdc5eb7fff_14F19/3nf_2.png" target="_blank" rel="noopener"><img src="https://images.cnblogs.com/cnblogs_com/CareySon/WindowsLiveWriter/ebfdc5eb7fff_14F19/3nf_thumb.png" alt="3nf"></a></p>
-<p><strong>对表进行第三范式(3NF)</strong></p>
-<p><a href="http://baike.baidu.com/view/68347.htm" target="_blank" rel="noopener"><em>关系模式</em></a><em>R&lt;U，F&gt; 中若不存在这样的码X、属性组Y及非主属性Z（Z  Y）, 使得X→Y，Y→Z，成立，则称R&lt;U，F&gt; ∈ 3NF。</em></p>
-<p>简单的说，第三范式是为了消除数据库中关键字之间的依赖关系，在上面经过第二范式化的表中，可以看出jobDescription(岗位职责)是由job(岗位)所决定，则jobDescription依赖于job,可以看出这不符合第三范式，对表进行第三范式后的关系图为：</p>
-<p><a href="http://images.cnblogs.com/cnblogs_com/CareySon/WindowsLiveWriter/ebfdc5eb7fff_14F19/3nf1_2.png" target="_blank" rel="noopener"><img src="https://images.cnblogs.com/cnblogs_com/CareySon/WindowsLiveWriter/ebfdc5eb7fff_14F19/3nf1_thumb.png" alt="3nf1"></a></p>
-<p>上表中，已经不存在数据库属性互相依赖的问题，所以符合第三范式</p>
-<p><strong>对表进行BC范式(BCNF)</strong></p>
-<p><em>设</em><a href="http://baike.baidu.com/view/68347.htm" target="_blank" rel="noopener"><em>关系模式</em></a><em>R&lt;U，F&gt;∈1NF，如果对于R的每个函数依赖X→Y，若Y不属于X，则X必含有候选码，那么R∈BCNF。</em></p>
-<p>简单的说，bc范式是在第三范式的基础上的一种特殊情况，既每个表中只有一个候选键（在一个数据库中每行的值都不相同，则可称为候选键），在上面第三范式的noNf表中可以看出，每一个员工的email都是唯一的（难道两个人用同一个email??）则，此表不符合bc范式，对其进行bc范式化后的关系图为:</p>
-<p><a href="http://images.cnblogs.com/cnblogs_com/CareySon/WindowsLiveWriter/ebfdc5eb7fff_14F19/bcnf_2.png" target="_blank" rel="noopener"><img src="https://images.cnblogs.com/cnblogs_com/CareySon/WindowsLiveWriter/ebfdc5eb7fff_14F19/bcnf_thumb.png" alt="bcnf"></a></p>
-<p><strong>对表进行第四范式(4NF)</strong></p>
-<p><a href="http://baike.baidu.com/view/68347.htm" target="_blank" rel="noopener"><em>关系模式</em></a><em>R&lt;U，F&gt;∈1NF，如果对于R的每个非平凡多值依赖X→→Y（Y  X），X都含有候选码，则R∈4NF。</em></p>
-<p>简单的说，第四范式是消除表中的多值依赖，也就是说可以减少维护数据一致性的工作。对于上面bc范式化的表中，对于员工的skill，两个可能的值是”C#,sql,javascript”和“C#，UML,Ruby”,可以看出，这个数据库属性存在多个值，这就可能造成数据库内容不一致的问题，比如第一个值写的是”C#”,而第二个值写的是”C#.net”,解决办法是将多值属性放入一个新表，则第四范式化后的关系图如下：</p>
-<p><a href="http://images.cnblogs.com/cnblogs_com/CareySon/WindowsLiveWriter/ebfdc5eb7fff_14F19/4nf_2.png" target="_blank" rel="noopener"><img src="https://images.cnblogs.com/cnblogs_com/CareySon/WindowsLiveWriter/ebfdc5eb7fff_14F19/4nf_thumb.png" alt="4nf"></a></p>
-<p>而对于skill表则可能的值为:</p>
-<p><a href="http://images.cnblogs.com/cnblogs_com/CareySon/WindowsLiveWriter/ebfdc5eb7fff_14F19/4nfdemo_2.png" target="_blank" rel="noopener"><img src="https://images.cnblogs.com/cnblogs_com/CareySon/WindowsLiveWriter/ebfdc5eb7fff_14F19/4nfdemo_thumb.png" alt="4nfdemo"></a></p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a><strong>总结</strong></h2><p>​     上面对于数据库范式进行分解的过程中不难看出，应用的范式登记越高，则表越多。表多会带来很多问题：</p>
+        <p>在讲数字证书之前必须要讲<strong>非对称加密算法</strong>和<strong>摘要算法</strong>，因为数字证书的基础就是各种加解密算法（非对称加密、摘要算法），而其中的核心就是非对称加密算法了。目前而言加密方法可以分为两大类。一类是<strong>单钥加密</strong>（private key cryptography）也可以称为对称加密，还有一类叫做<strong>双钥加密</strong>（public key cryptography）也可称为非对称加密。前者的加密和解密过程都用同一套密码，后者的加密和解密过程用的是不同的密码。下面来看看对称加密、非对称加密以及摘要算法，他们是怎样应用在数字证书中的。</p>
+<h3 id="对称加密"><a href="#对称加密" class="headerlink" title="对称加密"></a>对称加密</h3><p>对称加密(也叫私钥加密)指加密和解密使用相同密钥的加密算法。有时又叫传统密码算法，就是加密密钥能够从解密密钥中推算出来，同时解密密钥也可以从加密密钥中推算出来。而在大多数的对称算法中，加密密钥和解密密钥是相同的，所以也称这种加密算法为秘密密钥算法或单密钥算法。</p>
+<p>在应用该算法时，它要求发送方和接收方在安全通信之前，商定一个密钥。对称算法的安全性依赖于密钥，泄漏密钥就意味着任何人都可以对他们发送或接收的消息解密，所以密钥的保密性对通信性至关重要。对称加密算法的特点是算法公开、计算量小、加密速度快、加密效率高。对称加密有很多种算法，由于它效率很高，所以被广泛使用在很多加密协议的核心当中。不足之处是，交易双方都使用同样钥匙，安全性得不到保证。</p>
+<h4 id="常见的对称加密算法"><a href="#常见的对称加密算法" class="headerlink" title="常见的对称加密算法"></a>常见的对称加密算法</h4><ul>
+<li><strong>DES</strong>：数据加密标准（DES，Data Encryption Standard）是一种使用密钥加密的块密码，它基于使用<strong>56位密钥</strong>的对称算法，这个算法因为包含一些机密设计元素，相对短的密钥长度以及被怀疑内含美国国家安全局（NSA）的后门而在开始时是有争议的，DES现在已经不被视为一种安全的加密算法，主要因为它使用的56位密钥过短，导致容易被破解。为了提供实用所需的安全性，可以使用DES的派生算法3DES来进行加密，虽然3DES也存在理论上的攻击方法。</li>
+<li><strong>AES</strong>：高级加密标准（英语：Advanced Encryption Standard，缩写：AES），这个标准用来替代原先的DES，已经被多方分析且广为全世界所使用，2006年，高级加密标准已然成为对称密钥加密中最流行的算法之一。AES的区块长度固定为128比特，<strong>密钥长度则可以是128，192或256比特</strong>。</li>
+<li><strong>RC4</strong>：RC4加密算法是大名鼎鼎的RSA三人组中的头号人物Ronald Rivest在1987年设计的密钥长度可变的流加密算法簇。该算法的速度可以达到DES加密的10倍左右，且具有很高级别的非线性。RC4起初是用于保护商业机密的。但是在1994年9月，它的算法被发布在互联网上，也就不再有什么商业机密了。</li>
+<li><strong>IDEA</strong>：是旅居瑞士中国青年学者来学嘉和著名密码专家J.Massey于1990年提出的。它在1990年正式公布并在以后得到增强。这种算法是在DES算法的基础上发展出来的，类似于三重DES，和DES一样IDEA也是属于对称密钥算法。发展IDEA也是因为感到DES具有密钥太短等缺点，已经过时。<strong>IDEA的密钥为128位</strong>，这么长的密钥在今后若干年内应该是安全的。</li>
+</ul>
+<h3 id="非对称加密"><a href="#非对称加密" class="headerlink" title="非对称加密"></a>非对称加密</h3><p>与对称加密算法不同，非对称加密算法需要两个密钥：公开密钥（publickey）和私有密钥（privatekey）；并且加密密钥和解密密钥是成对出现的。非对称加密算法在加密和解密过程使用了不同的密钥，非对称加密也称为公钥加密，在密钥对中，其中一个密钥是对外公开的，所有人都可以获取到，称为公钥，其中一个密钥是不公开的称为私钥。</p>
+<h4 id="非对称加密的特性"><a href="#非对称加密的特性" class="headerlink" title="非对称加密的特性"></a>非对称加密的特性</h4><ul>
+<li>对于一个公钥，有且只有一个对应的私钥。</li>
+<li>公钥是公开的，并且不能通过公钥反推出私钥。</li>
+<li>通过私钥加密的密文只能通过公钥能解密，通过公钥加密的密文也只能通过私钥能解密。</li>
+</ul>
+<blockquote>
+<p>通过公钥是极难推算出私钥的，只能通过穷举，所以只要密钥足够长，要想从公钥推算出私钥几乎不可能的。</p>
+</blockquote>
+<h4 id="非对称加密的主要用途"><a href="#非对称加密的主要用途" class="headerlink" title="非对称加密的主要用途"></a>非对称加密的主要用途</h4><ul>
+<li><strong>对信息保密，防止中间人攻击</strong>：将明文使用公钥加密，传输给接收者，这样确保信息只能被有私钥的拥有者解密，其他人无法获得明文信息，因为没有私钥无法进行解密。该方法一般用于交换<strong>对称密钥</strong>。</li>
+<li><strong>身份验证和防止信息篡改</strong>：私钥拥有者使用私钥加密一段授权明文，并将授权明文和加密后的密文，以及公钥一并发送出来，接收方只需要通过公钥将密文解密后与授权明文对比是否一致，就可以判断明文在中途是否被篡改过。此方法用于<strong>数字签名</strong>。</li>
+</ul>
+<h4 id="常见的非对称加密算法"><a href="#常见的非对称加密算法" class="headerlink" title="常见的非对称加密算法"></a>常见的非对称加密算法</h4><ul>
+<li><strong>RSA</strong>：1977年，三位数学家Rivest、Shamir 和 Adleman 设计了一种算法，可以实现非对称加密。这种算法用他们三个人的名字命名，叫做RSA算法。从那时直到现在，RSA算法一直是最广为使用的”非对称加密算法”。毫不夸张地说，只要有计算机网络的地方，就有RSA算法。这种算法非常可靠，密钥越长，它就越难破解。根据已经披露的文献，目前被破解的最长RSA密钥是768个二进制位。也就是说，长度超过768位的密钥，还无法破解（至少没人公开宣布）。因此可以认为，<strong>1024位的RSA密钥基本安全，2048位的密钥极其安全</strong>。适用于数字签名和密钥交换。 该算法是目前应用最广泛的公钥加密算法，特别适用于通过 Internet 传送的数据。</li>
+<li><strong>DSA</strong>：数字签名算法 (Digital Signature Algorithm, DSA) 由美国国家安全署 (United States National Security Agency, NSA) 发明，已作为数字签名的标准。在DSA数字签名和认证中，发送者使用自己的私钥对文件或消息进行签名，接受者收到消息后使用发送者的公钥来验证签名的真实性。DSA只是一种算法，和RSA不同之处在于它不能用作加密和解密，也不能进行密钥交换，只用于签名，它比RSA要快很多。DSA 算法的安全性取决于自计算离散算法的困难。这种算法，不适用于数据加密，仅适用于数字签名。</li>
+<li><strong>Diffie-Hellman</strong>：一种确保共享KEY安全穿越不安全网络的方法。Whitefield与Martin Hellman在1976年提出了一个奇妙的密钥交换协议，称为Diffie-Hellman密钥交换协议/算法(Diffie-Hellman Key Exchange/Agreement Algorithm)。这个机制的巧妙在于需要安全通信的双方可以用这个方法确定对称密钥。然后可以用这个密钥进行加密和解密。但是注意，这个密钥交换协议/算法只能用于密钥的交换，而不能进行消息的加密和解密。双方确定要用的密钥后，要使用其他对称密钥操作加密算法实际加密和解密消息。该算法仅适用于密钥交换。</li>
+<li><strong>ECC</strong>：椭圆加密算法（ECC）是一种公钥加密体制，最初由Koblitz和Miller两人于1985年提出，与经典的RSA，DSA等公钥密码体制相比，椭圆密码体制有以下优点：160位的椭圆密钥与1024位的RSA密钥安全性相同；在私钥的加密解密速度上，ECC算法比RSA、DSA速度更快；存储空间占用小；带宽要求低；ECC算法的数学理论非常深奥和复杂，在工程应用中比较难于实现，但它的单位安全强度相对较高。</li>
+</ul>
+<p>非对称加密算法可能是世界上最重要的算法，它是当今电子商务等领域的基石。非对称加密算法如此强大可靠，却有一个弊端，就是加解密比较耗时。因此，在实际使用中，往往与对称加密和摘要算法结合使用。列如在实体之间交换对称密钥时，或者在签署一封邮件的散列时（数字签名）。</p>
+<blockquote>
+<p>散列是通过应用一种单向数学函数获得的一个定长结果，对于数据而言，叫做散列算法。</p>
+</blockquote>
+<h3 id="摘要算法"><a href="#摘要算法" class="headerlink" title="摘要算法"></a>摘要算法</h3><p>摘要算法是一个神奇的算法，也称为散列或者散列值。是一种与基于密钥（对称密钥或公钥）的加密不同的数据转换类型。散列就是通过把一个叫做散列算法的单向数学函数应用于数据，将任意长度的一块数据转换为一个定长的、不可逆转的数字，其长度通常在128～256位之间。所产生的散列值的长度应足够长，因此使找到两块具有相同散列值的数据的机会很少。</p>
+<h4 id="摘要算法具有以下特性："><a href="#摘要算法具有以下特性：" class="headerlink" title="摘要算法具有以下特性："></a>摘要算法具有以下特性：</h4><ul>
+<li>只要源文本不同，计算得到的结果，必然不同（或者说机会很少）。</li>
+<li>无法从结果反推出源数据（那是当然的，不然就能量不守恒了）。</li>
+</ul>
+<h4 id="常见的摘要算法："><a href="#常见的摘要算法：" class="headerlink" title="常见的摘要算法："></a>常见的摘要算法：</h4><ul>
+<li><strong>MD5</strong>：是RSA数据安全公司开发的一种单向散列算法，MD5被广泛使用，可以用来把不同长度的数据块进行暗码运算成一个固定位位的数值（通常是128位）。</li>
+<li><strong>SHA-1</strong>：与 DSA 公钥算法相似，安全散列算法1（SHA-1）也是由 NSA 设计的，并由 NIST 将其收录到 FIPS 中，作为散列数据的标准。它可产生一个 160 位的散列值。SHA-1 是流行的用于创建数字签名的单向散列算法。</li>
+<li><strong>MAC（Message Authentication Code）</strong>：消息认证代码，是一种使用密钥的单向函数，可以用它们在系统上或用户之间认证文件或消息，常见的是HMAC（用于消息认证的密钥散列算法）。</li>
+<li><strong>CRC（Cyclic Redundancy Check）</strong>：循环冗余校验码，CRC校验由于实现简单，检错能力强，被广泛使用在各种数据校验应用中。占用系统资源少，用软硬件均能实现，是进行数据传输差错检测地一种很好的手段（CRC 并不是严格意义上的散列算法，但它的作用与散列算法大致相同，所以归于此类）。</li>
+</ul>
+<p>摘要算法用于对比信息源是否一致，因为只要源数据发生变化，得到的摘要必然不同。因为通常结果比源数据要短很多，所以称为“摘要”。</p>
+<p>应用场景，如发件人生成邮件的散列值并加密它，然后将它与邮件本身一起发送。而收件人同时解密邮件和散列值，并由接收到的邮件产生另外一个散列值，然后将两个散列值进行比较。如果两者相同，邮件极有可能在传输期间没有发生任何改变。</p>
+<h3 id="数字签名"><a href="#数字签名" class="headerlink" title="数字签名"></a>数字签名</h3><p>数字签名就是对非对称加密和摘要算法的一种应用，能够确保信息在发布后不会被篡改（摘要算法特性），保证数据的完整性和可信性；同时也可以防止数据被他人伪造（非对称加密算法特性）；列如，我们有一段授权文本需要发布时，为了防止中途篡改发布的内容，保证发布文本的完整性，以及文本是由指定的发布者发布的。那么，可以通过摘要算法得到发布内容的摘要，得到摘要之后，发布者使用私钥加密得到密文（签名），这时候将源文本、密文（签名）以及公钥一起发布出去即可。</p>
+<p>验证过程为：首先验证公钥是否是发布者的公钥，然后用公钥对密文进行解密，得到摘要，使用发布者对文本同样的摘要算法得到摘要文本，比对摘要是否一致即可确认信息是否被篡改或者是指定发布者发布的。</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/ditialSig.jpg" alt=""></p>
+<p>数字签名可以快速验证文本的完整性和合法性，已广泛应用于各个领域。</p>
+<blockquote>
+<p>公钥的验证在后续数字证书的授权链中提到验证方法。</p>
+</blockquote>
+<h3 id="数字证书"><a href="#数字证书" class="headerlink" title="数字证书"></a>数字证书</h3><h4 id="现实生活中的证书"><a href="#现实生活中的证书" class="headerlink" title="现实生活中的证书"></a>现实生活中的证书</h4><p>在现实生活中，证书顾名思义，就是权限机构颁发的证明。比如英语6级证书，就是教育部门颁发给通过了6级考核的个人的证明，证明这个人的英语能力。我们来看一下这个证书的组成：</p>
+<ul>
+<li>被证明人：老王</li>
+<li>内容：通过了英语六级</li>
+<li>盖章：教育部门的公章或钢印</li>
+</ul>
+<p>当老王用这张证书找工作时，用人单位会通过查看证书的各项内容（尤其是公章），来验证证书的合法性和老王的能力。在现实生活中经常有假的6级证书，这些假证书最重要的就是有一个假公章。现实生活中使用法律法规来约束私刻假公章的行为，但是用人单位可能不能十分准确的判断公章是真是假。而数字签字可以来解决该类问题。</p>
+<h4 id="数字证书-1"><a href="#数字证书-1" class="headerlink" title="数字证书"></a>数字证书</h4><p>数字证书就是通过数字签名实现的数字化的证书，在现实生活中公章可以被伪造，但是在计算数字世界中，数字签名是没办法被伪造的，比如上述证书中，在一个证书文件中写明了证书内容，颁发证书时，教育部门用他们的私钥对文件的摘要信息进行签名，将签名和证书文件一起发布，这样就能确保该证书无法被伪造。验证证书是否合法时，首先用教育部门的公钥（公钥是公开的谁都可以获取到）对签名进行解密得到一个摘要信息，使用教育部门同样的摘要算法得到证书的另一个摘要信息，对比两个摘要信息是否一致就能确定该证书是否合法。在一般的证书组成中部分中，还加入了一些其他信息，比如证书的有效期。</p>
+<p>数字证书也有很多的签发机构，不同的签发机构签发的证书，用途也是不一样的，比如iOS开发中，使用到的ipa文件签名证书，需要到苹果申请。而在Web访问中为了防止Web内容在网络中安全传输，需要用到的SSL证书则需要向几家公认的机构签发。这些签发机构统称为CA（Certificate Authority）。</p>
+<p>Web访问相关的证书可以向国际公认的几个机构：</p>
 <ol>
-<li><p>查询时要连接多个表，增加了查询的复杂度</p>
-</li>
-<li><p>查询时需要连接多个表，降低了数据库查询性能</p>
-</li>
+<li><a href="http://www.webtrust.net/" target="_blank" rel="noopener"><strong>WebTrust</strong></a></li>
+<li><a href="http://cn.globalsign.com/" target="_blank" rel="noopener"><strong>GlobalSign</strong></a></li>
+<li><a href="http://certificate.fyicenter.com/335_Root_CA_GTE_CyberTrust_Global_Root_GTE_CyberTrust_Solutions.html" target="_blank" rel="noopener"><strong>GTE</strong></a></li>
+<li><a href="http://www.nortel.com/" target="_blank" rel="noopener"><strong>Nortel</strong></a></li>
+<li><a href="http://www.verisign.com/" target="_blank" rel="noopener"><strong>Verisign</strong></a></li>
 </ol>
-<p>而现在的情况，磁盘空间成本基本可以忽略不计，所以数据冗余所造成的问题也并不是应用数据库范式的理由。</p>
-<p>因此，并不是应用的范式越高越好，要看实际情况而定。第三范式已经很大程度上减少了数据冗余，并且减少了造成插入异常，更新异常，和删除异常了。我个人观点认为，大多数情况应用到第三范式已经足够，在一定情况下第二范式也是可以的。</p>
+<h4 id="数字证书的验证"><a href="#数字证书的验证" class="headerlink" title="数字证书的验证"></a>数字证书的验证</h4><p>申请证书是为了验证，比如Web应用相关的SSL证书验证方是浏览器，iOS各种证书的验证方是iOS设备。因为数字证书是基于数字签名的，所有数字证书的合法性验证就是验证数字证书的签名是否正确，对于签名的验证在是需要签发机构的公钥才能验证；</p>
+<p>对于iOS开发证书来说，申请完签名证书后，还需要安装苹果的公钥证书（XCode安装后会自动安装），这样才能确保我们申请的证书是可以被验证通过的（合法的），可用来进行ipa文件签名的。对于Web相关的证书签名的验证，则是由浏览器来验证，对于国际公认的几个证书签发机构浏览器会内置其公钥证书，用来验证数字证书的可信性。</p>
+<p>当数字证书通过验证后，便可以用数字证书做对应的事情，iOS开发证书可以用来对APP进行签名，SSL证书可以用来做Web内容加密处理相关的事情。所以有了这些证书之后，能保证在数据的传输过程中，数据是不会被篡改的，并且信息来源也是不能不修改的，从而确保信息安全。</p>
+<blockquote>
+<p>对于iOS，iOS系统已经将这个验证过程固化在系统中了，除非越狱，否则无法绕过</p>
+</blockquote>
+<h4 id="数字证书的授权链"><a href="#数字证书的授权链" class="headerlink" title="数字证书的授权链"></a>数字证书的授权链</h4><p>数字证书还包含一个授权链信息，举个例子：如果你要申请休假1周，需要你的上司审批，你的上司需要他的上司同意，最终需要大老板同意，那么这一层层的授权，形成了一个授权链，大老板是授权链的根(root)，中间这些环节分别是被更接近root的人授权的。</p>
+<p>比如苹果开发者的APP签名证书，该证书可以用来对APP进行签名，该证书实际上是由苹果的Worldwide Developer Relations Certificate Authority（WDRCA）授权签名的，而它是由Apple Certificate Authority授权签名的。在这个关系链中苹果的CA是根。 苹果CA根证书默认是内置在苹果系统中的，所以WDRCA的可信性可以由苹果内置的CA根证书来验证其可信性。</p>
+<p>Web相关的SSL证书顶部CA根，则就是上述提到的几家公认的签发机构，当我们需要Web做SSL的证书时，便可以向上述机构申请，通常向根机构申请费用都会比较高，也可以向一些二级授权机构进行申请，选择根机构证书签发的好处就是目前大多数的浏览器都会预装内置了这些权威CA的公钥证书，这样，在使用这些权威CA签发过的证书的时候，浏览器一般不会报风险提示。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>数字证书签名的基础是非对称加密算法，利用了非对称加密的身份验证和防止信息篡改的特性来实现的，在一些其他方面比如HTTPS中密钥交换用的就是非对称加密的保密特性来实现的，在非对称加密算法中RSA应用最广。非对称加密虽好，但却有一个弊端，就是加解密比较耗时，所以一般都是配合对称加密一起使用。</p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2017-02-10T06:45:23.000Z"><a href="/2017/02/10/安全/CDN的主要功能/">2017-02-10</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2017/02/10/安全/CDN的主要功能/">CDN的主要功能</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>CDN主要功能是在不同的地点缓存内容，通过负载均衡技术，将用户的请求定向到最合适的缓存服务器上去获取内容，比如说，是北京的用户，我们让他访问北京的节点，深圳的用户，我们让他访问深圳的节点。通过就近访问，加速用户对网站的访问。解决Internet网络拥堵状况，提高用户访问网络的响应速度。</p>
+<p>简单介绍下CDN与传统网站访问的区别：<br><strong>传统访问访问：</strong><br><img src="http://7xq1il.com1.z0.glb.clouddn.com/noCDN.png" alt=""></p>
+<p><strong>使用了CDN的网站访问：</strong><br><img src="http://7xq1il.com1.z0.glb.clouddn.com/haveCDN.png" alt=""></p>
+<p>与传统访问方式不同，CDN网络则是在用户和服务器之间增加缓存层，将用户的访问请求引导到最优的缓存节点而不是服务器源站点，从而加速访问速度。</p>
+<p><strong>完整的CDN工作流程：</strong><br><img src="http://7xq1il.com1.z0.glb.clouddn.com/comCDN.png" alt=""></p>
+<p>总结一下CDN的工作原理：通过权威DNS服务器来实现最优节点的选择，通过缓存来减少源站的压力。<br><strong>CDN应用场景：</strong><br><strong>静态网页</strong>图片小文件、博客<br><strong>大文件下载</strong>软件下载、视频点播或图片存储网站<br><strong>动态加速</strong>直播网站<br><strong>应用加速</strong>手机APP</p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2017-02-09T06:45:23.000Z"><a href="/2017/02/09/安全/详解https是如何确保安全的/">2017-02-09</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2017/02/09/安全/详解https是如何确保安全的/">详解https是如何确保安全的</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>Https 介绍</p>
+<h5 id="什么是Https"><a href="#什么是Https" class="headerlink" title="什么是Https"></a>什么是Https</h5><p>HTTPS（全称：Hypertext Transfer Protocol over Secure Socket Layer），是以安全为目标的HTTP通道，简单讲是HTTP的安全版。即HTTP下加入SSL层，HTTPS的安全基础是SSL，因此加密的详细内容就需要SSL</p>
+<h5 id="Https的作用"><a href="#Https的作用" class="headerlink" title="Https的作用"></a>Https的作用</h5><p><strong>内容加密</strong>建立一个信息安全通道，来保证数据传输的安全；<br><strong>身份认证</strong>确认网站的真实性<br><strong>数据完整性</strong>防止内容被第三方冒充或者篡改</p>
+<h5 id="Https的劣势"><a href="#Https的劣势" class="headerlink" title="Https的劣势"></a>Https的劣势</h5><p>对数据进行加解密决定了它比http慢<br>需要进行非对称的加解密，且需要三次握手。首次连接比较慢点，当然现在也有很多的优化。<br>出于安全考虑，浏览器不会在本地保存HTTPS缓存。实际上，只要在HTTP头中使用特定命令，HTTPS是可以缓存的。Firefox默认只在内存中缓存HTTPS。但是，只要头命令中有Cache-Control: Public，缓存就会被写到硬盘上。 IE只要http头允许就可以缓存https内容，缓存策略与是否使用HTTPS协议无关。</p>
+<h5 id="HTTPS和HTTP的区别"><a href="#HTTPS和HTTP的区别" class="headerlink" title="HTTPS和HTTP的区别"></a>HTTPS和HTTP的区别</h5><p>https协议需要到CA申请证书。<br>http是超文本传输协议，信息是明文传输；https 则是具有安全性的ssl加密传输协议。<br>http和https使用的是完全不同的连接方式，用的端口也不一样，前者是80，后者是443。<br>http的连接很简单，是无状态的；HTTPS协议是由SSL+HTTP协议构建的可进行加密传输、身份认证的网络协议，比http协议安全。<br>http默认使用80端口，https默认使用443端口</p>
+<p>下面就是https的整个架构，现在的https基本都使用TLS了，因为更加安全，所以下图中的SSL应该换为<strong>SSL/TLS</strong>。</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/sslexexplation.png" alt=""></p>
+<p>下面就上图中的知识点进行一个大概的介绍。</p>
+<h4 id="加解密相关知识"><a href="#加解密相关知识" class="headerlink" title="加解密相关知识"></a>加解密相关知识</h4><h5 id="对称加密"><a href="#对称加密" class="headerlink" title="对称加密"></a>对称加密</h5><p>对称加密(也叫私钥加密)指加密和解密使用相同密钥的加密算法。有时又叫传统密码算法，就是加密密钥能够从解密密钥中推算出来，同时解密密钥也可以从加密密钥中推算出来。而在大多数的对称算法中，加密密钥和解密密钥是相同的，所以也称这种加密算法为秘密密钥算法或单密钥算法。</p>
+<p>常见的对称加密有：DES（Data Encryption Standard）、AES（Advanced Encryption Standard）、RC4、IDEA</p>
+<h5 id="非对称加密"><a href="#非对称加密" class="headerlink" title="非对称加密"></a>非对称加密</h5><p>与对称加密算法不同，非对称加密算法需要两个密钥：公开密钥（publickey）和私有密钥（privatekey）；并且加密密钥和解密密钥是成对出现的。非对称加密算法在加密和解密过程使用了不同的密钥，非对称加密也称为公钥加密，在密钥对中，其中一个密钥是对外公开的，所有人都可以获取到，称为公钥，其中一个密钥是不公开的称为私钥。</p>
+<p>非对称加密算法对加密内容的长度有限制，不能超过公钥长度。比如现在常用的公钥长度是 2048 位，意味着待加密内容不能超过 256 个字节。</p>
+<h5 id="摘要算法"><a href="#摘要算法" class="headerlink" title="摘要算法"></a>摘要算法</h5><p>数字摘要是采用单项Hash函数将需要加密的明文“摘要”成一串固定长度（128位）的密文，这一串密文又称为数字指纹，它有固定的长度，而且不同的明文摘要成密文，其结果总是不同的，而同样的明文其摘要必定一致。“数字摘要“是https能确保数据完整性和防篡改的根本原因。</p>
+<h5 id="数字签名"><a href="#数字签名" class="headerlink" title="数字签名"></a>数字签名</h5><p>数字签名技术就是对“非对称密钥加解密”和“数字摘要“两项技术的应用，它将摘要信息用发送者的私钥加密，与原文一起传送给接收者。接收者只有用发送者的公钥才能解密被加密的摘要信息，然后用HASH函数对收到的原文产生一个摘要信息，与解密的摘要信息对比。如果相同，则说明收到的信息是完整的，在传输过程中没有被修改，否则说明信息被修改过，因此数字签名能够验证信息的完整性。</p>
+<p>数字签名的过程如下：明文 –&gt; hash运算 –&gt; 摘要 –&gt; 私钥加密 –&gt; 数字签名</p>
+<p>数字签名有两种功效：<br>一、能确定消息确实是由发送方签名并发出来的，因为别人假冒不了发送方的签名。<br>二、数字签名能确定消息的完整性。</p>
+<p><strong>注意：</strong><br>数字签名只能验证数据的完整性，数据本身是否加密不属于数字签名的控制范围</p>
+<h5 id="数字证书"><a href="#数字证书" class="headerlink" title="数字证书"></a>数字证书</h5><h5 id="为什么要有数字证书？"><a href="#为什么要有数字证书？" class="headerlink" title="为什么要有数字证书？"></a>为什么要有数字证书？</h5><p>对于请求方来说，它怎么能确定它所得到的公钥一定是从目标主机那里发布的，而且没有被篡改过呢？亦或者请求的目标主机本本身就从事窃取用户信息的不正当行为呢？这时候，我们需要有一个权威的值得信赖的第三方机构(一般是由政府审核并授权的机构)来统一对外发放主机机构的公钥，只要请求方这种机构获取公钥，就避免了上述问题的发生。</p>
+<h5 id="数字证书的颁发过程"><a href="#数字证书的颁发过程" class="headerlink" title="数字证书的颁发过程"></a>数字证书的颁发过程</h5><p>用户首先产生自己的密钥对，并将公共密钥及部分个人身份信息传送给认证中心。认证中心在核实身份后，将执行一些必要的步骤，以确信请求确实由用户发送而来，然后，认证中心将发给用户一个数字证书，该证书内包含用户的个人信息和他的公钥信息，同时还附有认证中心的签名信息(根证书私钥签名)。用户就可以使用自己的数字证书进行相关的各种活动。数字证书由独立的证书发行机构发布，数字证书各不相同，每种证书可提供不同级别的可信度。</p>
+<h4 id="证书包含哪些内容"><a href="#证书包含哪些内容" class="headerlink" title="证书包含哪些内容"></a>证书包含哪些内容</h4><p>证书颁发机构的名称<br>证书本身的数字签名<br>证书持有者公钥<br>证书签名用到的Hash算法</p>
+<h5 id="验证证书的有效性"><a href="#验证证书的有效性" class="headerlink" title="验证证书的有效性"></a>验证证书的有效性</h5><p><strong>浏览器默认都会内置CA根证书，其中根证书包含了CA的公钥</strong><br>证书颁发的机构是伪造的：浏览器不认识，直接认为是危险证书</p>
+<p>证书颁发的机构是确实存在的，于是根据CA名，找到对应内置的CA根证书、CA的公钥。用CA的公钥，对伪造的证书的摘要进行解密，发现解不了，认为是危险证书。</p>
+<p>对于篡改的证书，使用CA的公钥对数字签名进行解密得到摘要A，然后再根据签名的Hash算法计算出证书的摘要B，对比A与B，若相等则正常，若不相等则是被篡改过的。</p>
+<p>证书可在其过期前被吊销，通常情况是该证书的私钥已经失密。较新的浏览器如Chrome、Firefox、Opera和Internet Explorer都实现了在线证书状态协议（OCSP）以排除这种情形：浏览器将网站提供的证书的序列号通过OCSP发送给证书颁发机构，后者会告诉浏览器证书是否还是有效的。</p>
+<p>1、2点是对伪造证书进行的，3是对于篡改后的证书验证，4是对于过期失效的验证。</p>
+<h5 id="SSL-与-TLS"><a href="#SSL-与-TLS" class="headerlink" title="SSL 与 TLS"></a>SSL 与 TLS</h5><h5 id="SSL-Secure-Socket-Layer，安全套接字层"><a href="#SSL-Secure-Socket-Layer，安全套接字层" class="headerlink" title="SSL (Secure Socket Layer，安全套接字层)"></a>SSL (Secure Socket Layer，安全套接字层)</h5><p>SSL为Netscape所研发，用以保障在Internet上数据传输之安全，利用数据加密(Encryption)技术，可确保数据在网络上之传输过程中不会被截取，当前为3.0版本。</p>
+<p>SSL协议可分为两层： SSL记录协议（SSL Record Protocol）：它建立在可靠的传输协议（如TCP）之上，为高层协议提供数据封装、压缩、加密等基本功能的支持。 SSL握手协议（SSL Handshake Protocol）：它建立在SSL记录协议之上，用于在实际的数据传输开始前，通讯双方进行身份认证、协商加密算法、交换加密密钥等。</p>
+<h5 id="TLS-Transport-Layer-Security，传输层安全协议"><a href="#TLS-Transport-Layer-Security，传输层安全协议" class="headerlink" title="TLS (Transport Layer Security，传输层安全协议)"></a>TLS (Transport Layer Security，传输层安全协议)</h5><p>用于两个应用程序之间提供保密性和数据完整性。</p>
+<p>TLS 1.0是IETF（Internet Engineering Task Force，Internet工程任务组）制定的一种新的协议，它建立在SSL 3.0协议规范之上，是SSL 3.0的后续版本，可以理解为SSL 3.1，它是写入了 RFC 的。该协议由两层组成： TLS 记录协议（TLS Record）和 TLS 握手协议（TLS Handshake）。较低的层为 TLS 记录协议，位于某个可靠的传输协议（例如 TCP）上面。</p>
+<h5 id="SSL-TLS协议作用："><a href="#SSL-TLS协议作用：" class="headerlink" title="SSL/TLS协议作用："></a>SSL/TLS协议作用：</h5><p>认证用户和服务器，确保数据发送到正确的客户机和服务器；<br>加密数据以防止数据中途被窃取；<br>维护数据的完整性，确保数据在传输过程中不被改变。</p>
+<h5 id="TLS比SSL的优势"><a href="#TLS比SSL的优势" class="headerlink" title="TLS比SSL的优势"></a>TLS比SSL的优势</h5><p>对于消息认证使用密钥散列法：TLS 使用“消息认证代码的密钥散列法”（HMAC），当记录在开放的网络（如因特网）上传送时，该代码确保记录不会被变更。SSLv3.0还提供键控消息认证，但HMAC比SSLv3.0使用的（消息认证代码）MAC 功能更安全。</p>
+<p>增强的伪随机功能（PRF）：PRF生成密钥数据。在TLS中，HMAC定义PRF。PRF使用两种散列算法保证其安全性。如果任一算法暴露了，只要第二种算法未暴露，则数据仍然是安全的。</p>
+<p>改进的已完成消息验证：TLS和SSLv3.0都对两个端点提供已完成的消息，该消息认证交换的消息没有被变更。然而，TLS将此已完成消息基于PRF和HMAC值之上，这也比SSLv3.0更安全。</p>
+<p>一致证书处理：与SSLv3.0不同，TLS试图指定必须在TLS之间实现交换的证书类型。</p>
+<p>特定警报消息：TLS提供更多的特定和附加警报，以指示任一会话端点检测到的问题。TLS还对何时应该发送某些警报进行记录。</p>
+<h5 id="SSL、TLS的握手过程"><a href="#SSL、TLS的握手过程" class="headerlink" title="SSL、TLS的握手过程"></a>SSL、TLS的握手过程</h5><p>SSL与TLS握手整个过程如下图所示，下面会详细介绍每一步的具体内容：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/clientHello.png" alt=""></p>
+<h5 id="客户端首次发出请求"><a href="#客户端首次发出请求" class="headerlink" title="客户端首次发出请求"></a>客户端首次发出请求</h5><p>由于客户端(如浏览器)对一些加解密算法的支持程度不一样，但是在TLS协议传输过程中必须使用同一套加解密算法才能保证数据能够正常的加解密。在TLS握手阶段，客户端首先要告知服务端，自己支持哪些加密算法，所以客户端需要将本地支持的加密套件(Cipher Suite)的列表传送给服务端。除此之外，客户端还要产生一个随机数，这个随机数一方面需要在客户端保存，另一方面需要传送给服务端，客户端的随机数需要跟服务端产生的随机数结合起来产生后面要讲到的 Master Secret 。</p>
+<p>客户端需要提供如下信息：<br>支持的协议版本，比如TLS 1.0版<br>一个客户端生成的随机数，稍后用于生成”对话密钥”<br>支持的加密方法，比如RSA公钥加密<br>支持的压缩方法</p>
+<h5 id="服务端首次回应"><a href="#服务端首次回应" class="headerlink" title="服务端首次回应"></a>服务端首次回应</h5><p>服务端在接收到客户端的Client Hello之后，服务端需要确定加密协议的版本，以及加密的算法，然后也生成一个随机数，以及将自己的证书发送给客户端一并发送给客户端，这里的随机数是整个过程的第二个随机数。</p>
+<p>服务端需要提供的信息：<br>协议的版本<br>加密的算法<br>随机数<br>服务器证书</p>
+<h5 id="客户端再次回应"><a href="#客户端再次回应" class="headerlink" title="客户端再次回应"></a>客户端再次回应</h5><p>客户端首先会对服务器下发的证书进行验证，验证通过之后，则会继续下面的操作，客户端再次产生一个随机数（第三个随机数），然后使用服务器证书中的公钥进行加密，以及放一个ChangeCipherSpec消息即编码改变的消息，还有整个前面所有消息的hash值，进行服务器验证，然后用新秘钥加密一段数据一并发送到服务器，确保正式通信前无误。</p>
+<p>客户端使用前面的两个随机数以及刚刚新生成的新随机数，使用与服务器确定的加密算法，生成一个Session Secret。</p>
+<p>ChangeCipherSpec</p>
+<p>ChangeCipherSpec是一个独立的协议，体现在数据包中就是一个字节的数据，用于告知服务端，客户端已经切换到之前协商好的加密套件（Cipher Suite）的状态，准备使用之前协商好的加密套件加密数据并传输了。</p>
+<h5 id="服务器再次响应"><a href="#服务器再次响应" class="headerlink" title="服务器再次响应"></a>服务器再次响应</h5><p>服务端在接收到客户端传过来的第三个随机数的 加密数据之后，使用私钥对这段加密数据进行解密，并对数据进行验证，也会使用跟客户端同样的方式生成秘钥，一切准备好之后，也会给客户端发送一个 ChangeCipherSpec，告知客户端已经切换到协商过的加密套件状态，准备使用加密套件和 Session Secret加密数据了。之后，服务端也会使用 Session Secret 加密一段 Finish 消息发送给客户端，以验证之前通过握手建立起来的加解密通道是否成功。</p>
+<h5 id="后续客户端与服务器间通信"><a href="#后续客户端与服务器间通信" class="headerlink" title="后续客户端与服务器间通信"></a>后续客户端与服务器间通信</h5><p>确定秘钥之后，服务器与客户端之间就会通过商定的秘钥加密消息了，进行通讯了。整个握手过程也就基本完成了。</p>
+<p>值得特别提出的是：<br>SSL协议在握手阶段使用的是非对称加密，在传输阶段使用的是对称加密，也就是说在SSL上传送的数据是使用对称密钥加密的！因为非对称加密的速度缓慢，耗费资源。其实当客户端和主机使用非对称加密方式建立连接后，客户端和主机已经决定好了在传输过程使用的对称加密算法和关键的对称加密密钥，由于这个过程本身是安全可靠的，也即对称加密密钥是不可能被窃取盗用的，因此，保证了在传输过程中对数据进行对称加密也是安全可靠的，因为除了客户端和主机之外，不可能有第三方窃取并解密出对称加密密钥！如果有人窃听通信，他可以知道双方选择的加密方法，以及三个随机数中的两个。整个通话的安全，只取决于第三个随机数（Premaster secret）能不能被破解。</p>
+<h5 id="其他补充"><a href="#其他补充" class="headerlink" title="其他补充"></a>其他补充</h5><p>对于非常重要的保密数据，服务端还需要对客户端进行验证，以保证数据传送给了安全的合法的客户端。服务端可以向客户端发出 Cerficate Request 消息，要求客户端发送证书对客户端的合法性进行验证。比如，金融机构往往只允许认证客户连入自己的网络，就会向正式客户提供USB密钥，里面就包含了一张客户端证书。</p>
+<p>PreMaster secret前两个字节是TLS的版本号，这是一个比较重要的用来核对握手数据的版本号，因为在Client Hello阶段，客户端会发送一份加密套件列表和当前支持的SSL/TLS的版本号给服务端，而且是使用明文传送的，如果握手的数据包被破解之后，攻击者很有可能串改数据包，选择一个安全性较低的加密套件和版本给服务端，从而对数据进行破解。所以，服务端需要对密文中解密出来对的PreMaster版本号跟之前Client Hello阶段的版本号进行对比，如果版本号变低，则说明被串改，则立即停止发送任何消息。</p>
+<h5 id="session的恢复"><a href="#session的恢复" class="headerlink" title="session的恢复"></a>session的恢复</h5><p>有两种方法可以恢复原来的session：一种叫做session ID，另一种叫做session ticket。</p>
+<h5 id="session-ID"><a href="#session-ID" class="headerlink" title="session ID"></a>session ID</h5><p>session ID的思想很简单，就是每一次对话都有一个编号（session ID）。如果对话中断，下次重连的时候，只要客户端给出这个编号，且服务器有这个编号的记录，双方就可以重新使用已有的”对话密钥”，而不必重新生成一把。</p>
+<p>session ID是目前所有浏览器都支持的方法，但是它的缺点在于session ID往往只保留在一台服务器上。所以，如果客户端的请求发到另一台服务器，就无法恢复对话</p>
+<h5 id="session-ticket"><a href="#session-ticket" class="headerlink" title="session ticket"></a>session ticket</h5><p>客户端发送一个服务器在上一次对话中发送过来的session ticket。这个session ticket是加密的，只有服务器才能解密，其中包括本次对话的主要信息，比如对话密钥和加密方法。当服务器收到session ticket以后，解密后就不必重新生成对话密钥了。<br>目前只有Firefox和Chrome浏览器支持。</p>
+<h5 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h5><p>https实际就是在TCP层与http层之间加入了SSL/TLS来为上层的安全保驾护航，主要用到对称加密、非对称加密、证书，等技术进行客户端与服务器的数据加密传输，最终达到保证整个通信的安全性。</p>
+<p>原文：<a href="https://www.jianshu.com/p/30b8b40a671c" target="_blank" rel="noopener">https://www.jianshu.com/p/30b8b40a671c</a></p>
 
       
     </div>
@@ -371,14 +534,12 @@
 <h3 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h3><p>在以前的实现中,在生成块照时, <code>heapdump</code> 会fork一个新的node进程异步将老的内存快照信息写入文件. 通过这种方式生成的快照信息不能再chrome的开发者工具中进行比较, 并且和node.js v0.12 版本完全不兼容. 如果你确实想通过这种方式生成快照信息,可以通过添加参数来实现:</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">env NODE_HEAPDUMP_OPTIONS=fork node script.js</span><br></pre></td></tr></table></figure>
 <h3 id="分析快照信息"><a href="#分析快照信息" class="headerlink" title="分析快照信息"></a>分析快照信息</h3><ol>
-<li>打开chrome控制台</li>
+<li><p>打开chrome控制台<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/chrome-devtool-profile.png" alt=""></p>
+</li>
+<li><p>加载快照文件</p>
+</li>
 </ol>
-<p><img src="https://leokongwq.github.io/2016/11/08/nodejs-heapdump/chrome-devtool-profile.png" alt="chrome-devtool-profile.png"></p>
-<ol>
-<li>加载快照文件</li>
-</ol>
-<p>点击<code>load</code>按钮, 选择文件就可以加载快照文件了.</p>
-<p><img src="https://leokongwq.github.io/2016/11/08/nodejs-heapdump/chrome-nodejs-heapdump.png" alt="chrome-nodejs-heapdump.png"></p>
+<p>点击<code>load</code>按钮, 选择文件就可以加载快照文件了.<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/chrome-nodejs-heapdump.png" alt=""></p>
 <h3 id="配套工具-memwatch-next"><a href="#配套工具-memwatch-next" class="headerlink" title="配套工具 memwatch-next"></a>配套工具 memwatch-next</h3><p>线上运行的程序我们不会时不时的主动生产堆快照信息的, 如果能在发生内存泄露的时候生成快照信息,这样就最好了. 幸运的是有这种运行时内存<br>监控包:<code>memwatch-next</code></p>
 <h3 id="安装-memwatch"><a href="#安装-memwatch" class="headerlink" title="安装 memwatch"></a>安装 memwatch</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install memwatch-next --save</span><br></pre></td></tr></table></figure>
 <h3 id="使用-memwatch"><a href="#使用-memwatch" class="headerlink" title="使用 memwatch"></a>使用 memwatch</h3><h4 id="内存泄露监听"><a href="#内存泄露监听" class="headerlink" title="内存泄露监听"></a>内存泄露监听</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> memwatch = <span class="built_in">require</span>(<span class="string">'memwatch-next'</span>);</span><br><span class="line">memwatch.on(<span class="string">'leak'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">info</span>) </span>&#123; </span><br><span class="line">    <span class="comment">// 发生内存泄露时的回调函数</span></span><br><span class="line">    <span class="built_in">console</span>.error(<span class="string">'Memory leak detected: '</span>, info);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
@@ -642,197 +803,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2016-04-04T14:16:53.000Z"><a href="/2016/04/04/Node.js错误处理和调试/JavaScript错误处理机制/">2016-04-04</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2016/04/04/Node.js错误处理和调试/JavaScript错误处理机制/">JavaScript错误处理机制</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h2 id="Error-实例对象"><a href="#Error-实例对象" class="headerlink" title="Error 实例对象"></a>Error 实例对象</h2><p>JavaScript 解析或运行时，一旦发生错误，引擎就会抛出一个错误对象。JavaScript 原生提供<code>Error</code>构造函数，所有抛出的错误都是这个构造函数的实例。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> err = <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'出错了'</span>);</span><br><span class="line">err.message <span class="comment">// "出错了"</span></span><br></pre></td></tr></table></figure>
-<p>上面代码中，我们调用<code>Error</code>构造函数，生成一个实例对象<code>err</code>。<code>Error</code>构造函数接受一个参数，表示错误提示，可以从实例的<code>message</code>属性读到这个参数。抛出<code>Error</code>实例对象以后，整个程序就中断在发生错误的地方，不再往下执行。</p>
-<p>JavaScript 语言标准只提到，<code>Error</code>实例对象必须有<code>message</code>属性，表示出错时的提示信息，没有提到其他属性。大多数 JavaScript 引擎，对<code>Error</code>实例还提供<code>name</code>和<code>stack</code>属性，分别表示错误的名称和错误的堆栈，但它们是非标准的，不是每种实现都有。</p>
-<ul>
-<li><strong>message</strong>：错误提示信息</li>
-<li><strong>name</strong>：错误名称（非标准属性）</li>
-<li><strong>stack</strong>：错误的堆栈（非标准属性）</li>
-</ul>
-<p>使用<code>name</code>和<code>message</code>这两个属性，可以对发生什么错误有一个大概的了解。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (error.name) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(error.name + <span class="string">': '</span> + error.message);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><code>stack</code>属性用来查看错误发生时的堆栈。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">throwit</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">''</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">catchit</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    throwit();</span><br><span class="line">  &#125; <span class="keyword">catch</span>(e) &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(e.stack); <span class="comment">// print stack trace</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">catchit()</span><br><span class="line"><span class="comment">// Error</span></span><br><span class="line"><span class="comment">//    at throwit (~/examples/throwcatch.js:9:11)</span></span><br><span class="line"><span class="comment">//    at catchit (~/examples/throwcatch.js:3:9)</span></span><br><span class="line"><span class="comment">//    at repl:1:5</span></span><br></pre></td></tr></table></figure>
-<p>上面代码中，错误堆栈的最内层是<code>throwit</code>函数，然后是<code>catchit</code>函数，最后是函数的运行环境。</p>
-<h2 id="原生错误类型"><a href="#原生错误类型" class="headerlink" title="原生错误类型"></a>原生错误类型</h2><p><code>Error</code>实例对象是最一般的错误类型，在它的基础上，JavaScript 还定义了其他6种错误对象。也就是说，存在<code>Error</code>的6个派生对象。</p>
-<h3 id="SyntaxError-对象"><a href="#SyntaxError-对象" class="headerlink" title="SyntaxError 对象"></a>SyntaxError 对象</h3><p><code>SyntaxError</code>对象是解析代码时发生的语法错误。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 变量名错误</span></span><br><span class="line"><span class="keyword">var</span> <span class="number">1</span>a;</span><br><span class="line"><span class="comment">// Uncaught SyntaxError: Invalid or unexpected token</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 缺少括号</span></span><br><span class="line"><span class="built_in">console</span>.log <span class="string">'hello'</span>);</span><br><span class="line"><span class="comment">// Uncaught SyntaxError: Unexpected string</span></span><br></pre></td></tr></table></figure>
-<p>上面代码的错误，都是在语法解析阶段就可以发现，所以会抛出<code>SyntaxError</code>。第一个错误提示是“token 非法”，第二个错误提示是“字符串不符合要求”。</p>
-<h3 id="ReferenceError-对象"><a href="#ReferenceError-对象" class="headerlink" title="ReferenceError 对象"></a>ReferenceError 对象</h3><p><code>ReferenceError</code>对象是引用一个不存在的变量时发生的错误。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 使用一个不存在的变量</span></span><br><span class="line">unknownVariable</span><br><span class="line"><span class="comment">// Uncaught ReferenceError: unknownVariable is not defined</span></span><br></pre></td></tr></table></figure>
-<p>另一种触发场景是，将一个值分配给无法分配的对象，比如对函数的运行结果或者<code>this</code>赋值。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 等号左侧不是变量</span></span><br><span class="line"><span class="built_in">console</span>.log() = <span class="number">1</span></span><br><span class="line"><span class="comment">// Uncaught ReferenceError: Invalid left-hand side in assignment</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// this 对象不能手动赋值</span></span><br><span class="line"><span class="keyword">this</span> = <span class="number">1</span></span><br><span class="line"><span class="comment">// ReferenceError: Invalid left-hand side in assignment</span></span><br></pre></td></tr></table></figure>
-<p>上面代码对函数<code>console.log</code>的运行结果和<code>this</code>赋值，结果都引发了<code>ReferenceError</code>错误。</p>
-<h3 id="RangeError-对象"><a href="#RangeError-对象" class="headerlink" title="RangeError 对象"></a>RangeError 对象</h3><p><code>RangeError</code>对象是一个值超出有效范围时发生的错误。主要有几种情况，一是数组长度为负数，二是<code>Number</code>对象的方法参数超出范围，以及函数堆栈超过最大值。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 数组长度不得为负数</span></span><br><span class="line"><span class="keyword">new</span> <span class="built_in">Array</span>(<span class="number">-1</span>)</span><br><span class="line"><span class="comment">// Uncaught RangeError: Invalid array length</span></span><br></pre></td></tr></table></figure>
-<h3 id="TypeError-对象"><a href="#TypeError-对象" class="headerlink" title="TypeError 对象"></a>TypeError 对象</h3><p><code>TypeError</code>对象是变量或参数不是预期类型时发生的错误。比如，对字符串、布尔值、数值等原始类型的值使用<code>new</code>命令，就会抛出这种错误，因为<code>new</code>命令的参数应该是一个构造函数。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">new</span> <span class="number">123</span></span><br><span class="line"><span class="comment">// Uncaught TypeError: number is not a func</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> obj = &#123;&#125;;</span><br><span class="line">obj.unknownMethod()</span><br><span class="line"><span class="comment">// Uncaught TypeError: obj.unknownMethod is not a function</span></span><br></pre></td></tr></table></figure>
-<p>上面代码的第二种情况，调用对象不存在的方法，也会抛出<code>TypeError</code>错误，因为<code>obj.unknownMethod</code>的值是<code>undefined</code>，而不是一个函数。</p>
-<h3 id="URIError-对象"><a href="#URIError-对象" class="headerlink" title="URIError 对象"></a>URIError 对象</h3><p><code>URIError</code>对象是 URI 相关函数的参数不正确时抛出的错误，主要涉及<code>encodeURI()</code>、<code>decodeURI()</code>、<code>encodeURIComponent()</code>、<code>decodeURIComponent()</code>、<code>escape()</code>和<code>unescape()</code>这六个函数。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">decodeURI</span>(<span class="string">'%2'</span>)</span><br><span class="line"><span class="comment">// URIError: URI malformed</span></span><br></pre></td></tr></table></figure>
-<h3 id="EvalError-对象"><a href="#EvalError-对象" class="headerlink" title="EvalError 对象"></a>EvalError 对象</h3><p><code>eval</code>函数没有被正确执行时，会抛出<code>EvalError</code>错误。该错误类型已经不再使用了，只是为了保证与以前代码兼容，才继续保留。</p>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>以上这6种派生错误，连同原始的<code>Error</code>对象，都是构造函数。开发者可以使用它们，手动生成错误对象的实例。这些构造函数都接受一个函数，代表错误提示信息（message）。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> err1 = <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'出错了！'</span>);</span><br><span class="line"><span class="keyword">var</span> err2 = <span class="keyword">new</span> <span class="built_in">RangeError</span>(<span class="string">'出错了，变量超出有效范围！'</span>);</span><br><span class="line"><span class="keyword">var</span> err3 = <span class="keyword">new</span> <span class="built_in">TypeError</span>(<span class="string">'出错了，变量类型无效！'</span>);</span><br><span class="line"></span><br><span class="line">err1.message <span class="comment">// "出错了！"</span></span><br><span class="line">err2.message <span class="comment">// "出错了，变量超出有效范围！"</span></span><br><span class="line">err3.message <span class="comment">// "出错了，变量类型无效！"</span></span><br></pre></td></tr></table></figure>
-<h2 id="自定义错误"><a href="#自定义错误" class="headerlink" title="自定义错误"></a>自定义错误</h2><p>除了 JavaScript 原生提供的七种错误对象，还可以定义自己的错误对象。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">UserError</span>(<span class="params">message</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">this</span>.message = message || <span class="string">'默认信息'</span>;</span><br><span class="line">  <span class="keyword">this</span>.name = <span class="string">'UserError'</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">UserError.prototype = <span class="keyword">new</span> <span class="built_in">Error</span>();</span><br><span class="line">UserError.prototype.constructor = UserError;</span><br></pre></td></tr></table></figure>
-<p>上面代码自定义一个错误对象<code>UserError</code>，让它继承<code>Error</code>对象。然后，就可以生成这种自定义类型的错误了。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">new</span> UserError(<span class="string">'这是自定义的错误！'</span>);</span><br></pre></td></tr></table></figure>
-<h2 id="throw-语句"><a href="#throw-语句" class="headerlink" title="throw 语句"></a>throw 语句</h2><p><code>throw</code>语句的作用是手动中断程序执行，抛出一个错误。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (x &lt; <span class="number">0</span>) &#123;</span><br><span class="line">  <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'x 必须为正数'</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// Uncaught ReferenceError: x is not defined</span></span><br></pre></td></tr></table></figure>
-<p>上面代码中，如果变量<code>x</code>小于<code>0</code>，就手动抛出一个错误，告诉用户<code>x</code>的值不正确，整个程序就会在这里中断执行。可以看到，<code>throw</code>抛出的错误就是它的参数，这里是一个<code>Error</code>实例。</p>
-<p><code>throw</code>也可以抛出自定义错误。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">UserError</span>(<span class="params">message</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">this</span>.message = message || <span class="string">'默认信息'</span>;</span><br><span class="line">  <span class="keyword">this</span>.name = <span class="string">'UserError'</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">throw</span> <span class="keyword">new</span> UserError(<span class="string">'出错了！'</span>);</span><br><span class="line"><span class="comment">// Uncaught UserError &#123;message: "出错了！", name: "UserError"&#125;</span></span><br></pre></td></tr></table></figure>
-<p>上面代码中，<code>throw</code>抛出的是一个<code>UserError</code>实例。</p>
-<p>实际上，<code>throw</code>可以抛出任何类型的值。也就是说，它的参数可以是任何值。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 抛出一个字符串</span></span><br><span class="line"><span class="keyword">throw</span> <span class="string">'Error！'</span>;</span><br><span class="line"><span class="comment">// Uncaught Error！</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 抛出一个数值</span></span><br><span class="line"><span class="keyword">throw</span> <span class="number">42</span>;</span><br><span class="line"><span class="comment">// Uncaught 42</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 抛出一个布尔值</span></span><br><span class="line"><span class="keyword">throw</span> <span class="literal">true</span>;</span><br><span class="line"><span class="comment">// Uncaught true</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 抛出一个对象</span></span><br><span class="line"><span class="keyword">throw</span> &#123;</span><br><span class="line">  toString: <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="string">'Error!'</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="comment">// Uncaught &#123;toString: ƒ&#125;</span></span><br></pre></td></tr></table></figure>
-<p>对于 JavaScript 引擎来说，遇到<code>throw</code>语句，程序就中止了。引擎会接收到<code>throw</code>抛出的信息，可能是一个错误实例，也可能是其他类型的值。</p>
-<h2 id="try…catch-结构"><a href="#try…catch-结构" class="headerlink" title="try…catch 结构"></a>try…catch 结构</h2><p>一旦发生错误，程序就中止执行了。JavaScript 提供了<code>try...catch</code>结构，允许对错误进行处理，选择是否往下执行。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'出错了!'</span>);</span><br><span class="line">&#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(e.name + <span class="string">": "</span> + e.message);</span><br><span class="line">  <span class="built_in">console</span>.log(e.stack);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// Error: 出错了!</span></span><br><span class="line"><span class="comment">//   at &lt;anonymous&gt;:3:9</span></span><br><span class="line"><span class="comment">//   ...</span></span><br></pre></td></tr></table></figure>
-<p>上面代码中，<code>try</code>代码块抛出错误（上例用的是<code>throw</code>语句），JavaScript 引擎就立即把代码的执行，转到<code>catch</code>代码块，或者说错误被<code>catch</code>代码块捕获了。<code>catch</code>接受一个参数，表示<code>try</code>代码块抛出的值。</p>
-<p>如果你不确定某些代码是否会报错，就可以把它们放在<code>try...catch</code>代码块之中，便于进一步对错误进行处理。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  f();</span><br><span class="line">&#125; <span class="keyword">catch</span>(e) &#123;</span><br><span class="line">  <span class="comment">// 处理错误</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>上面代码中，如果函数<code>f</code>执行报错，就会进行<code>catch</code>代码块，接着对错误进行处理。</p>
-<p><code>catch</code>代码块捕获错误之后，程序不会中断，会按照正常流程继续执行下去。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  <span class="keyword">throw</span> <span class="string">"出错了"</span>;</span><br><span class="line">&#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="number">111</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">console</span>.log(<span class="number">222</span>);</span><br><span class="line"><span class="comment">// 111</span></span><br><span class="line"><span class="comment">// 222</span></span><br></pre></td></tr></table></figure>
-<p>上面代码中，<code>try</code>代码块抛出的错误，被<code>catch</code>代码块捕获后，程序会继续向下执行。</p>
-<p><code>catch</code>代码块之中，还可以再抛出错误，甚至使用嵌套的<code>try...catch</code>结构。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> n = <span class="number">100</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  <span class="keyword">throw</span> n;</span><br><span class="line">&#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">  <span class="keyword">if</span> (e &lt;= <span class="number">50</span>) &#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="keyword">throw</span> e;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// Uncaught 100</span></span><br></pre></td></tr></table></figure>
-<p>上面代码中，<code>catch</code>代码之中又抛出了一个错误。</p>
-<p>为了捕捉不同类型的错误，<code>catch</code>代码块之中可以加入判断语句。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  foo.bar();</span><br><span class="line">&#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">  <span class="keyword">if</span> (e <span class="keyword">instanceof</span> <span class="built_in">EvalError</span>) &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(e.name + <span class="string">": "</span> + e.message);</span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span> (e <span class="keyword">instanceof</span> <span class="built_in">RangeError</span>) &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(e.name + <span class="string">": "</span> + e.message);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>上面代码中，<code>catch</code>捕获错误之后，会判断错误类型（<code>EvalError</code>还是<code>RangeError</code>），进行不同的处理。</p>
-<h2 id="finally-代码块"><a href="#finally-代码块" class="headerlink" title="finally 代码块"></a>finally 代码块</h2><p><code>try...catch</code>结构允许在最后添加一个<code>finally</code>代码块，表示不管是否出现错误，都必需在最后运行的语句。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">cleansUp</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'出错了……'</span>);</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'此行不会执行'</span>);</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'完成清理工作'</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">cleansUp()</span><br><span class="line"><span class="comment">// 完成清理工作</span></span><br><span class="line"><span class="comment">// Error: 出错了……</span></span><br></pre></td></tr></table></figure>
-<p>上面代码中，由于没有<code>catch</code>语句块，所以错误没有捕获。执行<code>finally</code>代码块以后，程序就中断在错误抛出的地方。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">idle</span>(<span class="params">x</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(x);</span><br><span class="line">    <span class="keyword">return</span> <span class="string">'result'</span>;</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">"FINALLY"</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">idle(<span class="string">'hello'</span>)</span><br><span class="line"><span class="comment">// hello</span></span><br><span class="line"><span class="comment">// FINALLY</span></span><br><span class="line"><span class="comment">// "result"</span></span><br></pre></td></tr></table></figure>
-<p>上面代码说明，<code>try</code>代码块没有发生错误，而且里面还包括<code>return</code>语句，但是<code>finally</code>代码块依然会执行。注意，只有在其执行完毕后，才会显示<code>return</code>语句的值。</p>
-<p>下面的例子说明，<code>return</code>语句的执行是排在<code>finally</code>代码之前，只是等<code>finally</code>代码执行完毕后才返回。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> count = <span class="number">0</span>;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">countUp</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> count;</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    count++;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">countUp()</span><br><span class="line"><span class="comment">// 0</span></span><br><span class="line">count</span><br><span class="line"><span class="comment">// 1</span></span><br></pre></td></tr></table></figure>
-<p>上面代码说明，<code>return</code>语句的<code>count</code>的值，是在<code>finally</code>代码块运行之前就获取了。</p>
-<p>下面是<code>finally</code>代码块用法的典型场景。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">openFile();</span><br><span class="line"></span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  writeFile(Data);</span><br><span class="line">&#125; <span class="keyword">catch</span>(e) &#123;</span><br><span class="line">  handleError(e);</span><br><span class="line">&#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">  closeFile();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>上面代码首先打开一个文件，然后在<code>try</code>代码块中写入文件，如果没有发生错误，则运行<code>finally</code>代码块关闭文件；一旦发生错误，则先使用<code>catch</code>代码块处理错误，再使用<code>finally</code>代码块关闭文件。</p>
-<p>下面的例子充分反映了<code>try...catch...finally</code>这三者之间的执行顺序。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">f</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="number">0</span>);</span><br><span class="line">    <span class="keyword">throw</span> <span class="string">'bug'</span>;</span><br><span class="line">  &#125; <span class="keyword">catch</span>(e) &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="number">1</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>; <span class="comment">// 这句原本会延迟到 finally 代码块结束再执行</span></span><br><span class="line">    <span class="built_in">console</span>.log(<span class="number">2</span>); <span class="comment">// 不会运行</span></span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;    </span><br><span class="line">    <span class="built_in">console</span>.log(<span class="number">3</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>; <span class="comment">// 这句会覆盖掉前面那句 return</span></span><br><span class="line">    <span class="built_in">console</span>.log(<span class="number">4</span>); <span class="comment">// 不会运行</span></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="built_in">console</span>.log(<span class="number">5</span>); <span class="comment">// 不会运行</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> result = f();</span><br><span class="line"><span class="comment">// 0</span></span><br><span class="line"><span class="comment">// 1</span></span><br><span class="line"><span class="comment">// 3</span></span><br><span class="line"></span><br><span class="line">result</span><br><span class="line"><span class="comment">// false</span></span><br></pre></td></tr></table></figure>
-<p>上面代码中，<code>catch</code>代码块结束执行之前，会先执行<code>finally</code>代码块。</p>
-<p><code>catch</code>代码块之中，触发转入<code>finally</code>代码块的标志，不仅有<code>return</code>语句，还有<code>throw</code>语句。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">f</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="string">'出错了！'</span>;</span><br><span class="line">  &#125; <span class="keyword">catch</span>(e) &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'捕捉到内部错误'</span>);</span><br><span class="line">    <span class="keyword">throw</span> e; <span class="comment">// 这句原本会等到finally结束再执行</span></span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>; <span class="comment">// 直接返回</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  f();</span><br><span class="line">&#125; <span class="keyword">catch</span>(e) &#123;</span><br><span class="line">  <span class="comment">// 此处不会执行</span></span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'caught outer "bogus"'</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//  捕捉到内部错误</span></span><br></pre></td></tr></table></figure>
-<p>上面代码中，进入<code>catch</code>代码块之后，一遇到<code>throw</code>语句，就会去执行<code>finally</code>代码块，其中有<code>return false</code>语句，因此就直接返回了，不再会回去执行<code>catch</code>代码块剩下的部分了。</p>
-<p>原文：<a href="http://javascript.ruanyifeng.com/grammar/error.html" target="_blank" rel="noopener">http://javascript.ruanyifeng.com/grammar/error.html</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2016-03-12T06:45:23.000Z"><a href="/2016/03/12/javascript/JavaScript中的作用域和上下文/">2016-03-12</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2016/03/12/javascript/JavaScript中的作用域和上下文/">JavaScript中的作用域和上下文</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>JavaScript对于作用域（Scope）和上下文（Context）的实现是这门语言的一个非常独到的地方，部分归功于其独特的灵活性。 函数可以接收不同的的上下文和作用域。这些概念为JavaScript中的很多强大的设计模式提供了坚实的基础。 然而这也概念也非常容易给开发人员带来困惑。为此，本文将全面的剖析这些概念，并阐述不同的设计模式是如何利用它们的。</p>
-<h3 id="上下文（Context）和作用域（Scope）"><a href="#上下文（Context）和作用域（Scope）" class="headerlink" title="上下文（Context）和作用域（Scope）"></a>上下文（Context）和作用域（Scope）</h3><p>首先需要知道的是，上下文和作用域是两个完全不同的概念。多年来，我发现很多开发者会混淆这两个概念（包括我自己）， 错误的将两个概念混淆了。平心而论，这些年来很多术语都被混乱的使用了。</p>
-<p>函数的每次调用都有与之紧密相关的作用域和上下文。从根本上来说，作用域是基于函数的，而上下文是基于对象的。 换句话说，作用域涉及到所被调用函数中的变量访问，并且不同的调用场景是不一样的。上下文始终是this关键字的值， 它是拥有（控制）当前所执行代码的对象的引用。</p>
-<h3 id="变量作用域"><a href="#变量作用域" class="headerlink" title="变量作用域"></a>变量作用域</h3><p>一个变量可以被定义在局部或者全局作用域中，这建立了在运行时（runtime）期间变量的访问性的不同作用域范围。 任何被定义的全局变量，意味着它需要在函数体的外部被声明，并且存活于整个运行时（runtime），并且在任何作用域中都可以被访问到。 在ES6之前，局部变量只能存在于函数体中，并且函数的每次调用它们都拥有不同的作用域范围。 局部变量只能在其被调用期的作用域范围内被赋值、检索、操纵。</p>
-<p>需要注意，在ES6之前，JavaScript不支持块级作用域，这意味着在if语句、switch语句、for循环、while循环中无法支持块级作用域。 也就是说，ES6之前的JavaScript并不能构建类似于Java中的那样的块级作用域（变量不能在语句块外被访问到）。但是， 从ES6开始，你可以通过let关键字来定义变量，它修正了var关键字的缺点，能够让你像Java语言那样定义变量，并且支持块级作用域。看两个例子：</p>
-<p>ES6之前，我们使用var关键字定义变量：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">function func() &#123;</span><br><span class="line">  if (true) &#123;</span><br><span class="line">    var tmp = 123;</span><br><span class="line">  &#125;</span><br><span class="line">  console.log(tmp); // 123</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>之所以能够访问，是因为var关键字声明的变量有一个变量提升的过程。而在ES6场景，推荐使用let关键字定义变量：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">function func() &#123;</span><br><span class="line">  if (true) &#123;</span><br><span class="line">    let tmp = 123;</span><br><span class="line">  &#125;</span><br><span class="line">  console.log(tmp); // ReferenceError: tmp is not defined</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>这种方式，能够避免很多错误。</p>
-<h3 id="什么是this上下文"><a href="#什么是this上下文" class="headerlink" title="什么是this上下文"></a>什么是this上下文</h3><p>上下文通常取决于函数是如何被调用的。当一个函数被作为对象中的一个方法被调用的时候，this被设置为调用该方法的对象上：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var obj = &#123;</span><br><span class="line">    foo: function()&#123;</span><br><span class="line">        alert(this === obj);    </span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">obj.foo(); // true</span><br></pre></td></tr></table></figure></p>
-<p>这个准则也适用于当调用函数时使用new操作符来创建对象的实例的情况下。在这种情况下，在函数的作用域内部this的值被设置为新创建的实例：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">function foo()&#123;</span><br><span class="line">    alert(this);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">new foo() // foo</span><br><span class="line">foo() // window</span><br></pre></td></tr></table></figure></p>
-<p>当调用一个为绑定函数时，this默认情况下是全局上下文，在浏览器中它指向window对象。需要注意的是，ES5引入了严格模式的概念， 如果启用了严格模式，此时上下文默认为undefined。</p>
-<h3 id="执行环境（execution-context）"><a href="#执行环境（execution-context）" class="headerlink" title="执行环境（execution context）"></a>执行环境（execution context）</h3><p>JavaScript是一个单线程语言，意味着同一时间只能执行一个任务。当JavaScript解释器初始化执行代码时， 它首先默认进入全局执行环境（execution context），从此刻开始，函数的每次调用都会创建一个新的执行环境。</p>
-<p>这里会经常引起新手的困惑，这里提到了一个新的术语——执行环境（execution context），它定义了变量或函数有权访问的其他数据，决定了它们各自的行为。 它更偏向于作用域的作用，而不是我们前面讨论的上下文（Context）。请务必仔细的区分执行环境和上下文这两个概念（注：英文容易造成混淆）。 说实话，这是个非常糟糕的命名约定，但是它是ECMAScript规范制定的，你还是遵守吧。</p>
-<p>每个函数都有自己的执行环境。当执行流进入一个函数时，函数的环境就会被推入一个环境栈中（execution stack）。在函数执行完后，栈将其环境弹出， 把控制权返回给之前的执行环境。ECMAScript程序中的执行流正是由这个便利的机制控制着。</p>
-<p>执行环境可以分为创建和执行两个阶段。在创建阶段，解析器首先会创建一个变量对象（variable object，也称为活动对象 activation object）， 它由定义在执行环境中的变量、函数声明、和参数组成。在这个阶段，作用域链会被初始化，this的值也会被最终确定。 在执行阶段，代码被解释执行。</p>
-<p>每个执行环境都有一个与之关联的变量对象（variable object），环境中定义的所有变量和函数都保存在这个对象中。 需要知道，我们无法手动访问这个对象，只有解析器才能访问它。</p>
-<h3 id="作用域链（The-Scope-Chain）"><a href="#作用域链（The-Scope-Chain）" class="headerlink" title="作用域链（The Scope Chain）"></a>作用域链（The Scope Chain）</h3><p>当代码在一个环境中执行时，会创建变量对象的一个作用域链（scope chain）。作用域链的用途是保证对执行环境有权访问的所有变量和函数的有序访问。 作用域链包含了在环境栈中的每个执行环境对应的变量对象。通过作用域链，可以决定变量的访问和标识符的解析。 注意，全局执行环境的变量对象始终都是作用域链的最后一个对象。我们来看一个例子：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">var color = &quot;blue&quot;;</span><br><span class="line"></span><br><span class="line">function changeColor()&#123;</span><br><span class="line">  var anotherColor = &quot;red&quot;;</span><br><span class="line"></span><br><span class="line">  function swapColors()&#123;</span><br><span class="line">    var tempColor = anotherColor;</span><br><span class="line">    anotherColor = color;</span><br><span class="line">    color = tempColor;</span><br><span class="line"></span><br><span class="line">    // 这里可以访问color, anotherColor, 和 tempColor</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  // 这里可以访问color 和 anotherColor，但是不能访问 tempColor</span><br><span class="line">  swapColors();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">changeColor();</span><br><span class="line"></span><br><span class="line">// 这里只能访问color</span><br><span class="line">console.log(&quot;Color is now &quot; + color);</span><br></pre></td></tr></table></figure>
-<p>上述代码一共包括三个执行环境：全局环境、changeColor()的局部环境、swapColors()的局部环境。 上述程序的作用域链如下图所示：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/imgscope-chain.png" alt=""></p>
-<p>从上图发现。内部环境可以通过作用域链访问所有的外部环境，但是外部环境不能访问内部环境中的任何变量和函数。 这些环境之间的联系是线性的、有次序的。</p>
-<p>对于标识符解析（变量名或函数名搜索）是沿着作用域链一级一级地搜索标识符的过程。搜索过程始终从作用域链的前端开始， 然后逐级地向后（全局执行环境）回溯，直到找到标识符为止。</p>
-<h3 id="闭包"><a href="#闭包" class="headerlink" title="闭包"></a>闭包</h3><p>闭包是指有权访问另一函数作用域中的变量的函数。换句话说，在函数内定义一个嵌套的函数时，就构成了一个闭包， 它允许嵌套函数访问外层函数的变量。通过返回嵌套函数，允许你维护对外部函数中局部变量、参数、和内函数声明的访问。 这种封装允许你在外部作用域中隐藏和保护执行环境，并且暴露公共接口，进而通过公共接口执行进一步的操作。可以看个简单的例子：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">function foo()&#123;</span><br><span class="line">    var localVariable = &apos;private variable&apos;;</span><br><span class="line">    return function bar()&#123;</span><br><span class="line">        return localVariable;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var getLocalVariable = foo();</span><br><span class="line">getLocalVariable() // private variable</span><br></pre></td></tr></table></figure>
-<p>模块模式最流行的闭包类型之一，它允许你模拟公共的、私有的、和特权成员：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">var Module = (function()&#123;</span><br><span class="line">    var privateProperty = &apos;foo&apos;;</span><br><span class="line"></span><br><span class="line">    function privateMethod(args)&#123;</span><br><span class="line">        // do something</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    return &#123;</span><br><span class="line"></span><br><span class="line">        publicProperty: &apos;&apos;,</span><br><span class="line"></span><br><span class="line">        publicMethod: function(args)&#123;</span><br><span class="line">            // do something</span><br><span class="line">        &#125;,</span><br><span class="line"></span><br><span class="line">        privilegedMethod: function(args)&#123;</span><br><span class="line">            return privateMethod(args);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;)();</span><br></pre></td></tr></table></figure>
-<p>模块类似于一个单例对象。由于在上面的代码中我们利用了(function() { … })();的匿名函数形式，因此当编译器解析它的时候会立即执行。 在闭包的执行上下文的外部唯一可以访问的对象是位于返回对象中的公共方法和属性。然而，因为执行上下文被保存的缘故， 所有的私有属性和方法将一直存在于应用的整个生命周期，这意味着我们只有通过公共方法才可以与它们交互。</p>
-<p>另一种类型的闭包被称为立即执行的函数表达式（IIFE）。其实它很简单，只不过是一个在全局环境中自执行的匿名函数而已：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">(function(window)&#123;</span><br><span class="line">          </span><br><span class="line">    var foo, bar;</span><br><span class="line"></span><br><span class="line">    function private()&#123;</span><br><span class="line">        // do something</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    window.Module = &#123;</span><br><span class="line"></span><br><span class="line">        public: function()&#123;</span><br><span class="line">            // do something </span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">&#125;)(this);</span><br></pre></td></tr></table></figure>
-<p>对于保护全局命名空间免受变量污染而言，这种表达式非常有用，它通过构建函数作用域的形式将变量与全局命名空间隔离， 并通过闭包的形式让它们存在于整个运行时（runtime）。在很多的应用和框架中，这种封装源代码的方式用处非常的流行， 通常都是通过暴露一个单一的全局接口的方式与外部进行交互。</p>
-<h3 id="Call和Apply"><a href="#Call和Apply" class="headerlink" title="Call和Apply"></a>Call和Apply</h3><p>这两个方法内建在所有的函数中（它们是Function对象的原型方法），允许你在自定义上下文中执行函数。 不同点在于，call函数需要参数列表，而apply函数需要你提供一个参数数组。如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">var o = &#123;&#125;;</span><br><span class="line"></span><br><span class="line">function f(a, b) &#123;</span><br><span class="line">  return a + b;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">// 将函数f作为o的方法，实际上就是重新设置函数f的上下文</span><br><span class="line">f.call(o, 1, 2);    // 3</span><br><span class="line">f.apply(o, [1, 2]); // 3</span><br></pre></td></tr></table></figure></p>
-<p>两个结果是相同的，函数f在对象o的上下文中被调用，并提供了两个相同的参数1和2。</p>
-<p>在ES5中引入了Function.prototype.bind方法，用于控制函数的执行上下文，它会返回一个新的函数， 并且这个新函数会被永久的绑定到bind方法的第一个参数所指定的对象上，无论该函数被如何使用。 它通过闭包将函数引导到正确的上下文中。对于低版本浏览器，我们可以简单的对它进行实现如下（polyfill）：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">if(!(&apos;bind&apos; in Function.prototype))&#123;</span><br><span class="line">    Function.prototype.bind = function()&#123;</span><br><span class="line">        var fn = this, </span><br><span class="line">            context = arguments[0], </span><br><span class="line">            args = Array.prototype.slice.call(arguments, 1);</span><br><span class="line">        return function()&#123;</span><br><span class="line">            return fn.apply(context, args.concat(arguments));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>bind()方法通常被用在上下文丢失的场景下，例如面向对象和事件处理。之所以要这么做， 是因为节点的addEventListener方法总是为事件处理器所绑定的节点的上下文中执行回调函数， 这就是它应该表现的那样。但是，如果你想要使用高级的面向对象技术，或需要你的回调函数成为某个方法的实例， 你将需要手动调整上下文。这就是bind方法所带来的便利之处：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">function MyClass()&#123;</span><br><span class="line">    this.element = document.createElement(&apos;div&apos;);</span><br><span class="line">    this.element.addEventListener(&apos;click&apos;, this.onClick.bind(this), false);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">MyClass.prototype.onClick = function(e)&#123;</span><br><span class="line">    // do something</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
-<p>回顾上面bind方法的源代码，你可能会注意到有两次调用涉及到了Array的slice方法：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Array.prototype.slice.call(arguments, 1);</span><br><span class="line">[].slice.call(arguments);</span><br></pre></td></tr></table></figure></p>
-<p>我们知道，arguments对象并不是一个真正的数组，而是一个类数组对象，虽然具有length属性，并且值也能够被索引， 但是它们不支持原生的数组方法，例如slice和push。但是，由于它们具有和数组类似的行为，数组的方法能够被调用和劫持， 因此我们可以通过类似于上面代码的方式达到这个目的，其核心是利用call方法。</p>
-<p>这种调用其他对象方法的技术也可以被应用到面向对象中，我们可以在JavaScript中模拟经典的继承方式：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">MyClass.prototype.init = function()&#123;</span><br><span class="line">    // call the superclass init method in the context of the &quot;MyClass&quot; instance</span><br><span class="line">    MySuperClass.prototype.init.apply(this, arguments);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>也就是利用call或apply在子类（MyClass）的实例中调用超类（MySuperClass）的方法。</p>
-<h3 id="ES6中的箭头函数"><a href="#ES6中的箭头函数" class="headerlink" title="ES6中的箭头函数"></a>ES6中的箭头函数</h3><p>ES6中的箭头函数可以作为Function.prototype.bind()的替代品。和普通函数不同，箭头函数没有它自己的this值， 它的this值继承自外围作用域。</p>
-<p>对于普通函数而言，它总会自动接收一个this值，this的指向取决于它调用的方式。我们来看一个例子：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">var obj = &#123;</span><br><span class="line">  </span><br><span class="line">  // ...</span><br><span class="line">  </span><br><span class="line">  addAll: function (pieces) &#123;</span><br><span class="line">    var self = this;</span><br><span class="line">    _.each(pieces, function (piece) &#123;</span><br><span class="line">      self.add(piece);</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;,</span><br><span class="line">  </span><br><span class="line">  // ...</span><br><span class="line">  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>在上面的例子中，最直接的想法是直接使用this.add(piece)，但不幸的是，在JavaScript中你不能这么做， 因为each的回调函数并未从外层继承this值。在该回调函数中，this的值为window或undefined， 因此，我们使用临时变量self来将外部的this值导入内部。我们还有两种方法解决这个问题：</p>
-<p>使用ES5中的bind()方法<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">var obj = &#123;</span><br><span class="line">  </span><br><span class="line">  // ...</span><br><span class="line">  </span><br><span class="line">  addAll: function (pieces) &#123;</span><br><span class="line">    _.each(pieces, function (piece) &#123;</span><br><span class="line">      this.add(piece);</span><br><span class="line">    &#125;.bind(this));</span><br><span class="line">  &#125;,</span><br><span class="line">  </span><br><span class="line">  // ...</span><br><span class="line">  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>使用ES6中的箭头函数</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">var obj = &#123;</span><br><span class="line">  </span><br><span class="line">  // ...</span><br><span class="line">  </span><br><span class="line">  addAll: function (pieces) &#123;</span><br><span class="line">    _.each(pieces, piece =&gt; this.add(piece));</span><br><span class="line">  &#125;,</span><br><span class="line">  </span><br><span class="line">  // ...</span><br><span class="line">  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>在ES6版本中，addAll方法从它的调用者处获得了this值，内部函数是一个箭头函数，所以它集成了外部作用域的this值。</p>
-<p>注意：对回调函数而言，在浏览器中，回调函数中的this为window或undefined（严格模式），而在Node.js中， 回调函数的this为global。实例代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">function hello(a, callback) &#123;</span><br><span class="line">  callback(a);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">hello(&apos;weiwei&apos;, function(a) &#123;</span><br><span class="line">  console.log(this === global); // true</span><br><span class="line">  console.log(a); // weiwei</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><p>在你学习高级的设计模式之前，理解这些概念非常的重要，因为作用域和上下文在现代JavaScript中扮演着的最基本的角色。 无论我们谈论的是闭包、面向对象、继承、或者是各种原生实现，上下文和作用域都在其中扮演着至关重要的角色。 如果你的目标是精通JavaScript语言，并且深入的理解它的各个组成，那么作用域和上下文便是你的起点。</p>
-<h3 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h3><p><a href="http://ryanmorr.com/understanding-scope-and-context-in-javascript/" target="_blank" rel="noopener">Understanding Scope and Context in JavaScript</a><br><a href="http://www.2ality.com/2016/02/arrow-functions-vs-bind.html" target="_blank" rel="noopener">Arrow functions vs. bind()</a><br><a href="http://www.html-js.com/article/Sexy-Javascript-understand-the-callback-function-with-the-use-of-Javascript-in" target="_blank" rel="noopener">理解与使用Javascript中的回调函数</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -880,7 +850,9 @@
   
     <li><a href="/tags/shell/">shell</a><small>1</small></li>
   
-    <li><a href="/tags/存储/">存储</a><small>3</small></li>
+    <li><a href="/tags/存储/">存储</a><small>2</small></li>
+  
+    <li><a href="/tags/安全/">安全</a><small>3</small></li>
   
     <li><a href="/tags/异步编程/">异步编程</a><small>3</small></li>
   

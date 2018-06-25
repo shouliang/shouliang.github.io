@@ -53,6 +53,175 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2014-06-29T11:45:23.000Z"><a href="/2014/06/29/Git/Git(7)自定义Git/">2014-06-29</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2014/06/29/Git/Git(7)自定义Git/">七.自定义Git</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-自定义Git"><a href="#1-自定义Git" class="headerlink" title="1.自定义Git"></a>1.自定义Git</h3><hr>
+<p>在安装Git一节中，我们已经配置了user.name和user.email，实际上，Git还有很多可配置项。</p>
+<p>比如，让Git显示颜色，会让命令输出看起来更醒目：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git config --global color.ui true</span><br></pre></td></tr></table></figure></p>
+<p>这样，Git会适当地显示不同的颜色，比如git status命令：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgitColor01.png" alt=""></p>
+<p>文件名就会标上颜色。</p>
+<h3 id="2-忽略特殊文件"><a href="#2-忽略特殊文件" class="headerlink" title="2.忽略特殊文件"></a>2.忽略特殊文件</h3><hr>
+<p>有些时候我们需要把一些文件例如：保存了数据库密码的配置文件放在Git目录下，但又不提交，那么需要我们在Git工作区的根目录下创建一个特殊的.gitignore文件，然后把要忽略的文件名填进去，Git就会自动忽略这些文件。</p>
+<p>　　不需要从头写.gitignore文件，GitHub已经为我们准备了各种配置文件，只需要组合一下就可以使用了。所有配置文件可以直接在线浏览：<a href="https://github.com/github/gitignore" target="_blank" rel="noopener">https://github.com/github/gitignore</a></p>
+<p>忽略文件的原则是：</p>
+<ul>
+<li>忽略操作系统自动生成的文件，比如缩略图等；</li>
+<li>忽略编译生成的中间文件、可执行文件等，也就是如果一个文件是通过另一个文件自动生成的，那自动生成的文件就没必要放进版本库，比如Java编译产生的.class文件；</li>
+<li>忽略你自己的带有敏感信息的配置文件，比如存放口令的配置文件。</li>
+</ul>
+<h3 id="3-配置别名"><a href="#3-配置别名" class="headerlink" title="3.配置别名"></a>3.配置别名</h3><hr>
+<p>配置别名其实就是把命令重新设置简单些，方便输入，例如：如果输入git st就表示git status。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git config --global alias.st status</span><br></pre></td></tr></table></figure></p>
+<p>现在都用co表示checkout，ci表示commit，br表示branch：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git config --global alias.co checkout</span><br><span class="line">$ git config --global alias.ci commit</span><br><span class="line">$ git config --global alias.br branch</span><br></pre></td></tr></table></figure></p>
+<p>–global参数是全局参数，也就是这些命令在这台电脑的所有Git仓库下都有用。</p>
+<h3 id="4-配置文件"><a href="#4-配置文件" class="headerlink" title="4.配置文件"></a>4.配置文件</h3><hr>
+<p>配置Git的时候，加上–global是针对当前用户起作用的，如果不加，那只针对当前的仓库起作用。</p>
+<p>配置文件放哪了？每个仓库的Git配置文件都放在.git/config文件中：</p>
+<p>$ cat .git/config<br>[core]<br>    repositoryformatversion = 0<br>    filemode = true<br>    bare = false<br>    logallrefupdates = true<br>    ignorecase = true<br>    precomposeunicode = true<br>[remote “origin”]<br>    url = <a href="mailto:git@github.com" target="_blank" rel="noopener">git@github.com</a>:michaelliao/learngit.git<br>    fetch = +refs/heads/*:refs/remotes/origin/*<br>[branch “master”]<br>    remote = origin<br>    merge = refs/heads/master<br>[alias]<br>    last = log -1</p>
+<p>别名就在[alias]后面，要删除别名，直接把对应的行删掉即可。</p>
+<p>而当前用户的Git配置文件放在用户主目录下的一个隐藏文件.gitconfig中：</p>
+<p>$ cat .gitconfig<br>[alias]<br>    co = checkout<br>    ci = commit<br>    br = branch<br>    st = status<br>[user]<br>    name = Your Name<br>    email = <a href="mailto:your@email.com" target="_blank" rel="noopener">your@email.com</a></p>
+<p>配置别名也可以直接修改这个文件，如果改错了，可以删掉文件重新通过命令配置。</p>
+<h3 id="5-搭建Git服务器"><a href="#5-搭建Git服务器" class="headerlink" title="5.搭建Git服务器"></a>5.搭建Git服务器</h3><hr>
+<p>搭建Git服务器需要准备一台运行Linux的机器，强烈推荐用Ubuntu或Debian，这样，通过几条简单的apt命令就可以完成安装。</p>
+<p>假设你已经有sudo权限的用户账号，下面，正式开始安装。</p>
+<p><strong>第一步</strong>，安装git：</p>
+<pre><code>$ sudo apt-get install git
+</code></pre><p><strong>第二步</strong>，创建一个git用户，用来运行git服务：</p>
+<pre><code>$ sudo adduser git
+</code></pre><p><strong>第三步</strong>，创建证书登录：</p>
+<p>收集所有需要登录的用户的公钥，就是他们自己的id_rsa.pub文件，把所有公钥导入到/home/git/.ssh/authorized_keys文件里，一行一个。</p>
+<p><strong>第四步</strong>，初始化Git仓库：</p>
+<p>先选定一个目录作为Git仓库，假定是/srv/sample.git，在/srv目录下输入命令：</p>
+<pre><code>$ sudo git init --bare sample.git
+</code></pre><p>　　Git就会创建一个裸仓库，裸仓库没有工作区，因为服务器上的Git仓库纯粹是为了共享，所以不让用户直接登录到服务器上去改工作区，并且服务器上的Git仓库通常都以.git结尾。然后，把owner改为git：</p>
+<pre><code>$ sudo chown -R git:git sample.git
+</code></pre><p><strong>第五步</strong>，禁用shell登录：</p>
+<p>出于安全考虑，第二步创建的git用户不允许登录shell，这可以通过编辑/etc/passwd文件完成。找到类似下面的一行：</p>
+<pre><code>git:x:1001:1001:,,,:/home/git:/bin/bash
+</code></pre><p>改为：</p>
+<pre><code>git:x:1001:1001:,,,:/home/git:/usr/bin/git-shell
+</code></pre><p>这样，git用户可以正常通过ssh使用git，但无法登录shell，因为我们为git用户指定的git-shell每次一登录就自动退出。</p>
+<p><strong>第六步</strong>，克隆远程仓库：</p>
+<p>现在，可以通过git clone命令克隆远程仓库了，在各自的电脑上运行：</p>
+<pre><code>$ git clone git@server:/srv/sample.git
+Cloning into &apos;sample&apos;...
+warning: You appear to have cloned an empty repository.
+</code></pre><h3 id="6-管理公钥和权限"><a href="#6-管理公钥和权限" class="headerlink" title="6.管理公钥和权限"></a>6.管理公钥和权限</h3><hr>
+<h4 id="管理公钥"><a href="#管理公钥" class="headerlink" title="管理公钥"></a>管理公钥</h4><p>　　如果团队很小，把每个人的公钥收集起来放到服务器的/home/git/.ssh/authorized_keys文件里就是可行的。如果团队有几百号人，就没法这么玩了，这时，可以用Gitosis来管理公钥。</p>
+<h4 id="管理权限"><a href="#管理权限" class="headerlink" title="管理权限"></a>管理权限</h4><p>　　有很多不但视源代码如生命，而且视员工为窃贼的公司，会在版本控制系统里设置一套完善的权限控制，每个人是否有读写权限会精确到每个分支甚至每个目录下。因为Git是为Linux源代码托管而开发的，所以Git也继承了开源社区的精神，不支持权限控制。不过，因为Git支持钩子（hook），所以，可以在服务器端编写一系列脚本来控制提交等操作，达到权限控制的目的。Gitolite就是这个工具。</p>
+<p>这里我们也不介绍Gitolite了，不要把有限的生命浪费到权限斗争中。</p>
+<p>主要两点：</p>
+<ul>
+<li>要方便管理公钥，用Gitosis；</li>
+<li>要像SVN那样变态地控制权限，用Gitolite。</li>
+</ul>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2014-06-27T09:45:23.000Z"><a href="/2014/06/27/Git/Git(6)标签管理/">2014-06-27</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2014/06/27/Git/Git(6)标签管理/">六.标签管理</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-标签的简介"><a href="#1-标签的简介" class="headerlink" title="1.标签的简介"></a>1.标签的简介</h3><hr>
+<p>本节主要记录的Git标签的作用、标签的多种创建方式，以及标签的删除，与推送，和使用GitHub的Fork参与别人的项目。</p>
+<p><strong>标签的作用</strong><br>　　发布版本时，通常先在版本库中打一个标签，这样，就唯一确定了打标签时刻的版本。无论什么时候，取某个标签的版本，就是把那个打标签的时刻的历史版本取出来。所以，标签也是版本库的一个快照。Git的标签虽然是版本库的快照，但其实它就是指向某个commit的指针（跟分支很像，但是分支可以移动，标签不能移动），所以，创建和删除标签都是瞬间完成的。
+　　</p>
+<h3 id="2-创建标签"><a href="#2-创建标签" class="headerlink" title="2.创建标签"></a>2.创建标签</h3><hr>
+<p>在Git中打标签非常简单，首先，切换到需要打标签的分支上：</p>
+<p>$ git branch<br>*dev<br>  master<br>$ git checkout master<br>Switched to branch ‘master’<br>然后，敲命令git tag <name>就可以打一个新标签：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git tag v1.0</span><br></pre></td></tr></table></figure></name></p>
+<p>　　默认标签是打在最新提交的commit上的。还可以对历史提交打上标签，只要找到历史提交的commit id，然后打上就可以了，例如要对add merge这次提交打标签，它对应的commit id是6224937，输入命令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git tag v0.9 6224937</span><br></pre></td></tr></table></figure></p>
+<p>　　还可以创建带有说明的标签，用-a指定标签名，-m指定说明文字：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git tag -a v0.1 -m &quot;version 0.1 released&quot; 3628164</span><br></pre></td></tr></table></figure></p>
+<p>　　用命令git show 可以看到说明文字：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ git show v0.1</span><br><span class="line">tag v0.1</span><br><span class="line">Tagger: hubwiz &lt;hubwiz@163.com&gt;</span><br><span class="line">Date:   Mon Aug 26 07:28:11 2015 +0800</span><br><span class="line">version 0.1 released</span><br></pre></td></tr></table></figure></p>
+<p>　　签名采用PGP签名，因此，必须首先安装gpg（GnuPG），如果没有找到gpg，或者没有gpg密钥对，就会报错：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">gpg: signing failed: secret key not available</span><br><span class="line">error: gpg failed to sign the data</span><br><span class="line">error: unable to sign the tag</span><br></pre></td></tr></table></figure></p>
+<p>　　如果报错，请参考GnuPG帮助文档配置Key。</p>
+<ul>
+<li>命令git tag <name>用于新建一个标签，默认为HEAD，也可以指定一个commit id；</name></li>
+<li>git tag -a <tagname> -m “blablabla…”可以指定标签信息；</tagname></li>
+<li>git tag -s <tagname> -m “blablabla…”可以用PGP签名标签；</tagname></li>
+<li>命令git tag可以查看所有标签。</li>
+</ul>
+<h3 id="3-操作标签"><a href="#3-操作标签" class="headerlink" title="3.操作标签"></a>3.操作标签</h3><hr>
+<p>如果标签打错了，也可以删除：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git tag -d v0.1</span><br><span class="line">Deleted tag &apos;v0.1&apos; (was e078af9)</span><br></pre></td></tr></table></figure></p>
+<p>因为创建的标签都只存储在本地，不会自动推送到远程。所以，打错的标签可以在本地安全删除。</p>
+<p>如果要推送某个标签到远程，使用命令it push origin <tagname>:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ git push origin v1.0</span><br><span class="line">Total 0 (delta 0), reused 0 (delta 0)</span><br><span class="line">To git@github.com:michaelliao/learngit.git</span><br><span class="line"> * [new tag]         v1.0 -&gt; v1.0</span><br></pre></td></tr></table></figure></tagname></p>
+<p>或者，一次性推送全部尚未推送到远程的本地标签：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ git push origin --tags</span><br><span class="line">Counting objects: 1, done.</span><br><span class="line">Writing objects: 100% (1/1), 554 bytes, done.</span><br><span class="line">Total 1 (delta 0), reused 0 (delta 0)</span><br><span class="line">To git@github.com:michaelliao/learngit.git</span><br><span class="line">* [new tag]         v0.2 -&gt; v0.2</span><br><span class="line">* [new tag]         v0.9 -&gt; v0.9</span><br></pre></td></tr></table></figure></p>
+<p>如果标签已经推送到远程，要删除远程标签就麻烦一点，先从本地删除：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git tag -d v0.9</span><br><span class="line">Deleted tag &apos;v0.9&apos; (was 6224937)</span><br></pre></td></tr></table></figure></p>
+<p>然后，从远程删除。删除命令也是push，但是格式如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git push origin :refs/tags/v0.9</span><br><span class="line">To git@github.com:michaelliao/learngit.git</span><br><span class="line"> - [deleted]         v0.9</span><br></pre></td></tr></table></figure></p>
+<p>要看看是否真的从远程库删除了标签，可以登陆GitHub查看。</p>
+<p>本节知识点主要学习点：</p>
+<ul>
+<li>git push origin <tagname>可以推送一个本地标签；</tagname></li>
+<li>git push origin –tags可以推送全部未推送过的本地标签；</li>
+<li>git tag -d <tagname>可以删除一个本地标签；</tagname></li>
+<li>git push origin :refs/tags/<tagname>可以删除一个远程标签。</tagname></li>
+</ul>
+<h3 id="4-GitHub的使用"><a href="#4-GitHub的使用" class="headerlink" title="4.GitHub的使用"></a>4.GitHub的使用</h3><hr>
+<p>GitHub不仅是免费的远程仓库，个人的开源项目，可以放到GitHub上，而且GitHub还是一个开源协作社区，通过GitHub，既可以让别人参与你的开源项目，也可以参与别人的开源项目。</p>
+<p>　　在GitHub上，利用Git极其强大的克隆和分支功能，人们可以自由参与各种开源项目。比如人气极高的bootstrap项目，这是一个非常强大的CSS框架，在它的项目主页，点“Fork”就在自己的账号下克隆了一个bootstrap仓库，然后，从自己的账号下clone。一定要从自己的账号下clone仓库，这样你才能推送修改。如果从bootstrap的作者的仓库地址<a href="mailto:git@github.com" target="_blank" rel="noopener">git@github.com</a>:twbs/bootstrap.git克隆，因为没有权限，你将不能推送修改。</p>
+<p>　　Bootstrap的官方仓库twbs/bootstrap、你在GitHub上克隆的仓库my/bootstrap，以及你自己克隆到本地电脑的仓库，他们的关系就像下图显示的那样：<br>　　<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbootstrap.png" alt=""></p>
+<p>如果你希望bootstrap的官方库能接受你的修改，你就可以在GitHub上发起一个pull request。</p>
+<p>本节主要内容：</p>
+<ul>
+<li>在GitHub上，可以任意Fork开源仓库；</li>
+<li>自己拥有Fork后的仓库的读写权限；</li>
+<li>可以推送pull request给官方仓库来贡献代码。</li>
+</ul>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2014-06-24T09:45:23.000Z"><a href="/2014/06/24/Git/Git(5)分支管理/">2014-06-24</a></time>
       
       
@@ -686,157 +855,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2014-06-05T06:45:23.000Z"><a href="/2014/06/05/Mocha/Mocha(1)快速开始/">2014-06-05</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2014/06/05/Mocha/Mocha(1)快速开始/">一.快速开始</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-什么是mocha"><a href="#1-什么是mocha" class="headerlink" title="1.什么是mocha"></a>1.什么是mocha</h3><hr>
-<p>mocha 是一个功能丰富的javascript测试框架，可以运行在nodejs和浏览器环境，使异步测试变得简单有趣。mocha 串联运行测试，允许灵活和精确地报告结果，同时映射未捕获的异常用来纠正测试用例。</p>
-<p>支持TDD/BDD 的 开发方式，结合 should.js/expect/chai/better-assert 断言库，能轻松构建各种风格的测试用例。</p>
-<h4 id="特点"><a href="#特点" class="headerlink" title="特点"></a>特点</h4><ul>
-<li>简单</li>
-<li>灵活</li>
-<li>有趣<h4 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h4>通过npm全局安装： npm install -g mocha</li>
-</ul>
-<h3 id="2-第一个测试用例"><a href="#2-第一个测试用例" class="headerlink" title="2.第一个测试用例"></a>2.第一个测试用例</h3><hr>
-<p>我们首先来见识一下mocha最基本的测试用例是怎么的结构,如下。</p>
-<p>测试用例：</p>
-<p>//模块依赖<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var assert = require(&quot;assert&quot;);</span><br></pre></td></tr></table></figure></p>
-<p>//断言条件<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">describe(&apos;Array&apos;, function()&#123;</span><br><span class="line">  describe(&apos;#indexOf()&apos;, function()&#123;</span><br><span class="line">    it(&apos;当值不存在时应该返回 -1&apos;, function()&#123;</span><br><span class="line">      assert.equal(-1, [1,2,3].indexOf(5));</span><br><span class="line">      assert.equal(-1, [1,2,3].indexOf(0));</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>示例解析：测试用例首先需要引用断言模块，如上文中var assert = require(‘assert’);，代码 assert.equal(-1, [1,2,3].indexOf(5)); 中使用的是assert.equal(actual, expected, [message]) 语法。作用等同于使用’==’进行相等判断。actual为实际值，expected 为期望值。message为返回的信息。</p>
-<p>运行 Mocha：$ mocha</p>
-<h3 id="3-assert断言"><a href="#3-assert断言" class="headerlink" title="3.assert断言"></a>3.assert断言</h3><hr>
-<p>断言（assert）指的是对代码行为的预期。一个测试用例内部，包含一个或多个断言（assert）。</p>
-<p>断言会返回一个布尔值，表示代码行为是否符合预期。测试用例之中，只要有一个断言为false，这个测试用例就会失败，只有所有断言都为true，测试用例才会通过。</p>
-<p>比如上节示例中的：</p>
-<p>assert.equal(-1, [1,2,3].indexOf(5));</p>
-<p>assert.equal(-1, [1,2,3].indexOf(0));</p>
-<p>实际值（-1）和期望值（[1,2,3].indexOf(5)）是一样的，断言为true，所以这个测试用例成功了。</p>
-<p>mocha 允许开发者使用任意的断言库，当这些断言库抛出了一个错误异常时，mocha将会捕获并进行相应处理。这意味着你可以利用如 should.js断言库、 Node.js 常规的 assert 模块或其它类似的断言代码库。以下是众所周知的适用于Node.js或浏览器的断言库：</p>
-<ul>
-<li>should.js</li>
-<li>expect.js</li>
-<li>chai.js</li>
-<li>better-assert</li>
-<li>assert：nodejs原生模块，在前文示例中我们有应用到。</li>
-</ul>
-<h3 id="4-chai-js断言库"><a href="#4-chai-js断言库" class="headerlink" title="4.chai.js断言库"></a>4.chai.js断言库</h3><hr>
-<p>Chai 是一个非常灵活的断言库，它可以让你使用如下三种主要断言方式的任何一种：</p>
-<h4 id="assert："><a href="#assert：" class="headerlink" title="assert："></a>assert：</h4><p>这是来自老派测试驱动开发的经典的assert方式。比如：</p>
-<p>assert.equal(variable, “value”);</p>
-<h4 id="expect："><a href="#expect：" class="headerlink" title="expect："></a>expect：</h4><p>这种链式的断言方式在行为驱动开发中最为常见。比如：</p>
-<p>expect(variable).to.equal(“value”);</p>
-<h4 id="should："><a href="#should：" class="headerlink" title="should："></a>should：</h4><p>这也是在测试驱动开发中比较常用的方式之一。举例：</p>
-<p>variable.should.equal(“value”);</p>
-<h3 id="5-expect语法"><a href="#5-expect语法" class="headerlink" title="5.expect语法"></a>5.expect语法</h3><hr>
-<p>expect 库应用是非常广泛的，它拥有很好的链式结构和仿自然语言的方法。通常写同一个断言会有几个方法，比如expect(response).to.be(true) 和 expect(response).equal(true)。以下列举了 expect 常用的主要方法：</p>
-<ul>
-<li>ok ：检查是否为真</li>
-<li>true：检查对象是否为真</li>
-<li>to.be、to：作为连接两个方法的链式方法</li>
-<li>not：链接一个否定的断言，如 expect(false).not.to.be(true)</li>
-<li>a/an：检查类型（也适用于数组类型）</li>
-<li>include/contain：检查数组或字符串是否包含某个元素</li>
-<li>below/above：检查是否大于或者小于某个限定值<br>mocha支持TDD/BDD 的 开发方式，结合 should.js、expect、chai、better-assert 断言库，能轻松构建各种风格的测试用例。这里面有两个知识点，一个是断言库，另一个是 TDD/BDD 。</li>
-</ul>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2014-05-07T07:45:23.000Z"><a href="/2014/05/07/express/express(2)示例准备登陆/">2014-05-07</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2014/05/07/express/express(2)示例准备登陆/">二.准备登陆</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-安装模板"><a href="#1-安装模板" class="headerlink" title="1.安装模板"></a>1.安装模板</h3><hr>
-<p>我们要使用express框架实现一个简单的用户登陆功能，先准备一下相关资源。</p>
-<p>在nodejs中使用express框架，它默认的是ejs和jade渲染模板，以ejs模板为例，讲述模板渲染网页模板的基础功能。</p>
-<p>ejs模板安装方法<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install ejs</span><br></pre></td></tr></table></figure></p>
-<p>1.目录下安装好了之后，如何调用呢，如下所示：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">// 指定渲染模板文件的后缀名为ejs</span><br><span class="line">app.set(&apos;view engine&apos;, &apos;ejs&apos;);</span><br></pre></td></tr></table></figure></p>
-<p>2.默认ejs模板只支持渲染以ejs为扩展名的文件，可能在使用的时候会觉得它的代码书写方式很不爽还是想用html的形式去书写，该怎么办呢，这时就得去修改模板引擎了，也就会用到express的engine函数。</p>
-<p>3.engine注册模板引擎的函数，处理指定的后缀名文件。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">// 修改模板文件的后缀名为html</span><br><span class="line">app.set( &apos;view engine&apos;, &apos;html&apos; );</span><br><span class="line">// 运行ejs模块</span><br><span class="line">app.engine( &apos;.html&apos;, require( &apos;ejs&apos; ).__express );</span><br></pre></td></tr></table></figure></p>
-<p>“__express”，ejs模块的一个公共属性，表示要渲染的文件扩展名。</p>
-<h3 id="2-静态资源"><a href="#2-静态资源" class="headerlink" title="2.静态资源"></a>2.静态资源</h3><hr>
-<p>如果要在网页中加载静态文件（css、js、img），就需要另外指定一个存放静态文件的目录，当浏览器发出非HTML文件请求时，服务器端就会到这个目录下去寻找相关文件。</p>
-<p>项目目录下添加一个存放静态文件的目录为public。</p>
-<p>在public目录下在添加三个存放js、css、img的目录，相应取名为javascripts、stylesheets、images。</p>
-<p>然后就可以把相关文件放到相应的目录下了。</p>
-<p>比如，浏览器发出如下的样式表请求：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;link href=<span class="string">"/stylesheets/bootstrap.min.css"</span> rel=<span class="string">"stylesheet"</span> media=<span class="string">"screen"</span>&gt;</span><br></pre></td></tr></table></figure></p>
-<p>服务器端就到public/stylesheets/目录中寻找bootstrap.min.css文件。</p>
-<p>有了静态目录文件，我们还得在启动文件里告诉它这个静态文件路径，需要指定一下，如下所示：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">app.use(express.static(require(&apos;path&apos;).join(__dirname, &apos;public&apos;)));</span><br></pre></td></tr></table></figure></p>
-<p>PS：express.static —— 指定静态文件的查找目录。</p>
-<p>使用use函数调用中间件指定express静态访问目录，’public’就是我们我们新建的用来存放静态文件的总目录。</p>
-<h3 id="3-添加视图"><a href="#3-添加视图" class="headerlink" title="3.添加视图"></a>3.添加视图</h3><hr>
-<p>下面我们就来添加网页模板了，项目中我们会新建一个目录用来单独存放模板文件，这里我们就统一放到根路径上了。</p>
-<p>下面开始新建index.html、login.html、home.html三个页面。</p>
-<p>1.index.html页面参考内容如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;div style=&quot;height:400px;width:550px;margin:50px auto;margin-left:auto;border:solid 1px;background: rgb(246, 246, 253);&quot;&gt;</span><br><span class="line">    &lt;div style=&quot;margin-left: 35px;&quot;&gt;</span><br><span class="line">        # 首页</span><br><span class="line">        &lt;form action=&quot;#&quot;  role=&quot;form&quot; style=&quot;margin-top: 90px;margin-left: 60px;&quot;&gt; </span><br><span class="line">            # 欢迎进入首页！</span><br><span class="line">            &lt;div style=&quot;margin-top: 145px;&quot;&gt;</span><br><span class="line">                &lt;input type=&quot;button&quot; value=&quot;登 陆&quot; /&gt;</span><br><span class="line">            &lt;/div&gt;</span><br><span class="line">        &lt;/form&gt;</span><br><span class="line">    &lt;/div&gt;</span><br><span class="line">&lt;/div&gt;</span><br></pre></td></tr></table></figure></p>
-<p>2.login.html页面参考内容如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line">    &lt;title&gt;用户登录&lt;/title&gt;</span><br><span class="line">    &lt;meta charset=&quot;utf-8&quot;&gt;</span><br><span class="line">    &lt;script src=&quot;http://code.jquery.com/jquery-2.1.1.min.js&quot;&gt;&lt;/script&gt;</span><br><span class="line">... </span><br><span class="line">&lt;div style=&quot;height:300px;width:350px;margin:100px auto;margin-left:auto;border:solid 1px;background: rgb(246, 246, 253);&quot;&gt;</span><br><span class="line">    &lt;div style=&quot;width:200px;margin:auto;margin-top:50px;&quot;&gt; </span><br><span class="line">        # 用户登录</span><br><span class="line">        &lt;form action=&quot;#&quot;  role=&quot;form&quot; method=&quot;post&quot; &gt;</span><br><span class="line">            &lt;input id=&quot;username&quot; type=&quot;text&quot; name=&quot;username&quot; style=&quot;margin: 20px 0px;&quot; /&gt;</span><br><span class="line">            &lt;input id=&quot;password&quot; type=&quot;password&quot; name=&quot;password&quot; /&gt;</span><br><span class="line">            &lt;div style=&quot;margin-top:30px;margin-left:125px;&quot;&gt;</span><br><span class="line">                &lt;input type=&quot;button&quot; value=&quot;登 陆&quot; /&gt;</span><br><span class="line">            &lt;/div&gt;</span><br><span class="line">        &lt;/form&gt;</span><br><span class="line">    &lt;/div&gt;</span><br><span class="line">&lt;/div&gt;</span><br></pre></td></tr></table></figure></p>
-<p>3.home.html页面参考内容如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;div style=&quot;height:400px;width:550px;margin:50px auto;margin-left:auto;border:solid 1px;background: rgb(246, 246, 253);&quot;&gt;</span><br><span class="line">    &lt;div style=&quot;margin-left: 45px;&quot;&gt;</span><br><span class="line">        # 主页</span><br><span class="line">        &lt;form action=&quot;#&quot;  role=&quot;form&quot; style=&quot;margin-top: 90px;&quot;&gt;</span><br><span class="line">            # 登陆成功！</span><br><span class="line">            &lt;div style=&quot;margin-top: 145px;&quot;&gt;</span><br><span class="line">                &lt;input  type=&quot;button&quot; value=&quot;退 出&quot; /&gt;</span><br><span class="line">            &lt;/div&gt;</span><br><span class="line">        &lt;/form&gt;</span><br><span class="line">    &lt;/div&gt;</span><br><span class="line">&lt;/div&gt;</span><br></pre></td></tr></table></figure></p>
-<p>和静态文件一样，我们也要设置views存放的目录，如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">// 设定views变量，意为视图存放的目录</span><br><span class="line">app.set(&apos;views&apos;, __dirname);</span><br></pre></td></tr></table></figure></p>
-<p>有了网页模板和指定目录，下面就可以访问它们了。</p>
-<h3 id="4-渲染视图"><a href="#4-渲染视图" class="headerlink" title="4.渲染视图"></a>4.渲染视图</h3><hr>
-<p>我们要如何对网页模板进行访问呢，这就要用到res对象的render函数了。</p>
-<p>render函数，对网页模板进行渲染。</p>
-<p>格式：res.render(view, [locals], callback);</p>
-<p>参数view就是模板的文件名callback用来处理返回的渲染后的字符串，options、callback可省略，在渲染模板时locals可为其模板传入变量值，在模板中就可以调用所传变量了。</p>
-<p>比如渲染我们刚刚添加的index.html页面，我们就可以在app.js中写入如下内容：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">ar express = require(&apos;express&apos;);</span><br><span class="line">var app = express();</span><br><span class="line">var path = require(&apos;path&apos;);</span><br><span class="line">app.set(&apos;views&apos;, __dirname);</span><br><span class="line">app.set( &apos;view engine&apos;, &apos;html&apos; );</span><br><span class="line">app.engine( &apos;.html&apos;, require( &apos;ejs&apos; ).__express );</span><br><span class="line">app.get(&apos;/&apos;, function(req, res) &#123;</span><br><span class="line">    res.render(&apos;index&apos;);</span><br><span class="line">&#125;);</span><br><span class="line">app.listen(80);</span><br></pre></td></tr></table></figure></p>
-<h3 id="5-url重定向"><a href="#5-url重定向" class="headerlink" title="5.url重定向"></a>5.url重定向</h3><hr>
-<h4 id="redirect基本用法"><a href="#redirect基本用法" class="headerlink" title="redirect基本用法"></a>redirect基本用法</h4><p>redirect方法允许网址的重定向，跳转到指定的url并且可以指定status，默认为302方式。</p>
-<p>格式：res.redirect([status], url);</p>
-<p>例1：使用一个完整的url跳转到一个完全不同的域名。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">res.redirect(&quot;http://www.hubwiz.com&quot;);</span><br></pre></td></tr></table></figure></p>
-<p>例2：跳转指定页面，比如登陆页，如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">res.redirect(&quot;login&quot;);</span><br></pre></td></tr></table></figure></p>
-<p>后面我们开始实现登陆功能，先试一下redirect重定向</p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -886,7 +904,9 @@
   
     <li><a href="/tags/shell/">shell</a><small>1</small></li>
   
-    <li><a href="/tags/存储/">存储</a><small>3</small></li>
+    <li><a href="/tags/存储/">存储</a><small>2</small></li>
+  
+    <li><a href="/tags/安全/">安全</a><small>3</small></li>
   
     <li><a href="/tags/异步编程/">异步编程</a><small>3</small></li>
   

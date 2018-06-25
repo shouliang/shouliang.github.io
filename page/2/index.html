@@ -53,6 +53,197 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2016-04-04T14:16:53.000Z"><a href="/2016/04/04/Node.js错误处理和调试/JavaScript错误处理机制/">2016-04-04</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2016/04/04/Node.js错误处理和调试/JavaScript错误处理机制/">JavaScript错误处理机制</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h2 id="Error-实例对象"><a href="#Error-实例对象" class="headerlink" title="Error 实例对象"></a>Error 实例对象</h2><p>JavaScript 解析或运行时，一旦发生错误，引擎就会抛出一个错误对象。JavaScript 原生提供<code>Error</code>构造函数，所有抛出的错误都是这个构造函数的实例。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> err = <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'出错了'</span>);</span><br><span class="line">err.message <span class="comment">// "出错了"</span></span><br></pre></td></tr></table></figure>
+<p>上面代码中，我们调用<code>Error</code>构造函数，生成一个实例对象<code>err</code>。<code>Error</code>构造函数接受一个参数，表示错误提示，可以从实例的<code>message</code>属性读到这个参数。抛出<code>Error</code>实例对象以后，整个程序就中断在发生错误的地方，不再往下执行。</p>
+<p>JavaScript 语言标准只提到，<code>Error</code>实例对象必须有<code>message</code>属性，表示出错时的提示信息，没有提到其他属性。大多数 JavaScript 引擎，对<code>Error</code>实例还提供<code>name</code>和<code>stack</code>属性，分别表示错误的名称和错误的堆栈，但它们是非标准的，不是每种实现都有。</p>
+<ul>
+<li><strong>message</strong>：错误提示信息</li>
+<li><strong>name</strong>：错误名称（非标准属性）</li>
+<li><strong>stack</strong>：错误的堆栈（非标准属性）</li>
+</ul>
+<p>使用<code>name</code>和<code>message</code>这两个属性，可以对发生什么错误有一个大概的了解。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (error.name) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(error.name + <span class="string">': '</span> + error.message);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>stack</code>属性用来查看错误发生时的堆栈。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">throwit</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">''</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">catchit</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    throwit();</span><br><span class="line">  &#125; <span class="keyword">catch</span>(e) &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(e.stack); <span class="comment">// print stack trace</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">catchit()</span><br><span class="line"><span class="comment">// Error</span></span><br><span class="line"><span class="comment">//    at throwit (~/examples/throwcatch.js:9:11)</span></span><br><span class="line"><span class="comment">//    at catchit (~/examples/throwcatch.js:3:9)</span></span><br><span class="line"><span class="comment">//    at repl:1:5</span></span><br></pre></td></tr></table></figure>
+<p>上面代码中，错误堆栈的最内层是<code>throwit</code>函数，然后是<code>catchit</code>函数，最后是函数的运行环境。</p>
+<h2 id="原生错误类型"><a href="#原生错误类型" class="headerlink" title="原生错误类型"></a>原生错误类型</h2><p><code>Error</code>实例对象是最一般的错误类型，在它的基础上，JavaScript 还定义了其他6种错误对象。也就是说，存在<code>Error</code>的6个派生对象。</p>
+<h3 id="SyntaxError-对象"><a href="#SyntaxError-对象" class="headerlink" title="SyntaxError 对象"></a>SyntaxError 对象</h3><p><code>SyntaxError</code>对象是解析代码时发生的语法错误。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 变量名错误</span></span><br><span class="line"><span class="keyword">var</span> <span class="number">1</span>a;</span><br><span class="line"><span class="comment">// Uncaught SyntaxError: Invalid or unexpected token</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 缺少括号</span></span><br><span class="line"><span class="built_in">console</span>.log <span class="string">'hello'</span>);</span><br><span class="line"><span class="comment">// Uncaught SyntaxError: Unexpected string</span></span><br></pre></td></tr></table></figure>
+<p>上面代码的错误，都是在语法解析阶段就可以发现，所以会抛出<code>SyntaxError</code>。第一个错误提示是“token 非法”，第二个错误提示是“字符串不符合要求”。</p>
+<h3 id="ReferenceError-对象"><a href="#ReferenceError-对象" class="headerlink" title="ReferenceError 对象"></a>ReferenceError 对象</h3><p><code>ReferenceError</code>对象是引用一个不存在的变量时发生的错误。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 使用一个不存在的变量</span></span><br><span class="line">unknownVariable</span><br><span class="line"><span class="comment">// Uncaught ReferenceError: unknownVariable is not defined</span></span><br></pre></td></tr></table></figure>
+<p>另一种触发场景是，将一个值分配给无法分配的对象，比如对函数的运行结果或者<code>this</code>赋值。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 等号左侧不是变量</span></span><br><span class="line"><span class="built_in">console</span>.log() = <span class="number">1</span></span><br><span class="line"><span class="comment">// Uncaught ReferenceError: Invalid left-hand side in assignment</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// this 对象不能手动赋值</span></span><br><span class="line"><span class="keyword">this</span> = <span class="number">1</span></span><br><span class="line"><span class="comment">// ReferenceError: Invalid left-hand side in assignment</span></span><br></pre></td></tr></table></figure>
+<p>上面代码对函数<code>console.log</code>的运行结果和<code>this</code>赋值，结果都引发了<code>ReferenceError</code>错误。</p>
+<h3 id="RangeError-对象"><a href="#RangeError-对象" class="headerlink" title="RangeError 对象"></a>RangeError 对象</h3><p><code>RangeError</code>对象是一个值超出有效范围时发生的错误。主要有几种情况，一是数组长度为负数，二是<code>Number</code>对象的方法参数超出范围，以及函数堆栈超过最大值。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 数组长度不得为负数</span></span><br><span class="line"><span class="keyword">new</span> <span class="built_in">Array</span>(<span class="number">-1</span>)</span><br><span class="line"><span class="comment">// Uncaught RangeError: Invalid array length</span></span><br></pre></td></tr></table></figure>
+<h3 id="TypeError-对象"><a href="#TypeError-对象" class="headerlink" title="TypeError 对象"></a>TypeError 对象</h3><p><code>TypeError</code>对象是变量或参数不是预期类型时发生的错误。比如，对字符串、布尔值、数值等原始类型的值使用<code>new</code>命令，就会抛出这种错误，因为<code>new</code>命令的参数应该是一个构造函数。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">new</span> <span class="number">123</span></span><br><span class="line"><span class="comment">// Uncaught TypeError: number is not a func</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> obj = &#123;&#125;;</span><br><span class="line">obj.unknownMethod()</span><br><span class="line"><span class="comment">// Uncaught TypeError: obj.unknownMethod is not a function</span></span><br></pre></td></tr></table></figure>
+<p>上面代码的第二种情况，调用对象不存在的方法，也会抛出<code>TypeError</code>错误，因为<code>obj.unknownMethod</code>的值是<code>undefined</code>，而不是一个函数。</p>
+<h3 id="URIError-对象"><a href="#URIError-对象" class="headerlink" title="URIError 对象"></a>URIError 对象</h3><p><code>URIError</code>对象是 URI 相关函数的参数不正确时抛出的错误，主要涉及<code>encodeURI()</code>、<code>decodeURI()</code>、<code>encodeURIComponent()</code>、<code>decodeURIComponent()</code>、<code>escape()</code>和<code>unescape()</code>这六个函数。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">decodeURI</span>(<span class="string">'%2'</span>)</span><br><span class="line"><span class="comment">// URIError: URI malformed</span></span><br></pre></td></tr></table></figure>
+<h3 id="EvalError-对象"><a href="#EvalError-对象" class="headerlink" title="EvalError 对象"></a>EvalError 对象</h3><p><code>eval</code>函数没有被正确执行时，会抛出<code>EvalError</code>错误。该错误类型已经不再使用了，只是为了保证与以前代码兼容，才继续保留。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>以上这6种派生错误，连同原始的<code>Error</code>对象，都是构造函数。开发者可以使用它们，手动生成错误对象的实例。这些构造函数都接受一个函数，代表错误提示信息（message）。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> err1 = <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'出错了！'</span>);</span><br><span class="line"><span class="keyword">var</span> err2 = <span class="keyword">new</span> <span class="built_in">RangeError</span>(<span class="string">'出错了，变量超出有效范围！'</span>);</span><br><span class="line"><span class="keyword">var</span> err3 = <span class="keyword">new</span> <span class="built_in">TypeError</span>(<span class="string">'出错了，变量类型无效！'</span>);</span><br><span class="line"></span><br><span class="line">err1.message <span class="comment">// "出错了！"</span></span><br><span class="line">err2.message <span class="comment">// "出错了，变量超出有效范围！"</span></span><br><span class="line">err3.message <span class="comment">// "出错了，变量类型无效！"</span></span><br></pre></td></tr></table></figure>
+<h2 id="自定义错误"><a href="#自定义错误" class="headerlink" title="自定义错误"></a>自定义错误</h2><p>除了 JavaScript 原生提供的七种错误对象，还可以定义自己的错误对象。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">UserError</span>(<span class="params">message</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">this</span>.message = message || <span class="string">'默认信息'</span>;</span><br><span class="line">  <span class="keyword">this</span>.name = <span class="string">'UserError'</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">UserError.prototype = <span class="keyword">new</span> <span class="built_in">Error</span>();</span><br><span class="line">UserError.prototype.constructor = UserError;</span><br></pre></td></tr></table></figure>
+<p>上面代码自定义一个错误对象<code>UserError</code>，让它继承<code>Error</code>对象。然后，就可以生成这种自定义类型的错误了。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">new</span> UserError(<span class="string">'这是自定义的错误！'</span>);</span><br></pre></td></tr></table></figure>
+<h2 id="throw-语句"><a href="#throw-语句" class="headerlink" title="throw 语句"></a>throw 语句</h2><p><code>throw</code>语句的作用是手动中断程序执行，抛出一个错误。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (x &lt; <span class="number">0</span>) &#123;</span><br><span class="line">  <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'x 必须为正数'</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// Uncaught ReferenceError: x is not defined</span></span><br></pre></td></tr></table></figure>
+<p>上面代码中，如果变量<code>x</code>小于<code>0</code>，就手动抛出一个错误，告诉用户<code>x</code>的值不正确，整个程序就会在这里中断执行。可以看到，<code>throw</code>抛出的错误就是它的参数，这里是一个<code>Error</code>实例。</p>
+<p><code>throw</code>也可以抛出自定义错误。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">UserError</span>(<span class="params">message</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">this</span>.message = message || <span class="string">'默认信息'</span>;</span><br><span class="line">  <span class="keyword">this</span>.name = <span class="string">'UserError'</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">throw</span> <span class="keyword">new</span> UserError(<span class="string">'出错了！'</span>);</span><br><span class="line"><span class="comment">// Uncaught UserError &#123;message: "出错了！", name: "UserError"&#125;</span></span><br></pre></td></tr></table></figure>
+<p>上面代码中，<code>throw</code>抛出的是一个<code>UserError</code>实例。</p>
+<p>实际上，<code>throw</code>可以抛出任何类型的值。也就是说，它的参数可以是任何值。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 抛出一个字符串</span></span><br><span class="line"><span class="keyword">throw</span> <span class="string">'Error！'</span>;</span><br><span class="line"><span class="comment">// Uncaught Error！</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 抛出一个数值</span></span><br><span class="line"><span class="keyword">throw</span> <span class="number">42</span>;</span><br><span class="line"><span class="comment">// Uncaught 42</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 抛出一个布尔值</span></span><br><span class="line"><span class="keyword">throw</span> <span class="literal">true</span>;</span><br><span class="line"><span class="comment">// Uncaught true</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 抛出一个对象</span></span><br><span class="line"><span class="keyword">throw</span> &#123;</span><br><span class="line">  toString: <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="string">'Error!'</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="comment">// Uncaught &#123;toString: ƒ&#125;</span></span><br></pre></td></tr></table></figure>
+<p>对于 JavaScript 引擎来说，遇到<code>throw</code>语句，程序就中止了。引擎会接收到<code>throw</code>抛出的信息，可能是一个错误实例，也可能是其他类型的值。</p>
+<h2 id="try…catch-结构"><a href="#try…catch-结构" class="headerlink" title="try…catch 结构"></a>try…catch 结构</h2><p>一旦发生错误，程序就中止执行了。JavaScript 提供了<code>try...catch</code>结构，允许对错误进行处理，选择是否往下执行。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'出错了!'</span>);</span><br><span class="line">&#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(e.name + <span class="string">": "</span> + e.message);</span><br><span class="line">  <span class="built_in">console</span>.log(e.stack);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// Error: 出错了!</span></span><br><span class="line"><span class="comment">//   at &lt;anonymous&gt;:3:9</span></span><br><span class="line"><span class="comment">//   ...</span></span><br></pre></td></tr></table></figure>
+<p>上面代码中，<code>try</code>代码块抛出错误（上例用的是<code>throw</code>语句），JavaScript 引擎就立即把代码的执行，转到<code>catch</code>代码块，或者说错误被<code>catch</code>代码块捕获了。<code>catch</code>接受一个参数，表示<code>try</code>代码块抛出的值。</p>
+<p>如果你不确定某些代码是否会报错，就可以把它们放在<code>try...catch</code>代码块之中，便于进一步对错误进行处理。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  f();</span><br><span class="line">&#125; <span class="keyword">catch</span>(e) &#123;</span><br><span class="line">  <span class="comment">// 处理错误</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面代码中，如果函数<code>f</code>执行报错，就会进行<code>catch</code>代码块，接着对错误进行处理。</p>
+<p><code>catch</code>代码块捕获错误之后，程序不会中断，会按照正常流程继续执行下去。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  <span class="keyword">throw</span> <span class="string">"出错了"</span>;</span><br><span class="line">&#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="number">111</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">console</span>.log(<span class="number">222</span>);</span><br><span class="line"><span class="comment">// 111</span></span><br><span class="line"><span class="comment">// 222</span></span><br></pre></td></tr></table></figure>
+<p>上面代码中，<code>try</code>代码块抛出的错误，被<code>catch</code>代码块捕获后，程序会继续向下执行。</p>
+<p><code>catch</code>代码块之中，还可以再抛出错误，甚至使用嵌套的<code>try...catch</code>结构。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> n = <span class="number">100</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  <span class="keyword">throw</span> n;</span><br><span class="line">&#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">  <span class="keyword">if</span> (e &lt;= <span class="number">50</span>) &#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="keyword">throw</span> e;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// Uncaught 100</span></span><br></pre></td></tr></table></figure>
+<p>上面代码中，<code>catch</code>代码之中又抛出了一个错误。</p>
+<p>为了捕捉不同类型的错误，<code>catch</code>代码块之中可以加入判断语句。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  foo.bar();</span><br><span class="line">&#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">  <span class="keyword">if</span> (e <span class="keyword">instanceof</span> <span class="built_in">EvalError</span>) &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(e.name + <span class="string">": "</span> + e.message);</span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span> (e <span class="keyword">instanceof</span> <span class="built_in">RangeError</span>) &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(e.name + <span class="string">": "</span> + e.message);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面代码中，<code>catch</code>捕获错误之后，会判断错误类型（<code>EvalError</code>还是<code>RangeError</code>），进行不同的处理。</p>
+<h2 id="finally-代码块"><a href="#finally-代码块" class="headerlink" title="finally 代码块"></a>finally 代码块</h2><p><code>try...catch</code>结构允许在最后添加一个<code>finally</code>代码块，表示不管是否出现错误，都必需在最后运行的语句。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">cleansUp</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'出错了……'</span>);</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'此行不会执行'</span>);</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'完成清理工作'</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">cleansUp()</span><br><span class="line"><span class="comment">// 完成清理工作</span></span><br><span class="line"><span class="comment">// Error: 出错了……</span></span><br></pre></td></tr></table></figure>
+<p>上面代码中，由于没有<code>catch</code>语句块，所以错误没有捕获。执行<code>finally</code>代码块以后，程序就中断在错误抛出的地方。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">idle</span>(<span class="params">x</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(x);</span><br><span class="line">    <span class="keyword">return</span> <span class="string">'result'</span>;</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">"FINALLY"</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">idle(<span class="string">'hello'</span>)</span><br><span class="line"><span class="comment">// hello</span></span><br><span class="line"><span class="comment">// FINALLY</span></span><br><span class="line"><span class="comment">// "result"</span></span><br></pre></td></tr></table></figure>
+<p>上面代码说明，<code>try</code>代码块没有发生错误，而且里面还包括<code>return</code>语句，但是<code>finally</code>代码块依然会执行。注意，只有在其执行完毕后，才会显示<code>return</code>语句的值。</p>
+<p>下面的例子说明，<code>return</code>语句的执行是排在<code>finally</code>代码之前，只是等<code>finally</code>代码执行完毕后才返回。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> count = <span class="number">0</span>;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">countUp</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> count;</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    count++;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">countUp()</span><br><span class="line"><span class="comment">// 0</span></span><br><span class="line">count</span><br><span class="line"><span class="comment">// 1</span></span><br></pre></td></tr></table></figure>
+<p>上面代码说明，<code>return</code>语句的<code>count</code>的值，是在<code>finally</code>代码块运行之前就获取了。</p>
+<p>下面是<code>finally</code>代码块用法的典型场景。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">openFile();</span><br><span class="line"></span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  writeFile(Data);</span><br><span class="line">&#125; <span class="keyword">catch</span>(e) &#123;</span><br><span class="line">  handleError(e);</span><br><span class="line">&#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">  closeFile();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面代码首先打开一个文件，然后在<code>try</code>代码块中写入文件，如果没有发生错误，则运行<code>finally</code>代码块关闭文件；一旦发生错误，则先使用<code>catch</code>代码块处理错误，再使用<code>finally</code>代码块关闭文件。</p>
+<p>下面的例子充分反映了<code>try...catch...finally</code>这三者之间的执行顺序。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">f</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="number">0</span>);</span><br><span class="line">    <span class="keyword">throw</span> <span class="string">'bug'</span>;</span><br><span class="line">  &#125; <span class="keyword">catch</span>(e) &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="number">1</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>; <span class="comment">// 这句原本会延迟到 finally 代码块结束再执行</span></span><br><span class="line">    <span class="built_in">console</span>.log(<span class="number">2</span>); <span class="comment">// 不会运行</span></span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;    </span><br><span class="line">    <span class="built_in">console</span>.log(<span class="number">3</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>; <span class="comment">// 这句会覆盖掉前面那句 return</span></span><br><span class="line">    <span class="built_in">console</span>.log(<span class="number">4</span>); <span class="comment">// 不会运行</span></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="built_in">console</span>.log(<span class="number">5</span>); <span class="comment">// 不会运行</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> result = f();</span><br><span class="line"><span class="comment">// 0</span></span><br><span class="line"><span class="comment">// 1</span></span><br><span class="line"><span class="comment">// 3</span></span><br><span class="line"></span><br><span class="line">result</span><br><span class="line"><span class="comment">// false</span></span><br></pre></td></tr></table></figure>
+<p>上面代码中，<code>catch</code>代码块结束执行之前，会先执行<code>finally</code>代码块。</p>
+<p><code>catch</code>代码块之中，触发转入<code>finally</code>代码块的标志，不仅有<code>return</code>语句，还有<code>throw</code>语句。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">f</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="string">'出错了！'</span>;</span><br><span class="line">  &#125; <span class="keyword">catch</span>(e) &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'捕捉到内部错误'</span>);</span><br><span class="line">    <span class="keyword">throw</span> e; <span class="comment">// 这句原本会等到finally结束再执行</span></span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>; <span class="comment">// 直接返回</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  f();</span><br><span class="line">&#125; <span class="keyword">catch</span>(e) &#123;</span><br><span class="line">  <span class="comment">// 此处不会执行</span></span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'caught outer "bogus"'</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//  捕捉到内部错误</span></span><br></pre></td></tr></table></figure>
+<p>上面代码中，进入<code>catch</code>代码块之后，一遇到<code>throw</code>语句，就会去执行<code>finally</code>代码块，其中有<code>return false</code>语句，因此就直接返回了，不再会回去执行<code>catch</code>代码块剩下的部分了。</p>
+<p>原文：<a href="http://javascript.ruanyifeng.com/grammar/error.html" target="_blank" rel="noopener">http://javascript.ruanyifeng.com/grammar/error.html</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2016-03-12T06:45:23.000Z"><a href="/2016/03/12/javascript/JavaScript中的作用域和上下文/">2016-03-12</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2016/03/12/javascript/JavaScript中的作用域和上下文/">JavaScript中的作用域和上下文</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>JavaScript对于作用域（Scope）和上下文（Context）的实现是这门语言的一个非常独到的地方，部分归功于其独特的灵活性。 函数可以接收不同的的上下文和作用域。这些概念为JavaScript中的很多强大的设计模式提供了坚实的基础。 然而这也概念也非常容易给开发人员带来困惑。为此，本文将全面的剖析这些概念，并阐述不同的设计模式是如何利用它们的。</p>
+<h3 id="上下文（Context）和作用域（Scope）"><a href="#上下文（Context）和作用域（Scope）" class="headerlink" title="上下文（Context）和作用域（Scope）"></a>上下文（Context）和作用域（Scope）</h3><p>首先需要知道的是，上下文和作用域是两个完全不同的概念。多年来，我发现很多开发者会混淆这两个概念（包括我自己）， 错误的将两个概念混淆了。平心而论，这些年来很多术语都被混乱的使用了。</p>
+<p>函数的每次调用都有与之紧密相关的作用域和上下文。从根本上来说，作用域是基于函数的，而上下文是基于对象的。 换句话说，作用域涉及到所被调用函数中的变量访问，并且不同的调用场景是不一样的。上下文始终是this关键字的值， 它是拥有（控制）当前所执行代码的对象的引用。</p>
+<h3 id="变量作用域"><a href="#变量作用域" class="headerlink" title="变量作用域"></a>变量作用域</h3><p>一个变量可以被定义在局部或者全局作用域中，这建立了在运行时（runtime）期间变量的访问性的不同作用域范围。 任何被定义的全局变量，意味着它需要在函数体的外部被声明，并且存活于整个运行时（runtime），并且在任何作用域中都可以被访问到。 在ES6之前，局部变量只能存在于函数体中，并且函数的每次调用它们都拥有不同的作用域范围。 局部变量只能在其被调用期的作用域范围内被赋值、检索、操纵。</p>
+<p>需要注意，在ES6之前，JavaScript不支持块级作用域，这意味着在if语句、switch语句、for循环、while循环中无法支持块级作用域。 也就是说，ES6之前的JavaScript并不能构建类似于Java中的那样的块级作用域（变量不能在语句块外被访问到）。但是， 从ES6开始，你可以通过let关键字来定义变量，它修正了var关键字的缺点，能够让你像Java语言那样定义变量，并且支持块级作用域。看两个例子：</p>
+<p>ES6之前，我们使用var关键字定义变量：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">function func() &#123;</span><br><span class="line">  if (true) &#123;</span><br><span class="line">    var tmp = 123;</span><br><span class="line">  &#125;</span><br><span class="line">  console.log(tmp); // 123</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>之所以能够访问，是因为var关键字声明的变量有一个变量提升的过程。而在ES6场景，推荐使用let关键字定义变量：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">function func() &#123;</span><br><span class="line">  if (true) &#123;</span><br><span class="line">    let tmp = 123;</span><br><span class="line">  &#125;</span><br><span class="line">  console.log(tmp); // ReferenceError: tmp is not defined</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这种方式，能够避免很多错误。</p>
+<h3 id="什么是this上下文"><a href="#什么是this上下文" class="headerlink" title="什么是this上下文"></a>什么是this上下文</h3><p>上下文通常取决于函数是如何被调用的。当一个函数被作为对象中的一个方法被调用的时候，this被设置为调用该方法的对象上：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var obj = &#123;</span><br><span class="line">    foo: function()&#123;</span><br><span class="line">        alert(this === obj);    </span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">obj.foo(); // true</span><br></pre></td></tr></table></figure></p>
+<p>这个准则也适用于当调用函数时使用new操作符来创建对象的实例的情况下。在这种情况下，在函数的作用域内部this的值被设置为新创建的实例：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">function foo()&#123;</span><br><span class="line">    alert(this);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">new foo() // foo</span><br><span class="line">foo() // window</span><br></pre></td></tr></table></figure></p>
+<p>当调用一个为绑定函数时，this默认情况下是全局上下文，在浏览器中它指向window对象。需要注意的是，ES5引入了严格模式的概念， 如果启用了严格模式，此时上下文默认为undefined。</p>
+<h3 id="执行环境（execution-context）"><a href="#执行环境（execution-context）" class="headerlink" title="执行环境（execution context）"></a>执行环境（execution context）</h3><p>JavaScript是一个单线程语言，意味着同一时间只能执行一个任务。当JavaScript解释器初始化执行代码时， 它首先默认进入全局执行环境（execution context），从此刻开始，函数的每次调用都会创建一个新的执行环境。</p>
+<p>这里会经常引起新手的困惑，这里提到了一个新的术语——执行环境（execution context），它定义了变量或函数有权访问的其他数据，决定了它们各自的行为。 它更偏向于作用域的作用，而不是我们前面讨论的上下文（Context）。请务必仔细的区分执行环境和上下文这两个概念（注：英文容易造成混淆）。 说实话，这是个非常糟糕的命名约定，但是它是ECMAScript规范制定的，你还是遵守吧。</p>
+<p>每个函数都有自己的执行环境。当执行流进入一个函数时，函数的环境就会被推入一个环境栈中（execution stack）。在函数执行完后，栈将其环境弹出， 把控制权返回给之前的执行环境。ECMAScript程序中的执行流正是由这个便利的机制控制着。</p>
+<p>执行环境可以分为创建和执行两个阶段。在创建阶段，解析器首先会创建一个变量对象（variable object，也称为活动对象 activation object）， 它由定义在执行环境中的变量、函数声明、和参数组成。在这个阶段，作用域链会被初始化，this的值也会被最终确定。 在执行阶段，代码被解释执行。</p>
+<p>每个执行环境都有一个与之关联的变量对象（variable object），环境中定义的所有变量和函数都保存在这个对象中。 需要知道，我们无法手动访问这个对象，只有解析器才能访问它。</p>
+<h3 id="作用域链（The-Scope-Chain）"><a href="#作用域链（The-Scope-Chain）" class="headerlink" title="作用域链（The Scope Chain）"></a>作用域链（The Scope Chain）</h3><p>当代码在一个环境中执行时，会创建变量对象的一个作用域链（scope chain）。作用域链的用途是保证对执行环境有权访问的所有变量和函数的有序访问。 作用域链包含了在环境栈中的每个执行环境对应的变量对象。通过作用域链，可以决定变量的访问和标识符的解析。 注意，全局执行环境的变量对象始终都是作用域链的最后一个对象。我们来看一个例子：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">var color = &quot;blue&quot;;</span><br><span class="line"></span><br><span class="line">function changeColor()&#123;</span><br><span class="line">  var anotherColor = &quot;red&quot;;</span><br><span class="line"></span><br><span class="line">  function swapColors()&#123;</span><br><span class="line">    var tempColor = anotherColor;</span><br><span class="line">    anotherColor = color;</span><br><span class="line">    color = tempColor;</span><br><span class="line"></span><br><span class="line">    // 这里可以访问color, anotherColor, 和 tempColor</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  // 这里可以访问color 和 anotherColor，但是不能访问 tempColor</span><br><span class="line">  swapColors();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">changeColor();</span><br><span class="line"></span><br><span class="line">// 这里只能访问color</span><br><span class="line">console.log(&quot;Color is now &quot; + color);</span><br></pre></td></tr></table></figure>
+<p>上述代码一共包括三个执行环境：全局环境、changeColor()的局部环境、swapColors()的局部环境。 上述程序的作用域链如下图所示：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/imgscope-chain.png" alt=""></p>
+<p>从上图发现。内部环境可以通过作用域链访问所有的外部环境，但是外部环境不能访问内部环境中的任何变量和函数。 这些环境之间的联系是线性的、有次序的。</p>
+<p>对于标识符解析（变量名或函数名搜索）是沿着作用域链一级一级地搜索标识符的过程。搜索过程始终从作用域链的前端开始， 然后逐级地向后（全局执行环境）回溯，直到找到标识符为止。</p>
+<h3 id="闭包"><a href="#闭包" class="headerlink" title="闭包"></a>闭包</h3><p>闭包是指有权访问另一函数作用域中的变量的函数。换句话说，在函数内定义一个嵌套的函数时，就构成了一个闭包， 它允许嵌套函数访问外层函数的变量。通过返回嵌套函数，允许你维护对外部函数中局部变量、参数、和内函数声明的访问。 这种封装允许你在外部作用域中隐藏和保护执行环境，并且暴露公共接口，进而通过公共接口执行进一步的操作。可以看个简单的例子：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">function foo()&#123;</span><br><span class="line">    var localVariable = &apos;private variable&apos;;</span><br><span class="line">    return function bar()&#123;</span><br><span class="line">        return localVariable;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var getLocalVariable = foo();</span><br><span class="line">getLocalVariable() // private variable</span><br></pre></td></tr></table></figure>
+<p>模块模式最流行的闭包类型之一，它允许你模拟公共的、私有的、和特权成员：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">var Module = (function()&#123;</span><br><span class="line">    var privateProperty = &apos;foo&apos;;</span><br><span class="line"></span><br><span class="line">    function privateMethod(args)&#123;</span><br><span class="line">        // do something</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    return &#123;</span><br><span class="line"></span><br><span class="line">        publicProperty: &apos;&apos;,</span><br><span class="line"></span><br><span class="line">        publicMethod: function(args)&#123;</span><br><span class="line">            // do something</span><br><span class="line">        &#125;,</span><br><span class="line"></span><br><span class="line">        privilegedMethod: function(args)&#123;</span><br><span class="line">            return privateMethod(args);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;)();</span><br></pre></td></tr></table></figure>
+<p>模块类似于一个单例对象。由于在上面的代码中我们利用了(function() { … })();的匿名函数形式，因此当编译器解析它的时候会立即执行。 在闭包的执行上下文的外部唯一可以访问的对象是位于返回对象中的公共方法和属性。然而，因为执行上下文被保存的缘故， 所有的私有属性和方法将一直存在于应用的整个生命周期，这意味着我们只有通过公共方法才可以与它们交互。</p>
+<p>另一种类型的闭包被称为立即执行的函数表达式（IIFE）。其实它很简单，只不过是一个在全局环境中自执行的匿名函数而已：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">(function(window)&#123;</span><br><span class="line">          </span><br><span class="line">    var foo, bar;</span><br><span class="line"></span><br><span class="line">    function private()&#123;</span><br><span class="line">        // do something</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    window.Module = &#123;</span><br><span class="line"></span><br><span class="line">        public: function()&#123;</span><br><span class="line">            // do something </span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">&#125;)(this);</span><br></pre></td></tr></table></figure>
+<p>对于保护全局命名空间免受变量污染而言，这种表达式非常有用，它通过构建函数作用域的形式将变量与全局命名空间隔离， 并通过闭包的形式让它们存在于整个运行时（runtime）。在很多的应用和框架中，这种封装源代码的方式用处非常的流行， 通常都是通过暴露一个单一的全局接口的方式与外部进行交互。</p>
+<h3 id="Call和Apply"><a href="#Call和Apply" class="headerlink" title="Call和Apply"></a>Call和Apply</h3><p>这两个方法内建在所有的函数中（它们是Function对象的原型方法），允许你在自定义上下文中执行函数。 不同点在于，call函数需要参数列表，而apply函数需要你提供一个参数数组。如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">var o = &#123;&#125;;</span><br><span class="line"></span><br><span class="line">function f(a, b) &#123;</span><br><span class="line">  return a + b;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">// 将函数f作为o的方法，实际上就是重新设置函数f的上下文</span><br><span class="line">f.call(o, 1, 2);    // 3</span><br><span class="line">f.apply(o, [1, 2]); // 3</span><br></pre></td></tr></table></figure></p>
+<p>两个结果是相同的，函数f在对象o的上下文中被调用，并提供了两个相同的参数1和2。</p>
+<p>在ES5中引入了Function.prototype.bind方法，用于控制函数的执行上下文，它会返回一个新的函数， 并且这个新函数会被永久的绑定到bind方法的第一个参数所指定的对象上，无论该函数被如何使用。 它通过闭包将函数引导到正确的上下文中。对于低版本浏览器，我们可以简单的对它进行实现如下（polyfill）：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">if(!(&apos;bind&apos; in Function.prototype))&#123;</span><br><span class="line">    Function.prototype.bind = function()&#123;</span><br><span class="line">        var fn = this, </span><br><span class="line">            context = arguments[0], </span><br><span class="line">            args = Array.prototype.slice.call(arguments, 1);</span><br><span class="line">        return function()&#123;</span><br><span class="line">            return fn.apply(context, args.concat(arguments));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>bind()方法通常被用在上下文丢失的场景下，例如面向对象和事件处理。之所以要这么做， 是因为节点的addEventListener方法总是为事件处理器所绑定的节点的上下文中执行回调函数， 这就是它应该表现的那样。但是，如果你想要使用高级的面向对象技术，或需要你的回调函数成为某个方法的实例， 你将需要手动调整上下文。这就是bind方法所带来的便利之处：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">function MyClass()&#123;</span><br><span class="line">    this.element = document.createElement(&apos;div&apos;);</span><br><span class="line">    this.element.addEventListener(&apos;click&apos;, this.onClick.bind(this), false);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">MyClass.prototype.onClick = function(e)&#123;</span><br><span class="line">    // do something</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>回顾上面bind方法的源代码，你可能会注意到有两次调用涉及到了Array的slice方法：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Array.prototype.slice.call(arguments, 1);</span><br><span class="line">[].slice.call(arguments);</span><br></pre></td></tr></table></figure></p>
+<p>我们知道，arguments对象并不是一个真正的数组，而是一个类数组对象，虽然具有length属性，并且值也能够被索引， 但是它们不支持原生的数组方法，例如slice和push。但是，由于它们具有和数组类似的行为，数组的方法能够被调用和劫持， 因此我们可以通过类似于上面代码的方式达到这个目的，其核心是利用call方法。</p>
+<p>这种调用其他对象方法的技术也可以被应用到面向对象中，我们可以在JavaScript中模拟经典的继承方式：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">MyClass.prototype.init = function()&#123;</span><br><span class="line">    // call the superclass init method in the context of the &quot;MyClass&quot; instance</span><br><span class="line">    MySuperClass.prototype.init.apply(this, arguments);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>也就是利用call或apply在子类（MyClass）的实例中调用超类（MySuperClass）的方法。</p>
+<h3 id="ES6中的箭头函数"><a href="#ES6中的箭头函数" class="headerlink" title="ES6中的箭头函数"></a>ES6中的箭头函数</h3><p>ES6中的箭头函数可以作为Function.prototype.bind()的替代品。和普通函数不同，箭头函数没有它自己的this值， 它的this值继承自外围作用域。</p>
+<p>对于普通函数而言，它总会自动接收一个this值，this的指向取决于它调用的方式。我们来看一个例子：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">var obj = &#123;</span><br><span class="line">  </span><br><span class="line">  // ...</span><br><span class="line">  </span><br><span class="line">  addAll: function (pieces) &#123;</span><br><span class="line">    var self = this;</span><br><span class="line">    _.each(pieces, function (piece) &#123;</span><br><span class="line">      self.add(piece);</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;,</span><br><span class="line">  </span><br><span class="line">  // ...</span><br><span class="line">  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>在上面的例子中，最直接的想法是直接使用this.add(piece)，但不幸的是，在JavaScript中你不能这么做， 因为each的回调函数并未从外层继承this值。在该回调函数中，this的值为window或undefined， 因此，我们使用临时变量self来将外部的this值导入内部。我们还有两种方法解决这个问题：</p>
+<p>使用ES5中的bind()方法<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">var obj = &#123;</span><br><span class="line">  </span><br><span class="line">  // ...</span><br><span class="line">  </span><br><span class="line">  addAll: function (pieces) &#123;</span><br><span class="line">    _.each(pieces, function (piece) &#123;</span><br><span class="line">      this.add(piece);</span><br><span class="line">    &#125;.bind(this));</span><br><span class="line">  &#125;,</span><br><span class="line">  </span><br><span class="line">  // ...</span><br><span class="line">  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>使用ES6中的箭头函数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">var obj = &#123;</span><br><span class="line">  </span><br><span class="line">  // ...</span><br><span class="line">  </span><br><span class="line">  addAll: function (pieces) &#123;</span><br><span class="line">    _.each(pieces, piece =&gt; this.add(piece));</span><br><span class="line">  &#125;,</span><br><span class="line">  </span><br><span class="line">  // ...</span><br><span class="line">  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在ES6版本中，addAll方法从它的调用者处获得了this值，内部函数是一个箭头函数，所以它集成了外部作用域的this值。</p>
+<p>注意：对回调函数而言，在浏览器中，回调函数中的this为window或undefined（严格模式），而在Node.js中， 回调函数的this为global。实例代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">function hello(a, callback) &#123;</span><br><span class="line">  callback(a);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">hello(&apos;weiwei&apos;, function(a) &#123;</span><br><span class="line">  console.log(this === global); // true</span><br><span class="line">  console.log(a); // weiwei</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><p>在你学习高级的设计模式之前，理解这些概念非常的重要，因为作用域和上下文在现代JavaScript中扮演着的最基本的角色。 无论我们谈论的是闭包、面向对象、继承、或者是各种原生实现，上下文和作用域都在其中扮演着至关重要的角色。 如果你的目标是精通JavaScript语言，并且深入的理解它的各个组成，那么作用域和上下文便是你的起点。</p>
+<h3 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h3><p><a href="http://ryanmorr.com/understanding-scope-and-context-in-javascript/" target="_blank" rel="noopener">Understanding Scope and Context in JavaScript</a><br><a href="http://www.2ality.com/2016/02/arrow-functions-vs-bind.html" target="_blank" rel="noopener">Arrow functions vs. bind()</a><br><a href="http://www.html-js.com/article/Sexy-Javascript-understand-the-callback-function-with-the-use-of-Javascript-in" target="_blank" rel="noopener">理解与使用Javascript中的回调函数</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2016-03-09T06:45:23.000Z"><a href="/2016/03/09/javascript/Javascript面对对象/">2016-03-09</a></time>
       
       
@@ -630,175 +821,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2014-06-29T11:45:23.000Z"><a href="/2014/06/29/Git/Git(7)自定义Git/">2014-06-29</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2014/06/29/Git/Git(7)自定义Git/">七.自定义Git</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-自定义Git"><a href="#1-自定义Git" class="headerlink" title="1.自定义Git"></a>1.自定义Git</h3><hr>
-<p>在安装Git一节中，我们已经配置了user.name和user.email，实际上，Git还有很多可配置项。</p>
-<p>比如，让Git显示颜色，会让命令输出看起来更醒目：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git config --global color.ui true</span><br></pre></td></tr></table></figure></p>
-<p>这样，Git会适当地显示不同的颜色，比如git status命令：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgitColor01.png" alt=""></p>
-<p>文件名就会标上颜色。</p>
-<h3 id="2-忽略特殊文件"><a href="#2-忽略特殊文件" class="headerlink" title="2.忽略特殊文件"></a>2.忽略特殊文件</h3><hr>
-<p>有些时候我们需要把一些文件例如：保存了数据库密码的配置文件放在Git目录下，但又不提交，那么需要我们在Git工作区的根目录下创建一个特殊的.gitignore文件，然后把要忽略的文件名填进去，Git就会自动忽略这些文件。</p>
-<p>　　不需要从头写.gitignore文件，GitHub已经为我们准备了各种配置文件，只需要组合一下就可以使用了。所有配置文件可以直接在线浏览：<a href="https://github.com/github/gitignore" target="_blank" rel="noopener">https://github.com/github/gitignore</a></p>
-<p>忽略文件的原则是：</p>
-<ul>
-<li>忽略操作系统自动生成的文件，比如缩略图等；</li>
-<li>忽略编译生成的中间文件、可执行文件等，也就是如果一个文件是通过另一个文件自动生成的，那自动生成的文件就没必要放进版本库，比如Java编译产生的.class文件；</li>
-<li>忽略你自己的带有敏感信息的配置文件，比如存放口令的配置文件。</li>
-</ul>
-<h3 id="3-配置别名"><a href="#3-配置别名" class="headerlink" title="3.配置别名"></a>3.配置别名</h3><hr>
-<p>配置别名其实就是把命令重新设置简单些，方便输入，例如：如果输入git st就表示git status。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git config --global alias.st status</span><br></pre></td></tr></table></figure></p>
-<p>现在都用co表示checkout，ci表示commit，br表示branch：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git config --global alias.co checkout</span><br><span class="line">$ git config --global alias.ci commit</span><br><span class="line">$ git config --global alias.br branch</span><br></pre></td></tr></table></figure></p>
-<p>–global参数是全局参数，也就是这些命令在这台电脑的所有Git仓库下都有用。</p>
-<h3 id="4-配置文件"><a href="#4-配置文件" class="headerlink" title="4.配置文件"></a>4.配置文件</h3><hr>
-<p>配置Git的时候，加上–global是针对当前用户起作用的，如果不加，那只针对当前的仓库起作用。</p>
-<p>配置文件放哪了？每个仓库的Git配置文件都放在.git/config文件中：</p>
-<p>$ cat .git/config<br>[core]<br>    repositoryformatversion = 0<br>    filemode = true<br>    bare = false<br>    logallrefupdates = true<br>    ignorecase = true<br>    precomposeunicode = true<br>[remote “origin”]<br>    url = <a href="mailto:git@github.com" target="_blank" rel="noopener">git@github.com</a>:michaelliao/learngit.git<br>    fetch = +refs/heads/*:refs/remotes/origin/*<br>[branch “master”]<br>    remote = origin<br>    merge = refs/heads/master<br>[alias]<br>    last = log -1</p>
-<p>别名就在[alias]后面，要删除别名，直接把对应的行删掉即可。</p>
-<p>而当前用户的Git配置文件放在用户主目录下的一个隐藏文件.gitconfig中：</p>
-<p>$ cat .gitconfig<br>[alias]<br>    co = checkout<br>    ci = commit<br>    br = branch<br>    st = status<br>[user]<br>    name = Your Name<br>    email = <a href="mailto:your@email.com" target="_blank" rel="noopener">your@email.com</a></p>
-<p>配置别名也可以直接修改这个文件，如果改错了，可以删掉文件重新通过命令配置。</p>
-<h3 id="5-搭建Git服务器"><a href="#5-搭建Git服务器" class="headerlink" title="5.搭建Git服务器"></a>5.搭建Git服务器</h3><hr>
-<p>搭建Git服务器需要准备一台运行Linux的机器，强烈推荐用Ubuntu或Debian，这样，通过几条简单的apt命令就可以完成安装。</p>
-<p>假设你已经有sudo权限的用户账号，下面，正式开始安装。</p>
-<p><strong>第一步</strong>，安装git：</p>
-<pre><code>$ sudo apt-get install git
-</code></pre><p><strong>第二步</strong>，创建一个git用户，用来运行git服务：</p>
-<pre><code>$ sudo adduser git
-</code></pre><p><strong>第三步</strong>，创建证书登录：</p>
-<p>收集所有需要登录的用户的公钥，就是他们自己的id_rsa.pub文件，把所有公钥导入到/home/git/.ssh/authorized_keys文件里，一行一个。</p>
-<p><strong>第四步</strong>，初始化Git仓库：</p>
-<p>先选定一个目录作为Git仓库，假定是/srv/sample.git，在/srv目录下输入命令：</p>
-<pre><code>$ sudo git init --bare sample.git
-</code></pre><p>　　Git就会创建一个裸仓库，裸仓库没有工作区，因为服务器上的Git仓库纯粹是为了共享，所以不让用户直接登录到服务器上去改工作区，并且服务器上的Git仓库通常都以.git结尾。然后，把owner改为git：</p>
-<pre><code>$ sudo chown -R git:git sample.git
-</code></pre><p><strong>第五步</strong>，禁用shell登录：</p>
-<p>出于安全考虑，第二步创建的git用户不允许登录shell，这可以通过编辑/etc/passwd文件完成。找到类似下面的一行：</p>
-<pre><code>git:x:1001:1001:,,,:/home/git:/bin/bash
-</code></pre><p>改为：</p>
-<pre><code>git:x:1001:1001:,,,:/home/git:/usr/bin/git-shell
-</code></pre><p>这样，git用户可以正常通过ssh使用git，但无法登录shell，因为我们为git用户指定的git-shell每次一登录就自动退出。</p>
-<p><strong>第六步</strong>，克隆远程仓库：</p>
-<p>现在，可以通过git clone命令克隆远程仓库了，在各自的电脑上运行：</p>
-<pre><code>$ git clone git@server:/srv/sample.git
-Cloning into &apos;sample&apos;...
-warning: You appear to have cloned an empty repository.
-</code></pre><h3 id="6-管理公钥和权限"><a href="#6-管理公钥和权限" class="headerlink" title="6.管理公钥和权限"></a>6.管理公钥和权限</h3><hr>
-<h4 id="管理公钥"><a href="#管理公钥" class="headerlink" title="管理公钥"></a>管理公钥</h4><p>　　如果团队很小，把每个人的公钥收集起来放到服务器的/home/git/.ssh/authorized_keys文件里就是可行的。如果团队有几百号人，就没法这么玩了，这时，可以用Gitosis来管理公钥。</p>
-<h4 id="管理权限"><a href="#管理权限" class="headerlink" title="管理权限"></a>管理权限</h4><p>　　有很多不但视源代码如生命，而且视员工为窃贼的公司，会在版本控制系统里设置一套完善的权限控制，每个人是否有读写权限会精确到每个分支甚至每个目录下。因为Git是为Linux源代码托管而开发的，所以Git也继承了开源社区的精神，不支持权限控制。不过，因为Git支持钩子（hook），所以，可以在服务器端编写一系列脚本来控制提交等操作，达到权限控制的目的。Gitolite就是这个工具。</p>
-<p>这里我们也不介绍Gitolite了，不要把有限的生命浪费到权限斗争中。</p>
-<p>主要两点：</p>
-<ul>
-<li>要方便管理公钥，用Gitosis；</li>
-<li>要像SVN那样变态地控制权限，用Gitolite。</li>
-</ul>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2014-06-27T09:45:23.000Z"><a href="/2014/06/27/Git/Git(6)标签管理/">2014-06-27</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2014/06/27/Git/Git(6)标签管理/">六.标签管理</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-标签的简介"><a href="#1-标签的简介" class="headerlink" title="1.标签的简介"></a>1.标签的简介</h3><hr>
-<p>本节主要记录的Git标签的作用、标签的多种创建方式，以及标签的删除，与推送，和使用GitHub的Fork参与别人的项目。</p>
-<p><strong>标签的作用</strong><br>　　发布版本时，通常先在版本库中打一个标签，这样，就唯一确定了打标签时刻的版本。无论什么时候，取某个标签的版本，就是把那个打标签的时刻的历史版本取出来。所以，标签也是版本库的一个快照。Git的标签虽然是版本库的快照，但其实它就是指向某个commit的指针（跟分支很像，但是分支可以移动，标签不能移动），所以，创建和删除标签都是瞬间完成的。
-　　</p>
-<h3 id="2-创建标签"><a href="#2-创建标签" class="headerlink" title="2.创建标签"></a>2.创建标签</h3><hr>
-<p>在Git中打标签非常简单，首先，切换到需要打标签的分支上：</p>
-<p>$ git branch<br>*dev<br>  master<br>$ git checkout master<br>Switched to branch ‘master’<br>然后，敲命令git tag <name>就可以打一个新标签：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git tag v1.0</span><br></pre></td></tr></table></figure></name></p>
-<p>　　默认标签是打在最新提交的commit上的。还可以对历史提交打上标签，只要找到历史提交的commit id，然后打上就可以了，例如要对add merge这次提交打标签，它对应的commit id是6224937，输入命令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git tag v0.9 6224937</span><br></pre></td></tr></table></figure></p>
-<p>　　还可以创建带有说明的标签，用-a指定标签名，-m指定说明文字：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git tag -a v0.1 -m &quot;version 0.1 released&quot; 3628164</span><br></pre></td></tr></table></figure></p>
-<p>　　用命令git show 可以看到说明文字：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ git show v0.1</span><br><span class="line">tag v0.1</span><br><span class="line">Tagger: hubwiz &lt;hubwiz@163.com&gt;</span><br><span class="line">Date:   Mon Aug 26 07:28:11 2015 +0800</span><br><span class="line">version 0.1 released</span><br></pre></td></tr></table></figure></p>
-<p>　　签名采用PGP签名，因此，必须首先安装gpg（GnuPG），如果没有找到gpg，或者没有gpg密钥对，就会报错：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">gpg: signing failed: secret key not available</span><br><span class="line">error: gpg failed to sign the data</span><br><span class="line">error: unable to sign the tag</span><br></pre></td></tr></table></figure></p>
-<p>　　如果报错，请参考GnuPG帮助文档配置Key。</p>
-<ul>
-<li>命令git tag <name>用于新建一个标签，默认为HEAD，也可以指定一个commit id；</name></li>
-<li>git tag -a <tagname> -m “blablabla…”可以指定标签信息；</tagname></li>
-<li>git tag -s <tagname> -m “blablabla…”可以用PGP签名标签；</tagname></li>
-<li>命令git tag可以查看所有标签。</li>
-</ul>
-<h3 id="3-操作标签"><a href="#3-操作标签" class="headerlink" title="3.操作标签"></a>3.操作标签</h3><hr>
-<p>如果标签打错了，也可以删除：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git tag -d v0.1</span><br><span class="line">Deleted tag &apos;v0.1&apos; (was e078af9)</span><br></pre></td></tr></table></figure></p>
-<p>因为创建的标签都只存储在本地，不会自动推送到远程。所以，打错的标签可以在本地安全删除。</p>
-<p>如果要推送某个标签到远程，使用命令it push origin <tagname>:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ git push origin v1.0</span><br><span class="line">Total 0 (delta 0), reused 0 (delta 0)</span><br><span class="line">To git@github.com:michaelliao/learngit.git</span><br><span class="line"> * [new tag]         v1.0 -&gt; v1.0</span><br></pre></td></tr></table></figure></tagname></p>
-<p>或者，一次性推送全部尚未推送到远程的本地标签：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ git push origin --tags</span><br><span class="line">Counting objects: 1, done.</span><br><span class="line">Writing objects: 100% (1/1), 554 bytes, done.</span><br><span class="line">Total 1 (delta 0), reused 0 (delta 0)</span><br><span class="line">To git@github.com:michaelliao/learngit.git</span><br><span class="line">* [new tag]         v0.2 -&gt; v0.2</span><br><span class="line">* [new tag]         v0.9 -&gt; v0.9</span><br></pre></td></tr></table></figure></p>
-<p>如果标签已经推送到远程，要删除远程标签就麻烦一点，先从本地删除：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git tag -d v0.9</span><br><span class="line">Deleted tag &apos;v0.9&apos; (was 6224937)</span><br></pre></td></tr></table></figure></p>
-<p>然后，从远程删除。删除命令也是push，但是格式如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git push origin :refs/tags/v0.9</span><br><span class="line">To git@github.com:michaelliao/learngit.git</span><br><span class="line"> - [deleted]         v0.9</span><br></pre></td></tr></table></figure></p>
-<p>要看看是否真的从远程库删除了标签，可以登陆GitHub查看。</p>
-<p>本节知识点主要学习点：</p>
-<ul>
-<li>git push origin <tagname>可以推送一个本地标签；</tagname></li>
-<li>git push origin –tags可以推送全部未推送过的本地标签；</li>
-<li>git tag -d <tagname>可以删除一个本地标签；</tagname></li>
-<li>git push origin :refs/tags/<tagname>可以删除一个远程标签。</tagname></li>
-</ul>
-<h3 id="4-GitHub的使用"><a href="#4-GitHub的使用" class="headerlink" title="4.GitHub的使用"></a>4.GitHub的使用</h3><hr>
-<p>GitHub不仅是免费的远程仓库，个人的开源项目，可以放到GitHub上，而且GitHub还是一个开源协作社区，通过GitHub，既可以让别人参与你的开源项目，也可以参与别人的开源项目。</p>
-<p>　　在GitHub上，利用Git极其强大的克隆和分支功能，人们可以自由参与各种开源项目。比如人气极高的bootstrap项目，这是一个非常强大的CSS框架，在它的项目主页，点“Fork”就在自己的账号下克隆了一个bootstrap仓库，然后，从自己的账号下clone。一定要从自己的账号下clone仓库，这样你才能推送修改。如果从bootstrap的作者的仓库地址<a href="mailto:git@github.com" target="_blank" rel="noopener">git@github.com</a>:twbs/bootstrap.git克隆，因为没有权限，你将不能推送修改。</p>
-<p>　　Bootstrap的官方仓库twbs/bootstrap、你在GitHub上克隆的仓库my/bootstrap，以及你自己克隆到本地电脑的仓库，他们的关系就像下图显示的那样：<br>　　<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbootstrap.png" alt=""></p>
-<p>如果你希望bootstrap的官方库能接受你的修改，你就可以在GitHub上发起一个pull request。</p>
-<p>本节主要内容：</p>
-<ul>
-<li>在GitHub上，可以任意Fork开源仓库；</li>
-<li>自己拥有Fork后的仓库的读写权限；</li>
-<li>可以推送pull request给官方仓库来贡献代码。</li>
-</ul>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -848,7 +870,9 @@ warning: You appear to have cloned an empty repository.
   
     <li><a href="/tags/shell/">shell</a><small>1</small></li>
   
-    <li><a href="/tags/存储/">存储</a><small>3</small></li>
+    <li><a href="/tags/存储/">存储</a><small>2</small></li>
+  
+    <li><a href="/tags/安全/">安全</a><small>3</small></li>
   
     <li><a href="/tags/异步编程/">异步编程</a><small>3</small></li>
   
