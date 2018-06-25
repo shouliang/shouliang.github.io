@@ -53,76 +53,6 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2014-05-07T07:45:23.000Z"><a href="/2014/05/07/express/express(2)示例准备登陆/">2014-05-07</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2014/05/07/express/express(2)示例准备登陆/">二.准备登陆</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-安装模板"><a href="#1-安装模板" class="headerlink" title="1.安装模板"></a>1.安装模板</h3><hr>
-<p>我们要使用express框架实现一个简单的用户登陆功能，先准备一下相关资源。</p>
-<p>在nodejs中使用express框架，它默认的是ejs和jade渲染模板，以ejs模板为例，讲述模板渲染网页模板的基础功能。</p>
-<p>ejs模板安装方法<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install ejs</span><br></pre></td></tr></table></figure></p>
-<p>1.目录下安装好了之后，如何调用呢，如下所示：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">// 指定渲染模板文件的后缀名为ejs</span><br><span class="line">app.set(&apos;view engine&apos;, &apos;ejs&apos;);</span><br></pre></td></tr></table></figure></p>
-<p>2.默认ejs模板只支持渲染以ejs为扩展名的文件，可能在使用的时候会觉得它的代码书写方式很不爽还是想用html的形式去书写，该怎么办呢，这时就得去修改模板引擎了，也就会用到express的engine函数。</p>
-<p>3.engine注册模板引擎的函数，处理指定的后缀名文件。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">// 修改模板文件的后缀名为html</span><br><span class="line">app.set( &apos;view engine&apos;, &apos;html&apos; );</span><br><span class="line">// 运行ejs模块</span><br><span class="line">app.engine( &apos;.html&apos;, require( &apos;ejs&apos; ).__express );</span><br></pre></td></tr></table></figure></p>
-<p>“__express”，ejs模块的一个公共属性，表示要渲染的文件扩展名。</p>
-<h3 id="2-静态资源"><a href="#2-静态资源" class="headerlink" title="2.静态资源"></a>2.静态资源</h3><hr>
-<p>如果要在网页中加载静态文件（css、js、img），就需要另外指定一个存放静态文件的目录，当浏览器发出非HTML文件请求时，服务器端就会到这个目录下去寻找相关文件。</p>
-<p>项目目录下添加一个存放静态文件的目录为public。</p>
-<p>在public目录下在添加三个存放js、css、img的目录，相应取名为javascripts、stylesheets、images。</p>
-<p>然后就可以把相关文件放到相应的目录下了。</p>
-<p>比如，浏览器发出如下的样式表请求：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;link href=<span class="string">"/stylesheets/bootstrap.min.css"</span> rel=<span class="string">"stylesheet"</span> media=<span class="string">"screen"</span>&gt;</span><br></pre></td></tr></table></figure></p>
-<p>服务器端就到public/stylesheets/目录中寻找bootstrap.min.css文件。</p>
-<p>有了静态目录文件，我们还得在启动文件里告诉它这个静态文件路径，需要指定一下，如下所示：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">app.use(express.static(require(&apos;path&apos;).join(__dirname, &apos;public&apos;)));</span><br></pre></td></tr></table></figure></p>
-<p>PS：express.static —— 指定静态文件的查找目录。</p>
-<p>使用use函数调用中间件指定express静态访问目录，’public’就是我们我们新建的用来存放静态文件的总目录。</p>
-<h3 id="3-添加视图"><a href="#3-添加视图" class="headerlink" title="3.添加视图"></a>3.添加视图</h3><hr>
-<p>下面我们就来添加网页模板了，项目中我们会新建一个目录用来单独存放模板文件，这里我们就统一放到根路径上了。</p>
-<p>下面开始新建index.html、login.html、home.html三个页面。</p>
-<p>1.index.html页面参考内容如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;div style=&quot;height:400px;width:550px;margin:50px auto;margin-left:auto;border:solid 1px;background: rgb(246, 246, 253);&quot;&gt;</span><br><span class="line">    &lt;div style=&quot;margin-left: 35px;&quot;&gt;</span><br><span class="line">        # 首页</span><br><span class="line">        &lt;form action=&quot;#&quot;  role=&quot;form&quot; style=&quot;margin-top: 90px;margin-left: 60px;&quot;&gt; </span><br><span class="line">            # 欢迎进入首页！</span><br><span class="line">            &lt;div style=&quot;margin-top: 145px;&quot;&gt;</span><br><span class="line">                &lt;input type=&quot;button&quot; value=&quot;登 陆&quot; /&gt;</span><br><span class="line">            &lt;/div&gt;</span><br><span class="line">        &lt;/form&gt;</span><br><span class="line">    &lt;/div&gt;</span><br><span class="line">&lt;/div&gt;</span><br></pre></td></tr></table></figure></p>
-<p>2.login.html页面参考内容如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line">    &lt;title&gt;用户登录&lt;/title&gt;</span><br><span class="line">    &lt;meta charset=&quot;utf-8&quot;&gt;</span><br><span class="line">    &lt;script src=&quot;http://code.jquery.com/jquery-2.1.1.min.js&quot;&gt;&lt;/script&gt;</span><br><span class="line">... </span><br><span class="line">&lt;div style=&quot;height:300px;width:350px;margin:100px auto;margin-left:auto;border:solid 1px;background: rgb(246, 246, 253);&quot;&gt;</span><br><span class="line">    &lt;div style=&quot;width:200px;margin:auto;margin-top:50px;&quot;&gt; </span><br><span class="line">        # 用户登录</span><br><span class="line">        &lt;form action=&quot;#&quot;  role=&quot;form&quot; method=&quot;post&quot; &gt;</span><br><span class="line">            &lt;input id=&quot;username&quot; type=&quot;text&quot; name=&quot;username&quot; style=&quot;margin: 20px 0px;&quot; /&gt;</span><br><span class="line">            &lt;input id=&quot;password&quot; type=&quot;password&quot; name=&quot;password&quot; /&gt;</span><br><span class="line">            &lt;div style=&quot;margin-top:30px;margin-left:125px;&quot;&gt;</span><br><span class="line">                &lt;input type=&quot;button&quot; value=&quot;登 陆&quot; /&gt;</span><br><span class="line">            &lt;/div&gt;</span><br><span class="line">        &lt;/form&gt;</span><br><span class="line">    &lt;/div&gt;</span><br><span class="line">&lt;/div&gt;</span><br></pre></td></tr></table></figure></p>
-<p>3.home.html页面参考内容如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;div style=&quot;height:400px;width:550px;margin:50px auto;margin-left:auto;border:solid 1px;background: rgb(246, 246, 253);&quot;&gt;</span><br><span class="line">    &lt;div style=&quot;margin-left: 45px;&quot;&gt;</span><br><span class="line">        # 主页</span><br><span class="line">        &lt;form action=&quot;#&quot;  role=&quot;form&quot; style=&quot;margin-top: 90px;&quot;&gt;</span><br><span class="line">            # 登陆成功！</span><br><span class="line">            &lt;div style=&quot;margin-top: 145px;&quot;&gt;</span><br><span class="line">                &lt;input  type=&quot;button&quot; value=&quot;退 出&quot; /&gt;</span><br><span class="line">            &lt;/div&gt;</span><br><span class="line">        &lt;/form&gt;</span><br><span class="line">    &lt;/div&gt;</span><br><span class="line">&lt;/div&gt;</span><br></pre></td></tr></table></figure></p>
-<p>和静态文件一样，我们也要设置views存放的目录，如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">// 设定views变量，意为视图存放的目录</span><br><span class="line">app.set(&apos;views&apos;, __dirname);</span><br></pre></td></tr></table></figure></p>
-<p>有了网页模板和指定目录，下面就可以访问它们了。</p>
-<h3 id="4-渲染视图"><a href="#4-渲染视图" class="headerlink" title="4.渲染视图"></a>4.渲染视图</h3><hr>
-<p>我们要如何对网页模板进行访问呢，这就要用到res对象的render函数了。</p>
-<p>render函数，对网页模板进行渲染。</p>
-<p>格式：res.render(view, [locals], callback);</p>
-<p>参数view就是模板的文件名callback用来处理返回的渲染后的字符串，options、callback可省略，在渲染模板时locals可为其模板传入变量值，在模板中就可以调用所传变量了。</p>
-<p>比如渲染我们刚刚添加的index.html页面，我们就可以在app.js中写入如下内容：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">ar express = require(&apos;express&apos;);</span><br><span class="line">var app = express();</span><br><span class="line">var path = require(&apos;path&apos;);</span><br><span class="line">app.set(&apos;views&apos;, __dirname);</span><br><span class="line">app.set( &apos;view engine&apos;, &apos;html&apos; );</span><br><span class="line">app.engine( &apos;.html&apos;, require( &apos;ejs&apos; ).__express );</span><br><span class="line">app.get(&apos;/&apos;, function(req, res) &#123;</span><br><span class="line">    res.render(&apos;index&apos;);</span><br><span class="line">&#125;);</span><br><span class="line">app.listen(80);</span><br></pre></td></tr></table></figure></p>
-<h3 id="5-url重定向"><a href="#5-url重定向" class="headerlink" title="5.url重定向"></a>5.url重定向</h3><hr>
-<h4 id="redirect基本用法"><a href="#redirect基本用法" class="headerlink" title="redirect基本用法"></a>redirect基本用法</h4><p>redirect方法允许网址的重定向，跳转到指定的url并且可以指定status，默认为302方式。</p>
-<p>格式：res.redirect([status], url);</p>
-<p>例1：使用一个完整的url跳转到一个完全不同的域名。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">res.redirect(&quot;http://www.hubwiz.com&quot;);</span><br></pre></td></tr></table></figure></p>
-<p>例2：跳转指定页面，比如登陆页，如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">res.redirect(&quot;login&quot;);</span><br></pre></td></tr></table></figure></p>
-<p>后面我们开始实现登陆功能，先试一下redirect重定向</p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
         <time datetime="2014-05-04T06:45:23.000Z"><a href="/2014/05/04/express/express(1)基础知识/">2014-05-04</a></time>
       
       
@@ -712,6 +642,98 @@
 <li><p>Entity：通过Model创建的实体，它也可以操作数据库。</p>
 </li>
 </ol>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2014-02-13T06:45:23.000Z"><a href="/2014/02/13/Node.js异步编程/Node.js异步编程(3)async/">2014-02-13</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2014/02/13/Node.js异步编程/Node.js异步编程(3)async/">三.async</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="async"><a href="#async" class="headerlink" title="async"></a>async</h3><hr>
+<p>async是一个流程控制库，它就像黑夜中的明灯照亮那陷入callback嵌套泥潭的人们。 这么说虽然有些夸张，但是async确实为我们带来了丰富的嵌套解决方案。</p>
+<p>项目地址：</p>
+<p><a href="https://github.com/caolan/async" target="_blank" rel="noopener">https://github.com/caolan/async</a></p>
+<p>npm 安装<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install async</span><br></pre></td></tr></table></figure></p>
+<p>使用方法：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var async = require(&apos;async&apos;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="2-serires-tasks-callback"><a href="#2-serires-tasks-callback" class="headerlink" title="2.serires(tasks, callback)"></a>2.serires(tasks, callback)</h3><hr>
+<p>首先登场的是series函数，它的作用是串行执行，一个函数数组中的每个函数，每一个函数执行完成之后才能执行下一个函数，示例如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">async.series(&#123;</span><br><span class="line">    one: function(callback)&#123;</span><br><span class="line">        callback(null, 1);</span><br><span class="line">    &#125;,</span><br><span class="line">    two: function(callback)&#123;</span><br><span class="line">        callback(null, 2);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;,function(err, results) &#123; </span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>series函数的第一个参数可以是一个数组也可以是一个JSON对象，参数类型不同，影响的是返回数据的格式，如示例中的参数为数组，返回的results应该是这样的’[1,2]’。</p>
+<h3 id="3-waterfall-tasks-callback"><a href="#3-waterfall-tasks-callback" class="headerlink" title="3.waterfall(tasks,[callback])"></a>3.waterfall(tasks,[callback])</h3><hr>
+<p>waterfall和series函数有很多相似之处，都是按顺序依次执行一组函数，不同之处是waterfall每个函数产生的值，都将传给下一个函数，而series则没有这个功能，示例如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">async.waterfall([  </span><br><span class="line">    function(callback)&#123; </span><br><span class="line">      //task1 </span><br><span class="line">      callback(null,1);       </span><br><span class="line">    &#125;,function(data,callback)&#123;</span><br><span class="line">      //task2 </span><br><span class="line">      callback(null,2); </span><br><span class="line">    &#125; </span><br><span class="line">],function(err,results)&#123;  </span><br><span class="line">    console.log(results); </span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>另外需要注意的是waterfall的tasks参数只能是数组类型。</p>
+<h3 id="4-parallel-tasks-callback"><a href="#4-parallel-tasks-callback" class="headerlink" title="4.parallel(tasks,[callback])"></a>4.parallel(tasks,[callback])</h3><hr>
+<p>parallel函数是并行执行多个函数，每个函数都是立即执行，不需要等待其它函数先执行。 传给最终callback的数组中的数据按照tasks中声明的顺序，而不是执行完成的顺序，示例如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">async.parallel([</span><br><span class="line">    function(callback)&#123;</span><br><span class="line">        callback(null, &apos;one&apos;);</span><br><span class="line">    &#125;,</span><br><span class="line">    function(callback)&#123;</span><br><span class="line">        callback(null, &apos;two&apos;);</span><br><span class="line">    &#125;</span><br><span class="line">],</span><br><span class="line">function(err, results)&#123;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>tasks参数可以是一个数组或是json对象，和series函数一样，tasks参数类型不同，返回的results格式会不一样。</p>
+<h3 id="5-paralleLimit-tasks-limit-callback"><a href="#5-paralleLimit-tasks-limit-callback" class="headerlink" title="5.paralleLimit(tasks,limit,[callback])"></a>5.paralleLimit(tasks,limit,[callback])</h3><hr>
+<p>parallelLimit函数和parallel类似，但是它多了一个参数limit。 limit参数限制任务只能同时并发一定数量，而不是无限制并发，示例如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">async.parallelLimit([</span><br><span class="line">    function(callback)&#123;</span><br><span class="line">        callback(null, &apos;one&apos;);</span><br><span class="line">    &#125;,</span><br><span class="line">    function(callback)&#123;</span><br><span class="line">        callback(null, &apos;two&apos;);</span><br><span class="line">    &#125;</span><br><span class="line">],</span><br><span class="line">2,</span><br><span class="line">function(err, results)&#123;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="6-whilst-test-fn-callback"><a href="#6-whilst-test-fn-callback" class="headerlink" title="6.whilst(test,fn,callback)"></a>6.whilst(test,fn,callback)</h3><hr>
+<p>相当于while，但其中的异步调用将在完成后才会进行下一次循环。当你需要循环异步的操作的时候，它可以帮助你。示例如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">var count = 0;</span><br><span class="line">async.whilst(</span><br><span class="line">    function () &#123; return count &lt; 5; &#125;,</span><br><span class="line">    function (callback) &#123;</span><br><span class="line">        count++;</span><br><span class="line">        setTimeout(callback, 1000);</span><br><span class="line">    &#125;,</span><br><span class="line">    function (err) &#123;</span><br><span class="line">    &#125;</span><br><span class="line">);</span><br></pre></td></tr></table></figure></p>
+<p>test参数是一个返回布尔值结果的函数，通过返回值来决定循环是否继续，作用等同于while循环停止的条件。</p>
+<p>fn参数就是我们要异步执行的作业，每次fn执行完毕后才会进入下一次循环。</p>
+<h3 id="7-doWhilst"><a href="#7-doWhilst" class="headerlink" title="7.doWhilst"></a>7.doWhilst</h3><hr>
+<p>相当于do…while,较whilst而言，doWhilst交换了fn,test的参数位置，先执行一次循环，再做test判断。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">var count = 0;</span><br><span class="line">async.doWhilst(</span><br><span class="line">    function (callback) &#123;</span><br><span class="line">        count++;</span><br><span class="line">        setTimeout(callback, 1000);</span><br><span class="line">    &#125;,</span><br><span class="line">    function () &#123; return count &lt; 5; &#125;,</span><br><span class="line">    function (err) &#123; </span><br><span class="line">    &#125;</span><br><span class="line">);</span><br></pre></td></tr></table></figure></p>
+<h3 id="8-until-test-fn-callback"><a href="#8-until-test-fn-callback" class="headerlink" title="8.until(test,fn,callback)"></a>8.until(test,fn,callback)</h3><hr>
+<p>until与whilst正好相反，当test条件函数返回值为false时继续循环，与true时跳出。其它特性一致。示例如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">var count = 5;</span><br><span class="line">async.until(</span><br><span class="line">    function () &#123; return count &lt; 0; &#125;,</span><br><span class="line">    function (callback) &#123;</span><br><span class="line">        count--;</span><br><span class="line">        setTimeout(callback, 1000);</span><br><span class="line">    &#125;,</span><br><span class="line">    function (err) &#123;</span><br><span class="line">    &#125;</span><br><span class="line">);</span><br></pre></td></tr></table></figure></p>
+<h3 id="9-doUntil-fn-test-callback"><a href="#9-doUntil-fn-test-callback" class="headerlink" title="9.doUntil(fn,test,callback)"></a>9.doUntil(fn,test,callback)</h3><hr>
+<p>doUntil与doWhilst正好相反，当test为false时循环，与true时跳出。其它特性一致。</p>
+<p>示例：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">var count = 5;</span><br><span class="line">async.doUntil(</span><br><span class="line">    function (callback) &#123;</span><br><span class="line">        count--;</span><br><span class="line">        setTimeout(callback, 1000);</span><br><span class="line">    &#125;,</span><br><span class="line">    function () &#123; return count &lt; 0; &#125;,</span><br><span class="line">    function (err) &#123; </span><br><span class="line">    &#125;</span><br><span class="line">);</span><br></pre></td></tr></table></figure></p>
+<h3 id="10-forever-fn-errback"><a href="#10-forever-fn-errback" class="headerlink" title="10.forever(fn,errback)"></a>10.forever(fn,errback)</h3><hr>
+<p>forever函数比较特殊，它的功能是无论条件如何，函数都一直循环执行，只有出现程序执行的过程中出现错误时循环才会停止，callback才会被调用。</p>
+<p>示例：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">async.forever(</span><br><span class="line">    function(next) &#123;</span><br><span class="line">    &#125;,</span><br><span class="line">    function(err) &#123;</span><br><span class="line">    &#125;</span><br><span class="line">);</span><br></pre></td></tr></table></figure></p>
+<h3 id="11-compose-fn1-fn2…"><a href="#11-compose-fn1-fn2…" class="headerlink" title="11.compose(fn1,fn2…)"></a>11.compose(fn1,fn2…)</h3><hr>
+<p>使用compose可以创建一个异步函数的集合函数，将传入的多个异步函数包含在其中，当我们执行这个集合函数时，会依次执行每一个异步函数，每个函数会消费上一次函数的返回值。</p>
+<p>我们可以使用compose把异步函数f、g、h，组合成f(g(h()))的形式，通过callback得到返回值，请看示例：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">unction fn1(n, callback) &#123;</span><br><span class="line">    setTimeout(function () &#123;</span><br><span class="line">        callback(null, n + 1);</span><br><span class="line">    &#125;, 1000);</span><br><span class="line">&#125;</span><br><span class="line">function fn2(n, callback) &#123;</span><br><span class="line">    setTimeout(function () &#123;</span><br><span class="line">        callback(null, n * 3);</span><br><span class="line">    &#125;, 1000);</span><br><span class="line">&#125;</span><br><span class="line">var demo = async.compose(fn2, fn1);</span><br><span class="line">demo(4, function (err, result) &#123;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="12-auto-tasks-callback"><a href="#12-auto-tasks-callback" class="headerlink" title="12.auto(tasks,[callback])"></a>12.auto(tasks,[callback])</h3><hr>
+<p>用来处理有依赖关系的多个任务的执行。示例如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">async.auto(&#123;</span><br><span class="line">    getData: function(callback)&#123;</span><br><span class="line">        callback(null, &apos;data&apos;, &apos;converted to array&apos;);</span><br><span class="line">    &#125;,</span><br><span class="line">    makeFolder: function(callback)&#123;        </span><br><span class="line">        callback(null, &apos;folder&apos;);</span><br><span class="line">    &#125;,</span><br><span class="line">    writeFile: [&apos;getData&apos;, &apos;makeFolder&apos;, function(callback, results)&#123;        </span><br><span class="line">        callback(null, &apos;filename&apos;);</span><br><span class="line">    &#125;],</span><br><span class="line">    emailLink: [&apos;writeFile&apos;, function(callback, results)&#123;</span><br><span class="line">        callback(null, &#123;&apos;file&apos;:results.writeFile, &apos;email&apos;:&apos;user@example.com&apos;&#125;);</span><br><span class="line">    &#125;]</span><br><span class="line">&#125;, function(err, results) &#123;</span><br><span class="line">    console.log(&apos;err = &apos;, err);</span><br><span class="line">    console.log(&apos;results = &apos;, results);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>示例中writeFile依赖getData和makeFolder,emailLink依赖writeFile。</p>
+<h3 id="13-queue-worker-concurrency"><a href="#13-queue-worker-concurrency" class="headerlink" title="13.queue(worker,concurrency)"></a>13.queue(worker,concurrency)</h3><hr>
+<p>queue相当于一个加强版的parallel，主要是限制了worker数量，不再一次性全部执行。当worker数量不够用时，新加入的任务将会排队等候，直到有新的worker可用。</p>
+<p>它有多个点可供回调，如无等候任务时(empty)、全部执行完时(drain)等。</p>
+<p>示例：定义一个queue，其worker数量为2：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">var q = async.queue(function(task, callback) &#123;</span><br><span class="line">    console.log(&apos;worker is processing task: &apos;, task.name);</span><br><span class="line">    callback();</span><br><span class="line">&#125;, 2);</span><br><span class="line">q.push(&#123;name: &apos;foo&apos;&#125;, function (err) &#123;</span><br><span class="line">    console.log(&apos;finished processing foo&apos;);</span><br><span class="line">&#125;);</span><br><span class="line">q.push(&#123;name: &apos;bar&apos;&#125;, function (err) &#123;</span><br><span class="line">    console.log(&apos;finished processing bar&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>当最后一个任务交给worker执行时，会调用empty函数:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">q.empty = function() &#123;</span><br><span class="line">    console.log(&apos;no more tasks wating&apos;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="14-apply-function-arguments…"><a href="#14-apply-function-arguments…" class="headerlink" title="14.apply(function,arguments…)"></a>14.apply(function,arguments…)</h3><hr>
+<p>apply是一个非常好用的函数，可以让我们给一个函数预绑定多个参数并生成一个可直接调用的新函数，简化代码。示例如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">function(callback) &#123; </span><br><span class="line">    test(3, callback); </span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>用apply改写:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">async.apply(test, 3);</span><br></pre></td></tr></table></figure></p>
+<h3 id="15-iterator-tasks"><a href="#15-iterator-tasks" class="headerlink" title="15.iterator(tasks)"></a>15.iterator(tasks)</h3><hr>
+<p>将一组函数包装成为一个iterator，可通过next()得到以下一个函数为起点的新的iterator。该函数通常由async在内部使用，但如果需要时，也可在我们的代码中使用它。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">var iter = async.iterator([</span><br><span class="line">    function() &#123; console.log(&apos;111&apos;) &#125;,</span><br><span class="line">    function() &#123; console.log(&apos;222&apos;) &#125;,</span><br><span class="line">    function() &#123; console.log(&apos;333&apos;) &#125;</span><br><span class="line">]);</span><br><span class="line">iter();</span><br></pre></td></tr></table></figure>
+<p>直接调用()，会执行当前函数，并返回一个由下个函数为起点的新的iterator。调用next()，不会执行当前函数，直接返回由下个函数为起点的新iterator。</p>
+<p>对于同一个iterator，多次调用next()，不会影响自己。如果只剩下一个元素，调用next()会返回null。</p>
+<h3 id="16-小结"><a href="#16-小结" class="headerlink" title="16.小结"></a>16.小结</h3><hr>
+<p>async模块在流程控制方面给我们带来了比较全面的解决办法，下面我们来回顾一下都有哪几种方案：</p>
+<p>串行控制： series、waterfall、compose;</p>
+<p>并行控制：</p>
+<p>parallel、parallelLimit、queue;</p>
+<p>循环控制：<br>whilst、doWhilst、until、doUntil、forever;</p>
+<p>其他控制：<br>apply、applyEach、iterator、auto;</p>
 
       
     </div>

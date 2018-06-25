@@ -52,7 +52,7 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2017-01-03T06:45:23.000Z"><a href="/2017/01/03/存储/数据库范式那些事/">2017-01-03</a></time>
+        <time datetime="2017-01-09T06:45:23.000Z"><a href="/2017/01/09/存储/数据库范式那些事/">2017-01-09</a></time>
       
       
   
@@ -62,11 +62,11 @@
     </header>
     <div class="entry">
       
-        <h6 id="原文：http-www-cnblogs-com-CareySon-archive-2010-02-16-1668803-html"><a href="#原文：http-www-cnblogs-com-CareySon-archive-2010-02-16-1668803-html" class="headerlink" title="原文：http://www.cnblogs.com/CareySon/archive/2010/02/16/1668803.html"></a>原文：<a href="http://www.cnblogs.com/CareySon/archive/2010/02/16/1668803.html" target="_blank" rel="noopener">http://www.cnblogs.com/CareySon/archive/2010/02/16/1668803.html</a></h6><h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a><strong>简介</strong></h2><p>​      数据库范式在数据库设计中的地位一直很暧昧，教科书中对于数据库范式倒是都给出了学术性的定义，但实际应用中范式的应用却不甚乐观，这篇文章会用简单的语言和一个简单的数据库DEMO将一个不符合范式的数据库一步步从第一范式实现到第四范式。</p>
+        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a><strong>简介</strong></h2><p>​      数据库范式在数据库设计中的地位一直很暧昧，教科书中对于数据库范式倒是都给出了学术性的定义，但实际应用中范式的应用却不甚乐观，这篇文章会用简单的语言和一个简单的数据库DEMO将一个不符合范式的数据库一步步从第一范式实现到第四范式。</p>
 <h2 id="范式的目标"><a href="#范式的目标" class="headerlink" title="范式的目标"></a><strong>范式的目标</strong></h2><p>​      应用数据库范式可以带来许多好处，但是最重要的好处归结为三点：</p>
 <p>​      1.减少数据冗余（这是最主要的好处，其他好处都是由此而附带的）</p>
 <p>​      2.消除异常（插入异常，更新异常，删除异常）</p>
-<p>​      3.让数据组织的更加和谐</p>
+<p>​      3.让数据组织的更加和谐…</p>
 <p>​       但剑是双刃的，应用数据库范式同样也会带来弊端，这会在文章后面说到。</p>
 <h2 id="什么是范式"><a href="#什么是范式" class="headerlink" title="什么是范式"></a><strong>什么是范式</strong></h2><p>​      简单的说，范式是为了消除重复数据减少冗余数据，从而让数据库内的数据更好的组织，让磁盘空间得到更有效利用的一种标准化标准，满足高等级的范式的先决条件是满足低等级范式。(比如满足2nf一定满足1nf)</p>
 <h2 id="DEMO"><a href="#DEMO" class="headerlink" title="DEMO"></a><strong>DEMO</strong></h2><p>​      让我们先从一个未经范式化的表看起,表如下：</p>
@@ -95,7 +95,7 @@
 <p><a href="http://images.cnblogs.com/cnblogs_com/CareySon/WindowsLiveWriter/ebfdc5eb7fff_14F19/4nf_2.png" target="_blank" rel="noopener"><img src="https://images.cnblogs.com/cnblogs_com/CareySon/WindowsLiveWriter/ebfdc5eb7fff_14F19/4nf_thumb.png" alt="4nf"></a></p>
 <p>而对于skill表则可能的值为:</p>
 <p><a href="http://images.cnblogs.com/cnblogs_com/CareySon/WindowsLiveWriter/ebfdc5eb7fff_14F19/4nfdemo_2.png" target="_blank" rel="noopener"><img src="https://images.cnblogs.com/cnblogs_com/CareySon/WindowsLiveWriter/ebfdc5eb7fff_14F19/4nfdemo_thumb.png" alt="4nfdemo"></a></p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a><strong>总结</strong></h2><p>上面对于数据库范式进行分解的过程中不难看出，应用的范式登记越高，则表越多。表多会带来很多问题：</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a><strong>总结</strong></h2><p>​     上面对于数据库范式进行分解的过程中不难看出，应用的范式登记越高，则表越多。表多会带来很多问题：</p>
 <ol>
 <li><p>查询时要连接多个表，增加了查询的复杂度</p>
 </li>
@@ -156,7 +156,7 @@
   }(document, 'script', 'facebook-jssdk'));
 </script>
 
-<div class="fb-comments" data-href="https://shouliang.github.io/2017/01/03/存储/数据库范式那些事/index.html" data-num-posts="5" data-width="840" data-colorscheme="light"></div>
+<div class="fb-comments" data-href="https://shouliang.github.io/2017/01/09/存储/数据库范式那些事/index.html" data-num-posts="5" data-width="840" data-colorscheme="light"></div>
       
   
 </section>
