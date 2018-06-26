@@ -1,0 +1,292 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>CSP简介 | shouliang&#39;s blog</title>
+  <meta name="author" content="shouliang">
+  
+  <meta name="description" content="Node">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="CSP简介"/>
+  <meta property="og:site_name" content="shouliang&#39;s blog"/>
+
+  
+    <meta property="og:image" content=""/>
+  
+
+  <link href="/favicon.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="shouliang&#39;s blog" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+
+</head>
+
+
+<body>
+  <header id="header" class="inner"><div class="alignleft">
+  <h1><a href="/">shouliang&#39;s blog</a></h1>
+  <h2><a href="/"></a></h2>
+</div>
+<nav id="main-nav" class="alignright">
+  <ul>
+    
+      <li><a href="/">首页</a></li>
+    
+      <li><a href="/archives">归档</a></li>
+    
+      <li><a href="/about">关于</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+<div class="clearfix"></div></header>
+  <div id="content" class="inner">
+    <div id="main-col" class="alignleft"><div id="wrapper"><article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2017-02-20T06:45:23.000Z"><a href="/2017/02/20/安全/CSP简介/">2017-02-20</a></time>
+      
+      
+  
+    <h1 class="title">CSP简介</h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>跨域脚本攻击 XSS是最常见、危害最大的网页安全漏洞。为了防止它们，要采取很多编程措施，非常麻烦。很多人提出，能不能根本上解决问题，浏览器自动禁止外部注入恶意脚本？这就是”网页安全政策”（Content Security Policy，缩写 CSP）的来历。</p>
+<h2 id="一、简介"><a href="#一、简介" class="headerlink" title="一、简介"></a>一、简介</h2><p>CSP 的实质就是白名单制度，开发者明确告诉客户端，哪些外部资源可以加载和执行，等同于提供白名单。它的实现和执行全部由浏览器完成，开发者只需提供配置。</p>
+<p>CSP 大大增强了网页的安全性。攻击者即使发现了漏洞，也没法注入脚本，除非还控制了一台列入了白名单的可信主机。</p>
+<p>两种方法可以启用 CSP。一种是通过 HTTP 头信息的<code>Content-Security-Policy</code>的字段。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/csp01.jpg" alt=""></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy: script-src &apos;self&apos;; object-src &apos;none&apos;;</span><br><span class="line">style-src cdn.example.org third-party.org; child-src https:</span><br></pre></td></tr></table></figure>
+<p>另一种是通过网页的<meta>标签。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;meta http-equiv=&quot;Content-Security-Policy&quot; content=&quot;script-src &apos;self&apos;; object-src &apos;none&apos;; style-src cdn.example.org third-party.org; child-src https:&quot;&gt;</span><br></pre></td></tr></table></figure></p>
+<p>上面代码中，CSP 做了如下配置。</p>
+<ul>
+<li>脚本：只信任当前域名</li>
+<li><code>&lt;object&gt;</code>标签：不信任任何URL，即不加载任何资源</li>
+<li>样式表：只信任<code>cdn.example.org</code>和<code>third-party.org</code></li>
+<li>框架（frame）：必须使用HTTPS协议加载</li>
+<li>其他资源：没有限制</li>
+</ul>
+<p>启用后，不符合 CSP 的外部资源就会被阻止加载。</p>
+<h2 id="二、限制选项"><a href="#二、限制选项" class="headerlink" title="二、限制选项"></a>二、限制选项</h2><p>CSP 提供了很多限制选项，涉及安全的各个方面。</p>
+<h3 id="2-1-资源加载限制"><a href="#2-1-资源加载限制" class="headerlink" title="2.1 资源加载限制"></a>2.1 资源加载限制</h3><p>以下选项限制各类资源的加载。</p>
+<ul>
+<li><strong>script-src</strong>：外部脚本</li>
+<li><strong>style-src</strong>：样式表</li>
+<li><strong>img-src</strong>：图像</li>
+<li><strong>media-src</strong>：媒体文件（音频和视频）</li>
+<li><strong>font-src</strong>：字体文件</li>
+<li><strong>object-src</strong>：插件（比如 Flash）</li>
+<li><strong>child-src</strong>：框架</li>
+<li><strong>frame-ancestors</strong>：嵌入的外部资源（比如<code>&lt;frame&gt;</code>、<code>&lt;iframe&gt;</code>、<code>&lt;embed&gt;</code>和<code>&lt;applet&gt;</code>）</li>
+<li><strong>connect-src</strong>：HTTP 连接（通过 XHR、WebSockets、EventSource等）</li>
+<li><strong>worker-src</strong>：<code>worker</code>脚本</li>
+<li><strong>manifest-src</strong>：manifest 文件</li>
+</ul>
+<h3 id="2-2-default-src"><a href="#2-2-default-src" class="headerlink" title="2.2 default-src"></a>2.2 default-src</h3><p><code>default-src</code>用来设置上面各个选项的默认值。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy: default-src &apos;self&apos;</span><br></pre></td></tr></table></figure>
+<p>上面代码限制<strong>所有的</strong>外部资源，都只能从当前域名加载。</p>
+<p>如果同时设置某个单项限制（比如<code>font-src</code>）和<code>default-src</code>，前者会覆盖后者，即字体文件会采用<code>font-src</code>的值，其他资源依然采用<code>default-src</code>的值。</p>
+<h3 id="2-3-URL-限制"><a href="#2-3-URL-限制" class="headerlink" title="2.3 URL 限制"></a>2.3 URL 限制</h3><p>有时，网页会跟其他 URL 发生联系，这时也可以加以限制。</p>
+<ul>
+<li><strong>frame-ancestors</strong>：限制嵌入框架的网页</li>
+<li><strong>base-uri</strong>：限制<code>&lt;base#href&gt;</code></li>
+<li><strong>form-action</strong>：限制<code>&lt;form#action&gt;</code></li>
+</ul>
+<h3 id="2-4-其他限制"><a href="#2-4-其他限制" class="headerlink" title="2.4 其他限制"></a>2.4 其他限制</h3><p>其他一些安全相关的功能，也放在了 CSP 里面。</p>
+<ul>
+<li><strong>block-all-mixed-content</strong>：HTTPS 网页不得加载 HTTP 资源（浏览器已经默认开启）</li>
+<li><strong>upgrade-insecure-requests</strong>：自动将网页上所有加载外部资源的 HTTP 链接换成 HTTPS 协议</li>
+<li><strong>plugin-types</strong>：限制可以使用的插件格式</li>
+<li><strong>sandbox</strong>：浏览器行为的限制，比如不能有弹出窗口等。</li>
+</ul>
+<h3 id="2-5-report-uri"><a href="#2-5-report-uri" class="headerlink" title="2.5 report-uri"></a>2.5 report-uri</h3><p>有时，我们不仅希望防止 XSS，还希望记录此类行为。<code>report-uri</code>就用来告诉浏览器，应该把注入行为报告给哪个网址。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy: default-src &apos;self&apos;; ...; report-uri /my_amazing_csp_report_parser;</span><br></pre></td></tr></table></figure>
+<p>上面代码指定，将注入行为报告给<code>/my_amazing_csp_report_parser</code>这个 URL。</p>
+<p>浏览器会使用<code>POST</code>方法，发送一个JSON对象，下面是一个例子。</p>
+ <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;csp-report&quot;: &#123;</span><br><span class="line">    &quot;document-uri&quot;: &quot;http://example.org/page.html&quot;,</span><br><span class="line">    &quot;referrer&quot;: &quot;http://evil.example.com/&quot;,</span><br><span class="line">    &quot;blocked-uri&quot;: &quot;http://evil.example.com/evil.js&quot;,</span><br><span class="line">    &quot;violated-directive&quot;: &quot;script-src &apos;self&apos; https://apis.google.com&quot;,</span><br><span class="line">    &quot;original-policy&quot;: &quot;script-src &apos;self&apos; https://apis.google.com; report-uri http://example.org/my_amazing_csp_report_parser&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/csp02.png" alt="img"></p>
+<h2 id="三、Content-Security-Policy-Report-Only"><a href="#三、Content-Security-Policy-Report-Only" class="headerlink" title="三、Content-Security-Policy-Report-Only"></a>三、Content-Security-Policy-Report-Only</h2><p>除了<code>Content-Security-Policy</code>，还有一个<code>Content-Security-Policy-Report-Only</code>字段，表示不执行限制选项，只是记录违反限制的行为。</p>
+<p>它必须与<code>report-uri</code>选项配合使用。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy-Report-Only: <span class="keyword">default</span>-src <span class="string">'self'</span>; ...; report-uri /my_amazing_csp_report_parser;</span><br></pre></td></tr></table></figure></p>
+<h2 id="四、选项值"><a href="#四、选项值" class="headerlink" title="四、选项值"></a>四、选项值</h2><p>每个限制选项可以设置以下几种值，这些值就构成了白名单。</p>
+<ul>
+<li>主机名：<code>example.org</code>，<code>https://example.com:443</code></li>
+<li>路径名：<code>example.org/resources/js/</code></li>
+<li>通配符：<code>*.example.org</code>，<code>*://*.example.com:*</code>（表示任意协议、任意子域名、任意端口）</li>
+<li>协议名：<code>https:</code>、<code>data:</code></li>
+<li>关键字<code>&#39;self&#39;</code>：当前域名，需要加引号</li>
+<li>关键字<code>&#39;none&#39;</code>：禁止加载任何外部资源，需要加引号</li>
+</ul>
+<p>多个值也可以并列，用空格分隔。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy: script-src <span class="string">'self'</span> https:<span class="comment">//apis.google.com</span></span><br></pre></td></tr></table></figure></p>
+<p>如果同一个限制选项使用多次，只有第一次会生效。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># 错误的写法</span><br><span class="line">script-src https:<span class="comment">//host1.com; script-src https://host2.com</span></span><br><span class="line"></span><br><span class="line"> # 正确的写法</span><br><span class="line"> script-src https:<span class="comment">//host1.com https://host2.com</span></span><br></pre></td></tr></table></figure></p>
+<p>如果不设置某个限制选项，就是默认允许任何值。</p>
+<h2 id="五、script-src-的特殊值"><a href="#五、script-src-的特殊值" class="headerlink" title="五、script-src 的特殊值"></a>五、script-src 的特殊值</h2><p>除了常规值，<code>script-src</code>还可以设置一些特殊值。注意，下面这些值都必须放在单引号里面。</p>
+<ul>
+<li><p><strong>‘unsafe-inline’</strong>：允许执行页面内嵌的<code>&amp;lt;script&gt;</code>标签和事件监听函数</p>
+</li>
+<li><p><strong>unsafe-eval</strong>：允许将字符串当作代码执行，比如使用<code>eval</code>、<code>setTimeout</code>、<code>setInterval</code>和<code>Function</code>等函数。</p>
+</li>
+<li><p><strong>nonce值</strong>：每次HTTP回应给出一个授权token，页面内嵌脚本必须有这个token，才会执行</p>
+</li>
+<li><p><strong>hash值</strong>：列出允许执行的脚本代码的Hash值，页面内嵌脚本的哈希值只有吻合的情况下，才能执行。</p>
+</li>
+</ul>
+<p>以 Node.js 为例, 计算脚本的 hashes 值:<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> crypto = <span class="built_in">require</span>(<span class="string">'crypto'</span>);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">getHashByCode</span>(<span class="params">code, algorithm = <span class="string">'sha256'</span></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> algorithm + <span class="string">'-'</span> + crypto.createHash(algorithm).update(code, <span class="string">'utf8'</span>).digest(<span class="string">"base64"</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">getHashByCode(<span class="string">'console.log("hello world");'</span>); <span class="comment">// 'sha256-wxWy1+9LmiuOeDwtQyZNmWpT0jqCUikqaqVlJdtd</span></span><br></pre></td></tr></table></figure></p>
+<p>nonce值的例子如下，服务器发送网页的时候，告诉浏览器一个随机生成的token。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy: script-src <span class="string">'nonce-EDNnf03nceIOfn39fn3e9h3sdfa'</span></span><br></pre></td></tr></table></figure>
+<p>页面内嵌脚本，必须有这个token才能执行。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;script nonce=EDNnf03nceIOfn39fn3e9h3sdfa&gt;</span><br><span class="line">   <span class="comment">// some code</span></span><br><span class="line"> &lt;<span class="regexp">/script&gt;</span></span><br></pre></td></tr></table></figure>
+<p>hash值的例子如下，服务器给出一个允许执行的代码的hash值。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy: script-src <span class="string">'sha256-qznLcsROx4GACP2dm0UCKCzCG-HiZ1guq6ZZDob_Tng='</span></span><br></pre></td></tr></table></figure>
+<p>下面的代码就会允许执行，因为hash值相符。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;script&gt;alert(<span class="string">'Hello, world.'</span>);&lt;/script&gt;</span><br></pre></td></tr></table></figure>
+<p>注意，计算hash值的时候，<script>标签不算在内。<br>除了<code>script-src</code>选项，nonce值和hash值还可以用在<code>style-src</code>选项，控制页面内嵌的样式表。</p>
+<h2 id="六、注意点"><a href="#六、注意点" class="headerlink" title="六、注意点"></a>六、注意点</h2><p>（1）<code>script-src</code>和<code>object-src</code>是必设的，除非设置了<code>default-src</code>。</p>
+<p>因为攻击者只要能注入脚本，其他限制都可以规避。而<code>object-src</code>必设是因为 Flash 里面可以执行外部脚本。</p>
+<p>（2）<code>script-src</code>不能使用<code>unsafe-inline</code>关键字（除非伴随一个nonce值），也不能允许设置<code>data:</code>URL。</p>
+<p>下面是两个恶意攻击的例子。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;img src=<span class="string">"x"</span> onerror=<span class="string">"evil()"</span>&gt;</span><br><span class="line">&lt;script src=<span class="string">"data:text/javascript,evil()"</span>&gt;&lt;/script&gt;</span><br></pre></td></tr></table></figure>
+<p>（3）必须特别注意 JSONP 的回调函数。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;script</span><br><span class="line">  src=<span class="string">"/path/jsonp?callback=alert(document.domain)//"</span>&gt;</span><br><span class="line">&lt;<span class="regexp">/script&gt;</span></span><br></pre></td></tr></table></figure>
+<p>上面的代码中，虽然加载的脚本来自当前域名，但是通过改写回调函数，攻击者依然可以执行恶意代码。</p>
+</script></p>
+      
+    </div>
+    <footer>
+      
+        
+        
+  
+  <div class="tags">
+    <a href="/tags/安全/">安全</a>
+  </div>
+
+        
+  <div class="addthis addthis_toolbox addthis_default_style">
+    
+      <a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+    
+    
+      <a class="addthis_button_tweet"></a>
+    
+    
+      <a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+    
+    
+      <a class="addthis_button_pinterest_pinit" pi:pinit:layout="horizontal"></a>
+    
+    <a class="addthis_counter addthis_pill_style"></a>
+  </div>
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js"></script>
+
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">留言</h1>
+
+  
+      <div id="fb-root"></div>
+<script>
+  (function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=shouliang0816";
+    fjs.parentNode.insertBefore(js, fjs);
+  }(document, 'script', 'facebook-jssdk'));
+</script>
+
+<div class="fb-comments" data-href="https://shouliang.github.io/2017/02/20/安全/CSP简介/index.html" data-num-posts="5" data-width="840" data-colorscheme="light"></div>
+      
+  
+</section>
+
+</div></div>
+    <aside id="sidebar" class="alignright">
+  <div class="search">
+  <form action="//google.com/search" method="get" accept-charset="utf-8">
+    <input type="search" name="q" results="0" placeholder="搜索">
+    <input type="hidden" name="q" value="site:shouliang.github.io">
+  </form>
+</div>
+
+  
+
+  
+<div class="widget tag">
+  <h3 class="title">标签</h3>
+  <ul class="entry">
+  
+    <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
+  
+    <li><a href="/tags/Git/">Git</a><small>7</small></li>
+  
+    <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
+  
+    <li><a href="/tags/Javascript/">Javascript</a><small>2</small></li>
+  
+    <li><a href="/tags/Mocha/">Mocha</a><small>4</small></li>
+  
+    <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
+  
+    <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
+  
+    <li><a href="/tags/Node-js入门/">Node.js入门</a><small>9</small></li>
+  
+    <li><a href="/tags/Node错误处理和调试/">Node错误处理和调试</a><small>5</small></li>
+  
+    <li><a href="/tags/express/">express</a><small>2</small></li>
+  
+    <li><a href="/tags/redis/">redis</a><small>2</small></li>
+  
+    <li><a href="/tags/shell/">shell</a><small>1</small></li>
+  
+    <li><a href="/tags/存储/">存储</a><small>3</small></li>
+  
+    <li><a href="/tags/安全/">安全</a><small>7</small></li>
+  
+    <li><a href="/tags/异步编程/">异步编程</a><small>3</small></li>
+  
+  </ul>
+</div>
+
+</aside>
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div class="alignleft">
+  
+  &copy; 2018 shouliang
+  
+</div>
+<div class="clearfix"></div></footer>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+</body>
+</html>

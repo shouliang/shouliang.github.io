@@ -82,9 +82,7 @@
 </ul>
 <p>nodejs中的例子：</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> crypto = <span class="built_in">require</span>(<span class="string">'crypto'</span>);</span><br><span class="line"><span class="keyword">var</span> md5 = crypto.createHash(<span class="string">'md5'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> message = <span class="string">'hello'</span>;</span><br><span class="line"><span class="keyword">var</span> digest = md5.update(message, <span class="string">'utf8'</span>).digest(<span class="string">'hex'</span>); </span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(digest);</span><br><span class="line"><span class="comment">// 输出如下：注意这里是16进制</span></span><br><span class="line"><span class="comment">// 5d41402abc4b2a76b9719d911017c592</span></span><br></pre></td></tr></table></figure>
-<blockquote>
 <p>备注：在各类文章或文献中，摘要、hash、散列 这几个词经常会混用，导致不少初学者看了一脸懵逼，其实大部分时候指的都是一回事，记住上面对摘要的定义就好了。</p>
-</blockquote>
 <h2 id="三、MAC、HMAC"><a href="#三、MAC、HMAC" class="headerlink" title="三、MAC、HMAC"></a>三、MAC、HMAC</h2><p>MAC（Message Authentication Code）：消息认证码，用以保证数据的完整性。运算结果取决于消息本身、秘钥。</p>
 <p>MAC可以有多种不同的实现方式，比如HMAC。</p>
 <p>HMAC（Hash-based Message Authentication Code）：可以粗略地理解为带秘钥的hash函数。</p>
@@ -106,9 +104,7 @@
 <li>非对称加密通常用于加密短文本，对称加密通常用于加密长文本。</li>
 </ol>
 <p>两者可以结合起来使用，比如HTTPS协议，可以在握手阶段，通过RSA来交换生成对称秘钥。在之后的通讯阶段，可以使用对称加密算法对数据进行加密，秘钥则是握手阶段生成的。 </p>
-<blockquote>
 <p>备注：对称秘钥交换不一定通过RSA，还可以通过类似DH来完成，这里不展开。</p>
-</blockquote>
 <h2 id="五、数字签名"><a href="#五、数字签名" class="headerlink" title="五、数字签名"></a>五、数字签名</h2><p>从<strong>签名</strong>大致可以猜到<strong>数字签名</strong>的用途。主要作用如下：</p>
 <ol>
 <li>确认信息来源于特定的主体。</li>
@@ -141,9 +137,7 @@
 <h3 id="1、分组加密模式"><a href="#1、分组加密模式" class="headerlink" title="1、分组加密模式"></a>1、分组加密模式</h3><p>所谓的分组加密，就是将（较长的）明文拆分成固定长度的块，然后对拆分的块按照特定的模式进行加密。</p>
 <p>常见的分组加密模式有：ECB（不安全）、CBC（最常用）、CFB、OFB、CTR等。</p>
 <p>以最简单的ECB为例，先将消息拆分成等分的模块，然后利用秘钥进行加密。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-ECB_encryption.svg.png" alt=""><br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-ECB_decryption.svg.png" alt=""><br>更多关于分组加密模式的介绍可以参考 <a href="https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Common_modes" target="_blank" rel="noopener">wiki</a>。</p>
-<blockquote>
 <p>后面假设每个块的长度为128位</p>
-</blockquote>
 <h3 id="2、初始化向量：IV"><a href="#2、初始化向量：IV" class="headerlink" title="2、初始化向量：IV"></a>2、初始化向量：IV</h3><p>为了增强算法的安全性，部分分组加密模式（CFB、OFB、CTR）中引入了初始化向量（IV），使得加密的结果随机化。也就是说，对于同一段明文，IV不同，加密的结果不同。</p>
 <p>以CBC为例，每一个数据块，都与前一个加密块进行亦或运算后，再进行加密。对于第一个数据块，则是与IV进行亦或。</p>
 <p>IV的大小跟数据块的大小有关（128位），跟秘钥的长度无关。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-CBC_encryption.svg.png" alt=""><br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-CBC_decryption.svg.png" alt=""></p>
@@ -268,7 +262,7 @@
   
     <li><a href="/tags/存储/">存储</a><small>3</small></li>
   
-    <li><a href="/tags/安全/">安全</a><small>4</small></li>
+    <li><a href="/tags/安全/">安全</a><small>7</small></li>
   
     <li><a href="/tags/异步编程/">异步编程</a><small>3</small></li>
   
