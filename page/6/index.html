@@ -53,6 +53,60 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2014-01-18T12:45:23.000Z"><a href="/2014/01/18/Node.js入门/Node.js入门(4)url处理/">2014-01-18</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2014/01/18/Node.js入门/Node.js入门(4)url处理/">四.url处理</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-简介"><a href="#1-简介" class="headerlink" title="1.简介"></a>1.简介</h3><hr>
+<h4 id="url模块的基本用法"><a href="#url模块的基本用法" class="headerlink" title="url模块的基本用法"></a>url模块的基本用法</h4><p>node.js为互联网而生，和url打交道是无法避免的了，url模块提供一些基础的url处理。</p>
+<h3 id="2-parse"><a href="#2-parse" class="headerlink" title="2.parse"></a>2.parse</h3><hr>
+<h4 id="parse函数的基础用法"><a href="#parse函数的基础用法" class="headerlink" title="parse函数的基础用法"></a>parse函数的基础用法</h4><p>parse函数的作用是解析url，返回一个json格式的数组，请看如下示例：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> url = <span class="built_in">require</span>(<span class="string">'url'</span>);</span><br><span class="line">url.parse(<span class="string">'http://www.baidu.com'</span>);</span><br></pre></td></tr></table></figure>
+<p>运行结果：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&#123; <span class="attr">protocol</span>: <span class="string">'http:'</span>,</span><br><span class="line">  slashes: <span class="literal">null</span>,</span><br><span class="line">  auth: <span class="literal">null</span>,</span><br><span class="line">  host: <span class="literal">null</span>,</span><br><span class="line">  port: <span class="literal">null</span>,</span><br><span class="line">  hostname: <span class="literal">null</span>,</span><br><span class="line">  hash: <span class="literal">null</span>,</span><br><span class="line">  search: <span class="literal">null</span>,</span><br><span class="line">  query: <span class="literal">null</span>,</span><br><span class="line">  pathname: <span class="string">'www.baidu.com'</span>,</span><br><span class="line">  path: <span class="string">'www.baidu.com'</span>,</span><br><span class="line">  href: <span class="string">'http://www.baidu.com'</span> </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="3-条件解析"><a href="#3-条件解析" class="headerlink" title="3.条件解析"></a>3.条件解析</h3><hr>
+<h4 id="parse函数-——-条件解析"><a href="#parse函数-——-条件解析" class="headerlink" title="parse函数 —— 条件解析"></a>parse函数 —— 条件解析</h4><p>parse函数的第二个参数是布尔类型，当参数为true时，会将查询条件也解析成json格式的对象。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> url = <span class="built_in">require</span>(<span class="string">'url'</span>);</span><br><span class="line">url.parse(<span class="string">'http://www.baidu.com?page=1'</span>,<span class="literal">true</span>);</span><br></pre></td></tr></table></figure>
+<p>运行结果：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&#123; <span class="attr">protocol</span>: <span class="string">'http:'</span>,</span><br><span class="line">  slashes: <span class="literal">true</span>,</span><br><span class="line">  auth: <span class="literal">null</span>,</span><br><span class="line">  host: <span class="string">'www.baidu.com'</span>,</span><br><span class="line">  port: <span class="literal">null</span>,</span><br><span class="line">  hostname: <span class="string">'www.baidu.com'</span>,</span><br><span class="line">  hash: <span class="literal">null</span>,</span><br><span class="line">  search: <span class="string">'?page=1'</span>,</span><br><span class="line">  query: &#123; <span class="attr">page</span>: <span class="string">'1'</span> &#125;,</span><br><span class="line">  pathname: <span class="string">'/'</span>,</span><br><span class="line">  path: <span class="string">'/?page=1'</span>,</span><br><span class="line">  href: <span class="string">'http://www.baidu.com/?page=1'</span> </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意query值的不同</p>
+<h3 id="4-解析主机"><a href="#4-解析主机" class="headerlink" title="4.解析主机"></a>4.解析主机</h3><hr>
+<h4 id="parse函数-——-解析主机"><a href="#parse函数-——-解析主机" class="headerlink" title="parse函数 —— 解析主机"></a>parse函数 —— 解析主机</h4><p>parse函数的第三个参数也是布尔类型的，当参数为true，解析时会将url的”//“和第一个”/“之间的部分解析为主机名，示例如下：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> url = <span class="built_in">require</span>(<span class="string">'url'</span>);</span><br><span class="line">url.parse(<span class="string">'http://www.baidu.com/news'</span>,<span class="literal">false</span>,<span class="literal">true</span>);</span><br></pre></td></tr></table></figure>
+<p>运行结果：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&#123; <span class="attr">protocol</span>: <span class="string">'http:'</span>,</span><br><span class="line">  slashes: <span class="literal">true</span>,</span><br><span class="line">  auth: <span class="literal">null</span>,</span><br><span class="line">  host: <span class="string">'www.baidu.com'</span>,</span><br><span class="line">  port: <span class="literal">null</span>,</span><br><span class="line">  hostname: <span class="string">'www.baidu.com'</span>,</span><br><span class="line">  hash: <span class="literal">null</span>,</span><br><span class="line">  search: <span class="literal">null</span>,</span><br><span class="line">  query: <span class="literal">null</span>,</span><br><span class="line">  pathname: <span class="string">'/news'</span>,</span><br><span class="line">  path: <span class="string">'/news'</span>,</span><br><span class="line">  href: <span class="string">'http://www.baidu.com/news'</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="5-格式化"><a href="#5-格式化" class="headerlink" title="5.格式化"></a>5.格式化</h3><hr>
+<h4 id="format函数的基础用法"><a href="#format函数的基础用法" class="headerlink" title="format函数的基础用法"></a>format函数的基础用法</h4><p>format函数的作用与parse相反，它的参数是一个JSON对象，返回一个组装好的url地址，请看如下示例：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> url = <span class="built_in">require</span>(<span class="string">'url'</span>);</span><br><span class="line">url.format(&#123;</span><br><span class="line">	protocol: <span class="string">'http:'</span>,</span><br><span class="line">	hostname:<span class="string">'www.baidu.com'</span>,</span><br><span class="line">	port:<span class="string">'80'</span>,</span><br><span class="line">	pathname :<span class="string">'/news'</span>,</span><br><span class="line">	query:&#123;<span class="attr">page</span>:<span class="number">1</span>&#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>运行结果：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http:<span class="comment">//www.baidu.com/news?page=1</span></span><br></pre></td></tr></table></figure></p>
+<h3 id="6-reslove"><a href="#6-reslove" class="headerlink" title="6.reslove"></a>6.reslove</h3><hr>
+<h4 id="resolve函数的基础用法"><a href="#resolve函数的基础用法" class="headerlink" title="resolve函数的基础用法"></a>resolve函数的基础用法</h4><p>resolve函数的参数是两个路径，第一个路径是开始的路径或者说当前路径，第二个则是想要去往的路径，返回值是一个组装好的url，示例如下：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> url = <span class="built_in">require</span>(<span class="string">'url'</span>);</span><br><span class="line">url.resolve(<span class="string">'http://example.com/'</span>, <span class="string">'/one'</span>)  <span class="comment">// 'http://example.com/one'</span></span><br><span class="line">url.resolve(<span class="string">'http://example.com/one'</span>, <span class="string">'/two'</span>) <span class="comment">// 'http://example.com/two'</span></span><br></pre></td></tr></table></figure></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2014-01-14T09:45:23.000Z"><a href="/2014/01/14/Node.js入门/Node.js入门(3)文件I:O/">2014-01-14</a></time>
       
       
@@ -304,7 +358,7 @@
   
     <li><a href="/tags/存储/">存储</a><small>3</small></li>
   
-    <li><a href="/tags/安全/">安全</a><small>3</small></li>
+    <li><a href="/tags/安全/">安全</a><small>4</small></li>
   
     <li><a href="/tags/异步编程/">异步编程</a><small>3</small></li>
   

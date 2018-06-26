@@ -53,6 +53,71 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2016-04-10T14:16:53.000Z"><a href="/2016/04/10/Node.js错误处理和调试/CPU profiling/">2016-04-10</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2016/04/10/Node.js错误处理和调试/CPU profiling/">CPU profiling</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>There are many third party tools available for profiling Node.js applications but, in many cases, the easiest option is to use the Node.js built in profiler. The built in profiler uses the <a href="https://developers.google.com/v8/profiler_example" target="_blank" rel="noopener">profiler inside V8</a> which samples the stack at regular intervals during program execution. It records the results of these samples, along with important optimization events such as jit compiles, as a series of ticks:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">code-creation,LazyCompile,0,0x2d5000a337a0,396,&quot;bp native array.js:1153:16&quot;,0x289f644df68,~</span><br><span class="line">code-creation,LazyCompile,0,0x2d5000a33940,716,&quot;hasOwnProperty native v8natives.js:198:30&quot;,0x289f64438d0,~</span><br><span class="line">code-creation,LazyCompile,0,0x2d5000a33c20,284,&quot;ToName native runtime.js:549:16&quot;,0x289f643bb28,~</span><br><span class="line">code-creation,Stub,2,0x2d5000a33d40,182,&quot;DoubleToIStub&quot;</span><br><span class="line">code-creation,Stub,2,0x2d5000a33e00,507,&quot;NumberToStringStub&quot;</span><br></pre></td></tr></table></figure>
+<p>In the past you need the V8 source code to be able to interpret the ticks. Luckily, tools have recently been introduced into Node.js 4.4.0 that facilitate the consumption of this information without separately building V8 from source. Let’s see how the built-in profiler can help provide insight into application performance.</p>
+<p>To illustrate the use of the tick profiler, we will work with a simple Express application. Our application will have two handlers, one for adding new users to our system:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">app.get(<span class="string">'/newUser'</span>, (req, res) =&gt; &#123;</span><br><span class="line">  <span class="keyword">let</span> username = req.query.username || <span class="string">''</span>;</span><br><span class="line">  <span class="keyword">const</span> password = req.query.password || <span class="string">''</span>;</span><br><span class="line"></span><br><span class="line">  username = username.replace(<span class="regexp">/[!@#$%^&amp;*]/g</span>, <span class="string">''</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!username || !password || users.username) &#123;</span><br><span class="line">    <span class="keyword">return</span> res.sendStatus(<span class="number">400</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> salt = crypto.randomBytes(<span class="number">128</span>).toString(<span class="string">'base64'</span>);</span><br><span class="line">  <span class="keyword">const</span> hash = crypto.pbkdf2Sync(password, salt, <span class="number">10000</span>, <span class="number">512</span>);</span><br><span class="line"></span><br><span class="line">  users[username] = &#123; salt, hash &#125;;</span><br><span class="line"></span><br><span class="line">  res.sendStatus(<span class="number">200</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>and another for validating user authentication attempts:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">app.get(<span class="string">'/auth'</span>, (req, res) =&gt; &#123;</span><br><span class="line">  <span class="keyword">let</span> username = req.query.username || <span class="string">''</span>;</span><br><span class="line">  <span class="keyword">const</span> password = req.query.password || <span class="string">''</span>;</span><br><span class="line"></span><br><span class="line">  username = username.replace(<span class="regexp">/[!@#$%^&amp;*]/g</span>, <span class="string">''</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!username || !password || !users[username]) &#123;</span><br><span class="line">    <span class="keyword">return</span> res.sendStatus(<span class="number">400</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> hash = crypto.pbkdf2Sync(password, users[username].salt, <span class="number">10000</span>, <span class="number">512</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (users[username].hash.toString() === hash.toString()) &#123;</span><br><span class="line">    res.sendStatus(<span class="number">200</span>);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    res.sendStatus(<span class="number">401</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p><em>Please note that these are NOT recommended handlers for authenticating users in your Node.js applications and are used purely for illustration purposes. You should not be trying to design your own cryptographic authentication mechanisms in general. It is much better to use existing, proven authentication solutions.</em></p>
+<p>Now assume that we’ve deployed our application and users are complaining about high latency on requests. We can easily run the app with the built in profiler:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">NODE_ENV=production node --prof app.js</span><br></pre></td></tr></table></figure>
+<p>and put some load on the server using <code>ab</code> (ApacheBench):</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">curl -X GET &quot;http://localhost:8080/newUser?username=matt&amp;password=password&quot;</span><br><span class="line">ab -k -c 20 -n 250 &quot;http://localhost:8080/auth?username=matt&amp;password=password&quot;</span><br></pre></td></tr></table></figure>
+<p>and get an ab output of:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">Concurrency Level:      20</span><br><span class="line">Time taken for tests:   46.932 seconds</span><br><span class="line">Complete requests:      250</span><br><span class="line">Failed requests:        0</span><br><span class="line">Keep-Alive requests:    250</span><br><span class="line">Total transferred:      50250 bytes</span><br><span class="line">HTML transferred:       500 bytes</span><br><span class="line">Requests per second:    5.33 [#/sec] (mean)</span><br><span class="line">Time per request:       3754.556 [ms] (mean)</span><br><span class="line">Time per request:       187.728 [ms] (mean, across all concurrent requests)</span><br><span class="line">Transfer rate:          1.05 [Kbytes/sec] received</span><br><span class="line"></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">Percentage of the requests served within a certain time (ms)</span><br><span class="line">  50%   3755</span><br><span class="line">  66%   3804</span><br><span class="line">  75%   3818</span><br><span class="line">  80%   3825</span><br><span class="line">  90%   3845</span><br><span class="line">  95%   3858</span><br><span class="line">  98%   3874</span><br><span class="line">  99%   3875</span><br><span class="line"> 100%   4225 (longest request)</span><br></pre></td></tr></table></figure>
+<p>From this output, we see that we’re only managing to serve about 5 requests per second and that the average request takes just under 4 seconds round trip. In a real world example, we could be doing lots of work in many functions on behalf of a user request but even in our simple example, time could be lost compiling regular expressions, generating random salts, generating unique hashes from user passwords, or inside the Express framework itself.</p>
+<p>Since we ran our application using the <code>--prof</code> option, a tick file was generated in the same directory as your local run of the application. It should have the form <code>isolate-0xnnnnnnnnnnnn-v8.log</code> (where <code>n</code> is a digit).</p>
+<p>In order to make sense of this file, we need to use the tick processor bundled with the Node.js binary. To run the processor, use the <code>--prof-process</code> flag:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">node --prof-process isolate-0xnnnnnnnnnnnn-v8.log &gt; processed.txt</span><br></pre></td></tr></table></figure>
+<p>Opening processed.txt in your favorite text editor will give you a few different types of information. The file is broken up into sections which are again broken up by language. First, we look at the summary section and see:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[Summary]:</span><br><span class="line">  ticks  total  nonlib   name</span><br><span class="line">    79    0.2%    0.2%  JavaScript</span><br><span class="line"> 36703   97.2%   99.2%  C++</span><br><span class="line">     7    0.0%    0.0%  GC</span><br><span class="line">   767    2.0%          Shared libraries</span><br><span class="line">   215    0.6%          Unaccounted</span><br></pre></td></tr></table></figure>
+<p>This tells us that 97% of all samples gathered occurred in C++ code and that when viewing other sections of the processed output we should pay most attention to work being done in C++ (as opposed to Javascript). With this in mind, we next find the [C++] section which contains information about which C++ functions are taking the most CPU time and see:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[C++]:</span><br><span class="line">  ticks  total  nonlib   name</span><br><span class="line"> 19557   51.8%   52.9%  node::crypto::PBKDF2(v8::FunctionCallbackInfo&lt;v8::Value&gt; const&amp;)</span><br><span class="line">  4510   11.9%   12.2%  _sha1_block_data_order</span><br><span class="line">  3165    8.4%    8.6%  _malloc_zone_malloc</span><br></pre></td></tr></table></figure>
+<p>We see that the top 3 entries account for 72.1% of CPU time taken by the program. From this output, we immediately see that at least 51.8% of CPU time is taken up by a function called PBKDF2 which corresponds to our hash generation from a user’s password. However, it may not be immediately obvious how the lower two entries factor into our application (or if it is we will pretend otherwise for the sake of example). To better understand the relationship between these functions, we will next look at the [Bottom up (heavy) profile] section which provides information about the primary callers of each function. Examining this section, we find:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"> ticks parent  name</span><br><span class="line">19557   51.8%  node::crypto::PBKDF2(v8::FunctionCallbackInfo&lt;v8::Value&gt; const&amp;)</span><br><span class="line">19557  100.0%    v8::internal::Builtins::~Builtins()</span><br><span class="line">19557  100.0%      LazyCompile: ~pbkdf2 crypto.js:557:16</span><br><span class="line"></span><br><span class="line"> 4510   11.9%  _sha1_block_data_order</span><br><span class="line"> 4510  100.0%    LazyCompile: *pbkdf2 crypto.js:557:16</span><br><span class="line"> 4510  100.0%      LazyCompile: *exports.pbkdf2Sync crypto.js:552:30</span><br><span class="line"></span><br><span class="line"> 3165    8.4%  _malloc_zone_malloc</span><br><span class="line"> 3161   99.9%    LazyCompile: *pbkdf2 crypto.js:557:16</span><br><span class="line"> 3161  100.0%      LazyCompile: *exports.pbkdf2Sync crypto.js:552:30</span><br></pre></td></tr></table></figure>
+<p>Parsing this section takes a little more work than the raw tick counts above. Within each of the “call stacks” above, the percentage in the parent column tells you the percentage of samples for which the function in the row above was called by the function in the current row. For example, in the middle “call stack” above for _sha1_block_data_order, we see that _sha1_block_data_order occurred in 11.9% of samples, which we knew from the raw counts above. However, here, we can also tell that it was always called by the pbkdf2 function inside the Node.js crypto module. We see that similarly, _malloc_zone_malloc was called almost exclusively by the same pbkdf2 function. Thus, using the information in this view, we can tell that our hash computation from the user’s password accounts not only for the 51.8% from above but also for all CPU time in the top 3 most sampled functions since the calls to _sha1_block_data_order and _malloc_zone_malloc were made on behalf of the pbkdf2 function.</p>
+<p>At this point, it is very clear that the password based hash generation should be the target of our optimization. Thankfully, you’ve fully internalized the <a href="https://nodesource.com/blog/why-asynchronous" target="_blank" rel="noopener">benefits of asynchronous programming</a> and you realize that the work to generate a hash from the user’s password is being done in a synchronous way and thus tying down the event loop. This prevents us from working on other incoming requests while computing a hash.</p>
+<p>To remedy this issue, you make a small modification to the above handlers to use the asynchronous version of the pbkdf2 function:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">app.get(<span class="string">'/auth'</span>, (req, res) =&gt; &#123;</span><br><span class="line">  <span class="keyword">let</span> username = req.query.username || <span class="string">''</span>;</span><br><span class="line">  <span class="keyword">const</span> password = req.query.password || <span class="string">''</span>;</span><br><span class="line"></span><br><span class="line">  username = username.replace(<span class="regexp">/[!@#$%^&amp;*]/g</span>, <span class="string">''</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!username || !password || !users[username]) &#123;</span><br><span class="line">    <span class="keyword">return</span> res.sendStatus(<span class="number">400</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  crypto.pbkdf2(password, users[username].salt, <span class="number">10000</span>, <span class="number">512</span>, (err, hash) =&gt; &#123;</span><br><span class="line">    <span class="keyword">if</span> (users[username].hash.toString() === hash.toString()) &#123;</span><br><span class="line">      res.sendStatus(<span class="number">200</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      res.sendStatus(<span class="number">401</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>A new run of the ab benchmark above with the asynchronous version of your app yields:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">Concurrency Level:      20</span><br><span class="line">Time taken for tests:   12.846 seconds</span><br><span class="line">Complete requests:      250</span><br><span class="line">Failed requests:        0</span><br><span class="line">Keep-Alive requests:    250</span><br><span class="line">Total transferred:      50250 bytes</span><br><span class="line">HTML transferred:       500 bytes</span><br><span class="line">Requests per second:    19.46 [#/sec] (mean)</span><br><span class="line">Time per request:       1027.689 [ms] (mean)</span><br><span class="line">Time per request:       51.384 [ms] (mean, across all concurrent requests)</span><br><span class="line">Transfer rate:          3.82 [Kbytes/sec] received</span><br><span class="line"></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">Percentage of the requests served within a certain time (ms)</span><br><span class="line">  50%   1018</span><br><span class="line">  66%   1035</span><br><span class="line">  75%   1041</span><br><span class="line">  80%   1043</span><br><span class="line">  90%   1049</span><br><span class="line">  95%   1063</span><br><span class="line">  98%   1070</span><br><span class="line">  99%   1071</span><br><span class="line"> 100%   1079 (longest request)</span><br></pre></td></tr></table></figure>
+<p>Yay! Your app is now serving about 20 requests per second, roughly 4 times more than it was with the synchronous hash generation. Additionally, the average latency is down from the 4 seconds before to just over 1 second.</p>
+<p>Hopefully, through the performance investigation of this (admittedly contrived) example, you’ve seen how the V8 tick processor can help you gain a better understanding of the performance of your Node.js applications.</p>
+<p>原文：<a href="https://nodejs.org/en/docs/guides/simple-profiling/" target="_blank" rel="noopener">https://nodejs.org/en/docs/guides/simple-profiling/</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2016-04-05T14:16:53.000Z"><a href="/2016/04/05/Node.js错误处理和调试/Node出现uncaughtException之后的优雅退出方案/">2016-04-05</a></time>
       
       
@@ -780,58 +845,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2015-04-04T06:45:23.000Z"><a href="/2015/04/04/Gulp/Gulp(1)简介/">2015-04-04</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2015/04/04/Gulp/Gulp(1)简介/">一.gulp简介</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-什么是gulp"><a href="#1-什么是gulp" class="headerlink" title="1.什么是gulp"></a>1.什么是gulp</h3><hr>
-<p>gulp是前端开发过程中一种基于流的代码构建工具，是自动化项目的构建利器；她不仅能对网站资源进行优化，而且在开发过程中很多重复的任务能够使用正确的工具自动完成；使用她，不仅可以很愉快的编写代码，而且大大提高我们的工作效率。</p>
-<p>　　gulp是基于Nodejs的自动任务运行器， 她能自动化地完成 javascript、coffee、sass、less、html/image、css 等文件的测试、检查、合并、压缩、格式化、浏览器自动刷新、部署文件生成，并监听文件在改动后重复指定的这些步骤。在实现上，她借鉴了Unix操作系统的管道（pipe）思想，前一级的输出，直接变成后一级的输入，使得在操作上非常简单。</p>
-<h3 id="2-核心"><a href="#2-核心" class="headerlink" title="2.核心"></a>2.核心</h3><hr>
-<h4 id="流-stream"><a href="#流-stream" class="headerlink" title="流(stream)"></a>流(stream)</h4><p>流,简单来说就是建立在面向对象基础上的一种抽象的处理数据的工具。在流中，定义了一些处理数据的基本操作，如读取数据，写入数据等，程序员是对流进行所有操作的，而不用关心流的另一头数据的真正流向。流不但可以处理文件，还可以处理动态内存、网络数据等多种数据形式。</p>
-<p>　　而gulp正是通过流和代码优于配置的策略来尽量简化任务编写的工作。这看起来有点“像jQuery”的方法，把动作串起来创建构建任务。早在Unix的初期，流就已经存在了。流在Node.js生态系统中也扮演了重要的角色，类似于*nix将几乎所有设备抽象为文件一样，Node将几乎所有IO操作都抽象成了stream的操作。因此用gulp编写任务也可看作是用Node.js编写任务。当使用流时，gulp去除了中间文件，只将最后的输出写入磁盘，整个过程因此变得更快。</p>
-<h3 id="3-特点"><a href="#3-特点" class="headerlink" title="3.特点"></a>3.特点</h3><hr>
-<h4 id="易于使用"><a href="#易于使用" class="headerlink" title="易于使用"></a>易于使用</h4><p>　　通过代码优于配置的策略，gulp 让简单的任务简单，复杂的任务可管理。</p>
-<h4 id="构建快速"><a href="#构建快速" class="headerlink" title="构建快速"></a>构建快速</h4><p>　　利用 Node.js 流的威力，你可以快速构建项目并减少频繁的 IO 操作。</p>
-<h4 id="易于学习"><a href="#易于学习" class="headerlink" title="易于学习"></a>易于学习</h4><p>　　通过最少的 API，掌握 gulp 毫不费力，构建工作尽在掌握：如同一系列流管道。</p>
-<h4 id="插件高质"><a href="#插件高质" class="headerlink" title="插件高质"></a>插件高质</h4><p>　　gulp 严格的插件指南确保插件如你期望的那样简洁高质得工作。</p>
-<h3 id="4-安装"><a href="#4-安装" class="headerlink" title="4.安装"></a>4.安装</h3><hr>
-<p>首先确保你已经正确安装了nodejs环境。然后以全局方式安装gulp：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install -g gulp</span><br></pre></td></tr></table></figure></p>
-<p>　　全局安装gulp后，还需要在每个要使用gulp的项目中都单独安装一次。把目录切换到你的项目文件夹中，然后在命令行中执行：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install gulp</span><br></pre></td></tr></table></figure></p>
-<p>　　如果想在安装的时候把gulp写进项目package.json文件的依赖中，则可以加上–save-dev：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install --save-dev gulp</span><br></pre></td></tr></table></figure></p>
-<p>　　这样就完成了gulp的安装，接下来就可以在项目中应用gulp了。</p>
-<h3 id="5-使用"><a href="#5-使用" class="headerlink" title="5.使用"></a>5.使用</h3><hr>
-<p>1.建立gulpfile.js文件</p>
-<p>　　gulp也需要一个文件作为它的主文件，在gulp中这个文件叫做gulpfile.js。新建一个文件名为gulpfile.js的文件，然后放到你的项目目录中。之后要做的事情就是在gulpfile.js文件中定义我们的任务了。下面是一个最简单的gulpfile.js文件内容示例，它定义了一个默认的任务。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;);</span><br><span class="line">gulp.task(&apos;default&apos;,function()&#123;</span><br><span class="line">    console.log(&apos;hello world&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>2.运行gulp任务<br>　　要运行gulp任务，只需切换到存放gulpfile.js文件的目录(windows平台请使用cmd或者Power Shell等工具)，然后在命令行中执行gulp命令就行了，gulp后面可以加上要执行的任务名，例如gulp task1，如果没有指定任务名，则会执行任务名为default的默认任务。</p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -883,7 +896,7 @@
   
     <li><a href="/tags/存储/">存储</a><small>3</small></li>
   
-    <li><a href="/tags/安全/">安全</a><small>3</small></li>
+    <li><a href="/tags/安全/">安全</a><small>4</small></li>
   
     <li><a href="/tags/异步编程/">异步编程</a><small>3</small></li>
   
