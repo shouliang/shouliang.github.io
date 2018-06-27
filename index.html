@@ -53,6 +53,77 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2017-02-23T06:45:23.000Z"><a href="/2017/02/23/安全/SQL注入/">2017-02-23</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2017/02/23/安全/SQL注入/">SQL注入</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="如何理解SQL注入（攻击）？"><a href="#如何理解SQL注入（攻击）？" class="headerlink" title="如何理解SQL注入（攻击）？"></a>如何理解SQL注入（攻击）？</h3><ol>
+<li>SQL注入是一种将SQL代码添加到输入参数中，传递到服务器解析并执行的一种攻击手法。</li>
+<li>SQL注入攻击是输入参数未经过滤，然后直接拼接到SQL语句当中解析，执行达到预想之外的一种行为，称之为SQL注入攻击。</li>
+</ol>
+<h3 id="SQL注入是怎么产生的？"><a href="#SQL注入是怎么产生的？" class="headerlink" title="SQL注入是怎么产生的？"></a>SQL注入是怎么产生的？</h3><ol>
+<li>WEB开发人员无法保证所有的输入都已经过滤</li>
+<li>攻击者利用发送给SQL服务器的输入参数构造可执行的SQL代码（可加入到get请求、post请求、http头信息、cookie中）</li>
+<li>数据库未做相应的安全配置</li>
+</ol>
+<h3 id="如何进行SQL注入攻击"><a href="#如何进行SQL注入攻击" class="headerlink" title="如何进行SQL注入攻击"></a>如何进行SQL注入攻击</h3><p>要想发动sql注入攻击，就要知道正在使用的系统数据库，不然就没法提取重要的数据。<br>首先从Web应用技术上就给我们提供了判断的线索：</p>
+<ul>
+<li>ASP和.NET：Microsoft SQL Server</li>
+<li>PHP：MySQL、PostgreSQL</li>
+<li>Java：Oracle、MySQL</li>
+</ul>
+<p>Web容器也给我们提供了线索，比如安装IIS作为服务器平台，后台数据及很有可能是Microsoft SQL Server，而允许Apache和PHP的Linux服务器就很有可能使用开源的数据库，比如MySQL和PostgreSQL。</p>
+<h5 id="基于错误识别数据库"><a href="#基于错误识别数据库" class="headerlink" title="基于错误识别数据库"></a>基于错误识别数据库</h5><p>大多数情况下，要了解后台是什么数据库，只需要看一条详细的错误信息即可。比如判断我们事例中使用的数据库，我们加个单引号。<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">error:You have an error in your SQL syntax; <span class="keyword">check</span> the <span class="keyword">manual</span> that corresponds <span class="keyword">to</span> your MySQL <span class="keyword">server</span> <span class="keyword">version</span> <span class="keyword">for</span> the <span class="keyword">right</span> syntax <span class="keyword">to</span> <span class="keyword">use</span> near <span class="string">''' at line 1</span></span><br></pre></td></tr></table></figure></p>
+<p>从错误信息中，我们就可以发现是MySQL。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Microsoft OLE DB Provider for ODBC Drivers 错误 '80040e14'</span><br><span class="line"> [Microsoft][ODBC SQL Server Driver][SQL Server]Line 1:</span><br></pre></td></tr></table></figure>
+<p>上面错误信息可以发现是Microsoft SQL Server，如果错误信息开头是ORA，就可以判断数据库是Oracle，很简单，道理都是一样的，就不一一列举了。</p>
+<h6 id="UINON语句提取数据"><a href="#UINON语句提取数据" class="headerlink" title="UINON语句提取数据"></a>UINON语句提取数据</h6><p>UNION操作符可以合并两条或多条SELECT语句的查询结果，基本语法如下：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="keyword">column</span><span class="number">-1</span> <span class="keyword">column</span><span class="number">-2</span> <span class="keyword">from</span> <span class="keyword">table</span><span class="number">-1</span></span><br><span class="line"><span class="keyword">UNION</span></span><br><span class="line"><span class="keyword">select</span> <span class="keyword">column</span><span class="number">-1</span> <span class="keyword">column</span><span class="number">-2</span> <span class="keyword">from</span> <span class="keyword">table</span><span class="number">-2</span></span><br></pre></td></tr></table></figure></p>
+<h6 id="枚举数据库"><a href="#枚举数据库" class="headerlink" title="枚举数据库"></a>枚举数据库</h6><p>我们只以MySQL数据库为例了，枚举数据库并提取数据遵循一种层次化的方法，首先我们提取数据库名称，然后提取表，再到列，最后才是数据本身。要想获取远程数据库的表、列，就要访问专门保存描述各种数据库结构的表。通常将这些结构描述信息成为元数据。在MySQL中，这些表都保存在information_schema数据库中</p>
+<h6 id="第一步：提取数据库"><a href="#第一步：提取数据库" class="headerlink" title="第一步：提取数据库"></a>第一步：提取数据库</h6><p>在MySQL中，数据库名存放在information_schema数据库下schemata表schema_name字段中<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">id=1 union <span class="keyword">select</span> <span class="literal">null</span>,schema_name,<span class="literal">null</span> <span class="keyword">from</span> information_schema.schemata</span><br></pre></td></tr></table></figure></p>
+<h6 id="第二步：提取表名"><a href="#第二步：提取表名" class="headerlink" title="第二步：提取表名"></a>第二步：提取表名</h6><p>在MySQL中，表名存放在information_schema数据库下tables表table_name字段中<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?id=1 union <span class="keyword">select</span> <span class="literal">null</span>,table_name,<span class="literal">null</span> <span class="keyword">from</span> information_schema.tables <span class="keyword">where</span> table_schema=<span class="string">'ichunqiu'</span></span><br></pre></td></tr></table></figure></p>
+<h6 id="第三步：提取字段名"><a href="#第三步：提取字段名" class="headerlink" title="第三步：提取字段名"></a>第三步：提取字段名</h6><p>在MySQL中，字段名存放在information_schema数据库下columns表column_name字段中<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="literal">null</span>,column_name,<span class="literal">null</span> <span class="keyword">from</span> information_schema.columns <span class="keyword">where</span> table_name=<span class="string">'users'</span> <span class="keyword">and</span> table_schema=<span class="string">''</span></span><br></pre></td></tr></table></figure></p>
+<h6 id="第四步：提取数据"><a href="#第四步：提取数据" class="headerlink" title="第四步：提取数据"></a>第四步：提取数据</h6><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> username,<span class="keyword">password</span>,<span class="literal">null</span> <span class="keyword">from</span> <span class="keyword">users</span></span><br></pre></td></tr></table></figure>
+<h3 id="SQL盲注"><a href="#SQL盲注" class="headerlink" title="SQL盲注"></a>SQL盲注</h3><h4 id="布尔型注入"><a href="#布尔型注入" class="headerlink" title="布尔型注入"></a>布尔型注入</h4><p>例如：在参数后面加上or 1=1，可返回所有数据，因为 or 1=1永远为真</p>
+<h4 id="联合查询注入"><a href="#联合查询注入" class="headerlink" title="联合查询注入"></a>联合查询注入</h4><p>在参数后面加上：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UNION <span class="keyword">select</span> <span class="keyword">column</span><span class="number">-1</span> <span class="keyword">column</span><span class="number">-2</span> <span class="keyword">from</span> <span class="keyword">table</span><span class="number">-2</span></span><br></pre></td></tr></table></figure></p>
+<h4 id="多语句注入"><a href="#多语句注入" class="headerlink" title="多语句注入"></a>多语句注入</h4><p>在参数后面加上：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">;<span class="keyword">drop</span> <span class="keyword">table</span> a; <span class="keyword">select</span> * <span class="keyword">from</span> tableb;</span><br></pre></td></tr></table></figure></p>
+<h4 id="字符串注册"><a href="#字符串注册" class="headerlink" title="字符串注册"></a>字符串注册</h4><p>‘#’：’#’后所有的字符串都会被当成注释来处理用户名输入：user’#（单引号闭合user左边的单引号），密码随意输入，如：111，然后点击提交按钮。等价于SQL语句：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> <span class="keyword">user</span> <span class="keyword">WHERE</span> username = <span class="string">'user'</span>#<span class="string">'ADN password = '</span><span class="number">111</span><span class="string">'</span></span><br></pre></td></tr></table></figure></p>
+<h3 id="如何预防SQL注入"><a href="#如何预防SQL注入" class="headerlink" title="如何预防SQL注入"></a>如何预防SQL注入</h3><ol>
+<li>严格检查输入变量的类型和格式<br> 对于整数参数，加判断条件：不能为空、参数类型必须为数字<br> 对于字符串参数，可以使用正则表达式进行过滤：如：必须为[0-9a-zA-Z]范围内的字符串</li>
+<li>对URL进行编码</li>
+<li>对进入数据库的特殊字符（’”\尖括号&amp;*;等）进行转义处理，或编码转换</li>
+<li>所有的查询语句建议使用数据库提供的参数化查询接口，参数化的语句使用参数而不是将用户输入变量嵌入到SQL语句中，即不要直接拼接SQL语句</li>
+<li>避免网站打印出SQL错误信息，比如类型错误、字段不匹配等，把代码里的SQL语句暴露出来，以防止攻击者利用这些错误信息进行SQL注入。</li>
+<li>利用sql的预编译机制<br> 把sql语句的模板（变量采用占位符进行占位）发送给数据库服务器，数据库服务器对sql语句的模板进行编译，编译之后根据语句的优化分析对相应的索引进行优化，在最终绑定参数时把相应的参数传送给数据库服务器，直接进行执行，节省了sql查询时间，以及数据库服务器的资源，达到一次编译、多次执行的目的，除此之外，还可以防止SQL注入。具体是怎样防止SQL注入的呢？实际上当将绑定的参数传到数据库服务器，服务器对参数进行编译，即填充到相应的占位符的过程中，做了转义操作。</li>
+</ol>
+<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><p><a href="https://blog.csdn.net/github_36032947/article/details/78442189" target="_blank" rel="noopener">https://blog.csdn.net/github_36032947/article/details/78442189</a><br><a href="https://www.jianshu.com/p/ba35a7e1c67d" target="_blank" rel="noopener">https://www.jianshu.com/p/ba35a7e1c67d</a><br><a href="https://paper.seebug.org/15/" target="_blank" rel="noopener">https://paper.seebug.org/15/</a><br><a href="https://github.com/astaxie/build-web-application-with-golang/blob/master/zh/09.4.md" target="_blank" rel="noopener">https://github.com/astaxie/build-web-application-with-golang/blob/master/zh/09.4.md</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2017-02-20T06:45:23.000Z"><a href="/2017/02/20/安全/CSP简介/">2017-02-20</a></time>
       
       
@@ -116,8 +187,8 @@
 <p>浏览器会使用<code>POST</code>方法，发送一个JSON对象，下面是一个例子。</p>
  <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;csp-report&quot;: &#123;</span><br><span class="line">    &quot;document-uri&quot;: &quot;http://example.org/page.html&quot;,</span><br><span class="line">    &quot;referrer&quot;: &quot;http://evil.example.com/&quot;,</span><br><span class="line">    &quot;blocked-uri&quot;: &quot;http://evil.example.com/evil.js&quot;,</span><br><span class="line">    &quot;violated-directive&quot;: &quot;script-src &apos;self&apos; https://apis.google.com&quot;,</span><br><span class="line">    &quot;original-policy&quot;: &quot;script-src &apos;self&apos; https://apis.google.com; report-uri http://example.org/my_amazing_csp_report_parser&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p><img src="http://7xq1il.com1.z0.glb.clouddn.com/csp02.png" alt="img"></p>
-<h2 id="三、Content-Security-Policy-Report-Only"><a href="#三、Content-Security-Policy-Report-Only" class="headerlink" title="三、Content-Security-Policy-Report-Only"></a>三、Content-Security-Policy-Report-Only</h2><p>除了<code>Content-Security-Policy</code>，还有一个<code>Content-Security-Policy-Report-Only</code>字段，表示不执行限制选项，只是记录违反限制的行为。</p>
-<p>它必须与<code>report-uri</code>选项配合使用。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy-Report-Only: <span class="keyword">default</span>-src <span class="string">'self'</span>; ...; report-uri /my_amazing_csp_report_parser;</span><br></pre></td></tr></table></figure></p>
+<h2 id="三、Content-Security-Policy-Report-Only"><a href="#三、Content-Security-Policy-Report-Only" class="headerlink" title="三、Content-Security-Policy-Report-Only"></a>三、Content-Security-Policy-Report-Only</h2><p>除了<code>Content-Security-Policy</code>，还有一个<code>Content-Security-Policy-Report-Only</code>字段，表示不执行限制选项，只是记录违反限制的行为。<br>它必须与<code>report-uri</code>选项配合使用。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy-Report-Only: <span class="keyword">default</span>-src <span class="string">'self'</span>; ...; report-uri /my_amazing_csp_report_parser;</span><br></pre></td></tr></table></figure>
 <h2 id="四、选项值"><a href="#四、选项值" class="headerlink" title="四、选项值"></a>四、选项值</h2><p>每个限制选项可以设置以下几种值，这些值就构成了白名单。</p>
 <ul>
 <li>主机名：<code>example.org</code>，<code>https://example.com:443</code></li>
@@ -128,7 +199,7 @@
 <li>关键字<code>&#39;none&#39;</code>：禁止加载任何外部资源，需要加引号</li>
 </ul>
 <p>多个值也可以并列，用空格分隔。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy: script-src <span class="string">'self'</span> https:<span class="comment">//apis.google.com</span></span><br></pre></td></tr></table></figure></p>
-<p>如果同一个限制选项使用多次，只有第一次会生效。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># 错误的写法</span><br><span class="line">script-src https:<span class="comment">//host1.com; script-src https://host2.com</span></span><br><span class="line"></span><br><span class="line"> # 正确的写法</span><br><span class="line"> script-src https:<span class="comment">//host1.com https://host2.com</span></span><br></pre></td></tr></table></figure></p>
+<p>如果同一个限制选项使用多次，只有第一次会生效。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># 错误的写法</span><br><span class="line">script-src https:<span class="comment">//host1.com; script-src https://host2.com</span></span><br><span class="line"></span><br><span class="line"># 正确的写法</span><br><span class="line">script-src https:<span class="comment">//host1.com https://host2.com</span></span><br></pre></td></tr></table></figure></p>
 <p>如果不设置某个限制选项，就是默认允许任何值。</p>
 <h2 id="五、script-src-的特殊值"><a href="#五、script-src-的特殊值" class="headerlink" title="五、script-src 的特殊值"></a>五、script-src 的特殊值</h2><p>除了常规值，<code>script-src</code>还可以设置一些特殊值。注意，下面这些值都必须放在单引号里面。</p>
 <ul>
@@ -315,110 +386,6 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2017-02-12T06:45:23.000Z"><a href="/2017/02/12/安全/数字证书的基础知识/">2017-02-12</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/02/12/安全/数字证书的基础知识/">数字证书的基础知识</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>在讲数字证书之前必须要讲<strong>非对称加密算法</strong>和<strong>摘要算法</strong>，因为数字证书的基础就是各种加解密算法（非对称加密、摘要算法），而其中的核心就是非对称加密算法了。目前而言加密方法可以分为两大类。一类是<strong>单钥加密</strong>（private key cryptography）也可以称为对称加密，还有一类叫做<strong>双钥加密</strong>（public key cryptography）也可称为非对称加密。前者的加密和解密过程都用同一套密码，后者的加密和解密过程用的是不同的密码。下面来看看对称加密、非对称加密以及摘要算法，他们是怎样应用在数字证书中的。</p>
-<h3 id="对称加密"><a href="#对称加密" class="headerlink" title="对称加密"></a>对称加密</h3><p>对称加密(也叫私钥加密)指加密和解密使用相同密钥的加密算法。有时又叫传统密码算法，就是加密密钥能够从解密密钥中推算出来，同时解密密钥也可以从加密密钥中推算出来。而在大多数的对称算法中，加密密钥和解密密钥是相同的，所以也称这种加密算法为秘密密钥算法或单密钥算法。</p>
-<p>在应用该算法时，它要求发送方和接收方在安全通信之前，商定一个密钥。对称算法的安全性依赖于密钥，泄漏密钥就意味着任何人都可以对他们发送或接收的消息解密，所以密钥的保密性对通信性至关重要。对称加密算法的特点是算法公开、计算量小、加密速度快、加密效率高。对称加密有很多种算法，由于它效率很高，所以被广泛使用在很多加密协议的核心当中。不足之处是，交易双方都使用同样钥匙，安全性得不到保证。</p>
-<h4 id="常见的对称加密算法"><a href="#常见的对称加密算法" class="headerlink" title="常见的对称加密算法"></a>常见的对称加密算法</h4><ul>
-<li><strong>DES</strong>：数据加密标准（DES，Data Encryption Standard）是一种使用密钥加密的块密码，它基于使用<strong>56位密钥</strong>的对称算法，这个算法因为包含一些机密设计元素，相对短的密钥长度以及被怀疑内含美国国家安全局（NSA）的后门而在开始时是有争议的，DES现在已经不被视为一种安全的加密算法，主要因为它使用的56位密钥过短，导致容易被破解。为了提供实用所需的安全性，可以使用DES的派生算法3DES来进行加密，虽然3DES也存在理论上的攻击方法。</li>
-<li><strong>AES</strong>：高级加密标准（英语：Advanced Encryption Standard，缩写：AES），这个标准用来替代原先的DES，已经被多方分析且广为全世界所使用，2006年，高级加密标准已然成为对称密钥加密中最流行的算法之一。AES的区块长度固定为128比特，<strong>密钥长度则可以是128，192或256比特</strong>。</li>
-<li><strong>RC4</strong>：RC4加密算法是大名鼎鼎的RSA三人组中的头号人物Ronald Rivest在1987年设计的密钥长度可变的流加密算法簇。该算法的速度可以达到DES加密的10倍左右，且具有很高级别的非线性。RC4起初是用于保护商业机密的。但是在1994年9月，它的算法被发布在互联网上，也就不再有什么商业机密了。</li>
-<li><strong>IDEA</strong>：是旅居瑞士中国青年学者来学嘉和著名密码专家J.Massey于1990年提出的。它在1990年正式公布并在以后得到增强。这种算法是在DES算法的基础上发展出来的，类似于三重DES，和DES一样IDEA也是属于对称密钥算法。发展IDEA也是因为感到DES具有密钥太短等缺点，已经过时。<strong>IDEA的密钥为128位</strong>，这么长的密钥在今后若干年内应该是安全的。</li>
-</ul>
-<h3 id="非对称加密"><a href="#非对称加密" class="headerlink" title="非对称加密"></a>非对称加密</h3><p>与对称加密算法不同，非对称加密算法需要两个密钥：公开密钥（publickey）和私有密钥（privatekey）；并且加密密钥和解密密钥是成对出现的。非对称加密算法在加密和解密过程使用了不同的密钥，非对称加密也称为公钥加密，在密钥对中，其中一个密钥是对外公开的，所有人都可以获取到，称为公钥，其中一个密钥是不公开的称为私钥。</p>
-<h4 id="非对称加密的特性"><a href="#非对称加密的特性" class="headerlink" title="非对称加密的特性"></a>非对称加密的特性</h4><ul>
-<li>对于一个公钥，有且只有一个对应的私钥。</li>
-<li>公钥是公开的，并且不能通过公钥反推出私钥。</li>
-<li>通过私钥加密的密文只能通过公钥能解密，通过公钥加密的密文也只能通过私钥能解密。</li>
-</ul>
-<p>通过公钥是极难推算出私钥的，只能通过穷举，所以只要密钥足够长，要想从公钥推算出私钥几乎不可能的。</p>
-<h4 id="非对称加密的主要用途"><a href="#非对称加密的主要用途" class="headerlink" title="非对称加密的主要用途"></a>非对称加密的主要用途</h4><ul>
-<li><strong>对信息保密，防止中间人攻击</strong>：将明文使用公钥加密，传输给接收者，这样确保信息只能被有私钥的拥有者解密，其他人无法获得明文信息，因为没有私钥无法进行解密。该方法一般用于交换<strong>对称密钥</strong>。</li>
-<li><strong>身份验证和防止信息篡改</strong>：私钥拥有者使用私钥加密一段授权明文，并将授权明文和加密后的密文，以及公钥一并发送出来，接收方只需要通过公钥将密文解密后与授权明文对比是否一致，就可以判断明文在中途是否被篡改过。此方法用于<strong>数字签名</strong>。</li>
-</ul>
-<h4 id="常见的非对称加密算法"><a href="#常见的非对称加密算法" class="headerlink" title="常见的非对称加密算法"></a>常见的非对称加密算法</h4><ul>
-<li><strong>RSA</strong>：1977年，三位数学家Rivest、Shamir 和 Adleman 设计了一种算法，可以实现非对称加密。这种算法用他们三个人的名字命名，叫做RSA算法。从那时直到现在，RSA算法一直是最广为使用的”非对称加密算法”。毫不夸张地说，只要有计算机网络的地方，就有RSA算法。这种算法非常可靠，密钥越长，它就越难破解。根据已经披露的文献，目前被破解的最长RSA密钥是768个二进制位。也就是说，长度超过768位的密钥，还无法破解（至少没人公开宣布）。因此可以认为，<strong>1024位的RSA密钥基本安全，2048位的密钥极其安全</strong>。适用于数字签名和密钥交换。 该算法是目前应用最广泛的公钥加密算法，特别适用于通过 Internet 传送的数据。</li>
-<li><strong>DSA</strong>：数字签名算法 (Digital Signature Algorithm, DSA) 由美国国家安全署 (United States National Security Agency, NSA) 发明，已作为数字签名的标准。在DSA数字签名和认证中，发送者使用自己的私钥对文件或消息进行签名，接受者收到消息后使用发送者的公钥来验证签名的真实性。DSA只是一种算法，和RSA不同之处在于它不能用作加密和解密，也不能进行密钥交换，只用于签名，它比RSA要快很多。DSA 算法的安全性取决于自计算离散算法的困难。这种算法，不适用于数据加密，仅适用于数字签名。</li>
-<li><strong>Diffie-Hellman</strong>：一种确保共享KEY安全穿越不安全网络的方法。Whitefield与Martin Hellman在1976年提出了一个奇妙的密钥交换协议，称为Diffie-Hellman密钥交换协议/算法(Diffie-Hellman Key Exchange/Agreement Algorithm)。这个机制的巧妙在于需要安全通信的双方可以用这个方法确定对称密钥。然后可以用这个密钥进行加密和解密。但是注意，这个密钥交换协议/算法只能用于密钥的交换，而不能进行消息的加密和解密。双方确定要用的密钥后，要使用其他对称密钥操作加密算法实际加密和解密消息。该算法仅适用于密钥交换。</li>
-<li><strong>ECC</strong>：椭圆加密算法（ECC）是一种公钥加密体制，最初由Koblitz和Miller两人于1985年提出，与经典的RSA，DSA等公钥密码体制相比，椭圆密码体制有以下优点：160位的椭圆密钥与1024位的RSA密钥安全性相同；在私钥的加密解密速度上，ECC算法比RSA、DSA速度更快；存储空间占用小；带宽要求低；ECC算法的数学理论非常深奥和复杂，在工程应用中比较难于实现，但它的单位安全强度相对较高。</li>
-</ul>
-<p>非对称加密算法可能是世界上最重要的算法，它是当今电子商务等领域的基石。非对称加密算法如此强大可靠，却有一个弊端，就是加解密比较耗时。因此，在实际使用中，往往与对称加密和摘要算法结合使用。列如在实体之间交换对称密钥时，或者在签署一封邮件的散列时（数字签名）。</p>
-<p>散列是通过应用一种单向数学函数获得的一个定长结果，对于数据而言，叫做散列算法。</p>
-<h3 id="摘要算法"><a href="#摘要算法" class="headerlink" title="摘要算法"></a>摘要算法</h3><p>摘要算法是一个神奇的算法，也称为散列或者散列值。是一种与基于密钥（对称密钥或公钥）的加密不同的数据转换类型。散列就是通过把一个叫做散列算法的单向数学函数应用于数据，将任意长度的一块数据转换为一个定长的、不可逆转的数字，其长度通常在128～256位之间。所产生的散列值的长度应足够长，因此使找到两块具有相同散列值的数据的机会很少。</p>
-<h4 id="摘要算法具有以下特性："><a href="#摘要算法具有以下特性：" class="headerlink" title="摘要算法具有以下特性："></a>摘要算法具有以下特性：</h4><ul>
-<li>只要源文本不同，计算得到的结果，必然不同（或者说机会很少）。</li>
-<li>无法从结果反推出源数据（那是当然的，不然就能量不守恒了）。</li>
-</ul>
-<h4 id="常见的摘要算法："><a href="#常见的摘要算法：" class="headerlink" title="常见的摘要算法："></a>常见的摘要算法：</h4><ul>
-<li><strong>MD5</strong>：是RSA数据安全公司开发的一种单向散列算法，MD5被广泛使用，可以用来把不同长度的数据块进行暗码运算成一个固定位位的数值（通常是128位）。</li>
-<li><strong>SHA-1</strong>：与 DSA 公钥算法相似，安全散列算法1（SHA-1）也是由 NSA 设计的，并由 NIST 将其收录到 FIPS 中，作为散列数据的标准。它可产生一个 160 位的散列值。SHA-1 是流行的用于创建数字签名的单向散列算法。</li>
-<li><strong>MAC（Message Authentication Code）</strong>：消息认证代码，是一种使用密钥的单向函数，可以用它们在系统上或用户之间认证文件或消息，常见的是HMAC（用于消息认证的密钥散列算法）。</li>
-<li><strong>CRC（Cyclic Redundancy Check）</strong>：循环冗余校验码，CRC校验由于实现简单，检错能力强，被广泛使用在各种数据校验应用中。占用系统资源少，用软硬件均能实现，是进行数据传输差错检测地一种很好的手段（CRC 并不是严格意义上的散列算法，但它的作用与散列算法大致相同，所以归于此类）。</li>
-</ul>
-<p>摘要算法用于对比信息源是否一致，因为只要源数据发生变化，得到的摘要必然不同。因为通常结果比源数据要短很多，所以称为“摘要”。</p>
-<p>应用场景，如发件人生成邮件的散列值并加密它，然后将它与邮件本身一起发送。而收件人同时解密邮件和散列值，并由接收到的邮件产生另外一个散列值，然后将两个散列值进行比较。如果两者相同，邮件极有可能在传输期间没有发生任何改变。</p>
-<h3 id="数字签名"><a href="#数字签名" class="headerlink" title="数字签名"></a>数字签名</h3><p>数字签名就是对非对称加密和摘要算法的一种应用，能够确保信息在发布后不会被篡改（摘要算法特性），保证数据的完整性和可信性；同时也可以防止数据被他人伪造（非对称加密算法特性）；列如，我们有一段授权文本需要发布时，为了防止中途篡改发布的内容，保证发布文本的完整性，以及文本是由指定的发布者发布的。那么，可以通过摘要算法得到发布内容的摘要，得到摘要之后，发布者使用私钥加密得到密文（签名），这时候将源文本、密文（签名）以及公钥一起发布出去即可。</p>
-<p>验证过程为：首先验证公钥是否是发布者的公钥，然后用公钥对密文进行解密，得到摘要，使用发布者对文本同样的摘要算法得到摘要文本，比对摘要是否一致即可确认信息是否被篡改或者是指定发布者发布的。</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/ditialSig.jpg" alt=""></p>
-<p>数字签名可以快速验证文本的完整性和合法性，已广泛应用于各个领域。</p>
-<p>公钥的验证在后续数字证书的授权链中提到验证方法。</p>
-<h3 id="数字证书"><a href="#数字证书" class="headerlink" title="数字证书"></a>数字证书</h3><h4 id="现实生活中的证书"><a href="#现实生活中的证书" class="headerlink" title="现实生活中的证书"></a>现实生活中的证书</h4><p>在现实生活中，证书顾名思义，就是权限机构颁发的证明。比如英语6级证书，就是教育部门颁发给通过了6级考核的个人的证明，证明这个人的英语能力。我们来看一下这个证书的组成：</p>
-<ul>
-<li>被证明人：老王</li>
-<li>内容：通过了英语六级</li>
-<li>盖章：教育部门的公章或钢印</li>
-</ul>
-<p>当老王用这张证书找工作时，用人单位会通过查看证书的各项内容（尤其是公章），来验证证书的合法性和老王的能力。在现实生活中经常有假的6级证书，这些假证书最重要的就是有一个假公章。现实生活中使用法律法规来约束私刻假公章的行为，但是用人单位可能不能十分准确的判断公章是真是假。而数字签字可以来解决该类问题。</p>
-<h4 id="数字证书-1"><a href="#数字证书-1" class="headerlink" title="数字证书"></a>数字证书</h4><p>数字证书就是通过数字签名实现的数字化的证书，在现实生活中公章可以被伪造，但是在计算数字世界中，数字签名是没办法被伪造的，比如上述证书中，在一个证书文件中写明了证书内容，颁发证书时，教育部门用他们的私钥对文件的摘要信息进行签名，将签名和证书文件一起发布，这样就能确保该证书无法被伪造。验证证书是否合法时，首先用教育部门的公钥（公钥是公开的谁都可以获取到）对签名进行解密得到一个摘要信息，使用教育部门同样的摘要算法得到证书的另一个摘要信息，对比两个摘要信息是否一致就能确定该证书是否合法。在一般的证书组成中部分中，还加入了一些其他信息，比如证书的有效期。</p>
-<p>数字证书也有很多的签发机构，不同的签发机构签发的证书，用途也是不一样的，比如iOS开发中，使用到的ipa文件签名证书，需要到苹果申请。而在Web访问中为了防止Web内容在网络中安全传输，需要用到的SSL证书则需要向几家公认的机构签发。这些签发机构统称为CA（Certificate Authority）。</p>
-<p>Web访问相关的证书可以向国际公认的几个机构：</p>
-<ol>
-<li><a href="http://www.webtrust.net/" target="_blank" rel="noopener"><strong>WebTrust</strong></a></li>
-<li><a href="http://cn.globalsign.com/" target="_blank" rel="noopener"><strong>GlobalSign</strong></a></li>
-<li><a href="http://certificate.fyicenter.com/335_Root_CA_GTE_CyberTrust_Global_Root_GTE_CyberTrust_Solutions.html" target="_blank" rel="noopener"><strong>GTE</strong></a></li>
-<li><a href="http://www.nortel.com/" target="_blank" rel="noopener"><strong>Nortel</strong></a></li>
-<li><a href="http://www.verisign.com/" target="_blank" rel="noopener"><strong>Verisign</strong></a></li>
-</ol>
-<h4 id="数字证书的验证"><a href="#数字证书的验证" class="headerlink" title="数字证书的验证"></a>数字证书的验证</h4><p>申请证书是为了验证，比如Web应用相关的SSL证书验证方是浏览器，iOS各种证书的验证方是iOS设备。因为数字证书是基于数字签名的，所有数字证书的合法性验证就是验证数字证书的签名是否正确，对于签名的验证在是需要签发机构的公钥才能验证；</p>
-<p>对于iOS开发证书来说，申请完签名证书后，还需要安装苹果的公钥证书（XCode安装后会自动安装），这样才能确保我们申请的证书是可以被验证通过的（合法的），可用来进行ipa文件签名的。对于Web相关的证书签名的验证，则是由浏览器来验证，对于国际公认的几个证书签发机构浏览器会内置其公钥证书，用来验证数字证书的可信性。</p>
-<p>当数字证书通过验证后，便可以用数字证书做对应的事情，iOS开发证书可以用来对APP进行签名，SSL证书可以用来做Web内容加密处理相关的事情。所以有了这些证书之后，能保证在数据的传输过程中，数据是不会被篡改的，并且信息来源也是不能不修改的，从而确保信息安全。</p>
-<p>对于iOS，iOS系统已经将这个验证过程固化在系统中了，除非越狱，否则无法绕过</p>
-<h4 id="数字证书的授权链"><a href="#数字证书的授权链" class="headerlink" title="数字证书的授权链"></a>数字证书的授权链</h4><p>数字证书还包含一个授权链信息，举个例子：如果你要申请休假1周，需要你的上司审批，你的上司需要他的上司同意，最终需要大老板同意，那么这一层层的授权，形成了一个授权链，大老板是授权链的根(root)，中间这些环节分别是被更接近root的人授权的。</p>
-<p>比如苹果开发者的APP签名证书，该证书可以用来对APP进行签名，该证书实际上是由苹果的Worldwide Developer Relations Certificate Authority（WDRCA）授权签名的，而它是由Apple Certificate Authority授权签名的。在这个关系链中苹果的CA是根。 苹果CA根证书默认是内置在苹果系统中的，所以WDRCA的可信性可以由苹果内置的CA根证书来验证其可信性。</p>
-<p>Web相关的SSL证书顶部CA根，则就是上述提到的几家公认的签发机构，当我们需要Web做SSL的证书时，便可以向上述机构申请，通常向根机构申请费用都会比较高，也可以向一些二级授权机构进行申请，选择根机构证书签发的好处就是目前大多数的浏览器都会预装内置了这些权威CA的公钥证书，这样，在使用这些权威CA签发过的证书的时候，浏览器一般不会报风险提示。</p>
-<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>数字证书签名的基础是非对称加密算法，利用了非对称加密的身份验证和防止信息篡改的特性来实现的，在一些其他方面比如HTTPS中密钥交换用的就是非对称加密的保密特性来实现的，在非对称加密算法中RSA应用最广。非对称加密虽好，但却有一个弊端，就是加解密比较耗时，所以一般都是配合对称加密一起使用。</p>
-<p>原文：<a href="http://www.enkichen.com/2016/02/26/digital-certificate-based/" target="_blank" rel="noopener">http://www.enkichen.com/2016/02/26/digital-certificate-based/</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
         <time datetime="2017-02-12T06:45:23.000Z"><a href="/2017/02/12/安全/Node.js中crypto模块/">2017-02-12</a></time>
       
       
@@ -553,6 +520,110 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2017-02-12T06:45:23.000Z"><a href="/2017/02/12/安全/数字证书的基础知识/">2017-02-12</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2017/02/12/安全/数字证书的基础知识/">数字证书的基础知识</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>在讲数字证书之前必须要讲<strong>非对称加密算法</strong>和<strong>摘要算法</strong>，因为数字证书的基础就是各种加解密算法（非对称加密、摘要算法），而其中的核心就是非对称加密算法了。目前而言加密方法可以分为两大类。一类是<strong>单钥加密</strong>（private key cryptography）也可以称为对称加密，还有一类叫做<strong>双钥加密</strong>（public key cryptography）也可称为非对称加密。前者的加密和解密过程都用同一套密码，后者的加密和解密过程用的是不同的密码。下面来看看对称加密、非对称加密以及摘要算法，他们是怎样应用在数字证书中的。</p>
+<h3 id="对称加密"><a href="#对称加密" class="headerlink" title="对称加密"></a>对称加密</h3><p>对称加密(也叫私钥加密)指加密和解密使用相同密钥的加密算法。有时又叫传统密码算法，就是加密密钥能够从解密密钥中推算出来，同时解密密钥也可以从加密密钥中推算出来。而在大多数的对称算法中，加密密钥和解密密钥是相同的，所以也称这种加密算法为秘密密钥算法或单密钥算法。</p>
+<p>在应用该算法时，它要求发送方和接收方在安全通信之前，商定一个密钥。对称算法的安全性依赖于密钥，泄漏密钥就意味着任何人都可以对他们发送或接收的消息解密，所以密钥的保密性对通信性至关重要。对称加密算法的特点是算法公开、计算量小、加密速度快、加密效率高。对称加密有很多种算法，由于它效率很高，所以被广泛使用在很多加密协议的核心当中。不足之处是，交易双方都使用同样钥匙，安全性得不到保证。</p>
+<h4 id="常见的对称加密算法"><a href="#常见的对称加密算法" class="headerlink" title="常见的对称加密算法"></a>常见的对称加密算法</h4><ul>
+<li><strong>DES</strong>：数据加密标准（DES，Data Encryption Standard）是一种使用密钥加密的块密码，它基于使用<strong>56位密钥</strong>的对称算法，这个算法因为包含一些机密设计元素，相对短的密钥长度以及被怀疑内含美国国家安全局（NSA）的后门而在开始时是有争议的，DES现在已经不被视为一种安全的加密算法，主要因为它使用的56位密钥过短，导致容易被破解。为了提供实用所需的安全性，可以使用DES的派生算法3DES来进行加密，虽然3DES也存在理论上的攻击方法。</li>
+<li><strong>AES</strong>：高级加密标准（英语：Advanced Encryption Standard，缩写：AES），这个标准用来替代原先的DES，已经被多方分析且广为全世界所使用，2006年，高级加密标准已然成为对称密钥加密中最流行的算法之一。AES的区块长度固定为128比特，<strong>密钥长度则可以是128，192或256比特</strong>。</li>
+<li><strong>RC4</strong>：RC4加密算法是大名鼎鼎的RSA三人组中的头号人物Ronald Rivest在1987年设计的密钥长度可变的流加密算法簇。该算法的速度可以达到DES加密的10倍左右，且具有很高级别的非线性。RC4起初是用于保护商业机密的。但是在1994年9月，它的算法被发布在互联网上，也就不再有什么商业机密了。</li>
+<li><strong>IDEA</strong>：是旅居瑞士中国青年学者来学嘉和著名密码专家J.Massey于1990年提出的。它在1990年正式公布并在以后得到增强。这种算法是在DES算法的基础上发展出来的，类似于三重DES，和DES一样IDEA也是属于对称密钥算法。发展IDEA也是因为感到DES具有密钥太短等缺点，已经过时。<strong>IDEA的密钥为128位</strong>，这么长的密钥在今后若干年内应该是安全的。</li>
+</ul>
+<h3 id="非对称加密"><a href="#非对称加密" class="headerlink" title="非对称加密"></a>非对称加密</h3><p>与对称加密算法不同，非对称加密算法需要两个密钥：公开密钥（publickey）和私有密钥（privatekey）；并且加密密钥和解密密钥是成对出现的。非对称加密算法在加密和解密过程使用了不同的密钥，非对称加密也称为公钥加密，在密钥对中，其中一个密钥是对外公开的，所有人都可以获取到，称为公钥，其中一个密钥是不公开的称为私钥。</p>
+<h4 id="非对称加密的特性"><a href="#非对称加密的特性" class="headerlink" title="非对称加密的特性"></a>非对称加密的特性</h4><ul>
+<li>对于一个公钥，有且只有一个对应的私钥。</li>
+<li>公钥是公开的，并且不能通过公钥反推出私钥。</li>
+<li>通过私钥加密的密文只能通过公钥能解密，通过公钥加密的密文也只能通过私钥能解密。</li>
+</ul>
+<p>通过公钥是极难推算出私钥的，只能通过穷举，所以只要密钥足够长，要想从公钥推算出私钥几乎不可能的。</p>
+<h4 id="非对称加密的主要用途"><a href="#非对称加密的主要用途" class="headerlink" title="非对称加密的主要用途"></a>非对称加密的主要用途</h4><ul>
+<li><strong>对信息保密，防止中间人攻击</strong>：将明文使用公钥加密，传输给接收者，这样确保信息只能被有私钥的拥有者解密，其他人无法获得明文信息，因为没有私钥无法进行解密。该方法一般用于交换<strong>对称密钥</strong>。</li>
+<li><strong>身份验证和防止信息篡改</strong>：私钥拥有者使用私钥加密一段授权明文，并将授权明文和加密后的密文，以及公钥一并发送出来，接收方只需要通过公钥将密文解密后与授权明文对比是否一致，就可以判断明文在中途是否被篡改过。此方法用于<strong>数字签名</strong>。</li>
+</ul>
+<h4 id="常见的非对称加密算法"><a href="#常见的非对称加密算法" class="headerlink" title="常见的非对称加密算法"></a>常见的非对称加密算法</h4><ul>
+<li><strong>RSA</strong>：1977年，三位数学家Rivest、Shamir 和 Adleman 设计了一种算法，可以实现非对称加密。这种算法用他们三个人的名字命名，叫做RSA算法。从那时直到现在，RSA算法一直是最广为使用的”非对称加密算法”。毫不夸张地说，只要有计算机网络的地方，就有RSA算法。这种算法非常可靠，密钥越长，它就越难破解。根据已经披露的文献，目前被破解的最长RSA密钥是768个二进制位。也就是说，长度超过768位的密钥，还无法破解（至少没人公开宣布）。因此可以认为，<strong>1024位的RSA密钥基本安全，2048位的密钥极其安全</strong>。适用于数字签名和密钥交换。 该算法是目前应用最广泛的公钥加密算法，特别适用于通过 Internet 传送的数据。</li>
+<li><strong>DSA</strong>：数字签名算法 (Digital Signature Algorithm, DSA) 由美国国家安全署 (United States National Security Agency, NSA) 发明，已作为数字签名的标准。在DSA数字签名和认证中，发送者使用自己的私钥对文件或消息进行签名，接受者收到消息后使用发送者的公钥来验证签名的真实性。DSA只是一种算法，和RSA不同之处在于它不能用作加密和解密，也不能进行密钥交换，只用于签名，它比RSA要快很多。DSA 算法的安全性取决于自计算离散算法的困难。这种算法，不适用于数据加密，仅适用于数字签名。</li>
+<li><strong>Diffie-Hellman</strong>：一种确保共享KEY安全穿越不安全网络的方法。Whitefield与Martin Hellman在1976年提出了一个奇妙的密钥交换协议，称为Diffie-Hellman密钥交换协议/算法(Diffie-Hellman Key Exchange/Agreement Algorithm)。这个机制的巧妙在于需要安全通信的双方可以用这个方法确定对称密钥。然后可以用这个密钥进行加密和解密。但是注意，这个密钥交换协议/算法只能用于密钥的交换，而不能进行消息的加密和解密。双方确定要用的密钥后，要使用其他对称密钥操作加密算法实际加密和解密消息。该算法仅适用于密钥交换。</li>
+<li><strong>ECC</strong>：椭圆加密算法（ECC）是一种公钥加密体制，最初由Koblitz和Miller两人于1985年提出，与经典的RSA，DSA等公钥密码体制相比，椭圆密码体制有以下优点：160位的椭圆密钥与1024位的RSA密钥安全性相同；在私钥的加密解密速度上，ECC算法比RSA、DSA速度更快；存储空间占用小；带宽要求低；ECC算法的数学理论非常深奥和复杂，在工程应用中比较难于实现，但它的单位安全强度相对较高。</li>
+</ul>
+<p>非对称加密算法可能是世界上最重要的算法，它是当今电子商务等领域的基石。非对称加密算法如此强大可靠，却有一个弊端，就是加解密比较耗时。因此，在实际使用中，往往与对称加密和摘要算法结合使用。列如在实体之间交换对称密钥时，或者在签署一封邮件的散列时（数字签名）。</p>
+<p>散列是通过应用一种单向数学函数获得的一个定长结果，对于数据而言，叫做散列算法。</p>
+<h3 id="摘要算法"><a href="#摘要算法" class="headerlink" title="摘要算法"></a>摘要算法</h3><p>摘要算法是一个神奇的算法，也称为散列或者散列值。是一种与基于密钥（对称密钥或公钥）的加密不同的数据转换类型。散列就是通过把一个叫做散列算法的单向数学函数应用于数据，将任意长度的一块数据转换为一个定长的、不可逆转的数字，其长度通常在128～256位之间。所产生的散列值的长度应足够长，因此使找到两块具有相同散列值的数据的机会很少。</p>
+<h4 id="摘要算法具有以下特性："><a href="#摘要算法具有以下特性：" class="headerlink" title="摘要算法具有以下特性："></a>摘要算法具有以下特性：</h4><ul>
+<li>只要源文本不同，计算得到的结果，必然不同（或者说机会很少）。</li>
+<li>无法从结果反推出源数据（那是当然的，不然就能量不守恒了）。</li>
+</ul>
+<h4 id="常见的摘要算法："><a href="#常见的摘要算法：" class="headerlink" title="常见的摘要算法："></a>常见的摘要算法：</h4><ul>
+<li><strong>MD5</strong>：是RSA数据安全公司开发的一种单向散列算法，MD5被广泛使用，可以用来把不同长度的数据块进行暗码运算成一个固定位位的数值（通常是128位）。</li>
+<li><strong>SHA-1</strong>：与 DSA 公钥算法相似，安全散列算法1（SHA-1）也是由 NSA 设计的，并由 NIST 将其收录到 FIPS 中，作为散列数据的标准。它可产生一个 160 位的散列值。SHA-1 是流行的用于创建数字签名的单向散列算法。</li>
+<li><strong>MAC（Message Authentication Code）</strong>：消息认证代码，是一种使用密钥的单向函数，可以用它们在系统上或用户之间认证文件或消息，常见的是HMAC（用于消息认证的密钥散列算法）。</li>
+<li><strong>CRC（Cyclic Redundancy Check）</strong>：循环冗余校验码，CRC校验由于实现简单，检错能力强，被广泛使用在各种数据校验应用中。占用系统资源少，用软硬件均能实现，是进行数据传输差错检测地一种很好的手段（CRC 并不是严格意义上的散列算法，但它的作用与散列算法大致相同，所以归于此类）。</li>
+</ul>
+<p>摘要算法用于对比信息源是否一致，因为只要源数据发生变化，得到的摘要必然不同。因为通常结果比源数据要短很多，所以称为“摘要”。</p>
+<p>应用场景，如发件人生成邮件的散列值并加密它，然后将它与邮件本身一起发送。而收件人同时解密邮件和散列值，并由接收到的邮件产生另外一个散列值，然后将两个散列值进行比较。如果两者相同，邮件极有可能在传输期间没有发生任何改变。</p>
+<h3 id="数字签名"><a href="#数字签名" class="headerlink" title="数字签名"></a>数字签名</h3><p>数字签名就是对非对称加密和摘要算法的一种应用，能够确保信息在发布后不会被篡改（摘要算法特性），保证数据的完整性和可信性；同时也可以防止数据被他人伪造（非对称加密算法特性）；列如，我们有一段授权文本需要发布时，为了防止中途篡改发布的内容，保证发布文本的完整性，以及文本是由指定的发布者发布的。那么，可以通过摘要算法得到发布内容的摘要，得到摘要之后，发布者使用私钥加密得到密文（签名），这时候将源文本、密文（签名）以及公钥一起发布出去即可。</p>
+<p>验证过程为：首先验证公钥是否是发布者的公钥，然后用公钥对密文进行解密，得到摘要，使用发布者对文本同样的摘要算法得到摘要文本，比对摘要是否一致即可确认信息是否被篡改或者是指定发布者发布的。</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/ditialSig.jpg" alt=""></p>
+<p>数字签名可以快速验证文本的完整性和合法性，已广泛应用于各个领域。</p>
+<p>公钥的验证在后续数字证书的授权链中提到验证方法。</p>
+<h3 id="数字证书"><a href="#数字证书" class="headerlink" title="数字证书"></a>数字证书</h3><h4 id="现实生活中的证书"><a href="#现实生活中的证书" class="headerlink" title="现实生活中的证书"></a>现实生活中的证书</h4><p>在现实生活中，证书顾名思义，就是权限机构颁发的证明。比如英语6级证书，就是教育部门颁发给通过了6级考核的个人的证明，证明这个人的英语能力。我们来看一下这个证书的组成：</p>
+<ul>
+<li>被证明人：老王</li>
+<li>内容：通过了英语六级</li>
+<li>盖章：教育部门的公章或钢印</li>
+</ul>
+<p>当老王用这张证书找工作时，用人单位会通过查看证书的各项内容（尤其是公章），来验证证书的合法性和老王的能力。在现实生活中经常有假的6级证书，这些假证书最重要的就是有一个假公章。现实生活中使用法律法规来约束私刻假公章的行为，但是用人单位可能不能十分准确的判断公章是真是假。而数字签字可以来解决该类问题。</p>
+<h4 id="数字证书-1"><a href="#数字证书-1" class="headerlink" title="数字证书"></a>数字证书</h4><p>数字证书就是通过数字签名实现的数字化的证书，在现实生活中公章可以被伪造，但是在计算数字世界中，数字签名是没办法被伪造的，比如上述证书中，在一个证书文件中写明了证书内容，颁发证书时，教育部门用他们的私钥对文件的摘要信息进行签名，将签名和证书文件一起发布，这样就能确保该证书无法被伪造。验证证书是否合法时，首先用教育部门的公钥（公钥是公开的谁都可以获取到）对签名进行解密得到一个摘要信息，使用教育部门同样的摘要算法得到证书的另一个摘要信息，对比两个摘要信息是否一致就能确定该证书是否合法。在一般的证书组成中部分中，还加入了一些其他信息，比如证书的有效期。</p>
+<p>数字证书也有很多的签发机构，不同的签发机构签发的证书，用途也是不一样的，比如iOS开发中，使用到的ipa文件签名证书，需要到苹果申请。而在Web访问中为了防止Web内容在网络中安全传输，需要用到的SSL证书则需要向几家公认的机构签发。这些签发机构统称为CA（Certificate Authority）。</p>
+<p>Web访问相关的证书可以向国际公认的几个机构：</p>
+<ol>
+<li><a href="http://www.webtrust.net/" target="_blank" rel="noopener"><strong>WebTrust</strong></a></li>
+<li><a href="http://cn.globalsign.com/" target="_blank" rel="noopener"><strong>GlobalSign</strong></a></li>
+<li><a href="http://certificate.fyicenter.com/335_Root_CA_GTE_CyberTrust_Global_Root_GTE_CyberTrust_Solutions.html" target="_blank" rel="noopener"><strong>GTE</strong></a></li>
+<li><a href="http://www.nortel.com/" target="_blank" rel="noopener"><strong>Nortel</strong></a></li>
+<li><a href="http://www.verisign.com/" target="_blank" rel="noopener"><strong>Verisign</strong></a></li>
+</ol>
+<h4 id="数字证书的验证"><a href="#数字证书的验证" class="headerlink" title="数字证书的验证"></a>数字证书的验证</h4><p>申请证书是为了验证，比如Web应用相关的SSL证书验证方是浏览器，iOS各种证书的验证方是iOS设备。因为数字证书是基于数字签名的，所有数字证书的合法性验证就是验证数字证书的签名是否正确，对于签名的验证在是需要签发机构的公钥才能验证；</p>
+<p>对于iOS开发证书来说，申请完签名证书后，还需要安装苹果的公钥证书（XCode安装后会自动安装），这样才能确保我们申请的证书是可以被验证通过的（合法的），可用来进行ipa文件签名的。对于Web相关的证书签名的验证，则是由浏览器来验证，对于国际公认的几个证书签发机构浏览器会内置其公钥证书，用来验证数字证书的可信性。</p>
+<p>当数字证书通过验证后，便可以用数字证书做对应的事情，iOS开发证书可以用来对APP进行签名，SSL证书可以用来做Web内容加密处理相关的事情。所以有了这些证书之后，能保证在数据的传输过程中，数据是不会被篡改的，并且信息来源也是不能不修改的，从而确保信息安全。</p>
+<p>对于iOS，iOS系统已经将这个验证过程固化在系统中了，除非越狱，否则无法绕过</p>
+<h4 id="数字证书的授权链"><a href="#数字证书的授权链" class="headerlink" title="数字证书的授权链"></a>数字证书的授权链</h4><p>数字证书还包含一个授权链信息，举个例子：如果你要申请休假1周，需要你的上司审批，你的上司需要他的上司同意，最终需要大老板同意，那么这一层层的授权，形成了一个授权链，大老板是授权链的根(root)，中间这些环节分别是被更接近root的人授权的。</p>
+<p>比如苹果开发者的APP签名证书，该证书可以用来对APP进行签名，该证书实际上是由苹果的Worldwide Developer Relations Certificate Authority（WDRCA）授权签名的，而它是由Apple Certificate Authority授权签名的。在这个关系链中苹果的CA是根。 苹果CA根证书默认是内置在苹果系统中的，所以WDRCA的可信性可以由苹果内置的CA根证书来验证其可信性。</p>
+<p>Web相关的SSL证书顶部CA根，则就是上述提到的几家公认的签发机构，当我们需要Web做SSL的证书时，便可以向上述机构申请，通常向根机构申请费用都会比较高，也可以向一些二级授权机构进行申请，选择根机构证书签发的好处就是目前大多数的浏览器都会预装内置了这些权威CA的公钥证书，这样，在使用这些权威CA签发过的证书的时候，浏览器一般不会报风险提示。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>数字证书签名的基础是非对称加密算法，利用了非对称加密的身份验证和防止信息篡改的特性来实现的，在一些其他方面比如HTTPS中密钥交换用的就是非对称加密的保密特性来实现的，在非对称加密算法中RSA应用最广。非对称加密虽好，但却有一个弊端，就是加解密比较耗时，所以一般都是配合对称加密一起使用。</p>
+<p>原文：<a href="http://www.enkichen.com/2016/02/26/digital-certificate-based/" target="_blank" rel="noopener">http://www.enkichen.com/2016/02/26/digital-certificate-based/</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2017-02-10T06:45:23.000Z"><a href="/2017/02/10/安全/CDN的主要功能/">2017-02-10</a></time>
       
       
@@ -603,60 +674,60 @@
     <div class="entry">
       
         <p>Https 介绍</p>
-<h5 id="什么是Https"><a href="#什么是Https" class="headerlink" title="什么是Https"></a>什么是Https</h5><p>HTTPS（全称：Hypertext Transfer Protocol over Secure Socket Layer），是以安全为目标的HTTP通道，简单讲是HTTP的安全版。即HTTP下加入SSL层，HTTPS的安全基础是SSL，因此加密的详细内容就需要SSL</p>
-<h5 id="Https的作用"><a href="#Https的作用" class="headerlink" title="Https的作用"></a>Https的作用</h5><p><strong>内容加密</strong>建立一个信息安全通道，来保证数据传输的安全；<br><strong>身份认证</strong>确认网站的真实性<br><strong>数据完整性</strong>防止内容被第三方冒充或者篡改</p>
-<h5 id="Https的劣势"><a href="#Https的劣势" class="headerlink" title="Https的劣势"></a>Https的劣势</h5><p>对数据进行加解密决定了它比http慢<br>需要进行非对称的加解密，且需要三次握手。首次连接比较慢点，当然现在也有很多的优化。<br>出于安全考虑，浏览器不会在本地保存HTTPS缓存。实际上，只要在HTTP头中使用特定命令，HTTPS是可以缓存的。Firefox默认只在内存中缓存HTTPS。但是，只要头命令中有Cache-Control: Public，缓存就会被写到硬盘上。 IE只要http头允许就可以缓存https内容，缓存策略与是否使用HTTPS协议无关。</p>
-<h5 id="HTTPS和HTTP的区别"><a href="#HTTPS和HTTP的区别" class="headerlink" title="HTTPS和HTTP的区别"></a>HTTPS和HTTP的区别</h5><p>https协议需要到CA申请证书。<br>http是超文本传输协议，信息是明文传输；https 则是具有安全性的ssl加密传输协议。<br>http和https使用的是完全不同的连接方式，用的端口也不一样，前者是80，后者是443。<br>http的连接很简单，是无状态的；HTTPS协议是由SSL+HTTP协议构建的可进行加密传输、身份认证的网络协议，比http协议安全。<br>http默认使用80端口，https默认使用443端口</p>
+<h3 id="什么是Https"><a href="#什么是Https" class="headerlink" title="什么是Https"></a>什么是Https</h3><p>HTTPS（全称：Hypertext Transfer Protocol over Secure Socket Layer），是以安全为目标的HTTP通道，简单讲是HTTP的安全版。即HTTP下加入SSL层，HTTPS的安全基础是SSL，因此加密的详细内容就需要SSL</p>
+<h3 id="Https的作用"><a href="#Https的作用" class="headerlink" title="Https的作用"></a>Https的作用</h3><p><strong>内容加密</strong>建立一个信息安全通道，来保证数据传输的安全；<br><strong>身份认证</strong>确认网站的真实性<br><strong>数据完整性</strong>防止内容被第三方冒充或者篡改</p>
+<h3 id="Https的劣势"><a href="#Https的劣势" class="headerlink" title="Https的劣势"></a>Https的劣势</h3><p>对数据进行加解密决定了它比http慢<br>需要进行非对称的加解密，且需要三次握手。首次连接比较慢点，当然现在也有很多的优化。<br>出于安全考虑，浏览器不会在本地保存HTTPS缓存。实际上，只要在HTTP头中使用特定命令，HTTPS是可以缓存的。Firefox默认只在内存中缓存HTTPS。但是，只要头命令中有Cache-Control: Public，缓存就会被写到硬盘上。 IE只要http头允许就可以缓存https内容，缓存策略与是否使用HTTPS协议无关。</p>
+<h3 id="HTTPS和HTTP的区别"><a href="#HTTPS和HTTP的区别" class="headerlink" title="HTTPS和HTTP的区别"></a>HTTPS和HTTP的区别</h3><p>https协议需要到CA申请证书。<br>http是超文本传输协议，信息是明文传输；https 则是具有安全性的ssl加密传输协议。<br>http和https使用的是完全不同的连接方式，用的端口也不一样，前者是80，后者是443。<br>http的连接很简单，是无状态的；HTTPS协议是由SSL+HTTP协议构建的可进行加密传输、身份认证的网络协议，比http协议安全。<br>http默认使用80端口，https默认使用443端口</p>
 <p>下面就是https的整个架构，现在的https基本都使用TLS了，因为更加安全，所以下图中的SSL应该换为<strong>SSL/TLS</strong>。</p>
 <p><img src="http://7xq1il.com1.z0.glb.clouddn.com/sslexexplation.png" alt=""></p>
 <p>下面就上图中的知识点进行一个大概的介绍。</p>
-<h4 id="加解密相关知识"><a href="#加解密相关知识" class="headerlink" title="加解密相关知识"></a>加解密相关知识</h4><h5 id="对称加密"><a href="#对称加密" class="headerlink" title="对称加密"></a>对称加密</h5><p>对称加密(也叫私钥加密)指加密和解密使用相同密钥的加密算法。有时又叫传统密码算法，就是加密密钥能够从解密密钥中推算出来，同时解密密钥也可以从加密密钥中推算出来。而在大多数的对称算法中，加密密钥和解密密钥是相同的，所以也称这种加密算法为秘密密钥算法或单密钥算法。</p>
+<h2 id="加解密相关知识"><a href="#加解密相关知识" class="headerlink" title="加解密相关知识"></a>加解密相关知识</h2><h3 id="对称加密"><a href="#对称加密" class="headerlink" title="对称加密"></a>对称加密</h3><p>对称加密(也叫私钥加密)指加密和解密使用相同密钥的加密算法。有时又叫传统密码算法，就是加密密钥能够从解密密钥中推算出来，同时解密密钥也可以从加密密钥中推算出来。而在大多数的对称算法中，加密密钥和解密密钥是相同的，所以也称这种加密算法为秘密密钥算法或单密钥算法。</p>
 <p>常见的对称加密有：DES（Data Encryption Standard）、AES（Advanced Encryption Standard）、RC4、IDEA</p>
-<h5 id="非对称加密"><a href="#非对称加密" class="headerlink" title="非对称加密"></a>非对称加密</h5><p>与对称加密算法不同，非对称加密算法需要两个密钥：公开密钥（publickey）和私有密钥（privatekey）；并且加密密钥和解密密钥是成对出现的。非对称加密算法在加密和解密过程使用了不同的密钥，非对称加密也称为公钥加密，在密钥对中，其中一个密钥是对外公开的，所有人都可以获取到，称为公钥，其中一个密钥是不公开的称为私钥。</p>
+<h3 id="非对称加密"><a href="#非对称加密" class="headerlink" title="非对称加密"></a>非对称加密</h3><p>与对称加密算法不同，非对称加密算法需要两个密钥：公开密钥（publickey）和私有密钥（privatekey）；并且加密密钥和解密密钥是成对出现的。非对称加密算法在加密和解密过程使用了不同的密钥，非对称加密也称为公钥加密，在密钥对中，其中一个密钥是对外公开的，所有人都可以获取到，称为公钥，其中一个密钥是不公开的称为私钥。</p>
 <p>非对称加密算法对加密内容的长度有限制，不能超过公钥长度。比如现在常用的公钥长度是 2048 位，意味着待加密内容不能超过 256 个字节。</p>
-<h5 id="摘要算法"><a href="#摘要算法" class="headerlink" title="摘要算法"></a>摘要算法</h5><p>数字摘要是采用单项Hash函数将需要加密的明文“摘要”成一串固定长度（128位）的密文，这一串密文又称为数字指纹，它有固定的长度，而且不同的明文摘要成密文，其结果总是不同的，而同样的明文其摘要必定一致。“数字摘要“是https能确保数据完整性和防篡改的根本原因。</p>
-<h5 id="数字签名"><a href="#数字签名" class="headerlink" title="数字签名"></a>数字签名</h5><p>数字签名技术就是对“非对称密钥加解密”和“数字摘要“两项技术的应用，它将摘要信息用发送者的私钥加密，与原文一起传送给接收者。接收者只有用发送者的公钥才能解密被加密的摘要信息，然后用HASH函数对收到的原文产生一个摘要信息，与解密的摘要信息对比。如果相同，则说明收到的信息是完整的，在传输过程中没有被修改，否则说明信息被修改过，因此数字签名能够验证信息的完整性。</p>
+<h3 id="摘要算法"><a href="#摘要算法" class="headerlink" title="摘要算法"></a>摘要算法</h3><p>数字摘要是采用单项Hash函数将需要加密的明文“摘要”成一串固定长度（128位）的密文，这一串密文又称为数字指纹，它有固定的长度，而且不同的明文摘要成密文，其结果总是不同的，而同样的明文其摘要必定一致。“数字摘要“是https能确保数据完整性和防篡改的根本原因。</p>
+<h3 id="数字签名"><a href="#数字签名" class="headerlink" title="数字签名"></a>数字签名</h3><p>数字签名技术就是对“非对称密钥加解密”和“数字摘要“两项技术的应用，它将摘要信息用发送者的私钥加密，与原文一起传送给接收者。接收者只有用发送者的公钥才能解密被加密的摘要信息，然后用HASH函数对收到的原文产生一个摘要信息，与解密的摘要信息对比。如果相同，则说明收到的信息是完整的，在传输过程中没有被修改，否则说明信息被修改过，因此数字签名能够验证信息的完整性。</p>
 <p>数字签名的过程如下：明文 –&gt; hash运算 –&gt; 摘要 –&gt; 私钥加密 –&gt; 数字签名</p>
 <p>数字签名有两种功效：<br>一、能确定消息确实是由发送方签名并发出来的，因为别人假冒不了发送方的签名。<br>二、数字签名能确定消息的完整性。</p>
 <p><strong>注意：</strong><br>数字签名只能验证数据的完整性，数据本身是否加密不属于数字签名的控制范围</p>
-<h5 id="数字证书"><a href="#数字证书" class="headerlink" title="数字证书"></a>数字证书</h5><h5 id="为什么要有数字证书？"><a href="#为什么要有数字证书？" class="headerlink" title="为什么要有数字证书？"></a>为什么要有数字证书？</h5><p>对于请求方来说，它怎么能确定它所得到的公钥一定是从目标主机那里发布的，而且没有被篡改过呢？亦或者请求的目标主机本本身就从事窃取用户信息的不正当行为呢？这时候，我们需要有一个权威的值得信赖的第三方机构(一般是由政府审核并授权的机构)来统一对外发放主机机构的公钥，只要请求方这种机构获取公钥，就避免了上述问题的发生。</p>
-<h5 id="数字证书的颁发过程"><a href="#数字证书的颁发过程" class="headerlink" title="数字证书的颁发过程"></a>数字证书的颁发过程</h5><p>用户首先产生自己的密钥对，并将公共密钥及部分个人身份信息传送给认证中心。认证中心在核实身份后，将执行一些必要的步骤，以确信请求确实由用户发送而来，然后，认证中心将发给用户一个数字证书，该证书内包含用户的个人信息和他的公钥信息，同时还附有认证中心的签名信息(根证书私钥签名)。用户就可以使用自己的数字证书进行相关的各种活动。数字证书由独立的证书发行机构发布，数字证书各不相同，每种证书可提供不同级别的可信度。</p>
-<h4 id="证书包含哪些内容"><a href="#证书包含哪些内容" class="headerlink" title="证书包含哪些内容"></a>证书包含哪些内容</h4><p>证书颁发机构的名称<br>证书本身的数字签名<br>证书持有者公钥<br>证书签名用到的Hash算法</p>
-<h5 id="验证证书的有效性"><a href="#验证证书的有效性" class="headerlink" title="验证证书的有效性"></a>验证证书的有效性</h5><p><strong>浏览器默认都会内置CA根证书，其中根证书包含了CA的公钥</strong><br>证书颁发的机构是伪造的：浏览器不认识，直接认为是危险证书</p>
+<h2 id="数字证书"><a href="#数字证书" class="headerlink" title="数字证书"></a>数字证书</h2><h3 id="为什么要有数字证书？"><a href="#为什么要有数字证书？" class="headerlink" title="为什么要有数字证书？"></a>为什么要有数字证书？</h3><p>对于请求方来说，它怎么能确定它所得到的公钥一定是从目标主机那里发布的，而且没有被篡改过呢？亦或者请求的目标主机本本身就从事窃取用户信息的不正当行为呢？这时候，我们需要有一个权威的值得信赖的第三方机构(一般是由政府审核并授权的机构)来统一对外发放主机机构的公钥，只要请求方这种机构获取公钥，就避免了上述问题的发生。</p>
+<h3 id="数字证书的颁发过程"><a href="#数字证书的颁发过程" class="headerlink" title="数字证书的颁发过程"></a>数字证书的颁发过程</h3><p>用户首先产生自己的密钥对，并将公共密钥及部分个人身份信息传送给认证中心。认证中心在核实身份后，将执行一些必要的步骤，以确信请求确实由用户发送而来，然后，认证中心将发给用户一个数字证书，该证书内包含用户的个人信息和他的公钥信息，同时还附有认证中心的签名信息(根证书私钥签名)。用户就可以使用自己的数字证书进行相关的各种活动。数字证书由独立的证书发行机构发布，数字证书各不相同，每种证书可提供不同级别的可信度。</p>
+<h3 id="证书包含哪些内容"><a href="#证书包含哪些内容" class="headerlink" title="证书包含哪些内容"></a>证书包含哪些内容</h3><p>证书颁发机构的名称<br>证书本身的数字签名<br>证书持有者公钥<br>证书签名用到的Hash算法</p>
+<h3 id="验证证书的有效性"><a href="#验证证书的有效性" class="headerlink" title="验证证书的有效性"></a>验证证书的有效性</h3><p><strong>浏览器默认都会内置CA根证书，其中根证书包含了CA的公钥</strong><br>证书颁发的机构是伪造的：浏览器不认识，直接认为是危险证书</p>
 <p>证书颁发的机构是确实存在的，于是根据CA名，找到对应内置的CA根证书、CA的公钥。用CA的公钥，对伪造的证书的摘要进行解密，发现解不了，认为是危险证书。</p>
 <p>对于篡改的证书，使用CA的公钥对数字签名进行解密得到摘要A，然后再根据签名的Hash算法计算出证书的摘要B，对比A与B，若相等则正常，若不相等则是被篡改过的。</p>
 <p>证书可在其过期前被吊销，通常情况是该证书的私钥已经失密。较新的浏览器如Chrome、Firefox、Opera和Internet Explorer都实现了在线证书状态协议（OCSP）以排除这种情形：浏览器将网站提供的证书的序列号通过OCSP发送给证书颁发机构，后者会告诉浏览器证书是否还是有效的。</p>
 <p>1、2点是对伪造证书进行的，3是对于篡改后的证书验证，4是对于过期失效的验证。</p>
-<h5 id="SSL-与-TLS"><a href="#SSL-与-TLS" class="headerlink" title="SSL 与 TLS"></a>SSL 与 TLS</h5><h5 id="SSL-Secure-Socket-Layer，安全套接字层"><a href="#SSL-Secure-Socket-Layer，安全套接字层" class="headerlink" title="SSL (Secure Socket Layer，安全套接字层)"></a>SSL (Secure Socket Layer，安全套接字层)</h5><p>SSL为Netscape所研发，用以保障在Internet上数据传输之安全，利用数据加密(Encryption)技术，可确保数据在网络上之传输过程中不会被截取，当前为3.0版本。</p>
+<h2 id="SSL-与-TLS"><a href="#SSL-与-TLS" class="headerlink" title="SSL 与 TLS"></a>SSL 与 TLS</h2><h3 id="SSL-Secure-Socket-Layer，安全套接字层"><a href="#SSL-Secure-Socket-Layer，安全套接字层" class="headerlink" title="SSL (Secure Socket Layer，安全套接字层)"></a>SSL (Secure Socket Layer，安全套接字层)</h3><p>SSL为Netscape所研发，用以保障在Internet上数据传输之安全，利用数据加密(Encryption)技术，可确保数据在网络上之传输过程中不会被截取，当前为3.0版本。</p>
 <p>SSL协议可分为两层： SSL记录协议（SSL Record Protocol）：它建立在可靠的传输协议（如TCP）之上，为高层协议提供数据封装、压缩、加密等基本功能的支持。 SSL握手协议（SSL Handshake Protocol）：它建立在SSL记录协议之上，用于在实际的数据传输开始前，通讯双方进行身份认证、协商加密算法、交换加密密钥等。</p>
-<h5 id="TLS-Transport-Layer-Security，传输层安全协议"><a href="#TLS-Transport-Layer-Security，传输层安全协议" class="headerlink" title="TLS (Transport Layer Security，传输层安全协议)"></a>TLS (Transport Layer Security，传输层安全协议)</h5><p>用于两个应用程序之间提供保密性和数据完整性。</p>
+<h3 id="TLS-Transport-Layer-Security，传输层安全协议"><a href="#TLS-Transport-Layer-Security，传输层安全协议" class="headerlink" title="TLS (Transport Layer Security，传输层安全协议)"></a>TLS (Transport Layer Security，传输层安全协议)</h3><p>用于两个应用程序之间提供保密性和数据完整性。</p>
 <p>TLS 1.0是IETF（Internet Engineering Task Force，Internet工程任务组）制定的一种新的协议，它建立在SSL 3.0协议规范之上，是SSL 3.0的后续版本，可以理解为SSL 3.1，它是写入了 RFC 的。该协议由两层组成： TLS 记录协议（TLS Record）和 TLS 握手协议（TLS Handshake）。较低的层为 TLS 记录协议，位于某个可靠的传输协议（例如 TCP）上面。</p>
-<h5 id="SSL-TLS协议作用："><a href="#SSL-TLS协议作用：" class="headerlink" title="SSL/TLS协议作用："></a>SSL/TLS协议作用：</h5><p>认证用户和服务器，确保数据发送到正确的客户机和服务器；<br>加密数据以防止数据中途被窃取；<br>维护数据的完整性，确保数据在传输过程中不被改变。</p>
-<h5 id="TLS比SSL的优势"><a href="#TLS比SSL的优势" class="headerlink" title="TLS比SSL的优势"></a>TLS比SSL的优势</h5><p>对于消息认证使用密钥散列法：TLS 使用“消息认证代码的密钥散列法”（HMAC），当记录在开放的网络（如因特网）上传送时，该代码确保记录不会被变更。SSLv3.0还提供键控消息认证，但HMAC比SSLv3.0使用的（消息认证代码）MAC 功能更安全。</p>
+<h3 id="SSL-TLS协议作用："><a href="#SSL-TLS协议作用：" class="headerlink" title="SSL/TLS协议作用："></a>SSL/TLS协议作用：</h3><p>认证用户和服务器，确保数据发送到正确的客户机和服务器；<br>加密数据以防止数据中途被窃取；<br>维护数据的完整性，确保数据在传输过程中不被改变。</p>
+<h3 id="TLS比SSL的优势"><a href="#TLS比SSL的优势" class="headerlink" title="TLS比SSL的优势"></a>TLS比SSL的优势</h3><p>对于消息认证使用密钥散列法：TLS 使用“消息认证代码的密钥散列法”（HMAC），当记录在开放的网络（如因特网）上传送时，该代码确保记录不会被变更。SSLv3.0还提供键控消息认证，但HMAC比SSLv3.0使用的（消息认证代码）MAC 功能更安全。</p>
 <p>增强的伪随机功能（PRF）：PRF生成密钥数据。在TLS中，HMAC定义PRF。PRF使用两种散列算法保证其安全性。如果任一算法暴露了，只要第二种算法未暴露，则数据仍然是安全的。</p>
 <p>改进的已完成消息验证：TLS和SSLv3.0都对两个端点提供已完成的消息，该消息认证交换的消息没有被变更。然而，TLS将此已完成消息基于PRF和HMAC值之上，这也比SSLv3.0更安全。</p>
 <p>一致证书处理：与SSLv3.0不同，TLS试图指定必须在TLS之间实现交换的证书类型。</p>
 <p>特定警报消息：TLS提供更多的特定和附加警报，以指示任一会话端点检测到的问题。TLS还对何时应该发送某些警报进行记录。</p>
-<h5 id="SSL、TLS的握手过程"><a href="#SSL、TLS的握手过程" class="headerlink" title="SSL、TLS的握手过程"></a>SSL、TLS的握手过程</h5><p>SSL与TLS握手整个过程如下图所示，下面会详细介绍每一步的具体内容：</p>
+<h3 id="SSL、TLS的握手过程"><a href="#SSL、TLS的握手过程" class="headerlink" title="SSL、TLS的握手过程"></a>SSL、TLS的握手过程</h3><p>SSL与TLS握手整个过程如下图所示，下面会详细介绍每一步的具体内容：</p>
 <p><img src="http://7xq1il.com1.z0.glb.clouddn.com/clientHello.png" alt=""></p>
-<h5 id="客户端首次发出请求"><a href="#客户端首次发出请求" class="headerlink" title="客户端首次发出请求"></a>客户端首次发出请求</h5><p>由于客户端(如浏览器)对一些加解密算法的支持程度不一样，但是在TLS协议传输过程中必须使用同一套加解密算法才能保证数据能够正常的加解密。在TLS握手阶段，客户端首先要告知服务端，自己支持哪些加密算法，所以客户端需要将本地支持的加密套件(Cipher Suite)的列表传送给服务端。除此之外，客户端还要产生一个随机数，这个随机数一方面需要在客户端保存，另一方面需要传送给服务端，客户端的随机数需要跟服务端产生的随机数结合起来产生后面要讲到的 Master Secret 。</p>
+<h3 id="客户端首次发出请求"><a href="#客户端首次发出请求" class="headerlink" title="客户端首次发出请求"></a>客户端首次发出请求</h3><p>由于客户端(如浏览器)对一些加解密算法的支持程度不一样，但是在TLS协议传输过程中必须使用同一套加解密算法才能保证数据能够正常的加解密。在TLS握手阶段，客户端首先要告知服务端，自己支持哪些加密算法，所以客户端需要将本地支持的加密套件(Cipher Suite)的列表传送给服务端。除此之外，客户端还要产生一个随机数，这个随机数一方面需要在客户端保存，另一方面需要传送给服务端，客户端的随机数需要跟服务端产生的随机数结合起来产生后面要讲到的 Master Secret 。</p>
 <p>客户端需要提供如下信息：<br>支持的协议版本，比如TLS 1.0版<br>一个客户端生成的随机数，稍后用于生成”对话密钥”<br>支持的加密方法，比如RSA公钥加密<br>支持的压缩方法</p>
-<h5 id="服务端首次回应"><a href="#服务端首次回应" class="headerlink" title="服务端首次回应"></a>服务端首次回应</h5><p>服务端在接收到客户端的Client Hello之后，服务端需要确定加密协议的版本，以及加密的算法，然后也生成一个随机数，以及将自己的证书发送给客户端一并发送给客户端，这里的随机数是整个过程的第二个随机数。</p>
+<h3 id="服务端首次回应"><a href="#服务端首次回应" class="headerlink" title="服务端首次回应"></a>服务端首次回应</h3><p>服务端在接收到客户端的Client Hello之后，服务端需要确定加密协议的版本，以及加密的算法，然后也生成一个随机数，以及将自己的证书发送给客户端一并发送给客户端，这里的随机数是整个过程的第二个随机数。</p>
 <p>服务端需要提供的信息：<br>协议的版本<br>加密的算法<br>随机数<br>服务器证书</p>
-<h5 id="客户端再次回应"><a href="#客户端再次回应" class="headerlink" title="客户端再次回应"></a>客户端再次回应</h5><p>客户端首先会对服务器下发的证书进行验证，验证通过之后，则会继续下面的操作，客户端再次产生一个随机数（第三个随机数），然后使用服务器证书中的公钥进行加密，以及放一个ChangeCipherSpec消息即编码改变的消息，还有整个前面所有消息的hash值，进行服务器验证，然后用新秘钥加密一段数据一并发送到服务器，确保正式通信前无误。</p>
+<h3 id="客户端再次回应"><a href="#客户端再次回应" class="headerlink" title="客户端再次回应"></a>客户端再次回应</h3><p>客户端首先会对服务器下发的证书进行验证，验证通过之后，则会继续下面的操作，客户端再次产生一个随机数（第三个随机数），然后使用服务器证书中的公钥进行加密，以及放一个ChangeCipherSpec消息即编码改变的消息，还有整个前面所有消息的hash值，进行服务器验证，然后用新秘钥加密一段数据一并发送到服务器，确保正式通信前无误。</p>
 <p>客户端使用前面的两个随机数以及刚刚新生成的新随机数，使用与服务器确定的加密算法，生成一个Session Secret。</p>
 <p>ChangeCipherSpec</p>
 <p>ChangeCipherSpec是一个独立的协议，体现在数据包中就是一个字节的数据，用于告知服务端，客户端已经切换到之前协商好的加密套件（Cipher Suite）的状态，准备使用之前协商好的加密套件加密数据并传输了。</p>
-<h5 id="服务器再次响应"><a href="#服务器再次响应" class="headerlink" title="服务器再次响应"></a>服务器再次响应</h5><p>服务端在接收到客户端传过来的第三个随机数的 加密数据之后，使用私钥对这段加密数据进行解密，并对数据进行验证，也会使用跟客户端同样的方式生成秘钥，一切准备好之后，也会给客户端发送一个 ChangeCipherSpec，告知客户端已经切换到协商过的加密套件状态，准备使用加密套件和 Session Secret加密数据了。之后，服务端也会使用 Session Secret 加密一段 Finish 消息发送给客户端，以验证之前通过握手建立起来的加解密通道是否成功。</p>
-<h5 id="后续客户端与服务器间通信"><a href="#后续客户端与服务器间通信" class="headerlink" title="后续客户端与服务器间通信"></a>后续客户端与服务器间通信</h5><p>确定秘钥之后，服务器与客户端之间就会通过商定的秘钥加密消息了，进行通讯了。整个握手过程也就基本完成了。</p>
+<h3 id="服务器再次响应"><a href="#服务器再次响应" class="headerlink" title="服务器再次响应"></a>服务器再次响应</h3><p>服务端在接收到客户端传过来的第三个随机数的 加密数据之后，使用私钥对这段加密数据进行解密，并对数据进行验证，也会使用跟客户端同样的方式生成秘钥，一切准备好之后，也会给客户端发送一个 ChangeCipherSpec，告知客户端已经切换到协商过的加密套件状态，准备使用加密套件和 Session Secret加密数据了。之后，服务端也会使用 Session Secret 加密一段 Finish 消息发送给客户端，以验证之前通过握手建立起来的加解密通道是否成功。</p>
+<h3 id="后续客户端与服务器间通信"><a href="#后续客户端与服务器间通信" class="headerlink" title="后续客户端与服务器间通信"></a>后续客户端与服务器间通信</h3><p>确定秘钥之后，服务器与客户端之间就会通过商定的秘钥加密消息了，进行通讯了。整个握手过程也就基本完成了。</p>
 <p>值得特别提出的是：<br>SSL协议在握手阶段使用的是非对称加密，在传输阶段使用的是对称加密，也就是说在SSL上传送的数据是使用对称密钥加密的！因为非对称加密的速度缓慢，耗费资源。其实当客户端和主机使用非对称加密方式建立连接后，客户端和主机已经决定好了在传输过程使用的对称加密算法和关键的对称加密密钥，由于这个过程本身是安全可靠的，也即对称加密密钥是不可能被窃取盗用的，因此，保证了在传输过程中对数据进行对称加密也是安全可靠的，因为除了客户端和主机之外，不可能有第三方窃取并解密出对称加密密钥！如果有人窃听通信，他可以知道双方选择的加密方法，以及三个随机数中的两个。整个通话的安全，只取决于第三个随机数（Premaster secret）能不能被破解。</p>
-<h5 id="其他补充"><a href="#其他补充" class="headerlink" title="其他补充"></a>其他补充</h5><p>对于非常重要的保密数据，服务端还需要对客户端进行验证，以保证数据传送给了安全的合法的客户端。服务端可以向客户端发出 Cerficate Request 消息，要求客户端发送证书对客户端的合法性进行验证。比如，金融机构往往只允许认证客户连入自己的网络，就会向正式客户提供USB密钥，里面就包含了一张客户端证书。</p>
+<h3 id="其他补充"><a href="#其他补充" class="headerlink" title="其他补充"></a>其他补充</h3><p>对于非常重要的保密数据，服务端还需要对客户端进行验证，以保证数据传送给了安全的合法的客户端。服务端可以向客户端发出 Cerficate Request 消息，要求客户端发送证书对客户端的合法性进行验证。比如，金融机构往往只允许认证客户连入自己的网络，就会向正式客户提供USB密钥，里面就包含了一张客户端证书。</p>
 <p>PreMaster secret前两个字节是TLS的版本号，这是一个比较重要的用来核对握手数据的版本号，因为在Client Hello阶段，客户端会发送一份加密套件列表和当前支持的SSL/TLS的版本号给服务端，而且是使用明文传送的，如果握手的数据包被破解之后，攻击者很有可能串改数据包，选择一个安全性较低的加密套件和版本给服务端，从而对数据进行破解。所以，服务端需要对密文中解密出来对的PreMaster版本号跟之前Client Hello阶段的版本号进行对比，如果版本号变低，则说明被串改，则立即停止发送任何消息。</p>
-<h5 id="session的恢复"><a href="#session的恢复" class="headerlink" title="session的恢复"></a>session的恢复</h5><p>有两种方法可以恢复原来的session：一种叫做session ID，另一种叫做session ticket。</p>
-<h5 id="session-ID"><a href="#session-ID" class="headerlink" title="session ID"></a>session ID</h5><p>session ID的思想很简单，就是每一次对话都有一个编号（session ID）。如果对话中断，下次重连的时候，只要客户端给出这个编号，且服务器有这个编号的记录，双方就可以重新使用已有的”对话密钥”，而不必重新生成一把。</p>
+<h3 id="session的恢复"><a href="#session的恢复" class="headerlink" title="session的恢复"></a>session的恢复</h3><p>有两种方法可以恢复原来的session：一种叫做session ID，另一种叫做session ticket。</p>
+<h3 id="session-ID"><a href="#session-ID" class="headerlink" title="session ID"></a>session ID</h3><p>session ID的思想很简单，就是每一次对话都有一个编号（session ID）。如果对话中断，下次重连的时候，只要客户端给出这个编号，且服务器有这个编号的记录，双方就可以重新使用已有的”对话密钥”，而不必重新生成一把。</p>
 <p>session ID是目前所有浏览器都支持的方法，但是它的缺点在于session ID往往只保留在一台服务器上。所以，如果客户端的请求发到另一台服务器，就无法恢复对话</p>
-<h5 id="session-ticket"><a href="#session-ticket" class="headerlink" title="session ticket"></a>session ticket</h5><p>客户端发送一个服务器在上一次对话中发送过来的session ticket。这个session ticket是加密的，只有服务器才能解密，其中包括本次对话的主要信息，比如对话密钥和加密方法。当服务器收到session ticket以后，解密后就不必重新生成对话密钥了。<br>目前只有Firefox和Chrome浏览器支持。</p>
-<h5 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h5><p>https实际就是在TCP层与http层之间加入了SSL/TLS来为上层的安全保驾护航，主要用到对称加密、非对称加密、证书，等技术进行客户端与服务器的数据加密传输，最终达到保证整个通信的安全性。</p>
+<h3 id="session-ticket"><a href="#session-ticket" class="headerlink" title="session ticket"></a>session ticket</h3><p>客户端发送一个服务器在上一次对话中发送过来的session ticket。这个session ticket是加密的，只有服务器才能解密，其中包括本次对话的主要信息，比如对话密钥和加密方法。当服务器收到session ticket以后，解密后就不必重新生成对话密钥了。<br>目前只有Firefox和Chrome浏览器支持。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>https实际就是在TCP层与http层之间加入了SSL/TLS来为上层的安全保驾护航，主要用到对称加密、非对称加密、证书，等技术进行客户端与服务器的数据加密传输，最终达到保证整个通信的安全性。</p>
 <p><a href="http://www.wxtlife.com/2016/03/27/%E8%AF%A6%E8%A7%A3https%E6%98%AF%E5%A6%82%E4%BD%95%E7%A1%AE%E4%BF%9D%E5%AE%89%E5%85%A8%E7%9A%84%EF%BC%9F/" target="_blank" rel="noopener">原文</a></p>
 
       
@@ -794,62 +865,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2017-01-04T06:45:23.000Z"><a href="/2017/01/04/存储/主键与唯一索引的区别/">2017-01-04</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/01/04/存储/主键与唯一索引的区别/">主键与唯一索引的区别</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p><strong>1、主键</strong><br>主键ID，可以一列或多列，主键既是约束也是索引且是唯一索引，同时也用于对象缓存的键值。</p>
-<p><strong>2、索引</strong><br>组合或者引用关系的子表（数据量较大的时候），需要在关联主表的列上建立非聚集索引（如订单明细表中的产品ID字段、订单明细表中关联的订单ID字段）</p>
-<p>索引键的大小不能超过900个字节，当列表的大小超过900个字节或者若干列的和超过900个字节时，数据库将报错。</p>
-<p>表中如果建有大量索引将会影响INSERT、UPDATET、DELETE语句的性能，因为在表中的数据更改时，所有的索引都将必须进行适当的调整。需要避免对经常更新的表进行过多的索引，并且索引应保持较窄，列要尽可能的少。</p>
-<p>为经常用于查询的谓词创建索引，如用于下拉参照快速查找的code、name等。在平台现有下拉参照的查询sql语句中的like条件语句要改成不带前置通配符。还有需要关注Order By和Group By谓词的索引设计，Order By和Group By的谓词是需要排序的，某些情况下为Order By和Group By的谓词建立索引，会避免查询时的排序动作。</p>
-<p>对于内容基本重复的列，比如只有1和0，禁止建立索引，因为该索引选择性极差，在特定的情况下会误导优化器做出错误的选择，导致查询速度极大下降。</p>
-<p>当一个索引有多个列构成时，应注意将选择性强的列放在前面。仅仅前后次序的不同，性能上就可能出现数量级的差异。</p>
-<p>对小表进行索引可能不能产生优化效果，因为查询优化器在遍历用于搜索数据的索引时，花费的时间可能比执行简单的表扫描还长，设计索引时需要考虑表的大小。记录数不大于100的表不要建立索引。频繁操作的小数量表不建议建立索引，例如记录数不大于5000条。</p>
-<p><strong>索引与排序</strong><br>指定列的索引就相当于对指定的列进行排序，为什么要排序呢？</p>
-<p>因为排序有利于对该列的查询，可以大大增加查询效率。那么可能有人认为应该对所有的列排序，这样就可以增加整个数据库的查询效率。这样的想法是错误的，原因是建立索引也是要消耗系统资源的，给每个表里的每个列都建立索引那么将对系统造成极大的负担，那就更别提效率了！简单的说建立一个列的索引，就相当与建立一个列的排序。</p>
-<p>主键其实就是一个索引（特殊的唯一索引），但是这个索引跟一般的索引有所不同。主键所在的列里的每一个的记录都是唯一的，也可以说不能在主键里出现相同的记录，在同一个表里只能有一个主键。</p>
-<p>主键等于索引，索引不一定等于主键，简单的说主键就是所在列不能出现相同记录的特殊索引，而且这个索引只能在表里出现一次。</p>
-<p><strong>唯一索引与主键索引的比较</strong><br><strong>唯一索引</strong><br>唯一索引不允许两行具有相同的索引值。<br>如果现有数据中存在重复的键值，则大多数数据库都不允许将新创建的唯一索引与表一起保存。当新数据将使表中的键值重复时，数据库也拒绝接受此数据。例如，如果在 employee 表中的职员姓氏(lname) 列上创建了唯一索引，则所有职员不能同姓。</p>
-<p><strong>主键索引</strong><br>主键索引是唯一索引的特殊类型，其唯一索引名为primary。<br>表的主键，数据库表通常有一列或多列组合，其值用来唯一标识表中的每一行。<br>在数据库关系图中为表定义一个主键将自动创建主键索引，主键索引是唯一索引的特殊类型。主键索引要求主键中的每个值是唯一的。当在查询中使用主键索引时，它还允许快速访问数据。</p>
-<p><strong>二者比较：</strong><br>主键创建后一定包含一个唯一性索引，唯一性索引并不一定就是主键</p>
-<p>(1) 对于主健/unique constraint ， oracle/sql server/mysql等都会自动建立唯一索引；<br>(2) 主键不一定只包含一个字段，所以在主键的其中一个字段建唯一索引还是必要的；<br>(3) 主健可作外健，唯一索引不可；<br>(4) 主健不可为空，唯一索引可；<br>(5) 主健也可是多个字段的组合；<br>(6) 在 RBO 模式下，主键的执行计划优先级要高于唯一索引；</p>
-<p>主键严格于唯一索引体现：<br>a. 主键有not null属性<br>b. 主键在每个表只能有一个</p>
-<p><strong>主键与唯一索引的区别</strong><br>主键是一种约束，唯一索引是一种索引，两者在本质上是不同的</p>
-<ol>
-<li>主键一定是唯一性索引，其索引名为 primary，唯一性索引并不一定是主键</li>
-<li>一个表中可以有多个唯一性索引，但只能有一个主键</li>
-<li>主键列不允许空值，而唯一性索引列允许空值</li>
-</ol>
-<p>原文：<a href="https://blog.mimvp.com/article/7462.html" target="_blank" rel="noopener">https://blog.mimvp.com/article/7462.html</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -899,7 +914,7 @@
   
     <li><a href="/tags/存储/">存储</a><small>3</small></li>
   
-    <li><a href="/tags/安全/">安全</a><small>7</small></li>
+    <li><a href="/tags/安全/">安全</a><small>8</small></li>
   
     <li><a href="/tags/异步编程/">异步编程</a><small>3</small></li>
   

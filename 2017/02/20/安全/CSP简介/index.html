@@ -115,8 +115,8 @@
 <p>浏览器会使用<code>POST</code>方法，发送一个JSON对象，下面是一个例子。</p>
  <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;csp-report&quot;: &#123;</span><br><span class="line">    &quot;document-uri&quot;: &quot;http://example.org/page.html&quot;,</span><br><span class="line">    &quot;referrer&quot;: &quot;http://evil.example.com/&quot;,</span><br><span class="line">    &quot;blocked-uri&quot;: &quot;http://evil.example.com/evil.js&quot;,</span><br><span class="line">    &quot;violated-directive&quot;: &quot;script-src &apos;self&apos; https://apis.google.com&quot;,</span><br><span class="line">    &quot;original-policy&quot;: &quot;script-src &apos;self&apos; https://apis.google.com; report-uri http://example.org/my_amazing_csp_report_parser&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p><img src="http://7xq1il.com1.z0.glb.clouddn.com/csp02.png" alt="img"></p>
-<h2 id="三、Content-Security-Policy-Report-Only"><a href="#三、Content-Security-Policy-Report-Only" class="headerlink" title="三、Content-Security-Policy-Report-Only"></a>三、Content-Security-Policy-Report-Only</h2><p>除了<code>Content-Security-Policy</code>，还有一个<code>Content-Security-Policy-Report-Only</code>字段，表示不执行限制选项，只是记录违反限制的行为。</p>
-<p>它必须与<code>report-uri</code>选项配合使用。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy-Report-Only: <span class="keyword">default</span>-src <span class="string">'self'</span>; ...; report-uri /my_amazing_csp_report_parser;</span><br></pre></td></tr></table></figure></p>
+<h2 id="三、Content-Security-Policy-Report-Only"><a href="#三、Content-Security-Policy-Report-Only" class="headerlink" title="三、Content-Security-Policy-Report-Only"></a>三、Content-Security-Policy-Report-Only</h2><p>除了<code>Content-Security-Policy</code>，还有一个<code>Content-Security-Policy-Report-Only</code>字段，表示不执行限制选项，只是记录违反限制的行为。<br>它必须与<code>report-uri</code>选项配合使用。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy-Report-Only: <span class="keyword">default</span>-src <span class="string">'self'</span>; ...; report-uri /my_amazing_csp_report_parser;</span><br></pre></td></tr></table></figure>
 <h2 id="四、选项值"><a href="#四、选项值" class="headerlink" title="四、选项值"></a>四、选项值</h2><p>每个限制选项可以设置以下几种值，这些值就构成了白名单。</p>
 <ul>
 <li>主机名：<code>example.org</code>，<code>https://example.com:443</code></li>
@@ -127,7 +127,7 @@
 <li>关键字<code>&#39;none&#39;</code>：禁止加载任何外部资源，需要加引号</li>
 </ul>
 <p>多个值也可以并列，用空格分隔。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy: script-src <span class="string">'self'</span> https:<span class="comment">//apis.google.com</span></span><br></pre></td></tr></table></figure></p>
-<p>如果同一个限制选项使用多次，只有第一次会生效。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># 错误的写法</span><br><span class="line">script-src https:<span class="comment">//host1.com; script-src https://host2.com</span></span><br><span class="line"></span><br><span class="line"> # 正确的写法</span><br><span class="line"> script-src https:<span class="comment">//host1.com https://host2.com</span></span><br></pre></td></tr></table></figure></p>
+<p>如果同一个限制选项使用多次，只有第一次会生效。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># 错误的写法</span><br><span class="line">script-src https:<span class="comment">//host1.com; script-src https://host2.com</span></span><br><span class="line"></span><br><span class="line"># 正确的写法</span><br><span class="line">script-src https:<span class="comment">//host1.com https://host2.com</span></span><br></pre></td></tr></table></figure></p>
 <p>如果不设置某个限制选项，就是默认允许任何值。</p>
 <h2 id="五、script-src-的特殊值"><a href="#五、script-src-的特殊值" class="headerlink" title="五、script-src 的特殊值"></a>五、script-src 的特殊值</h2><p>除了常规值，<code>script-src</code>还可以设置一些特殊值。注意，下面这些值都必须放在单引号里面。</p>
 <ul>
@@ -258,7 +258,7 @@
   
     <li><a href="/tags/存储/">存储</a><small>3</small></li>
   
-    <li><a href="/tags/安全/">安全</a><small>7</small></li>
+    <li><a href="/tags/安全/">安全</a><small>8</small></li>
   
     <li><a href="/tags/异步编程/">异步编程</a><small>3</small></li>
   
