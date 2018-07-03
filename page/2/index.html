@@ -53,6 +53,52 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2017-01-05T06:45:23.000Z"><a href="/2017/01/05/存储/INNODB还是MYISAM/">2017-01-05</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2017/01/05/存储/INNODB还是MYISAM/">INNODB还是MYISAM</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>MyISAM 是MySQL中默认的存储引擎，一般来说不是有太多人关心这个东西。决定使用什么样的存储引擎是一个很tricky的事情，但是还是值我们去研究一下，这里的文章只考虑 MyISAM 和InnoDB这两个，因为这两个是最常见的。</p>
+<p>下面先让我们回答一些问题：</p>
+<ul>
+<li>你的数据库有外键吗？</li>
+<li>你需要事务支持吗？</li>
+<li>你需要全文索引吗？</li>
+<li>你经常使用什么样的查询模式？</li>
+<li>你的数据有多大？</li>
+</ul>
+<p>思考上面这些问题可以让你找到合适的方向，但那并不是绝对的。如果你需要事务处理或是外键，那么InnoDB 可能是比较好的方式。如果你需要全文索引，那么通常来说 MyISAM是好的选择，因为这是系统内建的，然而，我们其实并不会经常地去测试两百万行记录。所以，就算是慢一点，我们可以通过使用Sphinx从InnoDB中获得全文索引。</p>
+<p>数据的大小，是一个影响你选择什么样存储引擎的重要因素，大尺寸的数据集趋向于选择InnoDB方式，因为其支持事务处理和故障恢复。数据库的在小决定了故障恢复的时间长短，InnoDB可以利用事务日志进行数据恢复，这会比较快。而MyISAM可能会需要几个小时甚至几天来干这些事，InnoDB只需要几分钟。</p>
+<p>您操作数据库表的习惯可能也会是一个对性能影响很大的因素。比如： COUNT() 在 MyISAM 表中会非常快，而在InnoDB 表下可能会很痛苦。而主键查询则在InnoDB下会相当相当的快，但需要小心的是如果我们的主键太长了也会导致性能问题。大批的inserts 语句在MyISAM下会快一些，但是updates 在InnoDB 下会更快一些——尤其在并发量大的时候。</p>
+<p>所以，到底你检使用哪一个呢？根据经验来看，如果是一些小型的应用或项目，那么MyISAM 也许会更适合。当然，在大型的环境下使用MyISAM 也会有很大成功的时候，但却不总是这样的。如果你正在计划使用一个超大数据量的项目，而且需要事务处理或外键支持，那么你真的应该直接使用InnoDB方式。但需要记住InnoDB 的表需要更多的内存和存储，转换100GB 的MyISAM 表到InnoDB 表可能会让你有非常坏的体验。</p>
+<p>原文：<a href="https://coolshell.cn/articles/652.html" target="_blank" rel="noopener">https://coolshell.cn/articles/652.html</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2017-01-04T06:45:23.000Z"><a href="/2017/01/04/存储/主键与唯一索引的区别/">2017-01-04</a></time>
       
       
@@ -87,6 +133,137 @@
 <li>主键列不允许空值，而唯一性索引列允许空值</li>
 </ol>
 <p>原文：<a href="https://blog.mimvp.com/article/7462.html" target="_blank" rel="noopener">https://blog.mimvp.com/article/7462.html</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2016-09-04T06:45:23.000Z"><a href="/2016/09/04/Network/HTTP 协议入门/">2016-09-04</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2016/09/04/Network/HTTP 协议入门/">HTTP 协议入门</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h1 id="HTTP-协议入门"><a href="#HTTP-协议入门" class="headerlink" title="HTTP 协议入门"></a>HTTP 协议入门</h1><p>HTTP 协议是互联网的基础协议，也是网页开发的必备知识，最新版本 HTTP/2 更是让它成为技术热点。<br>本文介绍 HTTP 协议的历史演变和设计思路。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/http01.jpg" alt=""></p>
+<h2 id="一、HTTP-0-9"><a href="#一、HTTP-0-9" class="headerlink" title="一、HTTP/0.9"></a>一、HTTP/0.9</h2><p>HTTP 是基于 TCP/IP 协议的<a href="http://www.ruanyifeng.com/blog/2012/05/internet_protocol_suite_part_i.html" target="_blank" rel="noopener"><strong>应用层协议</strong></a>。它不涉及数据包（packet）传输，主要规定了客户端和服务器之间的通信格式，默认使用80端口。</p>
+<p>最早版本是1991年发布的0.9版。该版本极其简单，只有一个命令<code>GET</code>。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GET /index.html</span><br></pre></td></tr></table></figure>
+<p>上面命令表示，TCP 连接（connection）建立后，客户端向服务器请求（request）网页<code>index.html</code>。</p>
+<p>协议规定，服务器只能回应HTML格式的字符串，不能回应别的格式。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;html&gt;</span><br><span class="line">  &lt;body&gt;Hello World&lt;/body&gt;</span><br><span class="line">&lt;/html&gt;</span><br></pre></td></tr></table></figure></p>
+<p>服务器发送完毕，就关闭TCP连接。</p>
+<h2 id="二、HTTP-1-0"><a href="#二、HTTP-1-0" class="headerlink" title="二、HTTP/1.0"></a>二、HTTP/1.0</h2><h3 id="2-1-简介"><a href="#2-1-简介" class="headerlink" title="2.1 简介"></a>2.1 简介</h3><p>1996年5月，HTTP/1.0 版本发布，内容大大增加。</p>
+<p>首先，任何格式的内容都可以发送。这使得互联网不仅可以传输文字，还能传输图像、视频、二进制文件。这为互联网的大发展奠定了基础。</p>
+<p>其次，除了<code>GET</code>命令，还引入了<code>POST</code>命令和<code>HEAD</code>命令，丰富了浏览器与服务器的互动手段。</p>
+<p>再次，HTTP请求和回应的格式也变了。除了数据部分，每次通信都必须包括头信息（HTTP header），用来描述一些元数据。</p>
+<p>其他的新增功能还包括状态码（status code）、多字符集支持、多部分发送（multi-part type）、权限（authorization）、缓存（cache）、内容编码（content encoding）等。</p>
+<h3 id="2-2-请求格式"><a href="#2-2-请求格式" class="headerlink" title="2.2 请求格式"></a>2.2 请求格式</h3><p>下面是一个1.0版的HTTP请求的例子。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">GET / HTTP/1.0</span><br><span class="line">User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5)</span><br><span class="line">Accept: */*</span><br></pre></td></tr></table></figure>
+<p>可以看到，这个格式与0.9版有很大变化。</p>
+<p>第一行是请求命令，必须在尾部添加协议版本（<code>HTTP/1.0</code>）。后面就是多行头信息，描述客户端的情况。</p>
+<h3 id="2-3-回应格式"><a href="#2-3-回应格式" class="headerlink" title="2.3 回应格式"></a>2.3 回应格式</h3><p>服务器的回应如下。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">HTTP/1.0 200 OK </span><br><span class="line">Content-Type: text/plain</span><br><span class="line">Content-Length: 137582</span><br><span class="line">Expires: Thu, 05 Dec 1997 16:00:00 GMT</span><br><span class="line">Last-Modified: Wed, 5 August 1996 15:55:28 GMT</span><br><span class="line">Server: Apache 0.84</span><br><span class="line"></span><br><span class="line">&lt;html&gt;</span><br><span class="line">  &lt;body&gt;Hello World&lt;/body&gt;</span><br><span class="line">&lt;/html&gt;</span><br></pre></td></tr></table></figure>
+<p>回应的格式是”头信息 + 一个空行（<code>\r\n</code>） + 数据”。其中，第一行是”协议版本 + 状态码（status code） + 状态描述”。</p>
+<h3 id="2-4-Content-Type-字段"><a href="#2-4-Content-Type-字段" class="headerlink" title="2.4 Content-Type 字段"></a>2.4 Content-Type 字段</h3><p>关于字符的编码，1.0版规定，头信息必须是 ASCII 码，后面的数据可以是任何格式。因此，服务器回应的时候，必须告诉客户端，数据是什么格式，这就是<code>Content-Type</code>字段的作用。</p>
+<p>下面是一些常见的<code>Content-Type</code>字段的值。</p>
+<ul>
+<li>text/plain</li>
+<li>text/html</li>
+<li>text/css</li>
+<li>image/jpeg</li>
+<li>image/png</li>
+<li>image/svg+xml</li>
+<li>audio/mp4</li>
+<li>video/mp4</li>
+<li>application/javascript</li>
+<li>application/pdf</li>
+<li>application/zip</li>
+<li>application/atom+xml</li>
+</ul>
+<p>这些数据类型总称为<code>MIME type</code>，每个值包括一级类型和二级类型，之间用斜杠分隔。</p>
+<p>除了预定义的类型，厂商也可以自定义类型。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">application/vnd.debian.binary-package</span><br></pre></td></tr></table></figure>
+<p>上面的类型表明，发送的是Debian系统的二进制数据包。</p>
+<p><code>MIME type</code>还可以在尾部使用分号，添加参数。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Type: text/html; charset=utf-8</span><br></pre></td></tr></table></figure>
+<p>上面的类型表明，发送的是网页，而且编码是UTF-8。</p>
+<p>客户端请求的时候，可以使用<code>Accept</code>字段声明自己可以接受哪些数据格式。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Accept: */*</span><br></pre></td></tr></table></figure>
+<p>上面代码中，客户端声明自己可以接受任何格式的数据。</p>
+<p><code>MIME type</code>不仅用在HTTP协议，还可以用在其他地方，比如HTML网页。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=UTF-8&quot; /&gt;</span><br><span class="line">  &lt;!-- 等同于 --&gt;</span><br><span class="line">&lt;meta charset=&quot;utf-8&quot; /&gt;</span><br></pre></td></tr></table></figure>
+<h3 id="2-5-Content-Encoding-字段"><a href="#2-5-Content-Encoding-字段" class="headerlink" title="2.5 Content-Encoding 字段"></a>2.5 Content-Encoding 字段</h3><p>由于发送的数据可以是任何格式，因此可以把数据压缩后再发送。<code>Content-Encoding</code>字段说明数据的压缩方法。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Content-Encoding: gzip</span><br><span class="line">Content-Encoding: compress</span><br><span class="line">Content-Encoding: deflate</span><br></pre></td></tr></table></figure>
+<p>客户端在请求时，用<code>Accept-Encoding</code>字段说明自己可以接受哪些压缩方法。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Accept-Encoding: gzip, deflate</span><br></pre></td></tr></table></figure>
+<h3 id="2-6-缺点"><a href="#2-6-缺点" class="headerlink" title="2.6 缺点"></a>2.6 缺点</h3><p>HTTP/1.0 版的主要缺点是，每个TCP连接只能发送一个请求。发送数据完毕，连接就关闭，如果还要请求其他资源，就必须再新建一个连接。</p>
+<p>TCP连接的新建成本很高，因为需要客户端和服务器三次握手，并且开始时发送速率较慢（slow start）。所以，HTTP 1.0版本的性能比较差。随着网页加载的外部资源越来越多，这个问题就愈发突出了。</p>
+<p>为了解决这个问题，有些浏览器在请求时，用了一个非标准的<code>Connection</code>字段。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Connection: keep-alive</span><br></pre></td></tr></table></figure>
+<p>这个字段要求服务器不要关闭TCP连接，以便其他请求复用。服务器同样回应这个字段。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Connection: keep-alive</span><br></pre></td></tr></table></figure>
+<p>一个可以复用的TCP连接就建立了，直到客户端或服务器主动关闭连接。但是，这不是标准字段，不同实现的行为可能不一致，因此不是根本的解决办法。</p>
+<h2 id="三、HTTP-1-1"><a href="#三、HTTP-1-1" class="headerlink" title="三、HTTP/1.1"></a>三、HTTP/1.1</h2><p>1997年1月，HTTP/1.1 版本发布，只比 1.0 版本晚了半年。它进一步完善了 HTTP 协议，一直用到了20年后的今天，直到现在还是最流行的版本。</p>
+<h3 id="3-1-持久连接"><a href="#3-1-持久连接" class="headerlink" title="3.1 持久连接"></a>3.1 持久连接</h3><p>1.1 版的最大变化，就是引入了持久连接（persistent connection），即TCP连接默认不关闭，可以被多个请求复用，不用声明<code>Connection: keep-alive</code>。</p>
+<p>客户端和服务器发现对方一段时间没有活动，就可以主动关闭连接。不过，规范的做法是，客户端在最后一个请求时，发送<code>Connection: close</code>，明确要求服务器关闭TCP连接。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Connection: close</span><br></pre></td></tr></table></figure>
+<p>目前，对于同一个域名，大多数浏览器允许同时建立6个持久连接。</p>
+<h3 id="3-2-管道机制"><a href="#3-2-管道机制" class="headerlink" title="3.2 管道机制"></a>3.2 管道机制</h3><p>1.1 版还引入了管道机制（pipelining），即在同一个TCP连接里面，客户端可以同时发送多个请求。这样就进一步改进了HTTP协议的效率。</p>
+<p>举例来说，客户端需要请求两个资源。以前的做法是，在同一个TCP连接里面，先发送A请求，然后等待服务器做出回应，收到后再发出B请求。管道机制则是允许浏览器同时发出A请求和B请求，但是服务器还是按照顺序，先回应A请求，完成后再回应B请求。</p>
+<h3 id="3-3-Content-Length-字段"><a href="#3-3-Content-Length-字段" class="headerlink" title="3.3 Content-Length 字段"></a>3.3 Content-Length 字段</h3><p>一个TCP连接现在可以传送多个回应，势必就要有一种机制，区分数据包是属于哪一个回应的。这就是<code>Content-length</code>字段的作用，声明本次回应的数据长度。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Length: 3495</span><br></pre></td></tr></table></figure>
+<p>上面代码告诉浏览器，本次回应的长度是3495个字节，后面的字节就属于下一个回应了。</p>
+<p>在1.0版中，<code>Content-Length</code>字段不是必需的，因为浏览器发现服务器关闭了TCP连接，就表明收到的数据包已经全了。</p>
+<h3 id="3-4-分块传输编码"><a href="#3-4-分块传输编码" class="headerlink" title="3.4 分块传输编码"></a>3.4 分块传输编码</h3><p>使用<code>Content-Length</code>字段的前提条件是，服务器发送回应之前，必须知道回应的数据长度。</p>
+<p>对于一些很耗时的动态操作来说，这意味着，服务器要等到所有操作完成，才能发送数据，显然这样的效率不高。更好的处理方法是，产生一块数据，就发送一块，采用”流模式”（stream）取代”缓存模式”（buffer）。</p>
+<p>因此，1.1版规定可以不使用<code>Content-Length</code>字段，而使用<a href="https://zh.wikipedia.org/wiki/%E5%88%86%E5%9D%97%E4%BC%A0%E8%BE%93%E7%BC%96%E7%A0%81" target="_blank" rel="noopener">“分块传输编码”</a>（chunked transfer encoding）。只要请求或回应的头信息有<code>Transfer-Encoding</code>字段，就表明回应将由数量未定的数据块组成。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Transfer-Encoding: chunked</span><br></pre></td></tr></table></figure>
+<p>每个非空的数据块之前，会有一个16进制的数值，表示这个块的长度。最后是一个大小为0的块，就表示本次回应的数据发送完了。下面是一个例子。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">HTTP/1.1 200 OK</span><br><span class="line">Content-Type: text/plain</span><br><span class="line">Transfer-Encoding: chunked</span><br><span class="line"></span><br><span class="line">25</span><br><span class="line">This is the data in the first chunk</span><br><span class="line"> </span><br><span class="line">1C</span><br><span class="line">and this is the second one</span><br><span class="line"></span><br><span class="line">3</span><br><span class="line">con</span><br><span class="line"></span><br><span class="line">8</span><br><span class="line">sequence</span><br><span class="line"></span><br><span class="line">0</span><br></pre></td></tr></table></figure>
+<h3 id="3-5-其他功能"><a href="#3-5-其他功能" class="headerlink" title="3.5 其他功能"></a>3.5 其他功能</h3><p>1.1版还新增了许多动词方法：<code>PUT</code>、<code>PATCH</code>、<code>HEAD</code>、 <code>OPTIONS</code>、<code>DELETE</code>。</p>
+<p>另外，客户端请求的头信息新增了<code>Host</code>字段，用来指定服务器的域名。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Host: www.example.com</span><br></pre></td></tr></table></figure>
+<p>有了<code>Host</code>字段，就可以将请求发往同一台服务器上的不同网站，为虚拟主机的兴起打下了基础。</p>
+<h3 id="3-6-缺点"><a href="#3-6-缺点" class="headerlink" title="3.6 缺点"></a>3.6 缺点</h3><p>虽然1.1版允许复用TCP连接，但是同一个TCP连接里面，所有的数据通信是按次序进行的。服务器只有处理完一个回应，才会进行下一个回应。要是前面的回应特别慢，后面就会有许多请求排队等着。这称为<a href="https://zh.wikipedia.org/wiki/%E9%98%9F%E5%A4%B4%E9%98%BB%E5%A1%9E" target="_blank" rel="noopener">“队头堵塞”</a>（Head-of-line blocking）。</p>
+<p>为了避免这个问题，只有两种方法：一是减少请求数，二是同时多开持久连接。这导致了很多的网页优化技巧，比如合并脚本和样式表、将图片嵌入CSS代码、域名分片（domain sharding）等等。如果HTTP协议设计得更好一些，这些额外的工作是可以避免的。</p>
+<h2 id="四、SPDY-协议"><a href="#四、SPDY-协议" class="headerlink" title="四、SPDY 协议"></a>四、SPDY 协议</h2><p>2009年，谷歌公开了自行研发的 SPDY 协议，主要解决 HTTP/1.1 效率不高的问题。</p>
+<p>这个协议在Chrome浏览器上证明可行以后，就被当作 HTTP/2 的基础，主要特性都在 HTTP/2 之中得到继承。</p>
+<h2 id="五、HTTP-2"><a href="#五、HTTP-2" class="headerlink" title="五、HTTP/2"></a>五、HTTP/2</h2><p>2015年，HTTP/2 发布。它不叫 HTTP/2.0，是因为标准委员会不打算再发布子版本了，下一个新版本将是 HTTP/3。</p>
+<h3 id="5-1-二进制协议"><a href="#5-1-二进制协议" class="headerlink" title="5.1 二进制协议"></a>5.1 二进制协议</h3><p>HTTP/1.1 版的头信息肯定是文本（ASCII编码），数据体可以是文本，也可以是二进制。HTTP/2 则是一个彻底的二进制协议，头信息和数据体都是二进制，并且统称为”帧”（frame）：头信息帧和数据帧。</p>
+<p>二进制协议的一个好处是，可以定义额外的帧。HTTP/2 定义了近十种帧，为将来的高级应用打好了基础。如果使用文本实现这种功能，解析数据将会变得非常麻烦，二进制解析则方便得多。</p>
+<h3 id="5-2-多工"><a href="#5-2-多工" class="headerlink" title="5.2 多工"></a>5.2 多工</h3><p>HTTP/2 复用TCP连接，在一个连接里，客户端和浏览器都可以同时发送多个请求或回应，而且不用按照顺序一一对应，这样就避免了”队头堵塞”。</p>
+<p>举例来说，在一个TCP连接里面，服务器同时收到了A请求和B请求，于是先回应A请求，结果发现处理过程非常耗时，于是就发送A请求已经处理好的部分， 接着回应B请求，完成后，再发送A请求剩下的部分。</p>
+<p>这样双向的、实时的通信，就叫做多工（Multiplexing）。</p>
+<h3 id="5-3-数据流"><a href="#5-3-数据流" class="headerlink" title="5.3 数据流"></a>5.3 数据流</h3><p>因为 HTTP/2 的数据包是不按顺序发送的，同一个连接里面连续的数据包，可能属于不同的回应。因此，必须要对数据包做标记，指出它属于哪个回应。</p>
+<p>HTTP/2 将每个请求或回应的所有数据包，称为一个数据流（stream）。每个数据流都有一个独一无二的编号。数据包发送的时候，都必须标记数据流ID，用来区分它属于哪个数据流。另外还规定，客户端发出的数据流，ID一律为奇数，服务器发出的，ID为偶数。</p>
+<p>数据流发送到一半的时候，客户端和服务器都可以发送信号（<code>RST_STREAM</code>帧），取消这个数据流。1.1版取消数据流的唯一方法，就是关闭TCP连接。这就是说，HTTP/2 可以取消某一次请求，同时保证TCP连接还打开着，可以被其他请求使用。</p>
+<p>客户端还可以指定数据流的优先级。优先级越高，服务器就会越早回应。</p>
+<h3 id="5-4-头信息压缩"><a href="#5-4-头信息压缩" class="headerlink" title="5.4 头信息压缩"></a>5.4 头信息压缩</h3><p>HTTP 协议不带有状态，每次请求都必须附上所有信息。所以，请求的很多字段都是重复的，比如<code>Cookie</code>和<code>User Agent</code>，一模一样的内容，每次请求都必须附带，这会浪费很多带宽，也影响速度。</p>
+<p>HTTP/2 对这一点做了优化，引入了头信息压缩机制（header compression）。一方面，头信息使用<code>gzip</code>或<code>compress</code>压缩后再发送；另一方面，客户端和服务器同时维护一张头信息表，所有字段都会存入这个表，生成一个索引号，以后就不发送同样字段了，只发送索引号，这样就提高速度了。</p>
+<h3 id="5-5-服务器推送"><a href="#5-5-服务器推送" class="headerlink" title="5.5 服务器推送"></a>5.5 服务器推送</h3><p>HTTP/2 允许服务器未经请求，主动向客户端发送资源，这叫做服务器推送（server push）。</p>
+<p>常见场景是客户端请求一个网页，这个网页里面包含很多静态资源。正常情况下，客户端必须收到网页后，解析HTML源码，发现有静态资源，再发出静态资源请求。其实，服务器可以预期到客户端请求网页后，很可能会再请求静态资源，所以就主动把这些静态资源随着网页一起发给客户端了。</p>
+<h3 id="六、参考链接"><a href="#六、参考链接" class="headerlink" title="六、参考链接"></a>六、参考链接</h3><p><a href="http://kamranahmed.info/blog/2016/08/13/http-in-depth/" target="_blank" rel="noopener">Journey to HTTP/2</a>, by Kamran Ahmed<br><a href="https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol" target="_blank" rel="noopener">HTTP</a>, by Wikipedia<br><a href="https://tools.ietf.org/html/rfc1945" target="_blank" rel="noopener">HTTP/1.0 Specification</a><br><a href="https://http2.github.io/http2-spec/" target="_blank" rel="noopener">HTTP/2 Specification</a></p>
+<h3 id="七、原文"><a href="#七、原文" class="headerlink" title="七、原文"></a>七、原文</h3><p><a href="http://www.ruanyifeng.com/blog/2016/08/http.html" target="_blank" rel="noopener">http://www.ruanyifeng.com/blog/2016/08/http.html</a></p>
 
       
     </div>
@@ -706,193 +883,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2016-03-09T06:45:23.000Z"><a href="/2016/03/09/javascript/Javascript面对对象/">2016-03-09</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2016/03/09/javascript/Javascript面对对象/">Javascipt面对对象</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>面向对象编程是用抽象方式创建基于现实世界模型的一种编程模式，主要包括模块化、多态、和封装几种技术。 对JavaScript而言，其核心是支持面向对象的，同时它也提供了强大灵活的基于原型的面向对象编程能力。 本文将会深入的探讨有关使用JavaScript进行面向对象编程的一些核心基础知识，包括对象的创建，继承机制， 最后还会简要的介绍如何借助ES6提供的新的类机制重写传统的JavaScript面向对象代码。</p>
-<h3 id="面向对象的几个概念"><a href="#面向对象的几个概念" class="headerlink" title="面向对象的几个概念"></a>面向对象的几个概念</h3><p>在进入正题前，先了解传统的面向对象编程（例如Java）中常会涉及到的概念，大致可以包括：</p>
-<ul>
-<li>类：定义对象的特征。它是对象的属性和方法的模板定义。</li>
-<li>对象（或称实例）：类的一个实例。</li>
-<li>属性：对象的特征，比如颜色、尺寸等。</li>
-<li>方法：对象的行为，比如行走、说话等。</li>
-<li>构造函数：对象初始化的瞬间被调用的方法。</li>
-<li>继承：子类可以继承父类的特征。例如，猫继承了动物的一般特性。</li>
-<li>封装：一种把数据和相关的方法绑定在一起使用的方法。</li>
-<li>抽象：结合复杂的继承、方法、属性的对象能够模拟现实的模型。</li>
-<li>多态：不同的类可以定义相同的方法或属性。<br>在JavaScript的面向对象编程中大体也包括这些。不过在称呼上可能稍有不同，例如，JavaScript中没有原生的“类”的概念， 而只有对象的概念。因此，随着你认识的深入，我们会混用对象、实例、构造函数等概念。</li>
-</ul>
-<h3 id="对象（类）的创建"><a href="#对象（类）的创建" class="headerlink" title="对象（类）的创建"></a>对象（类）的创建</h3><p>在JavaScript中，我们通常可以使用构造函数来创建特定类型的对象。诸如Object和Array这样的原生构造函数，在运行时会自动出现在执行环境中。 此外，我们也可以创建自定义的构造函数。例如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">function Person(name, age, job) &#123;</span><br><span class="line">  this.name = name;</span><br><span class="line">  this.age = age;</span><br><span class="line">  this.job = job;</span><br><span class="line">&#125;</span><br><span class="line">var person1 = new Person(&apos;Weiwei&apos;, 27, &apos;Student&apos;);</span><br><span class="line">var person2 = new Person(&apos;Lily&apos;, 25, &apos;Doctor&apos;);</span><br></pre></td></tr></table></figure></p>
-<p>按照惯例，构造函数始终都应该以一个大写字母开头（和Java中定义的类一样），普通函数则小写字母开头。 要创建Person的新实例，必须使用new操作符。以这种方式调用构造函数实际上会经历以下4个步骤：</p>
-<ol>
-<li>创建一个新对象（实例）</li>
-<li>将构造函数的作用域赋给新对象（也就是重设了this的指向，this就指向了这个新对象）</li>
-<li>执行构造函数中的代码（为这个新对象添加属性）</li>
-<li>返回新对象</li>
-</ol>
-<p>在上面的例子中，我们创建了Person的两个实例person1和person2。 这两个对象默认都有一个constructor属性，该属性指向它们的构造函数Person，也就是说：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">console.log(person1.constructor == Person);  //true</span><br><span class="line">console.log(person2.constructor == Person);  //true</span><br></pre></td></tr></table></figure></p>
-<h3 id="自定义对象的类型检测"><a href="#自定义对象的类型检测" class="headerlink" title="自定义对象的类型检测"></a>自定义对象的类型检测</h3><p>我们可以使用instanceof操作符进行类型检测。我们创建的所有对象既是Object的实例，同时也是Person的实例。 因为所有的对象都继承自Object。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">console.log(person1 instanceof Object);  //true</span><br><span class="line">console.log(person1 instanceof Person);  //true</span><br><span class="line">console.log(person2 instanceof Object);  //true</span><br><span class="line">console.log(person2 instanceof Person);  //true</span><br></pre></td></tr></table></figure></p>
-<h3 id="构造函数的问题"><a href="#构造函数的问题" class="headerlink" title="构造函数的问题"></a>构造函数的问题</h3><p>我们不建议在构造函数中直接定义方法，如果这样做的话，每个方法都要在每个实例上重新创建一遍，这将非常损耗性能。 ——不要忘了，ECMAScript中的函数是对象，每定义一个函数，也就实例化了一个对象。</p>
-<p>幸运的是，在ECMAScript中，我们可以借助原型对象来解决这个问题。</p>
-<h3 id="借助原型模式定义对象的方法"><a href="#借助原型模式定义对象的方法" class="headerlink" title="借助原型模式定义对象的方法"></a>借助原型模式定义对象的方法</h3><p>我们创建的每个函数都有一个prototype属性，这个属性是一个指针，指向该函数的原型对象， 该对象包含了由特定类型的所有实例共享的属性和方法。也就是说，我们可以利用原型对象来让所有对象实例共享它所包含的属性和方法。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">function Person(name, age, job) &#123;</span><br><span class="line">  this.name = name;</span><br><span class="line">  this.age = age;</span><br><span class="line">  this.job = job;</span><br><span class="line">&#125;</span><br><span class="line">// 通过原型模式来添加所有实例共享的方法</span><br><span class="line">// sayName() 方法将会被Person的所有实例共享，而避免了重复创建</span><br><span class="line">Person.prototype.sayName = function () &#123;</span><br><span class="line">  console.log(this.name);</span><br><span class="line">&#125;;</span><br><span class="line">var person1 = new Person(&apos;Weiwei&apos;, 27, &apos;Student&apos;);</span><br><span class="line">var person2 = new Person(&apos;Lily&apos;, 25, &apos;Doctor&apos;);</span><br><span class="line">console.log(person1.sayName === person2.sayName); // true</span><br><span class="line">person1.sayName(); // Weiwei</span><br><span class="line">person2.sayName(); // Lily</span><br></pre></td></tr></table></figure></p>
-<p>正如上面的代码所示，通过原型模式定义的方法sayName()为所有的实例所共享。也就是， person1和person2访问的是同一个sayName()函数。同样的，公共属性也可以使用原型模式进行定义。例如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">function Chinese (name) &#123;</span><br><span class="line">    this.name = name;</span><br><span class="line">&#125;</span><br><span class="line">Chinese.prototype.country = &apos;China&apos;; // 公共属性，所有实例共享</span><br></pre></td></tr></table></figure></p>
-<p>当我们new Person()时，返回的Person实例会结合构造函数中定义的属性、行为和原型中定义的属性、行为， 生成最终属于Person实例的属性和行为。</p>
-<p>构造函数中定义的属性和行为的优先级要比原型中定义的属性和行为的优先级高，如果构造函数和原型中定义了同名的属性或行为， 构造函数中的属性或行为会覆盖原型中的同名的属性或行为。</p>
-<h3 id="原型对象"><a href="#原型对象" class="headerlink" title="原型对象"></a>原型对象</h3><p>现在我们来深入的理解一下什么是原型对象。</p>
-<p>只要创建了一个新函数，就会根据一组特定的规则为该函数创建一个prototype属性，这个属性指向函数的原型对象。 在默认情况下，所有原型对象都会自动获得一个constructor属性，这个属性包含一个指向prototype属性所在函数的指针。 也就是说：Person.prototype.constructor指向Person构造函数。</p>
-<p>创建了自定义的构造函数之后，其原型对象默认只会取得constructor属性；至于其他方法，则都是从Object继承而来的。 当调用构造函数创建一个新实例后，该实例内部将包含一个指针（内部属性），指向构造函数的原型对象。ES5中称这个指针为[[Prototype]]， 在Firefox、Safari和Chrome在每个对象上都支持一个属性<strong>proto</strong>（目前已被废弃）；而在其他实现中，这个属性对脚本则是完全不可见的。 要注意，这个链接存在于实例与构造函数的原型对象之间，而不是实例与构造函数之间。</p>
-<p>这三者关系的示意图如下：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/imgprototype-graph-1.jpg" alt=""></p>
-<p>上图展示了Person构造函数、Person的原型对象以及Person现有的两个实例之间的关系。</p>
-<ul>
-<li>Person.prototype指向了原型对象</li>
-<li>Person.prototype.constructor又指回了Person构造函数</li>
-<li>Person的每个实例person1和person2都包含一个内部属性（通常为<strong>proto</strong>），person1.<strong>proto</strong>和person2.<strong>proto</strong>指向了原型对象</li>
-</ul>
-<h3 id="查找对象属性"><a href="#查找对象属性" class="headerlink" title="查找对象属性"></a>查找对象属性</h3><p>从上图我们发现，虽然Person的两个实例都不包含属性和方法，但我们却可以调用person1.sayName()。 这是通过查找对象属性的过程来实现的。</p>
-<ol>
-<li>搜索首先从对象实例本身开始（实例person1有sayName属性吗？——没有）</li>
-<li>如果没找到，则继续搜索指针指向的原型对象（person1.<strong>proto</strong>有sayName属性吗？——有）<br>这也是多个对象实例共享原型所保存的属性和方法的基本原理。</li>
-</ol>
-<p>注意，如果我们在对象的实例中重写了某个原型中已存在的属性，则该实例属性会屏蔽原型中的那个属性。 此时，可以使用delete操作符删除实例上的属性。</p>
-<h3 id="Object-getPrototypeOf"><a href="#Object-getPrototypeOf" class="headerlink" title="Object.getPrototypeOf()"></a>Object.getPrototypeOf()</h3><p>根据ECMAScript标准，someObject.[[Prototype]] 符号是用于指派 someObject 的原型。 这个等同于 JavaScript 的 <strong>proto</strong> 属性（现已弃用，因为它不是标准）。 从ECMAScript 5开始, [[Prototype]] 可以用Object.getPrototypeOf()和Object.setPrototypeOf()访问器来访问。</p>
-<p>其中Object.getPrototypeOf()在所有支持的实现中，这个方法返回[[Prototype]]的值。例如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">person1.__proto__ === Object.getPrototypeOf(person1); // true</span><br><span class="line">Object.getPrototypeOf(person1) === Person.prototype; // true</span><br></pre></td></tr></table></figure></p>
-<p>也就是说，Object.getPrototypeOf(p1)返回的对象实际就是这个对象的原型。 这个方法的兼容性请参考该链接。</p>
-<h3 id="Object-keys"><a href="#Object-keys" class="headerlink" title="Object.keys()"></a>Object.keys()</h3><p>要取得对象上所有可枚举的实例属性，可以使用ES5中的Object.keys()方法。例如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Object.keys(p1); // [&quot;name&quot;, &quot;age&quot;, &quot;job&quot;]</span><br></pre></td></tr></table></figure></p>
-<p>此外，如果你想要得到所有实例属性，无论它是否可枚举，都可以使用Object.getOwnPropertyName()方法。</p>
-<h3 id="更简单的原型语法"><a href="#更简单的原型语法" class="headerlink" title="更简单的原型语法"></a>更简单的原型语法</h3><p>在上面的代码中，如果我们要添加原型属性和方法，就要重复的敲一遍Person.prototype。为了减少这个重复的过程， 更常见的做法是用一个包含所有属性和方法的对象字面量来重写整个原型对象。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">function Person(name, age, job) &#123;</span><br><span class="line">  this.name = name;</span><br><span class="line">  this.age = age;</span><br><span class="line">  this.job = job;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 重写整个原型对象</span><br><span class="line">Person.prototype = &#123;</span><br><span class="line">  </span><br><span class="line">  // 这里务必要重新将构造函数指回Person构造函数，否则会指向这个新创建的对象</span><br><span class="line">  constructor: Person, // Attention!</span><br><span class="line"></span><br><span class="line">  sayName: function () &#123;</span><br><span class="line">    console.log(this.name);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">var person1 = new Person(&apos;Weiwei&apos;, 27, &apos;Student&apos;);</span><br><span class="line">var person2 = new Person(&apos;Lily&apos;, 25, &apos;Doctor&apos;);</span><br><span class="line"></span><br><span class="line">console.log(person1.sayName === person2.sayName); // true</span><br><span class="line"></span><br><span class="line">person1.sayName();  // Weiwei</span><br><span class="line">person2.sayName();  // Lily</span><br></pre></td></tr></table></figure></p>
-<p>在上面的代码中特意包含了一个constructor属性，并将它的值设置为Person，从而确保了通过该属性能够访问到适当的值。 注意，以这种方式重设constructor属性会导致它的[[Enumerable]]特性设置为true。默认情况下，原生的constructor属性是不可枚举的。 你可以使用Object.defineProperty()：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">// 重设构造函数，只适用于ES5兼容的浏览器</span><br><span class="line">Object.defineProperty(Person.prototype, &quot;constructor&quot;, &#123;</span><br><span class="line">  enumerable: false,</span><br><span class="line">  value: Person</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<h3 id="组合使用构造函数模式和原型模式"><a href="#组合使用构造函数模式和原型模式" class="headerlink" title="组合使用构造函数模式和原型模式"></a>组合使用构造函数模式和原型模式</h3><p>创建自定义类型的最常见方式，就是组合使用构造函数模式与原型模式。构造函数模式用于定义实例属性， 而原型模式用于定义方法和共享的属性。结果，每个实例都会有自己的一份实例属性的副本，但同时又共享着对方的引用， 最大限度的节省了内存。</p>
-<h3 id="继承"><a href="#继承" class="headerlink" title="继承"></a>继承</h3><p>大多的面向对象语言都支持两种继承方式：接口继承和实现继承。ECMAScript只支持实现继承，而且其实现继承主要依靠原型链来实现。</p>
-<p>前面我们知道，JavaScript中实例的属性和行为是由构造函数和原型两部分共同组成的。如果我们想让Child继承Father， 那么我们就需要把Father构造函数和原型中属性和行为全部传给Child的构造函数和原型。</p>
-<h3 id="原型链继承"><a href="#原型链继承" class="headerlink" title="原型链继承"></a>原型链继承</h3><p>使用原型链作为实现继承的基本思想是：利用原型让一个引用类型继承另一个引用类型的属性和方法。首先我们先回顾一些基本概念：</p>
-<p>每个构造函数都有一个原型对象（prototype）<br>原型对象包含一个指向构造函数的指针（constructor）<br>实例都包含一个指向原型对象的内部指针（[[Prototype]]）<br>如果我们让原型对象等于另一个类型的实现，结果会怎么样？显然，此时的原型对象将包含一个指向另一个原型的指针， 相应的，另一个原型中也包含着一个指向另一个构造函数的指针。假如另一个原型又是另一个类型的实例，那么上述关系依然成立， 如此层层递进，就构成了实例与原型的链条。 更详细的内容可以参考这个链接。 先看一个简单的例子，它演示了使用原型链实现继承的基本框架：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">function Father () &#123;</span><br><span class="line">  this.fatherValue = true;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Father.prototype.getFatherValue = function () &#123;</span><br><span class="line">  console.log(this.fatherValue);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">function Child () &#123;</span><br><span class="line">  this.childValue = false;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 实现继承：继承自Father</span><br><span class="line">Child.prototype = new Father();</span><br><span class="line"></span><br><span class="line">Child.prototype.getChildValue = function () &#123;</span><br><span class="line">  console.log(this.childValue);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">var instance = new Child();</span><br><span class="line">instance.getFatherValue(); // true</span><br><span class="line">instance.getChildValue();  // false</span><br></pre></td></tr></table></figure></p>
-<p>在上面的代码中，原型链继承的核心语句是Child.prototype = new Father()，它实现了Child对Father的继承， 而继承是通过创建Father的实例，并将该实例赋给Child.prototype实现的。</p>
-<p>实现的本质是重写原型对象，代之以一个新类型的实例。也就是说，原来存在于Father的实例中的所有属性和方法， 现在也存在于Child.prototype中了。</p>
-<p>这个例子中的实例以及构造函数和原型之间的关系如下图所示：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/imgprototype-chain-inheritance.jpg" alt=""></p>
-<p>在上面的代码中，我们没有使用Child默认提供的原型，而是给它换了一个新原型；这个新原型就是Father的实例。 于是，新原型不仅具有了作为一个Father的实例所拥有的全部属性和方法。而且其内部还有一个指针[[Prototype]]，指向了Father的原型。</p>
-<ul>
-<li>instance指向Child的原型对象</li>
-<li>Child的原型对象指向Father的原型对象</li>
-<li>getFatherValue()方法仍然还在Father.prototype中</li>
-<li>但是，fatherValue则位于Child.prototype中</li>
-<li>instance.constructor现在指向的是Father<br>因为fatherValue是一个实例属性，而getFatherValue()则是一个原型方法。既然Child.prototype现在是Father的实例， 那么fatherValue当然就位于该实例中。</li>
-</ul>
-<p>通过实现原型链，本质上扩展了本章前面介绍的原型搜索机制。例如，instance.getFatherValue()会经历三个搜索步骤：</p>
-<ol>
-<li>搜索实例</li>
-<li>搜索Child.prototype</li>
-<li>搜索Father.prototype</li>
-</ol>
-<h3 id="别忘了Object"><a href="#别忘了Object" class="headerlink" title="别忘了Object"></a>别忘了Object</h3><p>所有的函数都默认原型都是Object的实例，因此默认原型都会包含一个内部指针[[Prototype]]，指向Object.prototype。 这也正是所有自定义类型都会继承toString()、valueOf()等默认方法的根本原因。所以， 我们说上面例子展示的原型链中还应该包括另外一个继承层次。关于Object的更多内容，可以参考这篇博客。</p>
-<p>也就是说，Child继承了Father，而Father继承了Object。当调用了instance.toString()时， 实际上调用的是保存在Object.prototype中的那个方法。</p>
-<h3 id="原型链继承的问题"><a href="#原型链继承的问题" class="headerlink" title="原型链继承的问题"></a>原型链继承的问题</h3><p>首先是顺序，一定要先继承父类，然后为子类添加新方法。</p>
-<p>其次，使用原型链实现继承时，不能使用对象字面量创建原型方法。因为这样做就会重写原型链，如下面的例子所示：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">function Father () &#123;</span><br><span class="line">  this.fatherValue = true;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Father.prototype.getFatherValue = function () &#123;</span><br><span class="line">  console.log(this.fatherValue);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">function Child () &#123;</span><br><span class="line">  this.childValue = false;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 继承了Father</span><br><span class="line">// 此时的原型链为 Child -&gt; Father -&gt; Object</span><br><span class="line">Child.prototype = new Father();</span><br><span class="line"></span><br><span class="line">// 使用字面量添加新方法，会导致上一行代码无效</span><br><span class="line">// 此时我们设想的原型链被切断，而是变成 Child -&gt; Object</span><br><span class="line">// 所以我们不推荐这么写了</span><br><span class="line">Child.prototype = &#123;</span><br><span class="line">  getChildValue: function () &#123;</span><br><span class="line">    console.log(this.childValue);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">var instance = new Child();</span><br><span class="line">instance.getChildValue();  // false</span><br><span class="line">instance.getFatherValue(); // error!</span><br></pre></td></tr></table></figure></p>
-<p>在上面的代码中，我们连续两次修改了Child.prototype的值。由于现在的原型包含的是一个Object的实例， 而非Father的实例，因此我们设想中的原型链已经被切断——Child和Father之间已经没有关系了。</p>
-<p>最后，在创建子类型的实例时，不能向超类型的构造函数中传递参数。实际上，应该说是没有办法在不影响所有对象实例的情况下， 给超类型的构造函数传递参数。因此，我们很少单独使用原型链。</p>
-<h3 id="借用构造函数继承"><a href="#借用构造函数继承" class="headerlink" title="借用构造函数继承"></a>借用构造函数继承</h3><p>借用构造函数（constructor stealing）的基本思想如下：即在子类构造函数的内部调用超类型构造函数。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">function Father (name) &#123;</span><br><span class="line">  this.name = name;</span><br><span class="line">  this.colors = [&apos;red&apos;, &apos;blue&apos;, &apos;green&apos;];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">function Child (name) &#123;</span><br><span class="line">  // 继承了Father，同时传递了参数</span><br><span class="line">  // 之所以这么做，是为了获得Father构造函数中的所有属性和方法</span><br><span class="line">  // 之所以用call，是为了修正Father内部this的指向</span><br><span class="line">  Father.call(this, name);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var instance1 = new Child(&quot;weiwei&quot;);</span><br><span class="line">instance1.colors.push(&apos;black&apos;);</span><br><span class="line">console.log(instance1.colors); // [ &apos;red&apos;, &apos;blue&apos;, &apos;green&apos;, &apos;black&apos; ]</span><br><span class="line">console.log(instance1.name); // weiwei</span><br><span class="line"></span><br><span class="line">var instance2 = new Child(&quot;lily&quot;);</span><br><span class="line">console.log(instance2.colors); // [ &apos;red&apos;, &apos;blue&apos;, &apos;green&apos; ]</span><br><span class="line">console.log(instance2.name); // lily</span><br></pre></td></tr></table></figure></p>
-<p>为了确保Father构造函数不会重写子类型的属性，可以在调用超类型构造函数后，再添加应该在子类型中定义的属性。</p>
-<h3 id="借用构造函数的缺点"><a href="#借用构造函数的缺点" class="headerlink" title="借用构造函数的缺点"></a>借用构造函数的缺点</h3><p>同构造函数一样，无法实现方法的复用（所有的方法会被重复创建一份）。</p>
-<h3 id="组合使用原型链和借用构造函数"><a href="#组合使用原型链和借用构造函数" class="headerlink" title="组合使用原型链和借用构造函数"></a>组合使用原型链和借用构造函数</h3><p>通常，我们会组合使用原型链继承和借用构造函数来实现继承。也就是说，使用原型链实现对原型属性和方法的继承， 而通过借用构造函数来实现对实例属性的继承。这样，既通过在原型上定义方法实现了函数复用，又能够保证每个实例都有它自己的属性。 我们改造最初的例子如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">// 父类构造函数</span><br><span class="line">function Person (name, age, job) &#123;</span><br><span class="line">  this.name = name;</span><br><span class="line">  this.age = age;</span><br><span class="line">  this.job = job;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 父类方法</span><br><span class="line">Person.prototype.sayName = function () &#123;</span><br><span class="line">  console.log(this.name);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">// --------------</span><br><span class="line"></span><br><span class="line">// 子类构造函数</span><br><span class="line">function Student (name, age, job, school) &#123;</span><br><span class="line">  // 继承父类的所有实例属性（获得父类构造函数中的属性）</span><br><span class="line">  Person.call(this, name, age, job);</span><br><span class="line">  this.school = school; // 添加新的子类属性</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 继承父类的原型方法（获得父类原型链上的属性和方法）</span><br><span class="line">Student.prototype = new Person();</span><br><span class="line"></span><br><span class="line">// 新增的子类方法</span><br><span class="line">Student.prototype.saySchool = function () &#123;</span><br><span class="line">  console.log(this.school);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">var person1 = new Person(&apos;Weiwei&apos;, 27, &apos;Student&apos;);</span><br><span class="line">var student1 = new Student(&apos;Lily&apos;, 25, &apos;Doctor&apos;, &quot;Southeast University&quot;);</span><br><span class="line"></span><br><span class="line">console.log(person1.sayName === student1.sayName); // true</span><br><span class="line"></span><br><span class="line">person1.sayName();  // Weiwei</span><br><span class="line">student1.sayName(); // Lily</span><br><span class="line">student1.saySchool(); // Southeast University</span><br></pre></td></tr></table></figure></p>
-<p>组合集成避免了原型链和借用构造函数的缺陷，融合了它们的优点，成为了JavaScript中最常用的继承模式。 而且，instanceof和isPropertyOf()也能够用于识别基于组合继承创建的对象。</p>
-<h3 id="组合继承的改进版：使用Object-create"><a href="#组合继承的改进版：使用Object-create" class="headerlink" title="组合继承的改进版：使用Object.create()"></a>组合继承的改进版：使用Object.create()</h3><p>在上面，我们继承父类的原型方法使用的是Student.prototype = new Person()。 这样做有很多的问题。 改进方法是使用ES5中新增的Object.create()。可以调用这个方法来创建一个新对象。新对象的原型就是调用create()方法传入的第一个参数：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Student.prototype = Object.create(Person.prototype);</span><br><span class="line"></span><br><span class="line">console.log(Student.prototype.constructor); // [Function: Person]</span><br><span class="line"></span><br><span class="line">// 设置 constructor 属性指向 Student</span><br><span class="line">Student.prototype.constructor = Student;</span><br></pre></td></tr></table></figure></p>
-<p>关于Object.create()的实现，我们可以参考一个简单的polyfill：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">function createObject(proto) &#123;</span><br><span class="line">    function F() &#123; &#125;</span><br><span class="line">    F.prototype = proto;</span><br><span class="line">    return new F();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// Usage:</span><br><span class="line">Student.prototype = createObject(Person.prototype);</span><br><span class="line">从本质上讲，createObject()对传入其中的对象执行了一次浅复制。</span><br></pre></td></tr></table></figure>
-<h3 id="ES6中的面向对象语法"><a href="#ES6中的面向对象语法" class="headerlink" title="ES6中的面向对象语法"></a>ES6中的面向对象语法</h3><p>ES6中引入了一套新的关键字用来实现class。 但它并不是映入了一种新的面向对象继承模式。JavaScript仍然是基于原型的，这些新的关键字包括class、 constructor、 static、 extends、 和super。</p>
-<p>class关键字不过是提供了一种在本文中所讨论的基于原型模式和构造器模式的面向对象的继承方式的语法糖(syntactic sugar)。</p>
-<p>对前面的代码修改如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">&apos;use strict&apos;;</span><br><span class="line"></span><br><span class="line">class Person &#123;</span><br><span class="line"></span><br><span class="line">  constructor (name, age, job) &#123;</span><br><span class="line">    this.name = name;</span><br><span class="line">    this.age = age;</span><br><span class="line">    this.job = job;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  sayName () &#123;</span><br><span class="line">    console.log(this.name);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class Student extends Person &#123;</span><br><span class="line"></span><br><span class="line">  constructor (name, age, school) &#123;</span><br><span class="line">    super(name, age, &apos;Student&apos;);</span><br><span class="line">    this.school = school;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  saySchool () &#123;</span><br><span class="line">    console.log(this.school);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var stu1 = new Student(&apos;weiwei&apos;, 20, &apos;Southeast University&apos;);</span><br><span class="line">var stu2 = new Student(&apos;lily&apos;, 22, &apos;Nanjing University&apos;);</span><br><span class="line"></span><br><span class="line">stu1.sayName(); // weiwei</span><br><span class="line">stu1.saySchool(); // Southeast University</span><br><span class="line"></span><br><span class="line">stu2.sayName(); // lily</span><br><span class="line">stu2.saySchool(); // Nanjing University</span><br></pre></td></tr></table></figure>
-<h3 id="类：class"><a href="#类：class" class="headerlink" title="类：class"></a>类：class</h3><p>是JavaScript中现有基于原型的继承的语法糖。ES6中的类并不是一种新的创建对象的方法，只不过是一种“特殊的函数”， 因此也包括类表达式和类声明， 但需要注意的是，与函数声明不同的是，类声明不会被提升。 参考链接</p>
-<h3 id="类构造器：constructor"><a href="#类构造器：constructor" class="headerlink" title="类构造器：constructor"></a>类构造器：constructor</h3><p>constructor()方法是有一种特殊的和class一起用于创建和初始化对象的方法。注意，在ES6类中只能有一个名称为constructor的方法， 否则会报错。在constructor()方法中可以调用super关键字调用父类构造器。如果你没有指定一个构造器方法， 类会自动使用一个默认的构造器。参考链接</p>
-<h3 id="类的静态方法：static"><a href="#类的静态方法：static" class="headerlink" title="类的静态方法：static"></a>类的静态方法：static</h3><p>静态方法就是可以直接使用类名调用的方法，而无需对类进行实例化，当然实例化后的类也无法调用静态方法。 静态方法常被用于创建应用的工具函数。参考链接</p>
-<h3 id="继承父类：extends"><a href="#继承父类：extends" class="headerlink" title="继承父类：extends"></a>继承父类：extends</h3><p>extends关键字可以用于继承父类。使用extends可以扩展一个内置的对象（如Date），也可以是自定义对象，或者是null。</p>
-<h3 id="关键字：super"><a href="#关键字：super" class="headerlink" title="关键字：super"></a>关键字：super</h3><p>super关键字用于调用父对象上的函数。 super.prop和super[expr]表达式在类和对象字面量中的任何方法定义中都有效。</p>
-<p>super([arguments]); // 调用父类构造器<br>super.functionOnParent([arguments]); // 调用父类中的方法<br>如果是在类的构造器中，需要在this关键字之前使用。参考链接</p>
-<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><p>本文对JavaScript的面向对象机制进行了较为深入的解读，尤其是构造函数和原型链方式实现对象的创建、继承、以及实例化。 此外，本文还简要介绍了如在ES6中编写面向对象代码。</p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2015-05-09T06:45:23.000Z"><a href="/2015/05/09/redis/Node.js与Redis/">2015-05-09</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2015/05/09/redis/Node.js与Redis/">Node.js与Redis</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-简介"><a href="#1-简介" class="headerlink" title="1.简介"></a>1.简介</h3><hr>
-<p>Redis官方推荐的Node.js的Redis客户端可以选择的有node_redis[7] 和ioredis[8] ，相比而言前者发布时间较早，而后者的功能则更加丰富一些。从接口来看两者的使用方法大同小异。</p>
-<h3 id="2-安装"><a href="#2-安装" class="headerlink" title="2.安装"></a>2.安装</h3><hr>
-<p>使用npm install ioredis命令安装最新版本的ioredis。</p>
-<h3 id="3-使用方法"><a href="#3-使用方法" class="headerlink" title="3.使用方法"></a>3.使用方法</h3><hr>
-<p>首先加载ioredis模块：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var Redis = require(&apos;ioredis&apos;);</span><br></pre></td></tr></table></figure></p>
-<p>下面的代码将创建一个默认连接到地址127.0.0.1，端口6379的Redis连接：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var redis = new Redis();</span><br></pre></td></tr></table></figure></p>
-<p>也可以显式地指定需要连接的地址：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var redis = new Redis(6379, &apos;127.0.0.1&apos;);</span><br></pre></td></tr></table></figure></p>
-<p>由于Node.js的异步特性，在处理返回值的时候与其他客户端差别较大。还是以GET/SET命令为例：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">redis.set(&apos;foo&apos;, &apos;bar&apos;, function () &#123;</span><br><span class="line">    //此时 SET 命令执行完并返回结果，</span><br><span class="line">    //因为这里并不关心 SET命令的结果，所以我们省略了回调函数的形参。</span><br><span class="line">    redis.get(&apos;foo&apos;, function (error, fooValue) &#123;</span><br><span class="line">        //error 参数存储了命令执行时返回的错误信息，如果没有错误则返回 null。</span><br><span class="line">        //回调函数的第二个参数存储的是命令执行的结果</span><br><span class="line">        console.log(fooValue); // &apos;bar&apos;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>  使用ioredis执行命令时需要传入回调函数（callback function）来获得返回值，当命令执行完返回结果后ioredis会调用该函数，并将命令的错误信息作为第一个参数、返回值作为第二个参数传递给该函数。同时ioredis还支持Promise形式的异步处理方式，如果省略最后一个回调函数，命令语句会返回一个Promise值，如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">redis.get(&apos;foo&apos;).then(function (fooValue) &#123;</span><br><span class="line">    //fooValue 即为键值</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>  Node.js的异步模型使得通过ioredis调用Redis命令的表现与Redis的底层管道协议十分相似：调用命令函数时（如redis.set()）并不会等待Redis返回命令执行结果，而是直接继续执行下一条语句，所以在Node.js中通过异步模型就能实现与管道类似的效果。上面的例子中我们并不需要SET命令的返回值，只要保证SET命令在GET命令前发出即可，所以完全不用等待SET命令返回结果后再执行GET命令。因此上面的代码可以改写成：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">//不需要返回值时可以省略回调函数</span><br><span class="line">redis.set(&apos;foo&apos;, &apos;bar&apos;);</span><br><span class="line">redis.get(&apos;foo&apos;, function (error, fooValue) &#123;</span><br><span class="line">    console.log(fooValue); // &apos;bar&apos;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>  不过由于SET和GET并未真正使用Redis的管道协议发送，所以当有多个客户端同时向 Redis 发送命令时，上例中的两个命令之间可能会被插入其他命令，换句话说，GET命令得到的值未必是“bar”。<br>  虽然Node.js的异步特性给我们带来了相对更高的性能，然而另一方面使用Redis实现某个功能时我们经常需要读写若干个键，而且很多情况下都会依赖之前命令的返回结果。这时就会出现嵌套多重回调函数的情况，影响代码可读性。就像这样：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">redis.get(&apos;people:2:home&apos;, function (error, home) &#123;</span><br><span class="line">    redis.hget(&apos;locations&apos;, home, function (error, address) &#123;</span><br><span class="line">        redis.exists(&apos;address:&apos; + address, function (error, addressExists) &#123;</span><br><span class="line">            if (addressExists) &#123;</span><br><span class="line">                console.log(&apos;地址存在。&apos;);</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                redis.exists(&apos;backup.address:&apos; + address, function (error, backupAddressExists) &#123;</span><br><span class="line">                    if (backupAddressExists) &#123;</span><br><span class="line">                        console.log(&apos;备用地址存在。&apos;);</span><br><span class="line">                    &#125; else &#123;</span><br><span class="line">                        console.log(&apos;地址不存在。&apos;);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>上面的代码并不是极端的情况，相反在实际开发中经常会遇到这种多层嵌套。为了减少嵌套，可以考虑使用 Async 、Step等第三方模块。如上面的代码可以稍微修改后使用Async重写为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">async.waterfall([</span><br><span class="line">    function (callback) &#123;</span><br><span class="line">        redis.get(&apos;people:2:home&apos;, callback);</span><br><span class="line">    &#125;,</span><br><span class="line">    function (home, callback) &#123;</span><br><span class="line">        redis.hget(&apos;locations&apos;, home, callback);</span><br><span class="line">    &#125;,</span><br><span class="line">    function (address, callback) &#123;</span><br><span class="line">        async.parallel([</span><br><span class="line">            function (callback) &#123;</span><br><span class="line">                redis.exists(&apos;address:&apos; + address, callback);</span><br><span class="line">            &#125;,</span><br><span class="line">            function (callback) &#123;</span><br><span class="line">               redis.exists(&apos;backup.address:&apos; + address, callback);</span><br><span class="line">            &#125;], function (err, results) &#123;</span><br><span class="line">            if (results[0]) &#123;</span><br><span class="line">                console.log(&apos;地址存在。&apos;);</span><br><span class="line">            &#125; else if (results[1]) &#123;</span><br><span class="line">                console.log(&apos;备用地址存在。&apos;);</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                console.log(&apos;地址不存在。&apos;);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line">]);</span><br></pre></td></tr></table></figure></p>
-<p>另外，可以使用co模块借助ES6的Generator特性来将ioredis的返回结果“串行化”：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var co = require(&apos;co&apos;);</span><br><span class="line">co(function* () &#123;</span><br><span class="line">    var result = yield redis.get(&apos;foo&apos;);</span><br><span class="line">    return result;</span><br><span class="line">&#125;).then(function (fooValue) &#123;</span><br><span class="line">    console.log(fooValue);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<h3 id="4-简便用法"><a href="#4-简便用法" class="headerlink" title="4.简便用法"></a>4.简便用法</h3><hr>
-<p>1．HMSET/HGETALL<br>  ioredis同样支持在HMSET命令中使用对象作参数（对象的属性值只能是字符串），相应的HGETALL命令会返回一个对象。<br>2．事务<br>  事务的用法如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var multi = redis.multi();</span><br><span class="line">multi.set(&apos;foo&apos;, &apos;bar&apos;);</span><br><span class="line">multi.sadd(&apos;set&apos;, &apos;a&apos;);</span><br><span class="line">mulit.exec(function (err, replies) &#123;</span><br><span class="line">    //replies 是一个数组，依次存放事务队列中命令的结果</span><br><span class="line">    console.log(replies);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>或者使用链式调用：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">redis.multi()</span><br><span class="line">    .set(&apos;foo&apos;, &apos;bar&apos;)</span><br><span class="line">    .sadd(&apos;set&apos;, &apos;a&apos;)</span><br><span class="line">    .exec(function (err, replies) &#123;</span><br><span class="line">        console.log(replies);</span><br><span class="line">    &#125;);</span><br></pre></td></tr></table></figure></p>
-<p>3．“发布/订阅”模式<br>  Node.js 使用事件的方式实现“发布/订阅”模式。现在创建两个连接分别充当发布者和订阅者：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">var pub = new Redis();</span><br><span class="line">var sub = new Redis();</span><br></pre></td></tr></table></figure></p>
-<p>然后让sub订阅chat频道并在订阅成功后发送一条消息：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sub.subscribe(&apos;chat&apos;, function () &#123;</span><br><span class="line">    pub.publish(&apos;chat&apos;, &apos;hi!&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>定义当接收到消息时要执行的回调函数：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sub.on(&apos;message&apos;, function (channel, message) &#123;</span><br><span class="line">    console.log(&apos;收到&apos; + channel + &apos;频道的消息：&apos; + message);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>运行后可以看到打印的结果：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ node testpubsub.js</span><br></pre></td></tr></table></figure></p>
-<p>收到chat频道的消息：’hi!’<br>补充知识 在 ioredis 中建立连接的过程也是异步的，执行 redis = new Redis()后连接并没有立即建立完成。在连接建立完成前执行的命令会被加入到离线任务队列中，当连接建立成功后ioredis会按照加入的顺序依次执行离线任务队列中的命令。</p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -924,13 +914,17 @@
   
     <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
   
+    <li><a href="/tags/HTTP/">HTTP</a><small>1</small></li>
+  
     <li><a href="/tags/Javascript/">Javascript</a><small>2</small></li>
   
-    <li><a href="/tags/Mocha/">Mocha</a><small>4</small></li>
+    <li><a href="/tags/Linux/">Linux</a><small>1</small></li>
   
     <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
   
     <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
+  
+    <li><a href="/tags/Node-js/">Node.js</a><small>1</small></li>
   
     <li><a href="/tags/Node-js入门/">Node.js入门</a><small>9</small></li>
   
@@ -947,6 +941,8 @@
     <li><a href="/tags/安全/">安全</a><small>8</small></li>
   
     <li><a href="/tags/异步编程/">异步编程</a><small>3</small></li>
+  
+    <li><a href="/tags/测试/">测试</a><small>5</small></li>
   
   </ul>
 </div>

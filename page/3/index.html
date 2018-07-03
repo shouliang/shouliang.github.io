@@ -53,6 +53,327 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2016-03-09T06:45:23.000Z"><a href="/2016/03/09/javascript/Javascript面对对象/">2016-03-09</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2016/03/09/javascript/Javascript面对对象/">Javascipt面对对象</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>面向对象编程是用抽象方式创建基于现实世界模型的一种编程模式，主要包括模块化、多态、和封装几种技术。 对JavaScript而言，其核心是支持面向对象的，同时它也提供了强大灵活的基于原型的面向对象编程能力。 本文将会深入的探讨有关使用JavaScript进行面向对象编程的一些核心基础知识，包括对象的创建，继承机制， 最后还会简要的介绍如何借助ES6提供的新的类机制重写传统的JavaScript面向对象代码。</p>
+<h3 id="面向对象的几个概念"><a href="#面向对象的几个概念" class="headerlink" title="面向对象的几个概念"></a>面向对象的几个概念</h3><p>在进入正题前，先了解传统的面向对象编程（例如Java）中常会涉及到的概念，大致可以包括：</p>
+<ul>
+<li>类：定义对象的特征。它是对象的属性和方法的模板定义。</li>
+<li>对象（或称实例）：类的一个实例。</li>
+<li>属性：对象的特征，比如颜色、尺寸等。</li>
+<li>方法：对象的行为，比如行走、说话等。</li>
+<li>构造函数：对象初始化的瞬间被调用的方法。</li>
+<li>继承：子类可以继承父类的特征。例如，猫继承了动物的一般特性。</li>
+<li>封装：一种把数据和相关的方法绑定在一起使用的方法。</li>
+<li>抽象：结合复杂的继承、方法、属性的对象能够模拟现实的模型。</li>
+<li>多态：不同的类可以定义相同的方法或属性。<br>在JavaScript的面向对象编程中大体也包括这些。不过在称呼上可能稍有不同，例如，JavaScript中没有原生的“类”的概念， 而只有对象的概念。因此，随着你认识的深入，我们会混用对象、实例、构造函数等概念。</li>
+</ul>
+<h3 id="对象（类）的创建"><a href="#对象（类）的创建" class="headerlink" title="对象（类）的创建"></a>对象（类）的创建</h3><p>在JavaScript中，我们通常可以使用构造函数来创建特定类型的对象。诸如Object和Array这样的原生构造函数，在运行时会自动出现在执行环境中。 此外，我们也可以创建自定义的构造函数。例如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">function Person(name, age, job) &#123;</span><br><span class="line">  this.name = name;</span><br><span class="line">  this.age = age;</span><br><span class="line">  this.job = job;</span><br><span class="line">&#125;</span><br><span class="line">var person1 = new Person(&apos;Weiwei&apos;, 27, &apos;Student&apos;);</span><br><span class="line">var person2 = new Person(&apos;Lily&apos;, 25, &apos;Doctor&apos;);</span><br></pre></td></tr></table></figure></p>
+<p>按照惯例，构造函数始终都应该以一个大写字母开头（和Java中定义的类一样），普通函数则小写字母开头。 要创建Person的新实例，必须使用new操作符。以这种方式调用构造函数实际上会经历以下4个步骤：</p>
+<ol>
+<li>创建一个新对象（实例）</li>
+<li>将构造函数的作用域赋给新对象（也就是重设了this的指向，this就指向了这个新对象）</li>
+<li>执行构造函数中的代码（为这个新对象添加属性）</li>
+<li>返回新对象</li>
+</ol>
+<p>在上面的例子中，我们创建了Person的两个实例person1和person2。 这两个对象默认都有一个constructor属性，该属性指向它们的构造函数Person，也就是说：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">console.log(person1.constructor == Person);  //true</span><br><span class="line">console.log(person2.constructor == Person);  //true</span><br></pre></td></tr></table></figure></p>
+<h3 id="自定义对象的类型检测"><a href="#自定义对象的类型检测" class="headerlink" title="自定义对象的类型检测"></a>自定义对象的类型检测</h3><p>我们可以使用instanceof操作符进行类型检测。我们创建的所有对象既是Object的实例，同时也是Person的实例。 因为所有的对象都继承自Object。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">console.log(person1 instanceof Object);  //true</span><br><span class="line">console.log(person1 instanceof Person);  //true</span><br><span class="line">console.log(person2 instanceof Object);  //true</span><br><span class="line">console.log(person2 instanceof Person);  //true</span><br></pre></td></tr></table></figure></p>
+<h3 id="构造函数的问题"><a href="#构造函数的问题" class="headerlink" title="构造函数的问题"></a>构造函数的问题</h3><p>我们不建议在构造函数中直接定义方法，如果这样做的话，每个方法都要在每个实例上重新创建一遍，这将非常损耗性能。 ——不要忘了，ECMAScript中的函数是对象，每定义一个函数，也就实例化了一个对象。</p>
+<p>幸运的是，在ECMAScript中，我们可以借助原型对象来解决这个问题。</p>
+<h3 id="借助原型模式定义对象的方法"><a href="#借助原型模式定义对象的方法" class="headerlink" title="借助原型模式定义对象的方法"></a>借助原型模式定义对象的方法</h3><p>我们创建的每个函数都有一个prototype属性，这个属性是一个指针，指向该函数的原型对象， 该对象包含了由特定类型的所有实例共享的属性和方法。也就是说，我们可以利用原型对象来让所有对象实例共享它所包含的属性和方法。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">function Person(name, age, job) &#123;</span><br><span class="line">  this.name = name;</span><br><span class="line">  this.age = age;</span><br><span class="line">  this.job = job;</span><br><span class="line">&#125;</span><br><span class="line">// 通过原型模式来添加所有实例共享的方法</span><br><span class="line">// sayName() 方法将会被Person的所有实例共享，而避免了重复创建</span><br><span class="line">Person.prototype.sayName = function () &#123;</span><br><span class="line">  console.log(this.name);</span><br><span class="line">&#125;;</span><br><span class="line">var person1 = new Person(&apos;Weiwei&apos;, 27, &apos;Student&apos;);</span><br><span class="line">var person2 = new Person(&apos;Lily&apos;, 25, &apos;Doctor&apos;);</span><br><span class="line">console.log(person1.sayName === person2.sayName); // true</span><br><span class="line">person1.sayName(); // Weiwei</span><br><span class="line">person2.sayName(); // Lily</span><br></pre></td></tr></table></figure></p>
+<p>正如上面的代码所示，通过原型模式定义的方法sayName()为所有的实例所共享。也就是， person1和person2访问的是同一个sayName()函数。同样的，公共属性也可以使用原型模式进行定义。例如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">function Chinese (name) &#123;</span><br><span class="line">    this.name = name;</span><br><span class="line">&#125;</span><br><span class="line">Chinese.prototype.country = &apos;China&apos;; // 公共属性，所有实例共享</span><br></pre></td></tr></table></figure></p>
+<p>当我们new Person()时，返回的Person实例会结合构造函数中定义的属性、行为和原型中定义的属性、行为， 生成最终属于Person实例的属性和行为。</p>
+<p>构造函数中定义的属性和行为的优先级要比原型中定义的属性和行为的优先级高，如果构造函数和原型中定义了同名的属性或行为， 构造函数中的属性或行为会覆盖原型中的同名的属性或行为。</p>
+<h3 id="原型对象"><a href="#原型对象" class="headerlink" title="原型对象"></a>原型对象</h3><p>现在我们来深入的理解一下什么是原型对象。</p>
+<p>只要创建了一个新函数，就会根据一组特定的规则为该函数创建一个prototype属性，这个属性指向函数的原型对象。 在默认情况下，所有原型对象都会自动获得一个constructor属性，这个属性包含一个指向prototype属性所在函数的指针。 也就是说：Person.prototype.constructor指向Person构造函数。</p>
+<p>创建了自定义的构造函数之后，其原型对象默认只会取得constructor属性；至于其他方法，则都是从Object继承而来的。 当调用构造函数创建一个新实例后，该实例内部将包含一个指针（内部属性），指向构造函数的原型对象。ES5中称这个指针为[[Prototype]]， 在Firefox、Safari和Chrome在每个对象上都支持一个属性<strong>proto</strong>（目前已被废弃）；而在其他实现中，这个属性对脚本则是完全不可见的。 要注意，这个链接存在于实例与构造函数的原型对象之间，而不是实例与构造函数之间。</p>
+<p>这三者关系的示意图如下：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/imgprototype-graph-1.jpg" alt=""></p>
+<p>上图展示了Person构造函数、Person的原型对象以及Person现有的两个实例之间的关系。</p>
+<ul>
+<li>Person.prototype指向了原型对象</li>
+<li>Person.prototype.constructor又指回了Person构造函数</li>
+<li>Person的每个实例person1和person2都包含一个内部属性（通常为<strong>proto</strong>），person1.<strong>proto</strong>和person2.<strong>proto</strong>指向了原型对象</li>
+</ul>
+<h3 id="查找对象属性"><a href="#查找对象属性" class="headerlink" title="查找对象属性"></a>查找对象属性</h3><p>从上图我们发现，虽然Person的两个实例都不包含属性和方法，但我们却可以调用person1.sayName()。 这是通过查找对象属性的过程来实现的。</p>
+<ol>
+<li>搜索首先从对象实例本身开始（实例person1有sayName属性吗？——没有）</li>
+<li>如果没找到，则继续搜索指针指向的原型对象（person1.<strong>proto</strong>有sayName属性吗？——有）<br>这也是多个对象实例共享原型所保存的属性和方法的基本原理。</li>
+</ol>
+<p>注意，如果我们在对象的实例中重写了某个原型中已存在的属性，则该实例属性会屏蔽原型中的那个属性。 此时，可以使用delete操作符删除实例上的属性。</p>
+<h3 id="Object-getPrototypeOf"><a href="#Object-getPrototypeOf" class="headerlink" title="Object.getPrototypeOf()"></a>Object.getPrototypeOf()</h3><p>根据ECMAScript标准，someObject.[[Prototype]] 符号是用于指派 someObject 的原型。 这个等同于 JavaScript 的 <strong>proto</strong> 属性（现已弃用，因为它不是标准）。 从ECMAScript 5开始, [[Prototype]] 可以用Object.getPrototypeOf()和Object.setPrototypeOf()访问器来访问。</p>
+<p>其中Object.getPrototypeOf()在所有支持的实现中，这个方法返回[[Prototype]]的值。例如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">person1.__proto__ === Object.getPrototypeOf(person1); // true</span><br><span class="line">Object.getPrototypeOf(person1) === Person.prototype; // true</span><br></pre></td></tr></table></figure></p>
+<p>也就是说，Object.getPrototypeOf(p1)返回的对象实际就是这个对象的原型。 这个方法的兼容性请参考该链接。</p>
+<h3 id="Object-keys"><a href="#Object-keys" class="headerlink" title="Object.keys()"></a>Object.keys()</h3><p>要取得对象上所有可枚举的实例属性，可以使用ES5中的Object.keys()方法。例如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Object.keys(p1); // [&quot;name&quot;, &quot;age&quot;, &quot;job&quot;]</span><br></pre></td></tr></table></figure></p>
+<p>此外，如果你想要得到所有实例属性，无论它是否可枚举，都可以使用Object.getOwnPropertyName()方法。</p>
+<h3 id="更简单的原型语法"><a href="#更简单的原型语法" class="headerlink" title="更简单的原型语法"></a>更简单的原型语法</h3><p>在上面的代码中，如果我们要添加原型属性和方法，就要重复的敲一遍Person.prototype。为了减少这个重复的过程， 更常见的做法是用一个包含所有属性和方法的对象字面量来重写整个原型对象。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">function Person(name, age, job) &#123;</span><br><span class="line">  this.name = name;</span><br><span class="line">  this.age = age;</span><br><span class="line">  this.job = job;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 重写整个原型对象</span><br><span class="line">Person.prototype = &#123;</span><br><span class="line">  </span><br><span class="line">  // 这里务必要重新将构造函数指回Person构造函数，否则会指向这个新创建的对象</span><br><span class="line">  constructor: Person, // Attention!</span><br><span class="line"></span><br><span class="line">  sayName: function () &#123;</span><br><span class="line">    console.log(this.name);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">var person1 = new Person(&apos;Weiwei&apos;, 27, &apos;Student&apos;);</span><br><span class="line">var person2 = new Person(&apos;Lily&apos;, 25, &apos;Doctor&apos;);</span><br><span class="line"></span><br><span class="line">console.log(person1.sayName === person2.sayName); // true</span><br><span class="line"></span><br><span class="line">person1.sayName();  // Weiwei</span><br><span class="line">person2.sayName();  // Lily</span><br></pre></td></tr></table></figure></p>
+<p>在上面的代码中特意包含了一个constructor属性，并将它的值设置为Person，从而确保了通过该属性能够访问到适当的值。 注意，以这种方式重设constructor属性会导致它的[[Enumerable]]特性设置为true。默认情况下，原生的constructor属性是不可枚举的。 你可以使用Object.defineProperty()：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">// 重设构造函数，只适用于ES5兼容的浏览器</span><br><span class="line">Object.defineProperty(Person.prototype, &quot;constructor&quot;, &#123;</span><br><span class="line">  enumerable: false,</span><br><span class="line">  value: Person</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="组合使用构造函数模式和原型模式"><a href="#组合使用构造函数模式和原型模式" class="headerlink" title="组合使用构造函数模式和原型模式"></a>组合使用构造函数模式和原型模式</h3><p>创建自定义类型的最常见方式，就是组合使用构造函数模式与原型模式。构造函数模式用于定义实例属性， 而原型模式用于定义方法和共享的属性。结果，每个实例都会有自己的一份实例属性的副本，但同时又共享着对方的引用， 最大限度的节省了内存。</p>
+<h3 id="继承"><a href="#继承" class="headerlink" title="继承"></a>继承</h3><p>大多的面向对象语言都支持两种继承方式：接口继承和实现继承。ECMAScript只支持实现继承，而且其实现继承主要依靠原型链来实现。</p>
+<p>前面我们知道，JavaScript中实例的属性和行为是由构造函数和原型两部分共同组成的。如果我们想让Child继承Father， 那么我们就需要把Father构造函数和原型中属性和行为全部传给Child的构造函数和原型。</p>
+<h3 id="原型链继承"><a href="#原型链继承" class="headerlink" title="原型链继承"></a>原型链继承</h3><p>使用原型链作为实现继承的基本思想是：利用原型让一个引用类型继承另一个引用类型的属性和方法。首先我们先回顾一些基本概念：</p>
+<p>每个构造函数都有一个原型对象（prototype）<br>原型对象包含一个指向构造函数的指针（constructor）<br>实例都包含一个指向原型对象的内部指针（[[Prototype]]）<br>如果我们让原型对象等于另一个类型的实现，结果会怎么样？显然，此时的原型对象将包含一个指向另一个原型的指针， 相应的，另一个原型中也包含着一个指向另一个构造函数的指针。假如另一个原型又是另一个类型的实例，那么上述关系依然成立， 如此层层递进，就构成了实例与原型的链条。 更详细的内容可以参考这个链接。 先看一个简单的例子，它演示了使用原型链实现继承的基本框架：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">function Father () &#123;</span><br><span class="line">  this.fatherValue = true;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Father.prototype.getFatherValue = function () &#123;</span><br><span class="line">  console.log(this.fatherValue);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">function Child () &#123;</span><br><span class="line">  this.childValue = false;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 实现继承：继承自Father</span><br><span class="line">Child.prototype = new Father();</span><br><span class="line"></span><br><span class="line">Child.prototype.getChildValue = function () &#123;</span><br><span class="line">  console.log(this.childValue);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">var instance = new Child();</span><br><span class="line">instance.getFatherValue(); // true</span><br><span class="line">instance.getChildValue();  // false</span><br></pre></td></tr></table></figure></p>
+<p>在上面的代码中，原型链继承的核心语句是Child.prototype = new Father()，它实现了Child对Father的继承， 而继承是通过创建Father的实例，并将该实例赋给Child.prototype实现的。</p>
+<p>实现的本质是重写原型对象，代之以一个新类型的实例。也就是说，原来存在于Father的实例中的所有属性和方法， 现在也存在于Child.prototype中了。</p>
+<p>这个例子中的实例以及构造函数和原型之间的关系如下图所示：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/imgprototype-chain-inheritance.jpg" alt=""></p>
+<p>在上面的代码中，我们没有使用Child默认提供的原型，而是给它换了一个新原型；这个新原型就是Father的实例。 于是，新原型不仅具有了作为一个Father的实例所拥有的全部属性和方法。而且其内部还有一个指针[[Prototype]]，指向了Father的原型。</p>
+<ul>
+<li>instance指向Child的原型对象</li>
+<li>Child的原型对象指向Father的原型对象</li>
+<li>getFatherValue()方法仍然还在Father.prototype中</li>
+<li>但是，fatherValue则位于Child.prototype中</li>
+<li>instance.constructor现在指向的是Father<br>因为fatherValue是一个实例属性，而getFatherValue()则是一个原型方法。既然Child.prototype现在是Father的实例， 那么fatherValue当然就位于该实例中。</li>
+</ul>
+<p>通过实现原型链，本质上扩展了本章前面介绍的原型搜索机制。例如，instance.getFatherValue()会经历三个搜索步骤：</p>
+<ol>
+<li>搜索实例</li>
+<li>搜索Child.prototype</li>
+<li>搜索Father.prototype</li>
+</ol>
+<h3 id="别忘了Object"><a href="#别忘了Object" class="headerlink" title="别忘了Object"></a>别忘了Object</h3><p>所有的函数都默认原型都是Object的实例，因此默认原型都会包含一个内部指针[[Prototype]]，指向Object.prototype。 这也正是所有自定义类型都会继承toString()、valueOf()等默认方法的根本原因。所以， 我们说上面例子展示的原型链中还应该包括另外一个继承层次。关于Object的更多内容，可以参考这篇博客。</p>
+<p>也就是说，Child继承了Father，而Father继承了Object。当调用了instance.toString()时， 实际上调用的是保存在Object.prototype中的那个方法。</p>
+<h3 id="原型链继承的问题"><a href="#原型链继承的问题" class="headerlink" title="原型链继承的问题"></a>原型链继承的问题</h3><p>首先是顺序，一定要先继承父类，然后为子类添加新方法。</p>
+<p>其次，使用原型链实现继承时，不能使用对象字面量创建原型方法。因为这样做就会重写原型链，如下面的例子所示：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">function Father () &#123;</span><br><span class="line">  this.fatherValue = true;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Father.prototype.getFatherValue = function () &#123;</span><br><span class="line">  console.log(this.fatherValue);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">function Child () &#123;</span><br><span class="line">  this.childValue = false;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 继承了Father</span><br><span class="line">// 此时的原型链为 Child -&gt; Father -&gt; Object</span><br><span class="line">Child.prototype = new Father();</span><br><span class="line"></span><br><span class="line">// 使用字面量添加新方法，会导致上一行代码无效</span><br><span class="line">// 此时我们设想的原型链被切断，而是变成 Child -&gt; Object</span><br><span class="line">// 所以我们不推荐这么写了</span><br><span class="line">Child.prototype = &#123;</span><br><span class="line">  getChildValue: function () &#123;</span><br><span class="line">    console.log(this.childValue);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">var instance = new Child();</span><br><span class="line">instance.getChildValue();  // false</span><br><span class="line">instance.getFatherValue(); // error!</span><br></pre></td></tr></table></figure></p>
+<p>在上面的代码中，我们连续两次修改了Child.prototype的值。由于现在的原型包含的是一个Object的实例， 而非Father的实例，因此我们设想中的原型链已经被切断——Child和Father之间已经没有关系了。</p>
+<p>最后，在创建子类型的实例时，不能向超类型的构造函数中传递参数。实际上，应该说是没有办法在不影响所有对象实例的情况下， 给超类型的构造函数传递参数。因此，我们很少单独使用原型链。</p>
+<h3 id="借用构造函数继承"><a href="#借用构造函数继承" class="headerlink" title="借用构造函数继承"></a>借用构造函数继承</h3><p>借用构造函数（constructor stealing）的基本思想如下：即在子类构造函数的内部调用超类型构造函数。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">function Father (name) &#123;</span><br><span class="line">  this.name = name;</span><br><span class="line">  this.colors = [&apos;red&apos;, &apos;blue&apos;, &apos;green&apos;];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">function Child (name) &#123;</span><br><span class="line">  // 继承了Father，同时传递了参数</span><br><span class="line">  // 之所以这么做，是为了获得Father构造函数中的所有属性和方法</span><br><span class="line">  // 之所以用call，是为了修正Father内部this的指向</span><br><span class="line">  Father.call(this, name);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var instance1 = new Child(&quot;weiwei&quot;);</span><br><span class="line">instance1.colors.push(&apos;black&apos;);</span><br><span class="line">console.log(instance1.colors); // [ &apos;red&apos;, &apos;blue&apos;, &apos;green&apos;, &apos;black&apos; ]</span><br><span class="line">console.log(instance1.name); // weiwei</span><br><span class="line"></span><br><span class="line">var instance2 = new Child(&quot;lily&quot;);</span><br><span class="line">console.log(instance2.colors); // [ &apos;red&apos;, &apos;blue&apos;, &apos;green&apos; ]</span><br><span class="line">console.log(instance2.name); // lily</span><br></pre></td></tr></table></figure></p>
+<p>为了确保Father构造函数不会重写子类型的属性，可以在调用超类型构造函数后，再添加应该在子类型中定义的属性。</p>
+<h3 id="借用构造函数的缺点"><a href="#借用构造函数的缺点" class="headerlink" title="借用构造函数的缺点"></a>借用构造函数的缺点</h3><p>同构造函数一样，无法实现方法的复用（所有的方法会被重复创建一份）。</p>
+<h3 id="组合使用原型链和借用构造函数"><a href="#组合使用原型链和借用构造函数" class="headerlink" title="组合使用原型链和借用构造函数"></a>组合使用原型链和借用构造函数</h3><p>通常，我们会组合使用原型链继承和借用构造函数来实现继承。也就是说，使用原型链实现对原型属性和方法的继承， 而通过借用构造函数来实现对实例属性的继承。这样，既通过在原型上定义方法实现了函数复用，又能够保证每个实例都有它自己的属性。 我们改造最初的例子如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">// 父类构造函数</span><br><span class="line">function Person (name, age, job) &#123;</span><br><span class="line">  this.name = name;</span><br><span class="line">  this.age = age;</span><br><span class="line">  this.job = job;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 父类方法</span><br><span class="line">Person.prototype.sayName = function () &#123;</span><br><span class="line">  console.log(this.name);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">// --------------</span><br><span class="line"></span><br><span class="line">// 子类构造函数</span><br><span class="line">function Student (name, age, job, school) &#123;</span><br><span class="line">  // 继承父类的所有实例属性（获得父类构造函数中的属性）</span><br><span class="line">  Person.call(this, name, age, job);</span><br><span class="line">  this.school = school; // 添加新的子类属性</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 继承父类的原型方法（获得父类原型链上的属性和方法）</span><br><span class="line">Student.prototype = new Person();</span><br><span class="line"></span><br><span class="line">// 新增的子类方法</span><br><span class="line">Student.prototype.saySchool = function () &#123;</span><br><span class="line">  console.log(this.school);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">var person1 = new Person(&apos;Weiwei&apos;, 27, &apos;Student&apos;);</span><br><span class="line">var student1 = new Student(&apos;Lily&apos;, 25, &apos;Doctor&apos;, &quot;Southeast University&quot;);</span><br><span class="line"></span><br><span class="line">console.log(person1.sayName === student1.sayName); // true</span><br><span class="line"></span><br><span class="line">person1.sayName();  // Weiwei</span><br><span class="line">student1.sayName(); // Lily</span><br><span class="line">student1.saySchool(); // Southeast University</span><br></pre></td></tr></table></figure></p>
+<p>组合集成避免了原型链和借用构造函数的缺陷，融合了它们的优点，成为了JavaScript中最常用的继承模式。 而且，instanceof和isPropertyOf()也能够用于识别基于组合继承创建的对象。</p>
+<h3 id="组合继承的改进版：使用Object-create"><a href="#组合继承的改进版：使用Object-create" class="headerlink" title="组合继承的改进版：使用Object.create()"></a>组合继承的改进版：使用Object.create()</h3><p>在上面，我们继承父类的原型方法使用的是Student.prototype = new Person()。 这样做有很多的问题。 改进方法是使用ES5中新增的Object.create()。可以调用这个方法来创建一个新对象。新对象的原型就是调用create()方法传入的第一个参数：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Student.prototype = Object.create(Person.prototype);</span><br><span class="line"></span><br><span class="line">console.log(Student.prototype.constructor); // [Function: Person]</span><br><span class="line"></span><br><span class="line">// 设置 constructor 属性指向 Student</span><br><span class="line">Student.prototype.constructor = Student;</span><br></pre></td></tr></table></figure></p>
+<p>关于Object.create()的实现，我们可以参考一个简单的polyfill：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">function createObject(proto) &#123;</span><br><span class="line">    function F() &#123; &#125;</span><br><span class="line">    F.prototype = proto;</span><br><span class="line">    return new F();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// Usage:</span><br><span class="line">Student.prototype = createObject(Person.prototype);</span><br><span class="line">从本质上讲，createObject()对传入其中的对象执行了一次浅复制。</span><br></pre></td></tr></table></figure>
+<h3 id="ES6中的面向对象语法"><a href="#ES6中的面向对象语法" class="headerlink" title="ES6中的面向对象语法"></a>ES6中的面向对象语法</h3><p>ES6中引入了一套新的关键字用来实现class。 但它并不是映入了一种新的面向对象继承模式。JavaScript仍然是基于原型的，这些新的关键字包括class、 constructor、 static、 extends、 和super。</p>
+<p>class关键字不过是提供了一种在本文中所讨论的基于原型模式和构造器模式的面向对象的继承方式的语法糖(syntactic sugar)。</p>
+<p>对前面的代码修改如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">&apos;use strict&apos;;</span><br><span class="line"></span><br><span class="line">class Person &#123;</span><br><span class="line"></span><br><span class="line">  constructor (name, age, job) &#123;</span><br><span class="line">    this.name = name;</span><br><span class="line">    this.age = age;</span><br><span class="line">    this.job = job;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  sayName () &#123;</span><br><span class="line">    console.log(this.name);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class Student extends Person &#123;</span><br><span class="line"></span><br><span class="line">  constructor (name, age, school) &#123;</span><br><span class="line">    super(name, age, &apos;Student&apos;);</span><br><span class="line">    this.school = school;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  saySchool () &#123;</span><br><span class="line">    console.log(this.school);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var stu1 = new Student(&apos;weiwei&apos;, 20, &apos;Southeast University&apos;);</span><br><span class="line">var stu2 = new Student(&apos;lily&apos;, 22, &apos;Nanjing University&apos;);</span><br><span class="line"></span><br><span class="line">stu1.sayName(); // weiwei</span><br><span class="line">stu1.saySchool(); // Southeast University</span><br><span class="line"></span><br><span class="line">stu2.sayName(); // lily</span><br><span class="line">stu2.saySchool(); // Nanjing University</span><br></pre></td></tr></table></figure>
+<h3 id="类：class"><a href="#类：class" class="headerlink" title="类：class"></a>类：class</h3><p>是JavaScript中现有基于原型的继承的语法糖。ES6中的类并不是一种新的创建对象的方法，只不过是一种“特殊的函数”， 因此也包括类表达式和类声明， 但需要注意的是，与函数声明不同的是，类声明不会被提升。 参考链接</p>
+<h3 id="类构造器：constructor"><a href="#类构造器：constructor" class="headerlink" title="类构造器：constructor"></a>类构造器：constructor</h3><p>constructor()方法是有一种特殊的和class一起用于创建和初始化对象的方法。注意，在ES6类中只能有一个名称为constructor的方法， 否则会报错。在constructor()方法中可以调用super关键字调用父类构造器。如果你没有指定一个构造器方法， 类会自动使用一个默认的构造器。参考链接</p>
+<h3 id="类的静态方法：static"><a href="#类的静态方法：static" class="headerlink" title="类的静态方法：static"></a>类的静态方法：static</h3><p>静态方法就是可以直接使用类名调用的方法，而无需对类进行实例化，当然实例化后的类也无法调用静态方法。 静态方法常被用于创建应用的工具函数。参考链接</p>
+<h3 id="继承父类：extends"><a href="#继承父类：extends" class="headerlink" title="继承父类：extends"></a>继承父类：extends</h3><p>extends关键字可以用于继承父类。使用extends可以扩展一个内置的对象（如Date），也可以是自定义对象，或者是null。</p>
+<h3 id="关键字：super"><a href="#关键字：super" class="headerlink" title="关键字：super"></a>关键字：super</h3><p>super关键字用于调用父对象上的函数。 super.prop和super[expr]表达式在类和对象字面量中的任何方法定义中都有效。</p>
+<p>super([arguments]); // 调用父类构造器<br>super.functionOnParent([arguments]); // 调用父类中的方法<br>如果是在类的构造器中，需要在this关键字之前使用。参考链接</p>
+<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><p>本文对JavaScript的面向对象机制进行了较为深入的解读，尤其是构造函数和原型链方式实现对象的创建、继承、以及实例化。 此外，本文还简要介绍了如在ES6中编写面向对象代码。</p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2015-11-05T14:16:53.000Z"><a href="/2015/11/05/Node.js/初识单线程的Node.js/">2015-11-05</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2015/11/05/Node.js/初识单线程的Node.js/">初识单线程的Node.js</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>从Node.js进入人们的视野时，我们所知道的它就由这些关键字组成 <strong>事件驱动、非阻塞I/O、高效、轻量</strong>，它在官网中也是这么描述自己的。</p>
+<p>Node.js® is a JavaScript runtime built on Chrome’s V8 JavaScript engine. Node.js uses an <strong>event-driven</strong>, <strong>non-blocking I/O model</strong> that makes it <strong>lightweight</strong> and <strong>efficient</strong>.</p>
+<p>于是，会有下面的场景出现：<br>当我们刚开始接触它时，可能会好奇：</p>
+<ul>
+<li><p><strong>为什么在浏览器中运行的 Javascript 能与操作系统进行如此底层的交互？</strong><br>当我们在用它进行文件 I/O 和网络 I/O 的时候，发现方法都需要传入回调，是异步的：</p>
+</li>
+<li><p><strong>那么这种异步，非阻塞的 I/O 是如何实现的？</strong><br>当我们习惯了用回调来处理 I/O，发现当需要顺序处理时，Callback Hell 出现了，于是有想到了同步的方法：</p>
+</li>
+<li><p><strong>那么在异步为主的 Node.js，有同步的方法嘛？</strong><br>身为一个前端，你在使用时，发现它的异步处理是基于事件的，跟前端很相似：</p>
+</li>
+<li><p><strong>那么它如何实现的这种事件驱动的处理方式呢？</strong><br>当我们慢慢写的多了，处理了大量 I/O 请求的时候，你会想：</p>
+</li>
+<li><p><strong>Node.js 异步非阻塞的 I/O 就不会有瓶颈出现吗？</strong><br>之后你还会想：</p>
+</li>
+<li><p><strong>Node.js 这么厉害，难道没有它不适合的事情吗？</strong><br>看到这些问题，是否有点头大，别急，带着这些问题我们来慢慢看这篇文章。</p>
+</li>
+</ul>
+<h3 id="Node-js-结构"><a href="#Node-js-结构" class="headerlink" title="Node.js 结构"></a>Node.js 结构</h3><p>从 Node.js 本身入手，先来看看 Node.js 的结构。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/nodestandard.jpeg" alt=""></p>
+<p>我们可以看到，Node.js 的结构大致分为三个层次：</p>
+<p> Node.js 标准库，这部分是由 Javascript 编写的，即我们使用过程中直接能调用的 API。在源码中的 <a href="https://github.com/nodejs/node/tree/master/lib" target="_blank" rel="noopener">lib</a> 目录下可以看到。</p>
+<ul>
+<li>Node bindings，这一层是 Javascript 与底层 C/C++ 能够沟通的关键，前者通过 bindings 调用后者，相互交换数据。实现在 <a href="https://github.com/nodejs/node/blob/master/src/node.cc" target="_blank" rel="noopener">node.cc</a></li>
+<li>这一层是支撑 Node.js 运行的关键，由 C/C++ 实现。<ul>
+<li>V8：Google 推出的 Javascript VM，也是 Node.js 为什么使用的是 Javascript 的关键，它为 Javascript 提供了在非浏览器端运行的环境，它的高效是 Node.js 之所以高效的原因之一。</li>
+<li>Libuv：它为 Node.js 提供了跨平台，线程池，事件池，异步 I/O 等能力，是 Node.js 如此强大的关键。</li>
+<li>C-ares：提供了异步处理 DNS 相关的能力。</li>
+<li>http_parser、OpenSSL、zlib 等：提供包括 http 解析、SSL、数据压缩等其他的能力。</li>
+</ul>
+</li>
+</ul>
+<h3 id="Libuv"><a href="#Libuv" class="headerlink" title="Libuv"></a>Libuv</h3><p>Libuv 是 Node.js 关键的一个组成部分，它为上层的 Node.js 提供了统一的 API 调用，使其不用考虑平台差距，隐藏了底层实现。</p>
+<p>具体它能做什么，官网的这张图体现的很好：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/1807041754libuv.png" alt=""></p>
+<p>可以看出，它是一个对开发者友好的工具集，包含定时器，非阻塞的网络 I/O，异步文件系统访问，子进程等功能。它封装了 Libev、Libeio 以及 IOCP，保证了跨平台的通用性。</p>
+<p>我们只要先知道它本身是异步和事件驱动的，记住这点，下面的问题就有了答案，我们一一来看。</p>
+<p> 与操作系统交互</p>
+<p>举个简单的例子，我们想要打开一个文件，并进行一些操作，可以写下面这样一段代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">var fs = require(&apos;fs&apos;);</span><br><span class="line">fs.open(&apos;./test.txt&apos;, &quot;w&quot;, function(err, fd) &#123;</span><br><span class="line">	//..do something</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>这段代码的调用过程大致可描述为：<a href="https://github.com/nodejs/node/blob/master/lib/fs.js" target="_blank" rel="noopener">lib/fs.js</a> → <a href="https://github.com/nodejs/node/blob/master/src/node_file.cc" target="_blank" rel="noopener">src/node_file.cc</a> → <a href="https://github.com/nodejs/node/tree/master/deps/uv/src" target="_blank" rel="noopener">uv_fs</a></p>
+<p>Node.js 深入浅出上的一幅图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/nodelib_180701.png" alt=""></p>
+<p>具体来说，当我们调用 <code>fs.open</code> 时，Node.js 通过 <code>process.binding</code> 调用 C/C++ 层面的 <code>Open</code> 函数，然后通过它调用 Libuv 中的具体方法 <code>uv_fs_open</code>，最后执行的结果通过回调的方式传回，完成流程。在图中，可以看到平台判断的流程，需要说明的是，这一步是在编译的时候已经决定好的，并不是在运行时中。</p>
+<p>总体来说，我们在 Javascript 中调用的方法，最终都会通过 <code>process.binding</code> 传递到 C/C++ 层面，最终由他们来执行真正的操作。Node.js 即这样与操作系统进行互动。</p>
+<p>通过这个过程，我们可以发现，实际上，Node.js 虽然说是用的 Javascript，但只是在开发时使用 Javascript 的语法来编写程序。真正的执行过程还是由 V8 将 Javascript 解释，然后由 C/C++ 来执行真正的系统调用，所以并不需要过分担心 Javascript 执行效率的问题。可以看出，Node.js 并不是一门语言，而是一个 <strong>平台</strong>，这点一定要分清楚。</p>
+<h3 id="异步、非阻塞-I-O"><a href="#异步、非阻塞-I-O" class="headerlink" title="异步、非阻塞 I/O"></a>异步、非阻塞 I/O</h3><p>通过上文，我们了解到，真正执行系统调用的其实是 Libuv。之前我们提到，Libuv 本身就是异步和事件驱动的，所以，当我们将 I/O 操作的请求传达给 Libuv 之后，Libuv 开启线程来执行这次 I/O 调用，并在执行完成后，传回给 Javascript 进行后续处理。</p>
+<p>这里面的 I/O 包括文件 I/O 和 网络 I/O。两者的底层执行略有不同。从上面的 Libuv 官网的图中，我们可以看到，文件 I/O，DNS 等操作，都是依托线程池（Thread Pool）来实现的。而网络 I/O 这一大类，包括：TCP、UDP、TTY 等，是由 epoll、IOCP、kqueue 来具体实现的。</p>
+<p>总结来说，一个异步 I/O 的大致流程如下：</p>
+<ul>
+<li>发起 I/O 调用<ol>
+<li>用户通过 Javascript 代码调用 Node 核心模块，将参数和回调函数传入到核心模块；</li>
+<li>Node 核心模块会将传入的参数和回调函数封装成一个请求对象；</li>
+<li>将这个请求对象推入到 I/O 线程池等待执行；</li>
+<li>Javascript 发起的异步调用结束，Javascript 线程继续执行后续操作。</li>
+</ol>
+</li>
+<li>执行回调<ol>
+<li>I/O 操作完成后，会将结果储存到请求对象的 result 属性上，并发出操作完成的通知；</li>
+<li>每次事件循环时会检查是否有完成的 I/O 操作，如果有就将请求对象加入到 I/O 观察者队列中，之后当做事件处理；</li>
+<li>处理 I/O 观察者事件时，会取出之前封装在请求对象中的回调函数，执行这个回调函数，并将 result 当参数，以完成 Javascript 回调的目的。</li>
+</ol>
+</li>
+</ul>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/updateloop_180701.png" alt=""></p>
+<p>这里面涉及到了 Libuv 本身的一个设计理念，事件循环（Event Loop），它是一个类似于 <code>while true</code> 的无限循环，其核心函数是 <code>uv_run</code>，下文会用到。</p>
+<p>从这里，我们可以看到，我们其实对 Node.js 的单线程一直有个误会。事实上，它的单线程指的是自身 Javascript 运行环境的单线程，Node.js 并没有给 Javascript 执行时创建新线程的能力，最终的实际操作，还是通过 Libuv 以及它的事件循环来执行的。这也就是为什么 Javascript 一个单线程的语言，能在 Node.js 里面实现异步操作的原因，两者并不冲突。</p>
+<h3 id="事件驱动"><a href="#事件驱动" class="headerlink" title="事件驱动"></a>事件驱动</h3><p>说到，事件驱动，对于前端来说，并不陌生。事件，是一个在 GUI 开发时很常用的一个概念，常见的有鼠标事件，键盘事件等等。在异步的多种实现中，事件是一种比较容易理解和实现的方式。</p>
+<p>说到事件，一定会想到回调，当我们写了一大堆事件处理函数后，Libuv 如何来执行这些回调呢？这就提到了我们之前说到的 <code>uv_run</code>，先看一张它的执行流程图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/loopalive_180701.png" alt=""></p>
+<p>在 <code>uv_run</code> 函数中，会维护一系列的监视器：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">typedef struct uv_loop_s uv_loop_t;</span><br><span class="line">typedef struct uv_err_s uv_err_t;</span><br><span class="line">typedef struct uv_handle_s uv_handle_t;</span><br><span class="line">typedef struct uv_stream_s uv_stream_t;</span><br><span class="line">typedef struct uv_tcp_s uv_tcp_t;</span><br><span class="line">typedef struct uv_udp_s uv_udp_t;</span><br><span class="line">typedef struct uv_pipe_s uv_pipe_t;</span><br><span class="line">typedef struct uv_tty_s uv_tty_t;</span><br><span class="line">typedef struct uv_poll_s uv_poll_t;</span><br><span class="line">typedef struct uv_timer_s uv_timer_t;</span><br><span class="line">typedef struct uv_prepare_s uv_prepare_t;</span><br><span class="line">typedef struct uv_check_s uv_check_t;</span><br><span class="line">typedef struct uv_idle_s uv_idle_t;</span><br><span class="line">typedef struct uv_async_s uv_async_t;</span><br><span class="line">typedef struct uv_process_s uv_process_t;</span><br><span class="line">typedef struct uv_fs_event_s uv_fs_event_t;</span><br><span class="line">typedef struct uv_fs_poll_s uv_fs_poll_t;</span><br><span class="line">typedef struct uv_signal_s uv_signal_t;</span><br></pre></td></tr></table></figure>
+<p>这些监视器都有对应着一种异步操作，它们通过 <code>uv_TYPE_start</code>，来注册事件监听以及相应的回调。</p>
+<p>在 <code>uv_run</code> 执行过程中，它会不断的检查这些队列中是或有 <code>pending</code> 状态的事件，有则触发，而且它在这里只会执行一个回调，避免在多个回调调用时发生竞争关系，因为 Javascript 是单线程的，无法处理这种情况。</p>
+<p>上面的图中，对 I/O 操作的事件驱动，表达的比较清楚。除了我们常提到的 I/O 操作，图中还表述了一种情况，timer（定时器）。它与其他两者不同之处在于，它没有单独开立新的线程，而是在事件循环中直接完成的。</p>
+<p>事件循环除了维护那些观察者队列，还维护了一个 <code>time</code> 字段，在初始化时会被赋值为0，每次循环都会更新这个值。所有与时间相关的操作，都会和这个值进行比较，来决定是否执行。</p>
+<p>在图中，与 timer 相关的过程如下：</p>
+<ol>
+<li>更新当前循环的 time 字段，即当前循环下的“现在”；</li>
+<li>检查循环中是否还有需要处理的任务（handlers/requests），如果没有就不必循环了，即是否 alive。</li>
+<li>检查注册过的 timer，如果某一个 timer 中指定的时间落后于当前时间了，说明该 timer 已到期，于是执行其对应的回调函数；</li>
+<li>执行一次 I/O polling（即阻塞住线程，等待 I/O 事件发生），如果在下一个 timer 到期时还没有任何 I/O 完成，则停止等待，执行下一个 timer 的回调。如果发生了 I/O 事件，则执行对应的回调；由于执行回调的时间里可能又有 timer 到期了，这里要再次检查 timer 并执行回调。<br>Node.js 会一直调用 <code>uv_run</code> 直到到循环不在 alive。</li>
+</ol>
+<h3 id="同步方法"><a href="#同步方法" class="headerlink" title="同步方法"></a>同步方法</h3><p>虽然 Node.js 是以异步为主要模式的，但我们在实际开发中，难免会有一些情况是有时序性的，如果由异步来写，就会写出很丑的 Callback Hell，如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">db.query(&apos;select nickname from users where id=&quot;12&quot;&apos;, function() &#123;</span><br><span class="line">	db.query(&apos;select * from xxx where id=&quot;12&quot;&apos;, function() &#123;</span><br><span class="line">		db.query(&apos;select * from xxx where id=&quot;12&quot;&apos;, function() &#123;</span><br><span class="line">			db.query(&apos;select * from xxx where id=&quot;12&quot;&apos;, function() &#123;</span><br><span class="line">				//...	</span><br><span class="line">			&#125;);</span><br><span class="line">		&#125;);</span><br><span class="line">	&#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>这个时候如果有同步方法，就会方便很多。这一点，Node.js 的开发者也想到了，目前大部分的异步操作函数，都存在其对应的同步版本，只需要在其名称后面加上 <code>Sync</code> 即可，不用传入回调。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var file = fs.readFileSync(&apos;/test.txt&apos;, &#123;&quot;encoding&quot;: &quot;utf-8&#125;);</span><br></pre></td></tr></table></figure>
+<p>这写方法还是比较好用的，执行 shell 命令，读取文件等都比较方便。不过，体验不太好的一点就是这种调用的错误收集，它不会像回调函数那样，在第一参数中传入错误信息，它会将错误直接抛出，你需要使用 <code>try...catch</code> 来获取，如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">var data;</span><br><span class="line">try &#123;</span><br><span class="line">  data = fs.readFileSync(&apos;/test.txt&apos;);</span><br><span class="line">&#125; catch (e) &#123;</span><br><span class="line">	if (e.code == &apos;ENOENT&apos;) &#123;</span><br><span class="line">		//...</span><br><span class="line">	&#125;</span><br><span class="line"> 	//...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>至于这些方法如何实现的，我们下回再论。</p>
+<h3 id="一些可能的瓶颈"><a href="#一些可能的瓶颈" class="headerlink" title="一些可能的瓶颈"></a>一些可能的瓶颈</h3><p>首先，文件的 I/O 方面，用户代码的运行，事件循环的通知等，是通过 Libuv 维护的线程池来进行操作的，它会运行全部的文件系统操作。既然这样，我们抛开硬盘的影响，对于严谨的 C/C++ 来说，这个线程池一定是有大小限制的。官方默认给出的大小是 <strong>4</strong>。当然是可以改变的。在启动时，通过设置 <code>UV_THREADPOOL_SIZE</code> 来改变这个值即可。不过，最大也只能是 <strong>128</strong>，因为这个是涉及到内存占用的。</p>
+<p>这个线程池对于所有的事件循环是共享的。当一个函数要使用线程池的时候（比如调用 <code>uv_queue_work</code>），Libuv 会预先分配并初始化 <code>UV_THREADPOOL_SIZE</code> 所允许的线程出来。而<strong>128</strong> 占用的内存大约是 1MB，如果设置的太高，当使用线程池频繁时，会因为内存占用过多而降低线程的性能。<a href="https://github.com/libuv/libuv/blob/master/docs/src/threadpool.rst" target="_blank" rel="noopener">具体说明</a>;</p>
+<p>对于网络 I/O 方面，以 Linux 系统下来说，网络 I/O 采用的是 epoll 这个异步模型。它的优点是采用了事件回调的方式，大大降低了文件描述符的创建（Linux下什么都是文件）。</p>
+<p>在每次调用 <code>epoll_wait</code> 时，实际返回的是就绪描述符的数量，根据这个值，去 epoll 指定的数组里面取对应数量的描述符，是一种 <strong>内存映射</strong> 的方式，减少了文件描述符的复制开销。</p>
+<p>上面提到的 epoll 指定的数组，它的大小即可监听的数量大小，它在不同的系统下，有不同的默认值，可见这里 <a href="https://github.com/nodejs/node/blob/master/deps/uv/src/unix/linux-syscalls.c#L80" target="_blank" rel="noopener">epoll create</a>。</p>
+<p>有了大小的限制，还远不够，为了保证运行的稳定，防止你在调用 epoll 函数时，指针越界，导致内存泄漏。还会用到另外一个值 <code>maxevents</code>，它是 <code>epoll_wait</code> 所能处理的最大数量，在调用 <code>epoll_wait</code> 时可以指定。一般情况下小于创建时（epoll_create）的数组大小，当然，也可以设置的比 size 大，不过应该没什么用。可以想到如果就绪的事件很多，超过了 <code>maxevents</code>，那么超出的事件就要等待前面的事件处理完成，才可以继续，可能会导致效率的下降。</p>
+<p>在这种情况下，你可能会担心事件会丢失。其实，是不会丢失的，它会通过 <code>ep_collect_ready_items</code> 将这些事件保存在一个队列中，在下一个 <code>epoll_wait</code> 再进行通知。</p>
+<h3 id="Node-js-不适合做什么"><a href="#Node-js-不适合做什么" class="headerlink" title="Node.js 不适合做什么"></a>Node.js 不适合做什么</h3><p>虽然看起来，Node.js 可以做很多事情，并且拥有很高的性能。比如做聊天室，搭建 Blog 等等，这些 I/O 密集型的应用，是比较适合 Node.js 的。</p>
+<p>但是，有一种类型的应用，可能 Node.js 处理起来会比较吃力，那就是 CPU 密集型的应用。前文提到，Libuv 通过事件循环来处理异步的事件，这是存在于 Node.js 主线程的机制。通过这个机制，所有的 I/O 操作，底层API的调用都变成了异步的。但用户的 Javascript 代码是运行在主线程中的，如果这部分代码运行耗时很长，就会导致事件循环被阻塞。因为，它对于事件的处理，都是按照队列顺序的，所以如果其中的任何一个事务/事件本身没有完成，那么其他的回调、监听器、超时、nextTick() 都得不到运行的机会，被阻塞的事件循环没有机会去处理它们。这样下去，轻则效率降低，重则运行停滞。</p>
+<p>比如我们常见的模板渲染，压缩，解压缩，加/解密等操作，都是 Node.js 的软肋，所以使用的时候要考虑到这方面。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ul>
+<li>Node.js 通过 <code>libuv</code> 来处理与操作系统的交互，并且因此具备了异步、非阻塞、事件驱动的能力。</li>
+<li>Node.js 实际上是 Javascript 执行线程的单线程，真正的的 I/O 操作，底层 API 调用都是通过多线程执行的。</li>
+<li>CPU 密集型的任务是 Node.js 的软肋。</li>
+</ul>
+<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="http://taobaofed.org/blog/2015/10/29/deep-into-node-1/" target="_blank" rel="noopener">http://taobaofed.org/blog/2015/10/29/deep-into-node-1/</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2015-05-09T06:45:23.000Z"><a href="/2015/05/09/redis/Node.js与Redis/">2015-05-09</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2015/05/09/redis/Node.js与Redis/">Node.js与Redis</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-简介"><a href="#1-简介" class="headerlink" title="1.简介"></a>1.简介</h3><hr>
+<p>Redis官方推荐的Node.js的Redis客户端可以选择的有node_redis[7] 和ioredis[8] ，相比而言前者发布时间较早，而后者的功能则更加丰富一些。从接口来看两者的使用方法大同小异。</p>
+<h3 id="2-安装"><a href="#2-安装" class="headerlink" title="2.安装"></a>2.安装</h3><hr>
+<p>使用npm install ioredis命令安装最新版本的ioredis。</p>
+<h3 id="3-使用方法"><a href="#3-使用方法" class="headerlink" title="3.使用方法"></a>3.使用方法</h3><hr>
+<p>首先加载ioredis模块：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var Redis = require(&apos;ioredis&apos;);</span><br></pre></td></tr></table></figure></p>
+<p>下面的代码将创建一个默认连接到地址127.0.0.1，端口6379的Redis连接：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var redis = new Redis();</span><br></pre></td></tr></table></figure></p>
+<p>也可以显式地指定需要连接的地址：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var redis = new Redis(6379, &apos;127.0.0.1&apos;);</span><br></pre></td></tr></table></figure></p>
+<p>由于Node.js的异步特性，在处理返回值的时候与其他客户端差别较大。还是以GET/SET命令为例：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">redis.set(&apos;foo&apos;, &apos;bar&apos;, function () &#123;</span><br><span class="line">    //此时 SET 命令执行完并返回结果，</span><br><span class="line">    //因为这里并不关心 SET命令的结果，所以我们省略了回调函数的形参。</span><br><span class="line">    redis.get(&apos;foo&apos;, function (error, fooValue) &#123;</span><br><span class="line">        //error 参数存储了命令执行时返回的错误信息，如果没有错误则返回 null。</span><br><span class="line">        //回调函数的第二个参数存储的是命令执行的结果</span><br><span class="line">        console.log(fooValue); // &apos;bar&apos;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>  使用ioredis执行命令时需要传入回调函数（callback function）来获得返回值，当命令执行完返回结果后ioredis会调用该函数，并将命令的错误信息作为第一个参数、返回值作为第二个参数传递给该函数。同时ioredis还支持Promise形式的异步处理方式，如果省略最后一个回调函数，命令语句会返回一个Promise值，如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">redis.get(&apos;foo&apos;).then(function (fooValue) &#123;</span><br><span class="line">    //fooValue 即为键值</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>  Node.js的异步模型使得通过ioredis调用Redis命令的表现与Redis的底层管道协议十分相似：调用命令函数时（如redis.set()）并不会等待Redis返回命令执行结果，而是直接继续执行下一条语句，所以在Node.js中通过异步模型就能实现与管道类似的效果。上面的例子中我们并不需要SET命令的返回值，只要保证SET命令在GET命令前发出即可，所以完全不用等待SET命令返回结果后再执行GET命令。因此上面的代码可以改写成：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">//不需要返回值时可以省略回调函数</span><br><span class="line">redis.set(&apos;foo&apos;, &apos;bar&apos;);</span><br><span class="line">redis.get(&apos;foo&apos;, function (error, fooValue) &#123;</span><br><span class="line">    console.log(fooValue); // &apos;bar&apos;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>  不过由于SET和GET并未真正使用Redis的管道协议发送，所以当有多个客户端同时向 Redis 发送命令时，上例中的两个命令之间可能会被插入其他命令，换句话说，GET命令得到的值未必是“bar”。<br>  虽然Node.js的异步特性给我们带来了相对更高的性能，然而另一方面使用Redis实现某个功能时我们经常需要读写若干个键，而且很多情况下都会依赖之前命令的返回结果。这时就会出现嵌套多重回调函数的情况，影响代码可读性。就像这样：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">redis.get(&apos;people:2:home&apos;, function (error, home) &#123;</span><br><span class="line">    redis.hget(&apos;locations&apos;, home, function (error, address) &#123;</span><br><span class="line">        redis.exists(&apos;address:&apos; + address, function (error, addressExists) &#123;</span><br><span class="line">            if (addressExists) &#123;</span><br><span class="line">                console.log(&apos;地址存在。&apos;);</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                redis.exists(&apos;backup.address:&apos; + address, function (error, backupAddressExists) &#123;</span><br><span class="line">                    if (backupAddressExists) &#123;</span><br><span class="line">                        console.log(&apos;备用地址存在。&apos;);</span><br><span class="line">                    &#125; else &#123;</span><br><span class="line">                        console.log(&apos;地址不存在。&apos;);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>上面的代码并不是极端的情况，相反在实际开发中经常会遇到这种多层嵌套。为了减少嵌套，可以考虑使用 Async 、Step等第三方模块。如上面的代码可以稍微修改后使用Async重写为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">async.waterfall([</span><br><span class="line">    function (callback) &#123;</span><br><span class="line">        redis.get(&apos;people:2:home&apos;, callback);</span><br><span class="line">    &#125;,</span><br><span class="line">    function (home, callback) &#123;</span><br><span class="line">        redis.hget(&apos;locations&apos;, home, callback);</span><br><span class="line">    &#125;,</span><br><span class="line">    function (address, callback) &#123;</span><br><span class="line">        async.parallel([</span><br><span class="line">            function (callback) &#123;</span><br><span class="line">                redis.exists(&apos;address:&apos; + address, callback);</span><br><span class="line">            &#125;,</span><br><span class="line">            function (callback) &#123;</span><br><span class="line">               redis.exists(&apos;backup.address:&apos; + address, callback);</span><br><span class="line">            &#125;], function (err, results) &#123;</span><br><span class="line">            if (results[0]) &#123;</span><br><span class="line">                console.log(&apos;地址存在。&apos;);</span><br><span class="line">            &#125; else if (results[1]) &#123;</span><br><span class="line">                console.log(&apos;备用地址存在。&apos;);</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                console.log(&apos;地址不存在。&apos;);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line">]);</span><br></pre></td></tr></table></figure></p>
+<p>另外，可以使用co模块借助ES6的Generator特性来将ioredis的返回结果“串行化”：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var co = require(&apos;co&apos;);</span><br><span class="line">co(function* () &#123;</span><br><span class="line">    var result = yield redis.get(&apos;foo&apos;);</span><br><span class="line">    return result;</span><br><span class="line">&#125;).then(function (fooValue) &#123;</span><br><span class="line">    console.log(fooValue);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="4-简便用法"><a href="#4-简便用法" class="headerlink" title="4.简便用法"></a>4.简便用法</h3><hr>
+<p>1．HMSET/HGETALL<br>  ioredis同样支持在HMSET命令中使用对象作参数（对象的属性值只能是字符串），相应的HGETALL命令会返回一个对象。<br>2．事务<br>  事务的用法如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var multi = redis.multi();</span><br><span class="line">multi.set(&apos;foo&apos;, &apos;bar&apos;);</span><br><span class="line">multi.sadd(&apos;set&apos;, &apos;a&apos;);</span><br><span class="line">mulit.exec(function (err, replies) &#123;</span><br><span class="line">    //replies 是一个数组，依次存放事务队列中命令的结果</span><br><span class="line">    console.log(replies);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>或者使用链式调用：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">redis.multi()</span><br><span class="line">    .set(&apos;foo&apos;, &apos;bar&apos;)</span><br><span class="line">    .sadd(&apos;set&apos;, &apos;a&apos;)</span><br><span class="line">    .exec(function (err, replies) &#123;</span><br><span class="line">        console.log(replies);</span><br><span class="line">    &#125;);</span><br></pre></td></tr></table></figure></p>
+<p>3．“发布/订阅”模式<br>  Node.js 使用事件的方式实现“发布/订阅”模式。现在创建两个连接分别充当发布者和订阅者：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">var pub = new Redis();</span><br><span class="line">var sub = new Redis();</span><br></pre></td></tr></table></figure></p>
+<p>然后让sub订阅chat频道并在订阅成功后发送一条消息：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sub.subscribe(&apos;chat&apos;, function () &#123;</span><br><span class="line">    pub.publish(&apos;chat&apos;, &apos;hi!&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>定义当接收到消息时要执行的回调函数：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sub.on(&apos;message&apos;, function (channel, message) &#123;</span><br><span class="line">    console.log(&apos;收到&apos; + channel + &apos;频道的消息：&apos; + message);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>运行后可以看到打印的结果：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ node testpubsub.js</span><br></pre></td></tr></table></figure></p>
+<p>收到chat频道的消息：’hi!’<br>补充知识 在 ioredis 中建立连接的过程也是异步的，执行 redis = new Redis()后连接并没有立即建立完成。在连接建立完成前执行的命令会被加入到离线任务队列中，当连接建立成功后ioredis会按照加入的顺序依次执行离线任务队列中的命令。</p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2015-05-07T06:45:23.000Z"><a href="/2015/05/07/redis/什么是redis/">2015-05-07</a></time>
       
       
@@ -536,292 +857,6 @@ warning: You appear to have cloned an empty repository.
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2014-06-27T09:45:23.000Z"><a href="/2014/06/27/Git/Git(6)标签管理/">2014-06-27</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2014/06/27/Git/Git(6)标签管理/">六.标签管理</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-标签的简介"><a href="#1-标签的简介" class="headerlink" title="1.标签的简介"></a>1.标签的简介</h3><hr>
-<p>本节主要记录的Git标签的作用、标签的多种创建方式，以及标签的删除，与推送，和使用GitHub的Fork参与别人的项目。</p>
-<p><strong>标签的作用</strong><br>　　发布版本时，通常先在版本库中打一个标签，这样，就唯一确定了打标签时刻的版本。无论什么时候，取某个标签的版本，就是把那个打标签的时刻的历史版本取出来。所以，标签也是版本库的一个快照。Git的标签虽然是版本库的快照，但其实它就是指向某个commit的指针（跟分支很像，但是分支可以移动，标签不能移动），所以，创建和删除标签都是瞬间完成的。
-　　</p>
-<h3 id="2-创建标签"><a href="#2-创建标签" class="headerlink" title="2.创建标签"></a>2.创建标签</h3><hr>
-<p>在Git中打标签非常简单，首先，切换到需要打标签的分支上：</p>
-<p>$ git branch<br>*dev<br>  master<br>$ git checkout master<br>Switched to branch ‘master’<br>然后，敲命令git tag <name>就可以打一个新标签：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git tag v1.0</span><br></pre></td></tr></table></figure></name></p>
-<p>　　默认标签是打在最新提交的commit上的。还可以对历史提交打上标签，只要找到历史提交的commit id，然后打上就可以了，例如要对add merge这次提交打标签，它对应的commit id是6224937，输入命令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git tag v0.9 6224937</span><br></pre></td></tr></table></figure></p>
-<p>　　还可以创建带有说明的标签，用-a指定标签名，-m指定说明文字：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git tag -a v0.1 -m &quot;version 0.1 released&quot; 3628164</span><br></pre></td></tr></table></figure></p>
-<p>　　用命令git show 可以看到说明文字：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ git show v0.1</span><br><span class="line">tag v0.1</span><br><span class="line">Tagger: hubwiz &lt;hubwiz@163.com&gt;</span><br><span class="line">Date:   Mon Aug 26 07:28:11 2015 +0800</span><br><span class="line">version 0.1 released</span><br></pre></td></tr></table></figure></p>
-<p>　　签名采用PGP签名，因此，必须首先安装gpg（GnuPG），如果没有找到gpg，或者没有gpg密钥对，就会报错：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">gpg: signing failed: secret key not available</span><br><span class="line">error: gpg failed to sign the data</span><br><span class="line">error: unable to sign the tag</span><br></pre></td></tr></table></figure></p>
-<p>　　如果报错，请参考GnuPG帮助文档配置Key。</p>
-<ul>
-<li>命令git tag <name>用于新建一个标签，默认为HEAD，也可以指定一个commit id；</name></li>
-<li>git tag -a <tagname> -m “blablabla…”可以指定标签信息；</tagname></li>
-<li>git tag -s <tagname> -m “blablabla…”可以用PGP签名标签；</tagname></li>
-<li>命令git tag可以查看所有标签。</li>
-</ul>
-<h3 id="3-操作标签"><a href="#3-操作标签" class="headerlink" title="3.操作标签"></a>3.操作标签</h3><hr>
-<p>如果标签打错了，也可以删除：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git tag -d v0.1</span><br><span class="line">Deleted tag &apos;v0.1&apos; (was e078af9)</span><br></pre></td></tr></table></figure></p>
-<p>因为创建的标签都只存储在本地，不会自动推送到远程。所以，打错的标签可以在本地安全删除。</p>
-<p>如果要推送某个标签到远程，使用命令it push origin <tagname>:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ git push origin v1.0</span><br><span class="line">Total 0 (delta 0), reused 0 (delta 0)</span><br><span class="line">To git@github.com:michaelliao/learngit.git</span><br><span class="line"> * [new tag]         v1.0 -&gt; v1.0</span><br></pre></td></tr></table></figure></tagname></p>
-<p>或者，一次性推送全部尚未推送到远程的本地标签：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ git push origin --tags</span><br><span class="line">Counting objects: 1, done.</span><br><span class="line">Writing objects: 100% (1/1), 554 bytes, done.</span><br><span class="line">Total 1 (delta 0), reused 0 (delta 0)</span><br><span class="line">To git@github.com:michaelliao/learngit.git</span><br><span class="line">* [new tag]         v0.2 -&gt; v0.2</span><br><span class="line">* [new tag]         v0.9 -&gt; v0.9</span><br></pre></td></tr></table></figure></p>
-<p>如果标签已经推送到远程，要删除远程标签就麻烦一点，先从本地删除：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git tag -d v0.9</span><br><span class="line">Deleted tag &apos;v0.9&apos; (was 6224937)</span><br></pre></td></tr></table></figure></p>
-<p>然后，从远程删除。删除命令也是push，但是格式如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git push origin :refs/tags/v0.9</span><br><span class="line">To git@github.com:michaelliao/learngit.git</span><br><span class="line"> - [deleted]         v0.9</span><br></pre></td></tr></table></figure></p>
-<p>要看看是否真的从远程库删除了标签，可以登陆GitHub查看。</p>
-<p>本节知识点主要学习点：</p>
-<ul>
-<li>git push origin <tagname>可以推送一个本地标签；</tagname></li>
-<li>git push origin –tags可以推送全部未推送过的本地标签；</li>
-<li>git tag -d <tagname>可以删除一个本地标签；</tagname></li>
-<li>git push origin :refs/tags/<tagname>可以删除一个远程标签。</tagname></li>
-</ul>
-<h3 id="4-GitHub的使用"><a href="#4-GitHub的使用" class="headerlink" title="4.GitHub的使用"></a>4.GitHub的使用</h3><hr>
-<p>GitHub不仅是免费的远程仓库，个人的开源项目，可以放到GitHub上，而且GitHub还是一个开源协作社区，通过GitHub，既可以让别人参与你的开源项目，也可以参与别人的开源项目。</p>
-<p>　　在GitHub上，利用Git极其强大的克隆和分支功能，人们可以自由参与各种开源项目。比如人气极高的bootstrap项目，这是一个非常强大的CSS框架，在它的项目主页，点“Fork”就在自己的账号下克隆了一个bootstrap仓库，然后，从自己的账号下clone。一定要从自己的账号下clone仓库，这样你才能推送修改。如果从bootstrap的作者的仓库地址<a href="mailto:git@github.com" target="_blank" rel="noopener">git@github.com</a>:twbs/bootstrap.git克隆，因为没有权限，你将不能推送修改。</p>
-<p>　　Bootstrap的官方仓库twbs/bootstrap、你在GitHub上克隆的仓库my/bootstrap，以及你自己克隆到本地电脑的仓库，他们的关系就像下图显示的那样：<br>　　<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbootstrap.png" alt=""></p>
-<p>如果你希望bootstrap的官方库能接受你的修改，你就可以在GitHub上发起一个pull request。</p>
-<p>本节主要内容：</p>
-<ul>
-<li>在GitHub上，可以任意Fork开源仓库；</li>
-<li>自己拥有Fork后的仓库的读写权限；</li>
-<li>可以推送pull request给官方仓库来贡献代码。</li>
-</ul>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2014-06-24T09:45:23.000Z"><a href="/2014/06/24/Git/Git(5)分支管理/">2014-06-24</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2014/06/24/Git/Git(5)分支管理/">五.分支管理</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-分支管理图文详解一"><a href="#1-分支管理图文详解一" class="headerlink" title="1.分支管理图文详解一"></a>1.分支管理图文详解一</h3><hr>
-<p>在版本回退里，你已经知道，每次提交，Git都把它们串成一条时间线，这条时间线就是一个分支。截止到目前，只有一条时间线，在Git里，这个分支叫主分支，即master分支。HEAD严格来说不是指向提交，而是指向master，master才是指向提交的，所以，HEAD指向的就是当前分支。</p>
-<p>　　一开始的时候，master分支是一条线，Git用master指向最新的提交，再用HEAD指向master，就能确定当前分支，以及当前分支的提交点：<br>　　<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbranch01.png" alt=""></p>
-<p>每次提交，master分支都会向前移动一步，这样，随着你不断提交，master分支的线也越来越长，当我们创建新的分支，例如dev时，Git新建了一个指针叫dev，指向master相同的提交，再把HEAD指向dev，就表示当前分支在dev上：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbranch02.png" alt=""></p>
-<p>你看，Git创建一个分支很快，因为除了增加一个dev指针，改改HEAD的指向，工作区的文件都没有任何变化！</p>
-<h3 id="2-分支管理图文详解二"><a href="#2-分支管理图文详解二" class="headerlink" title="2.分支管理图文详解二"></a>2.分支管理图文详解二</h3><hr>
-<p>接着分支管理图文详解一，现在对工作区的修改和提交就是针对dev分支了，比如新提交一次后，dev指针往前移动一步，而master指针不变：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbranch03.png" alt=""></p>
-<p>假如我们在dev上的工作完成了，就可以把dev合并到master上。Git怎么合并呢？最简单的方法，就是直接把master指向dev的当前提交，就完成了合并：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbranch04.png" alt=""></p>
-<p>所以Git合并分支也很快！就改改指针，工作区内容也不变！</p>
-<p>合并完分支后，甚至可以删除dev分支。删除dev分支就是把dev指针给删掉，删掉后，我们就剩下了一条master分支：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbranch05.png" alt=""></p>
-<h3 id="3-创建分支"><a href="#3-创建分支" class="headerlink" title="3.创建分支"></a>3.创建分支</h3><hr>
-<p>首先，我们创建dev分支，然后切换到dev分支：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout -b dev</span><br><span class="line">Switched to a new branch &apos;dev&apos;</span><br></pre></td></tr></table></figure></p>
-<p>git checkout命令加上-b参数表示创建并切换，相当于以下两条命令：</p>
-<p>$ git branch dev<br>$ git checkout dev<br>Switched to branch ‘dev’</p>
-<p>然后，用git branch命令查看当前分支：</p>
-<p>$ git branch<br>*dev<br>  master</p>
-<p>git branch命令会列出所有分支，当前分支前面会标一个*号。</p>
-<p>然后，我们就可以在dev分支上正常提交，比如对readme.txt做个修改，加上一行：</p>
-<p>Creating a new branch is quick.</p>
-<p>然后提交：</p>
-<p>$ git add readme.txt<br>$ git commit -m “branch test”<br>[dev fec145a] branch test<br>1 file changed, 1 insertion(+)</p>
-<p>现在，dev分支的工作完成，我们就可以切换回master分支：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout master</span><br><span class="line">Switched to branch &apos;master&apos;</span><br></pre></td></tr></table></figure>
-<p>切换回master分支后，再查看一个readme.txt文件，刚才添加的内容不见了！因为那个提交是在dev分支上，而master分支此刻的提交点并没有变：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkdev.png" alt=""></p>
-<h3 id="4-合并分支"><a href="#4-合并分支" class="headerlink" title="4.合并分支"></a>4.合并分支</h3><hr>
-<p>我们把前面dev分支的工作成果合并到master分支上：</p>
-<p>$ git merge dev<br>Updating d17efd8..fec145a<br>Fast-forward<br> readme.txt |    1 +<br> 1 file changed, 1 insertion(+)</p>
-<p>　　git merge命令用于合并指定分支到当前分支。合并后，再查看readme.txt的内容，就可以看到，和dev分支的最新提交是完全一样的。</p>
-<p>　　注意到上面的Fast-forward信息，Git告诉我们，这次合并是“快进模式”，也就是直接把master指向dev的当前提交，所以合并速度非常快。</p>
-<p>　　当然，也不是每次合并都能Fast-forward，我们后面会将其他方式的合并。</p>
-<h3 id="5-删除分支"><a href="#5-删除分支" class="headerlink" title="5.删除分支"></a>5.删除分支</h3><hr>
-<p>合并完成后，就可以放心地删除dev分支了：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git branch -d dev</span><br><span class="line">Deleted branch dev (was 5659891).</span><br></pre></td></tr></table></figure></p>
-<p>删除后，查看branch，就只剩下master分支了：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git branch</span><br><span class="line">* master</span><br></pre></td></tr></table></figure></p>
-<p>因为创建、合并和删除分支非常快，所以Git鼓励你使用分支完成某个任务，合并后再删掉分支，这和直接在master分支上工作效果是一样的，但过程更安全。</p>
-<p>前面所讲知识：汇总下这些使用命令：</p>
-<p>查看分支：git branch</p>
-<p>创建分支：git branch <name></name></p>
-<p>切换分支：git checkout <name></name></p>
-<p>创建+切换分支：git checkout -b <name></name></p>
-<p>合并某分支到当前分支：git merge <name></name></p>
-<p>删除分支：git branch -d <name></name></p>
-<h3 id="6-产生冲突"><a href="#6-产生冲突" class="headerlink" title="6.产生冲突"></a>6.产生冲突</h3><hr>
-<p>当我们进行合并分支往往会产生冲突。</p>
-<p>在准备新的feature1分支，继续我们的新分支开发<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout -b feature1</span><br></pre></td></tr></table></figure></p>
-<p>修改readme.txt最后一行，改为Creating a new branch is quick AND simple.</p>
-<p>在feature1分支上提交<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git add readme.txt </span><br><span class="line">$ git commit -m &quot;AND simple&quot;</span><br></pre></td></tr></table></figure></p>
-<p>切换到master分支<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout master</span><br><span class="line">Switched to branch &apos;master&apos;</span><br><span class="line">Your branch is ahead of &apos;origin/master&apos; by 1 commit.</span><br></pre></td></tr></table></figure></p>
-<p>Git还会自动提示我们当前master分支比远程的master分支要超前1个提交。</p>
-<p>在master分支上把readme.txt文件的最后一行改为Creating a new branch is quick &amp; simple.提交：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git add readme.txt </span><br><span class="line">$ git commit -m &quot;&amp; simple&quot;</span><br></pre></td></tr></table></figure></p>
-<h3 id="7-解决冲突"><a href="#7-解决冲突" class="headerlink" title="7.解决冲突"></a>7.解决冲突</h3><hr>
-<p>在上节中master分支和feature1分支各自都分别有新的提交，变成了这样：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkresolve01.png" alt=""></p>
-<p>这种情况下，Git无法执行“快速合并”，只能试图把各自的修改合并起来，但这种合并就可能会有冲突，执行git merge feature1,在看readme.txt：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span><br><span class="line">Creating a new branch is quick &amp; simple.</span><br><span class="line">=======</span><br><span class="line">Creating a new branch is quick AND simple.</span><br><span class="line">&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature1</span><br></pre></td></tr></table></figure></p>
-<p>我们把冲突的内容修改为Creating a new branch is quick and simple.，提交：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git add readme.txt </span><br><span class="line">$ git commit -m &quot;conflict fixed&quot;</span><br></pre></td></tr></table></figure></p>
-<p>现在，master分支和feature1分支变成了下图所示：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkresolve02.png" alt=""></p>
-<p>用带参数的git log也可以看到分支的合并情况：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git log --graph --pretty=oneline --abbrev-commit</span><br></pre></td></tr></table></figure></p>
-<p>最后，删除feature1分支：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git branch -d feature1</span><br><span class="line">Deleted branch feature1.</span><br></pre></td></tr></table></figure></p>
-<p>冲突解决，最后，删除feature1分支 git branch -d feature1。当Git无法自动合并分支时，就必须首先解决冲突。解决冲突后，再提交，合并完成。</p>
-<p>用git log –graph命令可以看到分支合并图。</p>
-<h3 id="8-Bug分支"><a href="#8-Bug分支" class="headerlink" title="8.Bug分支"></a>8.Bug分支</h3><hr>
-<p>如果你有一个bug任务，你想创建一个分支issue-101来修复它，但是你当前正在dev上进行的工作还没有完成而不能提交，bug需要现在修复，所以现在你需要暂停dev上工作，Git提供了一个stash功能，可以把当前工作现场“储藏”起来，等以后恢复现场后继续工作：$ git stash。</p>
-<p>　　假定需要在master分支上修复，就从master创建临时分支：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout master</span><br><span class="line">Switched to branch &apos;master&apos;</span><br><span class="line">$ git checkout -b issue-101</span><br><span class="line">Switched to a new branch &apos;issue-101&apos;</span><br></pre></td></tr></table></figure></p>
-<p>　　现在修复bug，需要把“Git is free software …”改为“Git is a free software …”，然后提交：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git add readme.txt </span><br><span class="line">$ git commit -m &quot;fix bug 101&quot;</span><br></pre></td></tr></table></figure></p>
-<p>　　修复完成后，切换到master分支，并完成合并，最后删除issue-101分支：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout master</span><br><span class="line">...</span><br><span class="line">$ git merge --no-ff -m &quot;merged bug fix 101&quot; issue-101</span><br><span class="line">...</span><br><span class="line">$ git branch -d issue-101</span><br><span class="line">Deleted branch issue-101 (...).</span><br></pre></td></tr></table></figure></p>
-<p>　　Git把stash内容存在某个地方了，但是需要恢复一下，有两个办法：</p>
-<ul>
-<li>一是用git stash apply恢复，但是恢复后，stash内容并不删除，你需要用git stash drop来删除；</li>
-<li>另一种方式是用git stash pop，恢复的同时把stash内容也删了：</li>
-</ul>
-<h3 id="9-Feature分支"><a href="#9-Feature分支" class="headerlink" title="9.Feature分支"></a>9.Feature分支</h3><hr>
-<p>　在软件开发中，总会添加一个新功能时，你肯定不希望因为一些实验性质的代码，把主分支搞乱了，所以每添加一个新功能，最好新建一个feature分支，在上面开发，完成后，合并，最后，删除该feature分支。</p>
-<p>　　现在新功能开发代号为Vulcan:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout -b feature-vulcan</span><br><span class="line">Switched to a new branch &apos;feature-vulcan&apos;</span><br></pre></td></tr></table></figure></p>
-<p>　　开发完毕，添加并提交：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git add vulcan.py</span><br><span class="line">$ git commit -m &quot;add feature vulcan&quot;</span><br></pre></td></tr></table></figure></p>
-<p>切回dev，准备合并：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout dev</span><br></pre></td></tr></table></figure></p>
-<p>　　一切顺利的话，feature分支和bug分支是类似的，合并，然后删除。</p>
-<p>　　由于种种原因，此功能又不需要了，现在这个分支需要就地销毁：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git branch -d feature-vulcan</span><br><span class="line">error: The branch &apos;feature-vulcan&apos; is not fully merged.</span><br><span class="line">If you are sure you want to delete it, run &apos;git branch -D feature-vulcan&apos;.</span><br></pre></td></tr></table></figure></p>
-<p>　　销毁失败。Git友情提醒，feature-vulcan分支还没有被合并，如果删除，将丢失掉修改，如果要强行删除，需要使用命令git branch -D feature-vulcan。</p>
-<p>　　现在我们强行删除：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git branch -D feature-vulcan</span><br><span class="line">Deleted branch feature-vulcan (was 756d4af).</span><br></pre></td></tr></table></figure></p>
-<p>　　注意：开发一个新feature，最好新建一个分支；如果要丢弃一个没有被合并过的分支，可以通过git branch -D <name>强行删除。</name></p>
-<h3 id="10-推送分支"><a href="#10-推送分支" class="headerlink" title="10.推送分支"></a>10.推送分支</h3><hr>
-<p>当你从远程仓库克隆时，实际上Git自动把本地的master分支和远程的master分支对应起来了，并且远程仓库的默认名称是origin。</p>
-<p>　　要查看远程库的信息，用git remote<br> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git remote</span><br><span class="line">origin</span><br></pre></td></tr></table></figure></p>
-<p>　　或者，用git remote -v显示更详细的信息：<br> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git remote -v</span><br></pre></td></tr></table></figure></p>
-<p>推送分支<br>　　推送分支，就是把该分支上的所有本地提交推送到远程库。推送时，要指定本地分支，这样，Git就会把该分支推送到远程库对应的远程分支上：<br> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git push origin master</span><br></pre></td></tr></table></figure></p>
-<p>　　如果要推送其他分支，比如dev，就改成<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git push origin dev</span><br></pre></td></tr></table></figure></p>
-<ul>
-<li>master分支是主分支，因此要时刻与远程同步；</li>
-<li>dev分支是开发分支，团队所有成员都需要在上面工作，所以也需要与远程同步；</li>
-<li>bug分支只用于在本地修复bug，就没必要推到远程了，除非老板要看看你每周到底修复了几个bug；</li>
-<li>feature分支是否推到远程，取决于你是否和你的小伙伴合作在上面开发。
-　　<h3 id="11-多人协助"><a href="#11-多人协助" class="headerlink" title="11.多人协助"></a>11.多人协助</h3></li>
-</ul>
-<hr>
-<p>多人协作时，大家都会往master和dev分支上推送各自的修改。当你的同事也克隆一份此项目从远程库，默认情况下，只能看到本地的master分支。现在，你的同事要在dev分支上开发，就必须创建远程origin的dev分支到本地，于是他用这个命令创建本地dev分支：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout -b dev origin/dev</span><br></pre></td></tr></table></figure></p>
-<p>　　现在，他就可以在dev上继续修改，然后，时不时地把dev分支push到远程，并且已经向origin/dev分支推送了他的提交，这时你也对同样的文件作了修改，并试图推送，推送失败，因为你的同事的最新提交和你试图推送的提交有冲突，解决办法也很简单，Git已经提示我们，先用git pull把最新的提交从origin/dev抓下来，然后，在本地合并，解决冲突，再推送，git pull也失败了，原因是没有指定本地dev分支与远程origin/dev分支的链接，根据提示，设置dev和origin/dev的链接。</p>
-<p>　　这回git pull成功，但是是合并有冲突，需要手动解决，解决的方法和分支管理中的解决冲突完全一样。解决后，提交，再push：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git commit -m &quot;merge &amp; fix hello.py&quot;</span><br><span class="line">[dev adca45d] merge &amp; fix hello.py</span><br><span class="line">$ git push origin dev</span><br></pre></td></tr></table></figure></p>
-<p>　　因此，多人协作的工作模式通常是这样：</p>
-<ul>
-<li>首先，可以试图用git push origin branch-name推送自己的修改；</li>
-<li>如果推送失败，则因为远程分支比你的本地更新，需要先用git pull试图合并；</li>
-<li>如果合并有冲突，则解决冲突，并在本地提交；</li>
-<li>没有冲突或者解决掉冲突后，再用git push origin branch-name推送就能成功！<br>　　如果git pull提示“no tracking information”，则说明本地分支和远程分支的链接关系没有创建，用命令git branch –set-upstream branch-name origin/branch-name。</li>
-</ul>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2014-06-23T09:45:23.000Z"><a href="/2014/06/23/Git/Git(4)远程仓库/">2014-06-23</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2014/06/23/Git/Git(4)远程仓库/">四.远程仓库</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-远程仓库简介"><a href="#1-远程仓库简介" class="headerlink" title="1.远程仓库简介"></a>1.远程仓库简介</h3><hr>
-<p>到目前为止，我们已经掌握了如何在Git仓库里对一个文件进行时光穿梭，你再也不用担心文件备份或者丢失的问题了。</p>
-<p>　　开始介绍Git的远程仓库功能。我们现在借用GitHub神奇的网站，这个网站就是提供Git仓库托管服务的，所以只要注册一个GitHub账号，就可以免费获得Git远程仓库。</p>
-<p>　　由于你的本地Git仓库和GitHub仓库之间的传输是通过SSH加密的，所以，需要一点设置：</p>
-<p>　　第1步：创建SSH Key。在当前目录下，看看有没有.ssh目录，如果有，再看看这个目录下有没有id_rsa和id_rsa.pub这两个文件，如果已经有了，可直接跳到下一步。如果没有，打开Shell（Windows下打开Git Bash），创建SSH Key：</p>
-<p>$ ssh-keygen -t rsa -C “<a href="mailto:youremail@example.com" target="_blank" rel="noopener">youremail@example.com</a>“<br>　　你需要把邮件地址换成你自己的邮件地址，然后一路回车，使用默认值即可，可以在用户主目录里找到.ssh目录，里面有id_rsa和id_rsa.pub两个文件，这两个就是SSH Key的秘钥对，id_rsa是私钥，不能泄露出去，id_rsa.pub是公钥，可以放心地告诉任何人。</p>
-<p>　　第2步：登陆GitHub，打开“Account settings”，“SSH Keys”页面：</p>
-<p>　　然后，点“Add SSH Key”，填上任意Title，在Key文本框里粘贴id_rsa.pub文件的内容：<br>　　<img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgitsshkey.png" alt=""></p>
-<h3 id="2-GitHub创建新仓库"><a href="#2-GitHub创建新仓库" class="headerlink" title="2.GitHub创建新仓库"></a>2.GitHub创建新仓库</h3><hr>
-<p>GitHub创建一个Git仓库,并且本地仓库与此仓库进行远程同步，此仓库既可以作为备份，又可以让其他人通过该仓库来协作。</p>
-<p>　　首先，登陆GitHub，然后，在右上角找到“Create a new repo”按钮，创建一个新的仓库：<br>　　<br>　　<img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgithub1.png" alt=""><br>　　<br>　在Repository name填入learngit，其他保持默认设置，点击“Create repository”按钮，就成功地创建了一个新的Git仓库。</p>
-<p>　　目前，在GitHub上的这个learngit仓库还是空的，GitHub告诉我们，可以从这个仓库克隆出新的仓库，也可以把一个已有的本地仓库与之关联，然后，把本地仓库的内容推送到GitHub仓库。</p>
-<p>　　现在，我们根据GitHub的提示，在本地的learngit仓库下运行命令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git remote add origin git@github.com:onlyone/learngit.git</span><br></pre></td></tr></table></figure></p>
-<p>　　请千万注意，把上面的onlyone替换成你自己的GitHub账户名，否则，你在本地关联的就是我的远程库，关联没有问题，但是你以后推送是推不上去的，因为你的SSH Key公钥不在我的账户列表中。</p>
-<p>　　添加后，远程库的名字就是origin，这是Git默认的叫法，也可以改成别的，但是origin这个名字一看就知道是远程库。</p>
-<p>　　注意：要关联一个远程库，使用命令git remote add origin git@server-name:path/repo-name.git。　
-　　</p>
-<h3 id="3-本地库推送到远程库"><a href="#3-本地库推送到远程库" class="headerlink" title="3.本地库推送到远程库"></a>3.本地库推送到远程库</h3><hr>
-<p>本地库的所有内容推送到远程库上：</p>
-<p>$ git push -u origin master<br>　　把本地库的内容推送到远程，用git push命令，实际上是把当前分支master推送到远程。</p>
-<p>　　由于远程库是空的，我们第一次推送master分支时，加上了-u参数，Git不但会把本地的master分支内容推送的远程新的master分支，还会把本地的master分支和远程的master分支关联起来，在以后的推送或者拉取时就可以简化命令。</p>
-<p>　　推送成功，github内容与当前目录中readme.txt一致：<br>　　<br>　　<img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgithubremote.png" alt=""><br>　　<br>从现在起，只要本地作了提交，就可以通过命令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git push origin master</span><br></pre></td></tr></table></figure></p>
-<p>　　把本地master分支的最新修改推送至GitHub，现在，你就拥有了真正的分布式版本库！</p>
-<p>　　注意：要关联一个远程库，使用命令git remote add origin git@server-name:path/repo-name.git；关联后，使用命令git push -u origin master第一次推送master分支的所有内容；此后，每次本地提交后，只要有必要，就可以使用命令git push origin master推送最新修改；
-　　</p>
-<h3 id="4-SSH警告"><a href="#4-SSH警告" class="headerlink" title="4.SSH警告"></a>4.SSH警告</h3><hr>
-<p>当你第一次使用Git的clone或者push命令连接GitHub时，会得到一个警告：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">The authenticity of host &apos;github.com (xx.xx.xx.xx)&apos; can&apos;t be established.</span><br><span class="line">RSA key fingerprint is xx.xx.xx.xx.xx.</span><br><span class="line">Are you sure you want to continue connecting (yes/no)?</span><br></pre></td></tr></table></figure></p>
-<p>　　这是因为Git使用SSH连接，而SSH连接在第一次验证GitHub服务器的Key时，需要你确认GitHub的Key的指纹信息是否真的来自GitHub的服务器，输入yes回车即可。</p>
-<p>　　Git会输出一个警告，告诉你已经把GitHub的Key添加到本机的一个信任列表里了：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Warning: Permanently added &apos;github.com&apos; (RSA) to the list of known hosts.</span><br></pre></td></tr></table></figure></p>
-<p>　　这个警告只会出现一次，后面的操作就不会有任何警告了。</p>
-<p>　　如果你实在担心有人冒充GitHub服务器，输入yes前可以对照GitHub的RSA Key的指纹信息是否与SSH连接给出的一致。</p>
-<h3 id="5-从远程库克隆"><a href="#5-从远程库克隆" class="headerlink" title="5.从远程库克隆"></a>5.从远程库克隆</h3><hr>
-<p>从远程库克隆,就需要我们先创建远程库，在github创建一个新的gitskills仓库，我们勾选Initialize this repository with a README，这样GitHub会自动为我们创建一个README.md文件。创建完毕后，可以看到README.md文件：</p>
-<p>　　现在，远程库已经准备好了，下一步是用命令git clone克隆一个本地库：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ git clone git@github.com:michaelliao/gitskills.git</span><br><span class="line"> </span><br><span class="line">$ cd gitskills</span><br><span class="line">$ ls</span><br><span class="line">README.md</span><br></pre></td></tr></table></figure></p>
-<p>　　注意把Git库的地址换成你自己的，然后进入gitskills目录看看，已经有README.md文件了。</p>
-<p>　　你也许还注意到，GitHub给出的地址不止一个，还可以用github.com/onlyone/gitskills.git这样的地址。实际上，Git支持多种协议，默认的git://使用ssh，但也可以使用https等其他协议。</p>
-<p>　　注意：要克隆一个仓库，首先必须知道仓库的地址，然后使用git clone命令克隆。</p>
-<p>　　Git支持多种协议，包括https，但通过ssh支持的原生git协议速度最快。</p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -853,13 +888,17 @@ warning: You appear to have cloned an empty repository.
   
     <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
   
+    <li><a href="/tags/HTTP/">HTTP</a><small>1</small></li>
+  
     <li><a href="/tags/Javascript/">Javascript</a><small>2</small></li>
   
-    <li><a href="/tags/Mocha/">Mocha</a><small>4</small></li>
+    <li><a href="/tags/Linux/">Linux</a><small>1</small></li>
   
     <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
   
     <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
+  
+    <li><a href="/tags/Node-js/">Node.js</a><small>1</small></li>
   
     <li><a href="/tags/Node-js入门/">Node.js入门</a><small>9</small></li>
   
@@ -876,6 +915,8 @@ warning: You appear to have cloned an empty repository.
     <li><a href="/tags/安全/">安全</a><small>8</small></li>
   
     <li><a href="/tags/异步编程/">异步编程</a><small>3</small></li>
+  
+    <li><a href="/tags/测试/">测试</a><small>5</small></li>
   
   </ul>
 </div>
