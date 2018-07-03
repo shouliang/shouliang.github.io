@@ -53,6 +53,223 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2014-01-29T12:45:23.000Z"><a href="/2014/01/29/Node.js入门/Node.js入门(8)子进程/">2014-01-29</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2014/01/29/Node.js入门/Node.js入门(8)子进程/">八.子进程</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-简介"><a href="#1-简介" class="headerlink" title="1.简介"></a>1.简介</h3><hr>
+<h4 id="child-process模块的基本介绍"><a href="#child-process模块的基本介绍" class="headerlink" title="child_process模块的基本介绍"></a>child_process模块的基本介绍</h4><p>众所周知node.js是基于单线程模型架构，这样的设计可以带来高效的CPU利用率，但是无法却利用多个核心的CPU，为了解决这个问题，node.js提供了child_process模块，通过多进程来实现对多核CPU的利用. child_process模块提供了四个创建子进程的函数，分别是spawn，exec，execFile和fork。</p>
+<h3 id="2-创建子进程"><a href="#2-创建子进程" class="headerlink" title="2.创建子进程"></a>2.创建子进程</h3><h4 id="spawn函数的基本用法"><a href="#spawn函数的基本用法" class="headerlink" title="spawn函数的基本用法"></a>spawn函数的基本用法</h4><p>spawn函数用给定的命令发布一个子进程，只能运行指定的程序，参数需要在列表中给出。如下示例：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> child_process = <span class="built_in">require</span>(<span class="string">'child_process'</span>);</span><br><span class="line"><span class="keyword">var</span> child = child_process.spawn( command );</span><br><span class="line">child.stdout.on(<span class="string">'data'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">data</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(data);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>通过执行命令得到返回结果，我们就可以拿到标准输出流数据了。</p>
+<h3 id="3-exec"><a href="#3-exec" class="headerlink" title="3.exec"></a>3.exec</h3><hr>
+<h4 id="exec函数的简单用法"><a href="#exec函数的简单用法" class="headerlink" title="exec函数的简单用法"></a>exec函数的简单用法</h4><p>exec也是一个创建子进程的函数，与spawn函数不同它可以直接接受一个回调函数作为参数，回调函数有三个参数，分别是err, stdout , stderr，基本使用方法如下：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> child_process = <span class="built_in">require</span>(<span class="string">'child_process'</span>);</span><br><span class="line">child_process.exec( command , <span class="function"><span class="keyword">function</span>(<span class="params">err, stdout , stderr </span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log( stdout );</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<h3 id="4-execFile"><a href="#4-execFile" class="headerlink" title="4.execFile"></a>4.execFile</h3><hr>
+<h4 id="execFile函数的简单用法"><a href="#execFile函数的简单用法" class="headerlink" title="execFile函数的简单用法"></a>execFile函数的简单用法</h4><p>execFile函数与exec函数类似，但execFile函数更显得精简，因为它可以直接执行所指定的文件，基本使用方法如下：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> child_process = <span class="built_in">require</span>(<span class="string">'child_process'</span>);</span><br><span class="line">child_process.execFile( file , <span class="function"><span class="keyword">function</span>(<span class="params">err, stdout , stderr </span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log( stdout );</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>execFile与spawn的参数相似，也需要分别指定执行的命令和参数，但可以接受一个回调函数，与exec的回调函数相同。</p>
+<h3 id="5-fork"><a href="#5-fork" class="headerlink" title="5.fork"></a>5.fork</h3><hr>
+<h4 id="fork函数的简单用法"><a href="#fork函数的简单用法" class="headerlink" title="fork函数的简单用法"></a>fork函数的简单用法</h4><p>fork函数可直接运行Node.js模块，所以我们可以直接通过指定模块路径而直接进行操作。使用方法如下：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> child_process = <span class="built_in">require</span>(<span class="string">'child_process'</span>);</span><br><span class="line">child_process.fork( modulePath );</span><br></pre></td></tr></table></figure></p>
+<p>该方法是spawn()的特殊情景，用于派生Node进程。除了普通ChildProcess实例所具有的所有方法，所返回的对象还具有内建的通讯通道。</p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2014-01-26T12:45:23.000Z"><a href="/2014/01/26/Node.js入门/Node.js入门(7)实用工具/">2014-01-26</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2014/01/26/Node.js入门/Node.js入门(7)实用工具/">七.实用工具</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-简介"><a href="#1-简介" class="headerlink" title="1.简介"></a>1.简介</h3><hr>
+<h4 id="UTIL模块的基本介绍"><a href="#UTIL模块的基本介绍" class="headerlink" title="UTIL模块的基本介绍"></a>UTIL模块的基本介绍</h4><p>util模块呢，是一个Node.js核心模块，提供常用函数的集合，用于弥补核心JavaScript的一些功能过于精简的不足。并且还提供了一系列常用工具，用来对数据的输出和验证。</p>
+<h3 id="2-转换字符串"><a href="#2-转换字符串" class="headerlink" title="2.转换字符串"></a>2.转换字符串</h3><h4 id="inspect函数的基本用法"><a href="#inspect函数的基本用法" class="headerlink" title="inspect函数的基本用法"></a>inspect函数的基本用法</h4><p>util.inspect(object,[showHidden],[depth],[colors])是一个将任意对象转换为字符串的函数，通常用于调试和错误输出。它至少接受一个参数object，即要转换的对象,我们来学习它的简单用法。使用语法如下：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> util = <span class="built_in">require</span>(<span class="string">'util'</span>);</span><br><span class="line"><span class="keyword">var</span> result = util.inspect(<span class="built_in">Object</span>);</span><br><span class="line"><span class="built_in">console</span>.log(result);</span><br></pre></td></tr></table></figure></p>
+<p>运行结果：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[<span class="built_in">Function</span>: <span class="built_in">Object</span>]</span><br></pre></td></tr></table></figure></p>
+<h3 id="3-字符串格式化"><a href="#3-字符串格式化" class="headerlink" title="3.字符串格式化"></a>3.字符串格式化</h3><hr>
+<h4 id="format函数的基本用法"><a href="#format函数的基本用法" class="headerlink" title="format函数的基本用法"></a>format函数的基本用法</h4><p>format函数根据第一个参数，返回一个格式化字符串，第一个参数是一个可包含零个或多个占位符的字符串。每一个占位符被替换为与其对应的转换后的值，支持的占位符有：”%s(字符串)”、”%d(数字&lt;整型和浮点型&gt;)”、”%j(JSON)”、”%(单独一个百分号则不作为一个参数)”。</p>
+<p>1：如果占位符没有相对应的参数，占位符将不会被替换.如示例：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> util = <span class="built_in">require</span>(<span class="string">'util'</span>);</span><br><span class="line"><span class="keyword">var</span> result = util.format(<span class="string">'%s:%s'</span>, <span class="string">'foo'</span>);</span><br><span class="line"><span class="built_in">console</span>.log(result);</span><br></pre></td></tr></table></figure>
+<p>运行结果：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">'foo:%s'</span></span><br></pre></td></tr></table></figure>
+<p>2：如果有多个参数占位符，额外的参数将会调用util.inspect()转换为字符串。这些字符串被连接在一起，并且以空格分隔。如示例：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> util = <span class="built_in">require</span>(<span class="string">'util'</span>);</span><br><span class="line"><span class="keyword">var</span> result = util.format(<span class="string">'%s:%s'</span>, <span class="string">'foo'</span>, <span class="string">'bar'</span>, <span class="string">'baz'</span>);</span><br><span class="line"><span class="built_in">console</span>.log(result);</span><br></pre></td></tr></table></figure></p>
+<p>运行结果：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">'foo:bar baz'</span></span><br></pre></td></tr></table></figure>
+<p>3：如果第一个参数是一个非格式化字符串，则会把所有的参数转成字符串并以空格隔开拼接在一块，而且返回该字符串。如示例：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> util = <span class="built_in">require</span>(<span class="string">'util'</span>);</span><br><span class="line"><span class="keyword">var</span> result = util.format(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>);</span><br><span class="line"><span class="built_in">console</span>.log(result);</span><br></pre></td></tr></table></figure></p>
+<p>运行结果：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">'1 2 3'</span></span><br></pre></td></tr></table></figure>
+<h3 id="4-数组验证"><a href="#4-数组验证" class="headerlink" title="4.数组验证"></a>4.数组验证</h3><hr>
+<h4 id="isArray函数的基本用法"><a href="#isArray函数的基本用法" class="headerlink" title="isArray函数的基本用法"></a>isArray函数的基本用法</h4><p>isArray函数可以判断对象是否为数组类型，是则返回ture,否则为false。语法如下：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> util = <span class="built_in">require</span>(<span class="string">'util'</span>);</span><br><span class="line"><span class="keyword">var</span> result = util.isArray([]);</span><br><span class="line"><span class="built_in">console</span>.log(result);</span><br></pre></td></tr></table></figure>
+<p>运行结果：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="literal">true</span></span><br></pre></td></tr></table></figure>
+<h3 id="5-日期验证"><a href="#5-日期验证" class="headerlink" title="5.日期验证"></a>5.日期验证</h3><hr>
+<h4 id="isDate函数的基本用法"><a href="#isDate函数的基本用法" class="headerlink" title="isDate函数的基本用法"></a>isDate函数的基本用法</h4><p>isDate函数可以判断对象是否为日期类型，是则返回ture,否则返回false。语法如下：</p>
+<p>例1：querystring.parse(“字符串”，”分隔符”，”分配符”)<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> util = <span class="built_in">require</span>(<span class="string">'util'</span>);</span><br><span class="line"><span class="keyword">var</span> result = util.isDate(<span class="keyword">new</span> <span class="built_in">Date</span>());</span><br><span class="line"><span class="built_in">console</span>.log(result);</span><br></pre></td></tr></table></figure></p>
+<p>运行结果：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="literal">true</span></span><br></pre></td></tr></table></figure></p>
+<h3 id="6-正则验证"><a href="#6-正则验证" class="headerlink" title="6.正则验证"></a>6.正则验证</h3><hr>
+<h4 id="isRegExp函数的基本用法"><a href="#isRegExp函数的基本用法" class="headerlink" title="isRegExp函数的基本用法"></a>isRegExp函数的基本用法</h4><p>isRegExp函数可以判断对象是否为正则类型，是则返回ture,否则返回false。语法如下：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> util = <span class="built_in">require</span>(<span class="string">'util'</span>);</span><br><span class="line"><span class="keyword">var</span> result = util.isRegExp(<span class="built_in">Object</span>);</span><br><span class="line"><span class="built_in">console</span>.log(result);</span><br></pre></td></tr></table></figure></p>
+<p>请自行验证。</p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2014-01-23T12:45:23.000Z"><a href="/2014/01/23/Node.js入门/Node.js入门(6)字符串转换/">2014-01-23</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2014/01/23/Node.js入门/Node.js入门(6)字符串转换/">六.字符串转换</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-简介"><a href="#1-简介" class="headerlink" title="1.简介"></a>1.简介</h3><hr>
+<h4 id="Query-String模块的基本用法"><a href="#Query-String模块的基本用法" class="headerlink" title="Query String模块的基本用法"></a>Query String模块的基本用法</h4><p>Query String模块用于实现URL参数字符串与参数对象之间的互相转换，提供了”stringify”、”parse”等一些实用函数来针对字符串进行处理，通过序列化和反序列化，来更好的应对实际开发中的条件需求，对于逻辑的处理也提供了很好的帮助。</p>
+<h3 id="2-序列化"><a href="#2-序列化" class="headerlink" title="2.序列化"></a>2.序列化</h3><hr>
+<h4 id="stringify函数的基础用法"><a href="#stringify函数的基础用法" class="headerlink" title="stringify函数的基础用法"></a>stringify函数的基础用法</h4><p>stringify函数的作用就是序列化对象，也就是说将对象类型转换成一个字符串类型（默认的分割符（”&amp;”）和分配符（”=”））。</p>
+<p>例1：querystring.stringify(“对象”)</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> querystring= <span class="built_in">require</span>(<span class="string">'querystring'</span>);</span><br><span class="line"><span class="keyword">var</span> result = querystring.stringify(&#123;<span class="attr">foo</span>:<span class="string">'bar'</span>,<span class="attr">cool</span>:[<span class="string">'xux'</span>, <span class="string">'yys'</span>]&#125;);</span><br><span class="line"><span class="built_in">console</span>.log(result);</span><br></pre></td></tr></table></figure>
+<p>运行结果：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">foo=bar&amp;cool=xux&amp;cool=yys</span><br></pre></td></tr></table></figure></p>
+<h3 id="3-序列化-lt-多参数-gt"><a href="#3-序列化-lt-多参数-gt" class="headerlink" title="3.序列化&lt;多参数&gt;"></a>3.序列化&lt;多参数&gt;</h3><hr>
+<h4 id="stringify函数的多参数用法"><a href="#stringify函数的多参数用法" class="headerlink" title="stringify函数的多参数用法"></a>stringify函数的多参数用法</h4><p>stringify函数的多参数用法，上节我们知道了对象被序列化为字符串之后默认是通过分割符（”&amp;”）和分配符（”=”）组成的，那可不可以改变呢，这节我们就来了解一下，是否可以自己去定义组合结果，看下面的小例子</p>
+<p>例1：querystring.stringify(“对象”，”分隔符”，”分配符”)</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> querystring = <span class="built_in">require</span>(<span class="string">'querystring'</span>);</span><br><span class="line"><span class="keyword">var</span> result = querystring.stringify(&#123;<span class="attr">foo</span>:<span class="string">'bar'</span>,<span class="attr">cool</span>:[<span class="string">'xux'</span>, <span class="string">'yys'</span>]&#125;,<span class="string">'*'</span>,<span class="string">'$'</span>);</span><br><span class="line"><span class="built_in">console</span>.log(result);</span><br></pre></td></tr></table></figure>
+<p>运行结果：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">'foo$bar*cool$xux*cool$yys'</span></span><br></pre></td></tr></table></figure>
+<h3 id="4-反序列化"><a href="#4-反序列化" class="headerlink" title="4.反序列化"></a>4.反序列化</h3><hr>
+<h4 id="parse函数的基本用法"><a href="#parse函数的基本用法" class="headerlink" title="parse函数的基本用法"></a>parse函数的基本用法</h4><p>接下来就来学习反序列化函数——parse函数，parse函数的作用就是反序列化字符串（默认是由”=”、”&amp;”拼接而成），转换得到一个对象类型。如下示例：</p>
+<p>例1：querystring.parse(“字符串”)</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> querystring = <span class="built_in">require</span>(<span class="string">'querystring'</span>);</span><br><span class="line"><span class="keyword">var</span> result = querystring.parse(<span class="string">'foo=bar&amp;cool=xux&amp;cool=yys'</span>);</span><br><span class="line"><span class="built_in">console</span>.log(result);</span><br></pre></td></tr></table></figure>
+<p>运行结果：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123; <span class="attr">foo</span>: <span class="string">'bar'</span>, <span class="attr">cool</span>: [<span class="string">'xux'</span>, <span class="string">'yys'</span>]&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="5-反序列化-lt-多参数-gt"><a href="#5-反序列化-lt-多参数-gt" class="headerlink" title="5.反序列化&lt;多参数&gt;"></a>5.反序列化&lt;多参数&gt;</h3><hr>
+<h4 id="parse函数的多参数用法"><a href="#parse函数的多参数用法" class="headerlink" title="parse函数的多参数用法"></a>parse函数的多参数用法</h4><p>和上节stringify函数的多参数用法不同的是，parse函数可以根据用户所自定义的分割符、分配符来反序列化字符串，从而得到相应的对象结果.如下示例：</p>
+<p>例1：querystring.parse(“字符串”，”分隔符”，”分配符”)<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> querystring = <span class="built_in">require</span>(<span class="string">'querystring'</span>);</span><br><span class="line"><span class="keyword">var</span> result = querystring.parse(<span class="string">'foo@bar$cool@xux$cool@yys'</span>,<span class="string">'@'</span>,<span class="string">'$'</span>);</span><br><span class="line"><span class="built_in">console</span>.log(result);</span><br></pre></td></tr></table></figure></p>
+<p>运行结果：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123; <span class="attr">foo</span>: <span class="string">''</span>, <span class="attr">bar</span>: <span class="string">'cool'</span>, <span class="attr">xux</span>: <span class="string">'cool'</span>, <span class="attr">yys</span>: <span class="string">''</span> &#125;</span><br></pre></td></tr></table></figure></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2014-01-21T12:45:23.000Z"><a href="/2014/01/21/Node.js入门/Node.js入门(5)path优化/">2014-01-21</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2014/01/21/Node.js入门/Node.js入门(5)path优化/">五.path优化</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-简介"><a href="#1-简介" class="headerlink" title="1.简介"></a>1.简介</h3><hr>
+<h4 id="path模块的基本用法"><a href="#path模块的基本用法" class="headerlink" title="path模块的基本用法"></a>path模块的基本用法</h4><p>本模块包含一套用于处理和转换文件路径的工具集,用于处理目录的对象，提高用户开发效率.</p>
+<h3 id="2-格式化路径"><a href="#2-格式化路径" class="headerlink" title="2.格式化路径"></a>2.格式化路径</h3><hr>
+<h4 id="normalize函数的基础用法"><a href="#normalize函数的基础用法" class="headerlink" title="normalize函数的基础用法"></a>normalize函数的基础用法</h4><p>normalize函数将不符合规范的路径经过格式化转换为标准路径,解析路径中的.与..外，还能去掉多余的斜杠。<br>如下示例：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> path = <span class="built_in">require</span>(<span class="string">'path'</span>);  </span><br><span class="line"><span class="keyword">var</span> data = path.normalize(<span class="string">'/path///normalize/hi/..'</span>);</span><br><span class="line"><span class="built_in">console</span>.log(data);</span><br></pre></td></tr></table></figure>
+<p>运行结果：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">'/path/normalize/'</span></span><br></pre></td></tr></table></figure></p>
+<h3 id="3-组合路径"><a href="#3-组合路径" class="headerlink" title="3.组合路径"></a>3.组合路径</h3><hr>
+<h4 id="join函数的基本用法"><a href="#join函数的基本用法" class="headerlink" title="join函数的基本用法"></a>join函数的基本用法</h4><p>join函数将传入的多个路径拼接为标准路径并将其格式化，返回规范后的路径，避免手工拼接路径字符串的繁琐. 如下示例：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> path = <span class="built_in">require</span>(<span class="string">'path'</span>);</span><br><span class="line"><span class="keyword">var</span> data = path.join(<span class="string">'///you'</span>, <span class="string">'/are'</span>, <span class="string">'//beautiful'</span>);</span><br><span class="line"><span class="built_in">console</span>.log(data);</span><br></pre></td></tr></table></figure>
+<p>运行结果：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">'/you/are/beautiful'</span></span><br></pre></td></tr></table></figure>
+<h3 id="4-dirname"><a href="#4-dirname" class="headerlink" title="4.dirname"></a>4.dirname</h3><hr>
+<h4 id="dirname函数的基本用法"><a href="#dirname函数的基本用法" class="headerlink" title="dirname函数的基本用法"></a>dirname函数的基本用法</h4><p>dirname函数用来返回路径中的目录名. 如下示例：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> path = <span class="built_in">require</span>(<span class="string">'path'</span>);</span><br><span class="line"><span class="keyword">var</span> data = path.dirname(<span class="string">'/foo/strong/cool/nice'</span>); </span><br><span class="line"><span class="built_in">console</span>.log(data);</span><br></pre></td></tr></table></figure>
+<p>运行结果：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">'/foo/strong/cool'</span></span><br></pre></td></tr></table></figure>
+<h3 id="5-basename"><a href="#5-basename" class="headerlink" title="5.basename"></a>5.basename</h3><hr>
+<h4 id="basename函数的基础用法"><a href="#basename函数的基础用法" class="headerlink" title="basename函数的基础用法"></a>basename函数的基础用法</h4><p>basename函数可返回路径中的最后一部分，并且可以对其进行条件排除. 如下示例：</p>
+<p>例1：path.basename(‘路径字符串’);</p>
+<p>例2：path.basename(‘路径字符串’, ‘[ext]’)&lt;排除[ext]后缀字符串&gt;;<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> path = <span class="built_in">require</span>(<span class="string">'path'</span>);    </span><br><span class="line"><span class="keyword">var</span> data1 = path.basename(<span class="string">'/foo/strong/basename/index.html'</span>);</span><br><span class="line"><span class="keyword">var</span> data2 = path.basename(<span class="string">'/foo/strong/basename/index.html'</span>,<span class="string">'.html'</span>);</span><br><span class="line"><span class="built_in">console</span>.log(data1 + <span class="string">' "and" '</span> + data2);</span><br></pre></td></tr></table></figure></p>
+<p>运行结果：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">'index.html "and" index'</span></span><br></pre></td></tr></table></figure></p>
+<h3 id="6-extname"><a href="#6-extname" class="headerlink" title="6.extname"></a>6.extname</h3><hr>
+<h4 id="extname函数的基础用法"><a href="#extname函数的基础用法" class="headerlink" title="extname函数的基础用法"></a>extname函数的基础用法</h4><p>extname函数返回路径中文件的扩展名(以最后一个’.’开始,返回’.’以及’.’以后的所有字符串,如没有’.’,则返回空字符串). 如下示例：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> path = <span class="built_in">require</span>(<span class="string">'path'</span>);</span><br><span class="line"><span class="keyword">var</span> data = path.extname(<span class="string">'index.html'</span>);</span><br><span class="line"><span class="built_in">console</span>.log(data);</span><br></pre></td></tr></table></figure></p>
+<p>运行结果：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">'.html'</span></span><br></pre></td></tr></table></figure></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2014-01-18T12:45:23.000Z"><a href="/2014/01/18/Node.js入门/Node.js入门(4)url处理/">2014-01-18</a></time>
       
       
@@ -432,7 +649,7 @@
   
     <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
   
-    <li><a href="/tags/Node-js/">Node.js</a><small>4</small></li>
+    <li><a href="/tags/Node-js/">Node.js</a><small>8</small></li>
   
     <li><a href="/tags/Node-js入门/">Node.js入门</a><small>9</small></li>
   

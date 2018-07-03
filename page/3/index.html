@@ -53,6 +53,222 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2016-04-15T14:16:53.000Z"><a href="/2016/04/15/Node.js错误处理和调试/heapdump简介/">2016-04-15</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2016/04/15/Node.js错误处理和调试/heapdump简介/">heapdump简介</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="heapdump工具介绍"><a href="#heapdump工具介绍" class="headerlink" title="heapdump工具介绍"></a>heapdump工具介绍</h3><blockquote>
+<p><code>heapdump</code> 是一个非常有用的node内存调试工具. 它能够在运行时将V8的堆dump到文件中. 这样我们就可以通过chrome的带的的开发者工具查看当时的内存占用情况,帮助我们分析一些内存问题.</p>
+</blockquote>
+<h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><p><code>heapdump</code>的安装时非常简单的,和安装普通的npm包是一样的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install heapdump --save</span><br></pre></td></tr></table></figure>
+<h3 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h3><p>一旦我们安装了<code>heapdump</code>, 我们就可以在代码中使用<code>heapdump</code>了.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var heapdump = require(&apos;heapdump&apos;);</span><br></pre></td></tr></table></figure>
+<h3 id="生产堆快照"><a href="#生产堆快照" class="headerlink" title="生产堆快照"></a>生产堆快照</h3><p>有两种方法来主动生成堆快照:</p>
+<ol>
+<li>主动调用方法 <code>writeSnapshot([filename], [callback])</code></li>
+<li>通过给进程发送信号 <code>kill -USR2 pid</code></li>
+</ol>
+<p>默认情况下node进程是可以接收并处理<code>USR2</code>信号的, 如果想要禁止,可以通过添加启动参数来实现:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">env NODE_HEAPDUMP_OPTIONS=nosignal node app.js</span><br></pre></td></tr></table></figure>
+<h3 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h3><p>在以前的实现中,在生成块照时, <code>heapdump</code> 会fork一个新的node进程异步将老的内存快照信息写入文件. 通过这种方式生成的快照信息不能再chrome的开发者工具中进行比较, 并且和node.js v0.12 版本完全不兼容. 如果你确实想通过这种方式生成快照信息,可以通过添加参数来实现:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">env NODE_HEAPDUMP_OPTIONS=fork node script.js</span><br></pre></td></tr></table></figure>
+<h3 id="分析快照信息"><a href="#分析快照信息" class="headerlink" title="分析快照信息"></a>分析快照信息</h3><ol>
+<li><p>打开chrome控制台<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/chrome-devtool-profile.png" alt=""></p>
+</li>
+<li><p>加载快照文件</p>
+</li>
+</ol>
+<p>点击<code>load</code>按钮, 选择文件就可以加载快照文件了.<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/chrome-nodejs-heapdump.png" alt=""></p>
+<h3 id="配套工具-memwatch-next"><a href="#配套工具-memwatch-next" class="headerlink" title="配套工具 memwatch-next"></a>配套工具 memwatch-next</h3><p>线上运行的程序我们不会时不时的主动生产堆快照信息的, 如果能在发生内存泄露的时候生成快照信息,这样就最好了. 幸运的是有这种运行时内存<br>监控包:<code>memwatch-next</code></p>
+<h3 id="安装-memwatch"><a href="#安装-memwatch" class="headerlink" title="安装 memwatch"></a>安装 memwatch</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install memwatch-next --save</span><br></pre></td></tr></table></figure>
+<h3 id="使用-memwatch"><a href="#使用-memwatch" class="headerlink" title="使用 memwatch"></a>使用 memwatch</h3><h4 id="内存泄露监听"><a href="#内存泄露监听" class="headerlink" title="内存泄露监听"></a>内存泄露监听</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> memwatch = <span class="built_in">require</span>(<span class="string">'memwatch-next'</span>);</span><br><span class="line">memwatch.on(<span class="string">'leak'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">info</span>) </span>&#123; </span><br><span class="line">    <span class="comment">// 发生内存泄露时的回调函数</span></span><br><span class="line">    <span class="built_in">console</span>.error(<span class="string">'Memory leak detected: '</span>, info);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<h3 id="内存使用监控"><a href="#内存使用监控" class="headerlink" title="内存使用监控"></a>内存使用监控</h3><p>监控内存使用情况最好的方法是在V8的GC后统计内存使用信息, memwatch就是这样做的.当V8执行垃圾回收的时候, memwatch会触发一个事件, 我们可以通过监听该事件来收集内存使用情况.</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">memwatch.on(<span class="string">'stats'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">stats</span>) </span>&#123; ... &#125;);</span><br></pre></td></tr></table></figure>
+<p>内存状态数据格式如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;num_full_gc&quot;: 17,</span><br><span class="line">  &quot;num_inc_gc&quot;: 8,</span><br><span class="line">  &quot;heap_compactions&quot;: 8,</span><br><span class="line">  &quot;estimated_base&quot;: 2592568,</span><br><span class="line">  &quot;current_base&quot;: 2592568,</span><br><span class="line">  &quot;min&quot;: 2499912,</span><br><span class="line">  &quot;max&quot;: 2592568,</span><br><span class="line">  &quot;usage_trend&quot;: 0</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>estimated_base</code> 和 <code>usage_trend</code> 是随事件变动的. 如果<code>usage_trend</code>的值一直是正数,则表明V8的堆大小是一直增长的, 也就是说程序可能有内存泄露.</p>
+<p>V8 有自己执行 GC 的策略, 如当负载比较高的时, V8可能延迟进行GC, <code>memwatch</code> 提供了一个方法<code>gc()</code>可以让我们主动触发GC动作(V8执行full gc 并进行内存整理).</p>
+<h3 id="Heap-Diffing"><a href="#Heap-Diffing" class="headerlink" title="Heap Diffing"></a>Heap Diffing</h3><p>针对内存泄露 <code>memwatch</code>提供了方法<code>HeapDiff</code>, 可以让我们对2个heap快照进行比较,找出差异.</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Take first snapshot </span></span><br><span class="line"><span class="keyword">var</span> hd = <span class="keyword">new</span> memwatch.HeapDiff();</span><br><span class="line"></span><br><span class="line"><span class="comment">// do some things ... </span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Take the second snapshot and compute the diff </span></span><br><span class="line"><span class="keyword">var</span> diff = hd.end();</span><br></pre></td></tr></table></figure>
+<p>diff 的内容格式是:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;before&quot;: &#123; &quot;nodes&quot;: 11625, &quot;size_bytes&quot;: 1869904, &quot;size&quot;: &quot;1.78 mb&quot; &#125;,</span><br><span class="line">  &quot;after&quot;:  &#123; &quot;nodes&quot;: 21435, &quot;size_bytes&quot;: 2119136, &quot;size&quot;: &quot;2.02 mb&quot; &#125;,</span><br><span class="line">  &quot;change&quot;: &#123; &quot;size_bytes&quot;: 249232, &quot;size&quot;: &quot;243.39 kb&quot;, &quot;freed_nodes&quot;: 197,</span><br><span class="line">    &quot;allocated_nodes&quot;: 10007,</span><br><span class="line">    &quot;details&quot;: [</span><br><span class="line">      &#123; &quot;what&quot;: &quot;String&quot;,</span><br><span class="line">        &quot;size_bytes&quot;: -2120,  &quot;size&quot;: &quot;-2.07 kb&quot;,  &quot;+&quot;: 3,    &quot;-&quot;: 62</span><br><span class="line">      &#125;,</span><br><span class="line">      &#123; &quot;what&quot;: &quot;Array&quot;,</span><br><span class="line">        &quot;size_bytes&quot;: 66687,  &quot;size&quot;: &quot;65.13 kb&quot;,  &quot;+&quot;: 4,    &quot;-&quot;: 78</span><br><span class="line">      &#125;,</span><br><span class="line">      &#123; &quot;what&quot;: &quot;LeakingClass&quot;,</span><br><span class="line">        &quot;size_bytes&quot;: 239952, &quot;size&quot;: &quot;234.33 kb&quot;, &quot;+&quot;: 9998, &quot;-&quot;: 0</span><br><span class="line">      &#125;</span><br><span class="line">    ]</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>用法: 我们可以在memwatch的<code>stats</code>回调事件中调用HeapDiff, 这样就能比较</p>
+<h3 id="配合使用"><a href="#配合使用" class="headerlink" title="配合使用"></a>配合使用</h3><p>在每一次发现内存泄漏的时候，我们都将此时的内存堆栈快照写入磁盘中</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">memwatch.on(<span class="string">'leak'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">info</span>) </span>&#123;</span><br><span class="line"> <span class="built_in">console</span>.error(info);</span><br><span class="line"> <span class="keyword">var</span> file = <span class="string">'/tmp/myapp-'</span> + process.pid + <span class="string">'-'</span> + <span class="built_in">Date</span>.now() + <span class="string">'.heapsnapshot'</span>;</span><br><span class="line"> heapdump.writeSnapshot(file, <span class="function"><span class="keyword">function</span>(<span class="params">err</span>)</span>&#123;</span><br><span class="line">   <span class="keyword">if</span> (err) <span class="built_in">console</span>.error(err);</span><br><span class="line">   <span class="keyword">else</span> <span class="built_in">console</span>.error(<span class="string">'Wrote snapshot: '</span> + file);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>原文：<a href="https://leokongwq.github.io/2016/11/08/nodejs-heapdump.html" target="_blank" rel="noopener">https://leokongwq.github.io/2016/11/08/nodejs-heapdump.html</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2016-04-12T14:16:53.000Z"><a href="/2016/04/12/Node.js错误处理和调试/动态修改NodeJS程序中的变量值/">2016-04-12</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2016/04/12/Node.js错误处理和调试/动态修改NodeJS程序中的变量值/">动态修改Node程序中的变量值</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h2 id="启动一个-HTTP-Server"><a href="#启动一个-HTTP-Server" class="headerlink" title="启动一个 HTTP Server"></a>启动一个 HTTP Server</h2><p>用简单的 Hello World 做例子吧，不过略作修改。在 <code>global</code> 下放一个变量 <code>message</code>， 然后打印出来：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// message content will be modified !</span></span><br><span class="line">global.message = <span class="string">"hello world!"</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> server = <span class="built_in">require</span>(<span class="string">'http'</span>).createServer(<span class="function"><span class="keyword">function</span> (<span class="params">req, res</span>) </span>&#123;</span><br><span class="line">  res.end(global.message);</span><br><span class="line">&#125;).listen(<span class="number">8001</span>);</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'pid = %d'</span>, process.pid);</span><br></pre></td></tr></table></figure>
+<p>用命令启动 Server，此时，通过用浏览器访问 <code>http://localhost:8001</code> 可以看到网页内容是 <code>hello world!</code>。 接下来我们将尝试在不改变代码，不重启进程的情况下把 <code>message</code> 换成 “hello bugs!”。</p>
+<h2 id="使-Server-进程进入-Debug-模式"><a href="#使-Server-进程进入-Debug-模式" class="headerlink" title="使 Server 进程进入 Debug 模式"></a>使 Server 进程进入 Debug 模式</h2><p>V8 引擎在实现的时候留了 Debugger 接口。 通过命令 <code>node --debug-brk=5858 [filename]</code> 可以启动一个脚本，并且立即进入 Debug 模式。</p>
+<p>那么如果是已经运行着的 NodeJS 程序，可以进入 Debug 模式吗？也是可以的，在操作系统下给 NodeJS 的进程发一个 <code>SIGUSR1</code> 信号，可以让进程进入 Debug 模式。 进入 Debug 模式的进程会在本地启动一个 TCP Server 并且默认监听 <code>5858</code> 端口。</p>
+<p>此时在另一个命令行窗口执行命令 <code>node debug localhost:5858</code> 就可以连接到 Debugger 调试端口， 并且可以使用很多常用的 Debug 命令，比如 <code>c</code>继续执行，<code>s</code> 步入， <code>o</code>步出等。</p>
+<h2 id="Debugger-协议"><a href="#Debugger-协议" class="headerlink" title="Debugger 协议"></a>Debugger 协议</h2><p>使用 <code>node debug hostname:port</code> 命令连接到进程进行 Debug 的方式比较简单，但是要完成一些高级的功能就会处处受限，因为它只封装了 Debugger 协议中 command 的一部分。 下面介绍一下这个简单的协议。</p>
+<p>Client 和 Server 的通讯是通过 TCP 进行的。 DebugClient 第一次连接到 DebugServer 的时候会拿到一些 Header，比如 Node 版本， V8 版本等。后面紧跟着一个空的消息1</p>
+<p><strong>消息1</strong></p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Type: connect\r\n</span><br><span class="line">V8-Version: <span class="number">3.28</span><span class="number">.71</span><span class="number">.19</span>\r\n</span><br><span class="line">Protocol-Version: <span class="number">1</span>\r\n</span><br><span class="line">Embedding-Host: node v0<span class="number">.12</span><span class="number">.4</span>\r\n</span><br><span class="line">Content-Length: <span class="number">0</span>\r\n</span><br><span class="line">\r\n</span><br></pre></td></tr></table></figure>
+<p>消息实体由 Header 和 Body 组成，消息1的 Body 为空，所以 Header 中对应的 Content-Length 为 0。而在下面这个例子里，Body 为一个单行的 JSON 字符串，这是由协议所规定的。</p>
+<p><strong>消息2</strong></p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Content-Length: <span class="number">46</span>\r\n</span><br><span class="line">\r\n</span><br><span class="line">&#123;<span class="string">"command"</span>:<span class="string">"version"</span>,<span class="string">"type"</span>:<span class="string">"request"</span>,<span class="string">"seq"</span>:<span class="number">1</span>&#125;</span><br></pre></td></tr></table></figure>
+<p>消息2的类型( type )是 <code>request</code>，代表这是 Client 发给 Server 的命令，其他的可能值是 <code>response</code> 和 <code>event</code> 分别代表 Server 对 Client 的相应，和 Server 端发生的事件。</p>
+<p><strong>消息3</strong></p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Content-Length: <span class="number">137</span>\r\n</span><br><span class="line">\r\n</span><br><span class="line">&#123;<span class="string">"seq"</span>:<span class="number">1</span>,<span class="string">"request_seq"</span>:<span class="number">1</span>,<span class="string">"type"</span>:<span class="string">"response"</span>,<span class="string">"command"</span>:<span class="string">"version"</span>,<span class="string">"success"</span>:<span class="literal">true</span>,<span class="string">"body"</span>:&#123;<span class="string">"V8Version"</span>:<span class="string">"3.28.71.19"</span>&#125;,<span class="string">"refs"</span>:[],<span class="string">"running"</span>:<span class="literal">true</span>&#125;</span><br></pre></td></tr></table></figure>
+<p>消息2是 Client 发送给 Server的，消息3是 Server 对 Client 的相应，那么如何判断消息3是不是消息2的结果呢？可以看到消息2中的 seq 值是1，而 消息3中的 request_seq 值是1。 Debugger 协议正是通过这两个值把异步返回的结果和请求一一对应起来的。</p>
+<p>Debugger 协议就是这么的简单。</p>
+<h3 id="实例化一个-Debugger-Client"><a href="#实例化一个-Debugger-Client" class="headerlink" title="实例化一个 Debugger Client"></a>实例化一个 Debugger Client</h3><p>了解了 Debugger 协议后，相信好奇心强的程序员已经跃跃欲试自己实现一个了。本着不重复发明轮子的原则开始在网上找实现，找了好久找到这个库 <a href="https://www.npmjs.com/package/pDebug" target="_blank" rel="noopener">pDebug</a>， 可惜这个库已经好久不更新了。后来通过阅读 <code>node-inspector</code> 的源码才发现，其实 NodeJS 自带了一个 Debugger 模块, 相关代码在 <code>_debugger</code> 模块里(<a href="https://github.com/joyent/node/blob/master/lib/_debugger.js" target="_blank" rel="noopener">源码</a>)，由于模块名是以 <code>_</code>开头的，所以网上找不到它的 API，好在代码注释写的非常详细，很快就能上手。</p>
+<p>我们需要的正是这个模块下的 Client， 而 Client 其实是继承于 Socket 的.</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> Client = <span class="built_in">require</span>(<span class="string">'_debugger'</span>).Client;</span><br><span class="line"><span class="keyword">var</span> client = <span class="keyword">new</span> Client();</span><br><span class="line"></span><br><span class="line">client.connect(<span class="number">5858</span>);</span><br><span class="line">client.on(<span class="string">'ready'</span>, <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="comment">// 连接成功</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<h3 id="通过-Debugger-接口执行命令"><a href="#通过-Debugger-接口执行命令" class="headerlink" title="通过 Debugger 接口执行命令"></a>通过 Debugger 接口执行命令</h3><p>接下来我们来看看如何修改这个 global 的变量，代码如下</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">modifyTheMessage</span>(<span class="params">newMessage</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> msg = &#123;</span><br><span class="line">        <span class="string">'command'</span>: <span class="string">'evaluate'</span>,</span><br><span class="line">        <span class="string">'arguments'</span>: &#123;</span><br><span class="line">            <span class="string">'expression'</span>: <span class="string">'global.message="'</span> + newMessage + <span class="string">'"'</span>,</span><br><span class="line">            <span class="string">'global'</span>: <span class="literal">true</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">    client.req(msg, <span class="function"><span class="keyword">function</span> (<span class="params">err, body, res</span>) </span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'modified to %s'</span>, newMessage);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>client.req</code> 方法封装了 <code>type=request</code> 消息类型 和 <code>seq</code> 自增的逻辑，因此在构造 <code>msg</code> JSON对象的时候不需要指明这两个属性。 我们要修改 message 其实就是在 JavaScript 调用的顶层执行 <code>global.message=newMessage</code></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>此时，再访问 <code>http://localhost:8001</code> 可以看到网页上显示的内容已经由 <code>&#39;hello world!&#39;</code> 变成了 <code>&#39;hello bugs!&#39;</code>，是不是很神奇。</p>
+<p>这种方式也带来了很多可能性：</p>
+<ul>
+<li>动态修改配置</li>
+</ul>
+<p>线上的服务器不用重启就可以应用新的配置</p>
+<ul>
+<li>模块注入</li>
+</ul>
+<p>通过其他任意语言编写的应用程序为已经运行的 NodeJS 进程注入新的模块</p>
+<ul>
+<li>性能监控</li>
+</ul>
+<p>可以剥离用户线上代码对第三方性能监控模块的直接依赖</p>
+<ul>
+<li>错误监控</li>
+</ul>
+<p>发生异常时，通过 Debugger 可以抓到发生错误的函数和行号，并且抓取各个调用栈中的每一个变量，即使是在闭包里</p>
+<ul>
+<li>Chrome 调试</li>
+</ul>
+<p>由于 Chrome 也是基于 V8 的，上述方法也可以用于 Chrome 相关的功能集成</p>
+<p>原文：<a href="http://code.oneapm.com/nodejs/2015/06/27/intereference/" target="_blank" rel="noopener">http://code.oneapm.com/nodejs/2015/06/27/intereference/</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2016-04-10T14:16:53.000Z"><a href="/2016/04/10/Node.js错误处理和调试/CPU profiling/">2016-04-10</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2016/04/10/Node.js错误处理和调试/CPU profiling/">CPU profiling</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>There are many third party tools available for profiling Node.js applications but, in many cases, the easiest option is to use the Node.js built in profiler. The built in profiler uses the <a href="https://developers.google.com/v8/profiler_example" target="_blank" rel="noopener">profiler inside V8</a> which samples the stack at regular intervals during program execution. It records the results of these samples, along with important optimization events such as jit compiles, as a series of ticks:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">code-creation,LazyCompile,0,0x2d5000a337a0,396,&quot;bp native array.js:1153:16&quot;,0x289f644df68,~</span><br><span class="line">code-creation,LazyCompile,0,0x2d5000a33940,716,&quot;hasOwnProperty native v8natives.js:198:30&quot;,0x289f64438d0,~</span><br><span class="line">code-creation,LazyCompile,0,0x2d5000a33c20,284,&quot;ToName native runtime.js:549:16&quot;,0x289f643bb28,~</span><br><span class="line">code-creation,Stub,2,0x2d5000a33d40,182,&quot;DoubleToIStub&quot;</span><br><span class="line">code-creation,Stub,2,0x2d5000a33e00,507,&quot;NumberToStringStub&quot;</span><br></pre></td></tr></table></figure>
+<p>In the past you need the V8 source code to be able to interpret the ticks. Luckily, tools have recently been introduced into Node.js 4.4.0 that facilitate the consumption of this information without separately building V8 from source. Let’s see how the built-in profiler can help provide insight into application performance.</p>
+<p>To illustrate the use of the tick profiler, we will work with a simple Express application. Our application will have two handlers, one for adding new users to our system:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">app.get(<span class="string">'/newUser'</span>, (req, res) =&gt; &#123;</span><br><span class="line">  <span class="keyword">let</span> username = req.query.username || <span class="string">''</span>;</span><br><span class="line">  <span class="keyword">const</span> password = req.query.password || <span class="string">''</span>;</span><br><span class="line"></span><br><span class="line">  username = username.replace(<span class="regexp">/[!@#$%^&amp;*]/g</span>, <span class="string">''</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!username || !password || users.username) &#123;</span><br><span class="line">    <span class="keyword">return</span> res.sendStatus(<span class="number">400</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> salt = crypto.randomBytes(<span class="number">128</span>).toString(<span class="string">'base64'</span>);</span><br><span class="line">  <span class="keyword">const</span> hash = crypto.pbkdf2Sync(password, salt, <span class="number">10000</span>, <span class="number">512</span>);</span><br><span class="line"></span><br><span class="line">  users[username] = &#123; salt, hash &#125;;</span><br><span class="line"></span><br><span class="line">  res.sendStatus(<span class="number">200</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>and another for validating user authentication attempts:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">app.get(<span class="string">'/auth'</span>, (req, res) =&gt; &#123;</span><br><span class="line">  <span class="keyword">let</span> username = req.query.username || <span class="string">''</span>;</span><br><span class="line">  <span class="keyword">const</span> password = req.query.password || <span class="string">''</span>;</span><br><span class="line"></span><br><span class="line">  username = username.replace(<span class="regexp">/[!@#$%^&amp;*]/g</span>, <span class="string">''</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!username || !password || !users[username]) &#123;</span><br><span class="line">    <span class="keyword">return</span> res.sendStatus(<span class="number">400</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> hash = crypto.pbkdf2Sync(password, users[username].salt, <span class="number">10000</span>, <span class="number">512</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (users[username].hash.toString() === hash.toString()) &#123;</span><br><span class="line">    res.sendStatus(<span class="number">200</span>);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    res.sendStatus(<span class="number">401</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p><em>Please note that these are NOT recommended handlers for authenticating users in your Node.js applications and are used purely for illustration purposes. You should not be trying to design your own cryptographic authentication mechanisms in general. It is much better to use existing, proven authentication solutions.</em></p>
+<p>Now assume that we’ve deployed our application and users are complaining about high latency on requests. We can easily run the app with the built in profiler:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">NODE_ENV=production node --prof app.js</span><br></pre></td></tr></table></figure>
+<p>and put some load on the server using <code>ab</code> (ApacheBench):</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">curl -X GET &quot;http://localhost:8080/newUser?username=matt&amp;password=password&quot;</span><br><span class="line">ab -k -c 20 -n 250 &quot;http://localhost:8080/auth?username=matt&amp;password=password&quot;</span><br></pre></td></tr></table></figure>
+<p>and get an ab output of:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">Concurrency Level:      20</span><br><span class="line">Time taken for tests:   46.932 seconds</span><br><span class="line">Complete requests:      250</span><br><span class="line">Failed requests:        0</span><br><span class="line">Keep-Alive requests:    250</span><br><span class="line">Total transferred:      50250 bytes</span><br><span class="line">HTML transferred:       500 bytes</span><br><span class="line">Requests per second:    5.33 [#/sec] (mean)</span><br><span class="line">Time per request:       3754.556 [ms] (mean)</span><br><span class="line">Time per request:       187.728 [ms] (mean, across all concurrent requests)</span><br><span class="line">Transfer rate:          1.05 [Kbytes/sec] received</span><br><span class="line"></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">Percentage of the requests served within a certain time (ms)</span><br><span class="line">  50%   3755</span><br><span class="line">  66%   3804</span><br><span class="line">  75%   3818</span><br><span class="line">  80%   3825</span><br><span class="line">  90%   3845</span><br><span class="line">  95%   3858</span><br><span class="line">  98%   3874</span><br><span class="line">  99%   3875</span><br><span class="line"> 100%   4225 (longest request)</span><br></pre></td></tr></table></figure>
+<p>From this output, we see that we’re only managing to serve about 5 requests per second and that the average request takes just under 4 seconds round trip. In a real world example, we could be doing lots of work in many functions on behalf of a user request but even in our simple example, time could be lost compiling regular expressions, generating random salts, generating unique hashes from user passwords, or inside the Express framework itself.</p>
+<p>Since we ran our application using the <code>--prof</code> option, a tick file was generated in the same directory as your local run of the application. It should have the form <code>isolate-0xnnnnnnnnnnnn-v8.log</code> (where <code>n</code> is a digit).</p>
+<p>In order to make sense of this file, we need to use the tick processor bundled with the Node.js binary. To run the processor, use the <code>--prof-process</code> flag:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">node --prof-process isolate-0xnnnnnnnnnnnn-v8.log &gt; processed.txt</span><br></pre></td></tr></table></figure>
+<p>Opening processed.txt in your favorite text editor will give you a few different types of information. The file is broken up into sections which are again broken up by language. First, we look at the summary section and see:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[Summary]:</span><br><span class="line">  ticks  total  nonlib   name</span><br><span class="line">    79    0.2%    0.2%  JavaScript</span><br><span class="line"> 36703   97.2%   99.2%  C++</span><br><span class="line">     7    0.0%    0.0%  GC</span><br><span class="line">   767    2.0%          Shared libraries</span><br><span class="line">   215    0.6%          Unaccounted</span><br></pre></td></tr></table></figure>
+<p>This tells us that 97% of all samples gathered occurred in C++ code and that when viewing other sections of the processed output we should pay most attention to work being done in C++ (as opposed to Javascript). With this in mind, we next find the [C++] section which contains information about which C++ functions are taking the most CPU time and see:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[C++]:</span><br><span class="line">  ticks  total  nonlib   name</span><br><span class="line"> 19557   51.8%   52.9%  node::crypto::PBKDF2(v8::FunctionCallbackInfo&lt;v8::Value&gt; const&amp;)</span><br><span class="line">  4510   11.9%   12.2%  _sha1_block_data_order</span><br><span class="line">  3165    8.4%    8.6%  _malloc_zone_malloc</span><br></pre></td></tr></table></figure>
+<p>We see that the top 3 entries account for 72.1% of CPU time taken by the program. From this output, we immediately see that at least 51.8% of CPU time is taken up by a function called PBKDF2 which corresponds to our hash generation from a user’s password. However, it may not be immediately obvious how the lower two entries factor into our application (or if it is we will pretend otherwise for the sake of example). To better understand the relationship between these functions, we will next look at the [Bottom up (heavy) profile] section which provides information about the primary callers of each function. Examining this section, we find:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"> ticks parent  name</span><br><span class="line">19557   51.8%  node::crypto::PBKDF2(v8::FunctionCallbackInfo&lt;v8::Value&gt; const&amp;)</span><br><span class="line">19557  100.0%    v8::internal::Builtins::~Builtins()</span><br><span class="line">19557  100.0%      LazyCompile: ~pbkdf2 crypto.js:557:16</span><br><span class="line"></span><br><span class="line"> 4510   11.9%  _sha1_block_data_order</span><br><span class="line"> 4510  100.0%    LazyCompile: *pbkdf2 crypto.js:557:16</span><br><span class="line"> 4510  100.0%      LazyCompile: *exports.pbkdf2Sync crypto.js:552:30</span><br><span class="line"></span><br><span class="line"> 3165    8.4%  _malloc_zone_malloc</span><br><span class="line"> 3161   99.9%    LazyCompile: *pbkdf2 crypto.js:557:16</span><br><span class="line"> 3161  100.0%      LazyCompile: *exports.pbkdf2Sync crypto.js:552:30</span><br></pre></td></tr></table></figure>
+<p>Parsing this section takes a little more work than the raw tick counts above. Within each of the “call stacks” above, the percentage in the parent column tells you the percentage of samples for which the function in the row above was called by the function in the current row. For example, in the middle “call stack” above for _sha1_block_data_order, we see that _sha1_block_data_order occurred in 11.9% of samples, which we knew from the raw counts above. However, here, we can also tell that it was always called by the pbkdf2 function inside the Node.js crypto module. We see that similarly, _malloc_zone_malloc was called almost exclusively by the same pbkdf2 function. Thus, using the information in this view, we can tell that our hash computation from the user’s password accounts not only for the 51.8% from above but also for all CPU time in the top 3 most sampled functions since the calls to _sha1_block_data_order and _malloc_zone_malloc were made on behalf of the pbkdf2 function.</p>
+<p>At this point, it is very clear that the password based hash generation should be the target of our optimization. Thankfully, you’ve fully internalized the <a href="https://nodesource.com/blog/why-asynchronous" target="_blank" rel="noopener">benefits of asynchronous programming</a> and you realize that the work to generate a hash from the user’s password is being done in a synchronous way and thus tying down the event loop. This prevents us from working on other incoming requests while computing a hash.</p>
+<p>To remedy this issue, you make a small modification to the above handlers to use the asynchronous version of the pbkdf2 function:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">app.get(<span class="string">'/auth'</span>, (req, res) =&gt; &#123;</span><br><span class="line">  <span class="keyword">let</span> username = req.query.username || <span class="string">''</span>;</span><br><span class="line">  <span class="keyword">const</span> password = req.query.password || <span class="string">''</span>;</span><br><span class="line"></span><br><span class="line">  username = username.replace(<span class="regexp">/[!@#$%^&amp;*]/g</span>, <span class="string">''</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!username || !password || !users[username]) &#123;</span><br><span class="line">    <span class="keyword">return</span> res.sendStatus(<span class="number">400</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  crypto.pbkdf2(password, users[username].salt, <span class="number">10000</span>, <span class="number">512</span>, (err, hash) =&gt; &#123;</span><br><span class="line">    <span class="keyword">if</span> (users[username].hash.toString() === hash.toString()) &#123;</span><br><span class="line">      res.sendStatus(<span class="number">200</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      res.sendStatus(<span class="number">401</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>A new run of the ab benchmark above with the asynchronous version of your app yields:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">Concurrency Level:      20</span><br><span class="line">Time taken for tests:   12.846 seconds</span><br><span class="line">Complete requests:      250</span><br><span class="line">Failed requests:        0</span><br><span class="line">Keep-Alive requests:    250</span><br><span class="line">Total transferred:      50250 bytes</span><br><span class="line">HTML transferred:       500 bytes</span><br><span class="line">Requests per second:    19.46 [#/sec] (mean)</span><br><span class="line">Time per request:       1027.689 [ms] (mean)</span><br><span class="line">Time per request:       51.384 [ms] (mean, across all concurrent requests)</span><br><span class="line">Transfer rate:          3.82 [Kbytes/sec] received</span><br><span class="line"></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">Percentage of the requests served within a certain time (ms)</span><br><span class="line">  50%   1018</span><br><span class="line">  66%   1035</span><br><span class="line">  75%   1041</span><br><span class="line">  80%   1043</span><br><span class="line">  90%   1049</span><br><span class="line">  95%   1063</span><br><span class="line">  98%   1070</span><br><span class="line">  99%   1071</span><br><span class="line"> 100%   1079 (longest request)</span><br></pre></td></tr></table></figure>
+<p>Yay! Your app is now serving about 20 requests per second, roughly 4 times more than it was with the synchronous hash generation. Additionally, the average latency is down from the 4 seconds before to just over 1 second.</p>
+<p>Hopefully, through the performance investigation of this (admittedly contrived) example, you’ve seen how the V8 tick processor can help you gain a better understanding of the performance of your Node.js applications.</p>
+<p>原文：<a href="https://nodejs.org/en/docs/guides/simple-profiling/" target="_blank" rel="noopener">https://nodejs.org/en/docs/guides/simple-profiling/</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2016-04-05T14:16:53.000Z"><a href="/2016/04/05/Node.js错误处理和调试/Node出现uncaughtException之后的优雅退出方案/">2016-04-05</a></time>
       
       
@@ -465,6 +681,144 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2015-11-08T14:16:53.000Z"><a href="/2015/11/08/Node.js/当我们谈论cluster时我们在谈论什么/">2015-11-08</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2015/11/08/Node.js/当我们谈论cluster时我们在谈论什么/">当我们谈论 cluster 时我们在谈论什么</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>Node.js 诞生之初就遭到不少这样的吐槽，当然这些都早已不是问题了。</p>
+<ol>
+<li>可靠性低。</li>
+<li>单进程，单线程，只支持单核 CPU，不能充分的利用多核 CPU 服务器。一旦这个进程崩掉，那么整个 web 服务就崩掉了。</li>
+</ol>
+<p>回想以前用 php 开发 web 服务器的时候，每个 request 都在单独的线程中处理，即使某一个请求发生很严重的错误也不会影响到其它请求。Node.js 会在一个线程中处理大量请求，如果处理某个请求时产生一个没有被捕获到的异常将导致整个进程的退出，已经接收到的其它连接全部都无法处理，对一个 web 服务器来说，这绝对是致命的灾难。</p>
+<p>应用部署到多核服务器时，为了充分利用多核 CPU 资源一般启动多个 Node.js 进程提供服务，这时就会使用到 Node.js 内置的 cluster 模块了。相信大多数的 Node.js 开发者可能都没有直接使用到 cluster，cluster 模块对 child_process 模块提供了一层封装，可以说是为了发挥服务器多核优势而量身定做的。简单的一个 fork，不需要开发者修改任何的应用代码便能够实现多进程部署。当下最热门的带有负载均衡功能的 Node.js 应用进程管理器 pm2 便是最好的一个例子，开发的时候完全不需要关注多进程场景，剩余的一切都交给 pm2 处理，与开发者的应用代码完美分离。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pm2 start app.js</span><br></pre></td></tr></table></figure>
+<p>pm2 确实非常强大，但本文并不讲解 pm2 的工作原理，而是从更底层的进程通信讲起，为大家揭秘使用 Node.js 开发 web 应用时，使用 cluster 模块实现多进程部署的原理。</p>
+<h2 id="fork"><a href="#fork" class="headerlink" title="fork"></a>fork</h2><p>说到多进程当然少不了 fork ,在 un*x 系统中，fork 函数为用户提供最底层的多进程实现。</p>
+<blockquote>
+<p>fork() creates a new process by duplicating the calling process. The new process is referred to as the child process. The calling process is referred to as the parent process.</p>
+<p>The child process and the parent process run in separate memory spaces. At the time of fork() both memory spaces have the same content. Memory writes, file mappings (mmap(2)), and unmappings (munmap(2)) performed by one of the processes do not affect the other.</p>
+</blockquote>
+<p>本文中要讲解的 fork 是 cluster 模块中非常重要的一个方法，当然了，底层也是依赖上面提到的 fork 函数实现。 多个子进程便是通过在master进程中不断的调用 cluster.fork 方法构造出来。下面的结构图大家应该非常熟悉了。</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/cluster01_180703.png" alt=""></p>
+<p>上面的图非常粗糙， 并没有告诉我们 master 与 worker 到底是如何分工协作的。Node.js 在这块做过比较大的改动，下面就细细的剖析开来。</p>
+<h3 id="多进程监听同一端口"><a href="#多进程监听同一端口" class="headerlink" title="多进程监听同一端口"></a>多进程监听同一端口</h3><p>最初的 Node.js 多进程模型就是这样实现的，master 进程创建 socket，绑定到某个地址以及端口后，自身不调用 listen 来监听连接以及 accept 连接，而是将该 socket 的 fd 传递到 fork 出来的 worker 进程，worker 接收到 fd 后再调用 listen，accept 新的连接。但实际一个新到来的连接最终只能被某一个 worker 进程 accpet 再做处理，至于是哪个 worker 能够 accept 到，开发者完全无法预知以及干预。这势必就导致了当一个新连接到来时，多个 worker 进程会产生竞争，最终由胜出的 worker 获取连接。</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/cluster02_180703.png" alt=""><br>为了进一步加深对这种模型的理解，我编写了一个非常简单的 demo。</p>
+<p>master 进程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">const net = require(&apos;net&apos;);</span><br><span class="line">const fork = require(&apos;child_process&apos;).fork;</span><br><span class="line"></span><br><span class="line">var handle = net._createServerHandle(&apos;0.0.0.0&apos;, 3000);</span><br><span class="line"></span><br><span class="line">for(var i=0;i&lt;4;i++) &#123;</span><br><span class="line">   fork(&apos;./worker&apos;).send(&#123;&#125;, handle);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>worker 进程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">const net = require(&apos;net&apos;);</span><br><span class="line">process.on(&apos;message&apos;, function(m, handle) &#123;</span><br><span class="line">  start(handle);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">var buf = &apos;hello nodejs&apos;;</span><br><span class="line">var res = [&apos;HTTP/1.1 200 OK&apos;,&apos;content-length:&apos;+buf.length].join(&apos;\r\n&apos;)+&apos;\r\n\r\n&apos;+buf;</span><br><span class="line"></span><br><span class="line">function start(server) &#123;</span><br><span class="line">    server.listen();</span><br><span class="line">    server.onconnection = function(err,handle) &#123;</span><br><span class="line">        console.log(&apos;got a connection on worker, pid = %d&apos;, process.pid);</span><br><span class="line">        var socket = new net.Socket(&#123;</span><br><span class="line">            handle: handle</span><br><span class="line">        &#125;);</span><br><span class="line">        socket.readable = socket.writable = true;</span><br><span class="line">        socket.end(res);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>保存后直接运行 <code>node master.js</code> 启动服务器，在另一个终端多次运行 <code>ab -n10000 -c100 http://127.0.0.1:3000/</code></p>
+<p>各个 worker 进程统计到的请求数分别为</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">worker 63999  got 14561 connections</span><br><span class="line">worker 64000  got 8329  connections</span><br><span class="line">worker 64001  got 2356  connections</span><br><span class="line">worker 64002  got 4885  connections</span><br></pre></td></tr></table></figure>
+<p>相信到这里大家也应该知道这种多进程模型比较明显的问题了</p>
+<ul>
+<li>多个进程之间会竞争 accpet 一个连接，产生惊群现象，效率比较低。</li>
+<li>由于无法控制一个新的连接由哪个进程来处理，必然导致各 worker 进程之间的负载非常不均衡。</li>
+</ul>
+<p>这其实就是著名的”惊群”现象。</p>
+<p>简单说来，多线程/多进程等待同一个 socket 事件，当这个事件发生时，这些线程/进程被同时唤醒，就是惊群。可以想见，效率很低下，许多进程被内核重新调度唤醒，同时去响应这一个事件，当然只有一个进程能处理事件成功，其他的进程在处理该事件失败后重新休眠（也有其他选择）。这种性能浪费现象就是惊群。</p>
+<p>惊群通常发生在 server 上，当父进程绑定一个端口监听 socket，然后 fork 出多个子进程，子进程们开始循环处理（比如 accept）这个 socket。每当用户发起一个 TCP 连接时，多个子进程同时被唤醒，然后其中一个子进程 accept 新连接成功，余者皆失败，重新休眠。</p>
+<h3 id="nginx-proxy"><a href="#nginx-proxy" class="headerlink" title="nginx proxy"></a>nginx proxy</h3><p>现代的 web 服务器一般都会在应用服务器外面再添加一层负载均衡，比如目前使用最广泛的 nginx。<br>利用 nginx 强大的反向代理功能，可以启动多个独立的 node 进程，分别绑定不同的端口，最后由nginx 接收请求然后进行分配。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">http &#123; </span><br><span class="line">  upstream cluster &#123; </span><br><span class="line">      server 127.0.0.1:3000; </span><br><span class="line">      server 127.0.0.1:3001; </span><br><span class="line">      server 127.0.0.1:3002; </span><br><span class="line">      server 127.0.0.1:3003; </span><br><span class="line">  &#125; </span><br><span class="line">  server &#123; </span><br><span class="line">       listen 80; </span><br><span class="line">       server_name www.domain.com; </span><br><span class="line">       location / &#123; </span><br><span class="line">            proxy_pass http://cluster;</span><br><span class="line">       &#125; </span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这种方式就将负载均衡的任务完全交给了 nginx 处理，并且 nginx 本身也相当擅长。再加一个守护进程负责各个 node 进程的稳定性，这种方案也勉强行得通。但也有比较大的局限性，比如想增加或者减少一个进程时还得再去改下 nginx 的配置。该方案与 nginx 耦合度太高，实际项目中并不经常使用。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>说了这么多，一直在讲解 Node.js 多进程部署时遇到的各种问题。小伙伴们肯定会有非常多的疑问。实际的 Node.js 项目中我们到底是如何利用多进程的呢，并且如何保障各个 worker 进程的稳定性。如何利用 cluster 模块 fork 子进程，父子进程间又是如何实现通信的呢？</p>
+<p>下篇将为大家一一揭晓，敬请期待！</p>
+<p><a href="http://taobaofed.org/blog/2015/11/03/nodejs-cluster/" target="_blank" rel="noopener">上篇文章</a>讲解了 Node.js 中多进程部署时遇到的各种问题，那么实际的线上项目中到底是如何利用多进程，如何保障各个 worker 进程稳定性的呢，又是如何利用 cluster 模块 fork 子进程，父子进程间又是如何实现通信的呢？本篇就来一一揭晓。</p>
+<h2 id="负载均衡"><a href="#负载均衡" class="headerlink" title="负载均衡"></a>负载均衡</h2><p>回忆一下上篇中提到的最初 Node.js 多进程模型，多个进程绑定同一端口，相互竞争 accpet 新到来的连接。由于无法控制一个新的连接由哪个进程来处理，导致各 worker 进程之间的负载非常不均衡。</p>
+<p>于是后面就出现了基于 round-robin 算法的另一种模型。主要思路是 master 进程创建 socket，绑定地址以及端口后再进行监听。该 socket 的 fd 不传递到各个 worker 进程。当 master 进程获取到新的连接时，再决定将 accept 到的客户端连接分发给指定的 worker 处理。这里使用了<strong>指定</strong>, 所以如何传递以及传递给哪个 worker 完全是可控的。round-robin 只是其中的某种算法而已，当然可以换成其他的。</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/cluster03_180703.png" alt=""></p>
+<p>同样基于这种模型也给出一个简单的 demo。</p>
+<p>master 进程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">const net = require(&apos;net&apos;);</span><br><span class="line">const fork = require(&apos;child_process&apos;).fork;</span><br><span class="line"></span><br><span class="line">var workers = [];</span><br><span class="line">for (var i = 0; i &lt; 4; i++) &#123;</span><br><span class="line">   workers.push(fork(&apos;./worker&apos;));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var handle = net._createServerHandle(&apos;0.0.0.0&apos;, 3000);</span><br><span class="line">handle.listen();</span><br><span class="line">handle.onconnection = function (err,handle) &#123;</span><br><span class="line">    var worker = workers.pop();</span><br><span class="line">    worker.send(&#123;&#125;,handle);</span><br><span class="line">    workers.unshift(worker);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>woker 进程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">const net = require(&apos;net&apos;);</span><br><span class="line">process.on(&apos;message&apos;, function (m, handle) &#123;</span><br><span class="line">  start(handle);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">var buf = &apos;hello Node.js&apos;;</span><br><span class="line">var res = [&apos;HTTP/1.1 200 OK&apos;,&apos;content-length:&apos;+buf.length].join(&apos;\r\n&apos;)+&apos;\r\n\r\n&apos;+buf;</span><br><span class="line"></span><br><span class="line">function start(handle) &#123;</span><br><span class="line">    console.log(&apos;got a connection on worker, pid = %d&apos;, process.pid);</span><br><span class="line">    var socket = new net.Socket(&#123;</span><br><span class="line">        handle: handle</span><br><span class="line">    &#125;);</span><br><span class="line">    socket.readable = socket.writable = true;</span><br><span class="line">    socket.end(res);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>由于只有 master 进程接收客户端连接，并且能够按照特定的算法进行分发， 很好的解决了上篇中提到的由于竞争导致各 worker 进程负载不均衡的硬伤。</p>
+<h2 id="优雅退出"><a href="#优雅退出" class="headerlink" title="优雅退出"></a>优雅退出</h2><p>上篇文章开头提到 Node.js 被吐槽稳定性差，进程发生未捕获到的异常就会退出。实际项目中由于各种原因，不可避免最后上线时还是存在各种 bug 以及异常，最终进程退出。</p>
+<p>当进程异常退出时，有可能该进程上还有很多未处理完的请求，简单粗暴的使进程直接退出必然导致所有的请求都会丢失，给用户带来非常糟的体验，这就非常需要一个进程优雅退出的方案。</p>
+<p>给 process 对象添加 uncaughtException 事件绑定能够避免发生异常时进程直接退出。在回调函数里调用当前运行 server 对象的 close 方法，停止接收新的连接。同时告知 master 进程该 worker 进程即将退出，可以 fork 新的 worker 了。</p>
+<p>接着在几秒中之后差不多所有请求都已经处理完毕后，该进程主动退出，其中 timeout 可以根据实际业务场景进行设置。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">setTimeout(function () &#123;</span><br><span class="line">  process.exit(1);</span><br><span class="line">&#125;, timeout)</span><br></pre></td></tr></table></figure>
+<p>这里面有一个小的细节处理，在关闭服务器之前，后续新接收的 request 全部关闭 keep-alive 特性，通知客户端不需要与该服务器保持 socket 连接了。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">server.on(&apos;request&apos;, function (req, res) &#123;</span><br><span class="line">    req.shouldKeepAlive = false;</span><br><span class="line">    res.shouldKeepAlive = false;</span><br><span class="line">    if (!res._header) &#123;</span><br><span class="line">        res.setHeader(&apos;Connection&apos;, &apos;close&apos;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>第三方 <code>graceful</code> 模块专门来处理这种场景的，感兴趣的同学可以阅读下源码。</p>
+<h2 id="进程守护"><a href="#进程守护" class="headerlink" title="进程守护"></a>进程守护</h2><p>master 进程除了负责接收新的连接，分发给各 worker 进程处理之外，还得像天使一样默默地守护着这些 worker 进程，保障整个应用的稳定性。一旦某个 worker 进程异常退出就 fork 一个新的子进程顶替上去。</p>
+<p>这一切 cluster 模块都已经好处理了，当某个 worker 进程发生异常退出或者与 master 进程失去联系（disconnected）时，master 进程都会收到相应的事件通知。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">cluster.on(&apos;exit&apos;, function () &#123;</span><br><span class="line">    clsuter.fork();</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">cluster.on(&apos;disconnect&apos;, function () &#123;</span><br><span class="line">    clsuter.fork();</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>推荐使用第三方模块 recluster 和 cfork，已经处理的很成熟了。</p>
+<p>这样一来整个应用的稳定性重任就落在 master 进程上了，所以一定不要给 master 太多其它的任务，百分百保证它的健壮性，一旦 master 进程挂掉你的应用也就玩完了。</p>
+<h2 id="IPC"><a href="#IPC" class="headerlink" title="IPC"></a>IPC</h2><p>master 进程能够接收连接进行分发，同时守护 worker 进程，这一切都离不开进程间的通信。<br>讲了这么多，终于到最核心的地方了，要用多进程模型就一定会涉及到 IPC（进程间通信）了。Node.js 中 IPC 都是在父子进程之间进行，按有无发送 fd 分为 2 种方式。</p>
+<h3 id="发送-fd"><a href="#发送-fd" class="headerlink" title="发送 fd"></a>发送 fd</h3><p>当进程间需要发生文件描述符 fd 时，libuv 底层采用消息队列来实现 IPC。master 进程接收到客户端连接分发给 worker 进程处理时就用到了进程间 fd 的传递。</p>
+<h3 id="不发送-fd"><a href="#不发送-fd" class="headerlink" title="不发送 fd"></a>不发送 fd</h3><p>这种情况父子进程之间只是发送简单的字符串，并且它们之间的通信是双向的。master 与 worker 间的消息传递便是这种方式。虽然 pipe 能够满足父子进程间的消息传递，但由于 pipe 是半双工的，也就是说必须得创建 2 个 pipe 才可以实现双向的通信，这无疑使得程序逻辑更复杂。</p>
+<p>libuv 底层采用 socketpair 来实现全双工的进程通信，父进程 fork 子进程之前会调用 socketpair 创建 2 个 fd，下面是一个最简单的也最原始的利用 socketpair 来实现父子进程间双向通信的 demo。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">#include &lt;string.h&gt;</span><br><span class="line">#include &lt;unistd.h&gt;</span><br><span class="line">#include &lt;sys/types.h&gt;</span><br><span class="line">#include &lt;errno.h&gt;</span><br><span class="line">#include &lt;sys/socket.h&gt;</span><br><span class="line">#include &lt;stdlib.h&gt;</span><br><span class="line">#define BUF_SIZE 100</span><br><span class="line"></span><br><span class="line">int main () &#123;</span><br><span class="line">    int s[2];</span><br><span class="line">    int w,r;</span><br><span class="line">    char * buf = (char*)calloc(1 , BUF_SIZE);</span><br><span class="line">    pid_t pid;</span><br><span class="line">    </span><br><span class="line">    if (socketpair(AF_UNIX,SOCK_STREAM,0,s) == -1 ) &#123;</span><br><span class="line">        printf(&quot;create unnamed socket pair failed:%s\n&quot;, strerror(errno));</span><br><span class="line">        exit(-1);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    if ((pid = fork()) &gt; 0) &#123;</span><br><span class="line">        printf(&quot;Parent process&apos;s pid is %d\n&quot;,getpid());</span><br><span class="line">        close(s[1]);</span><br><span class="line">        char *messageToChild = &quot;a message to child  process!&quot;;</span><br><span class="line">        if ((w = write(s[0] , messageToChild , strlen(messageToChild) ) ) == -1) &#123;</span><br><span class="line">            printf(&quot;Write socket error:%s\n&quot;,strerror(errno));</span><br><span class="line">            exit(-1);</span><br><span class="line">        &#125;</span><br><span class="line">        sleep(1);</span><br><span class="line">        if ( (r = read(s[0], buf , BUF_SIZE )) == -1) &#123;</span><br><span class="line">          printf(&quot;Pid %d read from socket error:%s\n&quot;,getpid() , strerror(errno) );</span><br><span class="line">          exit(-1);</span><br><span class="line">        &#125;</span><br><span class="line">        printf(&quot;Pid %d read string : %s \n&quot;,getpid(),buf);</span><br><span class="line">    &#125; else if (pid == 0) &#123;</span><br><span class="line">         printf(&quot;Fork child process successed\n&quot;);</span><br><span class="line">         printf(&quot;Child process&apos;s pid is :%d\n&quot;,getpid());</span><br><span class="line">         close(s[0]);</span><br><span class="line">         char *messageToParent = &quot;a message to parent process!&quot;;</span><br><span class="line">         if ((w = write(s[1] , messageToParent , strlen(messageToParent))) == -1 ) &#123;</span><br><span class="line">             printf(&quot;Write socket error:%s\n&quot;,strerror(errno));</span><br><span class="line">             exit(-1);</span><br><span class="line">         &#125;</span><br><span class="line">         sleep(1);</span><br><span class="line">         if ((r = read(s[1], buf , BUF_SIZE )) == -1) &#123;</span><br><span class="line">             printf(&quot;Pid %d read from socket error:%s\n&quot;, getpid() , strerror(errno) );</span><br><span class="line">             exit(-1);</span><br><span class="line">         &#125;</span><br><span class="line">         printf(&quot;Pid %d read string : %s \n&quot;,getpid(),buf); </span><br><span class="line">     &#125; else &#123;</span><br><span class="line">        printf(&quot;Fork failed:%s\n&quot;,strerror(errno));</span><br><span class="line">        exit(-1);</span><br><span class="line">    &#125;</span><br><span class="line">    exit(0);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>保存为 socketpair.c 后运行 <code>gcc socketpair.c -o socket &amp;&amp; ./socket</code> 输出</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Parent process&apos;s pid is 52853</span><br><span class="line">Fork child process successed</span><br><span class="line">Child process&apos;s pid is :52854</span><br><span class="line">Pid 52854 read string : a message to child  process! </span><br><span class="line">Pid 52853 read string : a message to parent process!</span><br></pre></td></tr></table></figure>
+<h3 id="Node-js-中的-IPC"><a href="#Node-js-中的-IPC" class="headerlink" title="Node.js 中的 IPC"></a>Node.js 中的 IPC</h3><p>上面从 libuv 底层方面讲解了父子进程间双向通信的原理，在上层 Node.js 中又是如何实现的呢，让我们来一探究竟。</p>
+<p>Node.js 中父进程调用 fork 产生子进程时，会事先构造一个 pipe 用于进程通信，</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">new process.binding(&apos;pipe_wrap&apos;).Pipe(true);</span><br></pre></td></tr></table></figure>
+<p>构造出的 pipe 最初还是关闭的状态，或者说底层还并没有创建一个真实的 pipe，直至调用到 libuv 底层的<code>uv_spawn</code>, 利用 socketpair 创建的全双工通信管道绑定到最初 Node.js 层创建的 pipe 上。</p>
+<p>管道此时已经真实的存在了，父进程保留对一端的操作，通过环境变量将管道的另一端文件描述符 fd 传递到子进程。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">options.envPairs.push(&apos;NODE_CHANNEL_FD=&apos; + ipcFd);</span><br></pre></td></tr></table></figure>
+<p>子进程启动后通过环境变量拿到 fd</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var fd = parseInt(process.env.NODE_CHANNEL_FD, 10);</span><br></pre></td></tr></table></figure>
+<p>并将 fd 绑定到一个新构造的 pipe 上</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">var p = new Pipe(true);</span><br><span class="line">p.open(fd);</span><br></pre></td></tr></table></figure>
+<p>于是父子进程间用于双向通信的所有基础设施都已经准备好了。说了这么多可能还是不太明白吧？ 没关系，我们还是来写一个简单的 demo 感受下。</p>
+<p>Node.js 构造出的 pipe 被存储在进程的<code>_channel</code>属性上</p>
+<p>master.js</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">const WriteWrap = process.binding(&apos;stream_wrap&apos;).WriteWrap;</span><br><span class="line">var cp = require(&apos;child_process&apos;);</span><br><span class="line"></span><br><span class="line">var worker = cp.fork(__dirname + &apos;/worker.js&apos;);</span><br><span class="line">var channel = worker._channel;</span><br><span class="line"></span><br><span class="line">channel.onread = function (len, buf, handle) &#123;</span><br><span class="line">    if (buf) &#123;</span><br><span class="line">        console.log(buf.toString())</span><br><span class="line">        channel.close()</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        channel.close()</span><br><span class="line">        console.log(&apos;channel closed&apos;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var message = &#123; hello: &apos;worker&apos;,  pid: process.pid &#125;;</span><br><span class="line">var req = new WriteWrap();</span><br><span class="line">var string = JSON.stringify(message) + &apos;\n&apos;;</span><br><span class="line">channel.writeUtf8String(req, string, null);</span><br></pre></td></tr></table></figure>
+<p>worker.js</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">const WriteWrap = process.binding(&apos;stream_wrap&apos;).WriteWrap;</span><br><span class="line">const channel = process._channel;</span><br><span class="line"></span><br><span class="line">channel.ref();</span><br><span class="line">channel.onread = function (len, buf, handle) &#123;</span><br><span class="line">    if (buf) &#123;</span><br><span class="line">        console.log(buf.toString())</span><br><span class="line">    &#125;else&#123;</span><br><span class="line">        process._channel.close()</span><br><span class="line">        console.log(&apos;channel closed&apos;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var message = &#123; hello: &apos;master&apos;,  pid: process.pid &#125;;</span><br><span class="line">var req = new WriteWrap();</span><br><span class="line">var string = JSON.stringify(message) + &apos;\n&apos;;</span><br><span class="line">channel.writeUtf8String(req, string, null);</span><br></pre></td></tr></table></figure>
+<p>运行<code>node master.js</code> 输出</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&#123;&quot;hello&quot;:&quot;worker&quot;,&quot;pid&quot;:58731&#125;</span><br><span class="line">&#123;&quot;hello&quot;:&quot;master&quot;,&quot;pid&quot;:58732&#125;</span><br><span class="line">channel closed</span><br></pre></td></tr></table></figure>
+<h3 id="进程失联"><a href="#进程失联" class="headerlink" title="进程失联"></a>进程失联</h3><p>在多进程服务器中，为了保障整个 web 应用的稳定性，master 进程需要监控 worker 进程的 exit 以及 disconnect 事件，收到相应事件通知后重启 worker 进程。</p>
+<p>exit 事件不用说，disconnect 事件可能很多人就不太明白了。还记得上面讲到的进程优雅退出吗，当捕获到未处理异常时，进程不立即退出，但是会立刻通知 master 进程重新 fork 新的进程，而不是等该进程主动退出后再 fork。具体的做法就是调用 worker进程的 disconnect 方法，从而关闭父子进程用于通信的 channel ，此时父子进程之间失去了联系，此时master 进程会触发 disconnect 事件，fork 一个新的 worker进程。</p>
+<p>下面是一个触发<code>disconnect</code>事件的简单 demo</p>
+<p>master.js</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">const WriteWrap = process.binding(&apos;stream_wrap&apos;).WriteWrap;</span><br><span class="line">const net = require(&apos;net&apos;);</span><br><span class="line">const fork = require(&apos;child_process&apos;).fork;</span><br><span class="line"></span><br><span class="line">var workers = [];</span><br><span class="line">for (var i = 0; i &lt; 4; i++) &#123;</span><br><span class="line">     var worker = fork(__dirname + &apos;/worker.js&apos;);</span><br><span class="line">     worker.on(&apos;disconnect&apos;, function () &#123;</span><br><span class="line">         console.log(&apos;[%s] worker %s is disconnected&apos;, process.pid, worker.pid);</span><br><span class="line">     &#125;);</span><br><span class="line">     workers.push(worker);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var handle = net._createServerHandle(&apos;0.0.0.0&apos;, 3000);</span><br><span class="line">handle.listen();</span><br><span class="line">handle.onconnection = function (err,handle) &#123;</span><br><span class="line">    var worker = workers.pop();</span><br><span class="line">    var channel = worker._channel;</span><br><span class="line">    var req = new WriteWrap();</span><br><span class="line">    channel.writeUtf8String(req, &apos;dispatch handle&apos;, handle);</span><br><span class="line">    workers.unshift(worker);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>worker.js</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">const net = require(&apos;net&apos;);</span><br><span class="line">const WriteWrap = process.binding(&apos;stream_wrap&apos;).WriteWrap;</span><br><span class="line">const channel = process._channel;</span><br><span class="line">var buf = &apos;hello Node.js&apos;;</span><br><span class="line">var res = [&apos;HTTP/1.1 200 OK&apos;,&apos;content-length:&apos; + buf.length].join(&apos;\r\n&apos;) + &apos;\r\n\r\n&apos; + buf;</span><br><span class="line"></span><br><span class="line">channel.ref(); //防止进程退出</span><br><span class="line">channel.onread = function (len, buf, handle) &#123;</span><br><span class="line">    console.log(&apos;[%s] worker %s got a connection&apos;, process.pid, process.pid);</span><br><span class="line">    var socket = new net.Socket(&#123;</span><br><span class="line">        handle: handle</span><br><span class="line">    &#125;);</span><br><span class="line">    socket.readable = socket.writable = true;</span><br><span class="line">    socket.end(res);</span><br><span class="line">    console.log(&apos;[%s] worker %s is going to disconnect&apos;, process.pid, process.pid);</span><br><span class="line">    channel.close();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>运行<code>node master.js</code>启动服务器后，在另一个终端执行多次<code>curl http://127.0.0.1:3000</code>，下面是输出的内容</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[63240] worker 63240 got a connection</span><br><span class="line">[63240] worker 63240 is going to disconnect</span><br><span class="line">[63236] worker 63240 is disconnected</span><br></pre></td></tr></table></figure>
+<h2 id="最简单的负载均衡-server"><a href="#最简单的负载均衡-server" class="headerlink" title="最简单的负载均衡 server"></a>最简单的负载均衡 server</h2><p>回到前面讲的 round-robin 多进程服务器模型，用于通信的 channel 除了可以发送简单的字符串数据外，还可以发送文件描述符，</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">channel.writeUtf8String(req, string, null);</span><br></pre></td></tr></table></figure>
+<p>最后一个参数便是要传递的 fd。round-robin 多进程服务器模型的核心也正式依赖于这个特性。 在上面的 demo 基础上，我们再稍微加工一下，还原在 Node.js 中最原始的处理。</p>
+<p>master.js</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">const WriteWrap = process.binding(&apos;stream_wrap&apos;).WriteWrap;</span><br><span class="line">const net = require(&apos;net&apos;);</span><br><span class="line">const fork = require(&apos;child_process&apos;).fork;</span><br><span class="line"></span><br><span class="line">var workers = [];</span><br><span class="line">for(var i = 0; i &lt; 4; i++) &#123;</span><br><span class="line">    workers.push(fork(__dirname + &apos;/worker.js&apos;));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var handle = net._createServerHandle(&apos;0.0.0.0&apos;, 3000);</span><br><span class="line">handle.listen();</span><br><span class="line">handle.onconnection = function (err,handle) &#123;</span><br><span class="line">    var worker = workers.pop();</span><br><span class="line">    var channel = worker._channel;</span><br><span class="line">    var req = new WriteWrap();</span><br><span class="line">    channel.writeUtf8String(req, &apos;dispatch handle&apos;, handle);</span><br><span class="line">    workers.unshift(worker);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>worker.js</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">const net = require(&apos;net&apos;);</span><br><span class="line">const WriteWrap = process.binding(&apos;stream_wrap&apos;).WriteWrap;</span><br><span class="line">const channel = process._channel;</span><br><span class="line">var buf = &apos;hello Node.js&apos;;</span><br><span class="line">var res = [&apos;HTTP/1.1 200 OK&apos;, &apos;content-length:&apos; + buf.length].join(&apos;\r\n&apos;) + &apos;\r\n\r\n&apos; + buf;</span><br><span class="line"></span><br><span class="line">channel.ref();</span><br><span class="line">channel.onread = function (len, buf, handle) &#123;</span><br><span class="line">    var socket = new net.Socket(&#123;</span><br><span class="line">        handle: handle</span><br><span class="line">    &#125;);</span><br><span class="line">    socket.readable = socket.writable = true;</span><br><span class="line">    socket.end(res);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>运行 <code>node master.js</code>， 一个简单的多进程 Node.js web 服务器便跑起来了。</p>
+<h2 id="小结-1"><a href="#小结-1" class="headerlink" title="小结"></a>小结</h2><p>到此整个 Node.js 的多进程服务器模型，以及底层进程间通信原理就讲完了，也为大家揭开了 cluster 的神秘面纱， 相信大家对 cluster 有了更深刻的认识。祝大家 Node.js 的开发旅途上玩得更愉快！</p>
+<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="http://taobaofed.org/blog/2015/11/03/nodejs-cluster/" target="_blank" rel="noopener">http://taobaofed.org/blog/2015/11/03/nodejs-cluster/</a><br><a href="http://taobaofed.org/blog/2015/11/10/nodejs-cluster-2/" target="_blank" rel="noopener">http://taobaofed.org/blog/2015/11/10/nodejs-cluster-2/</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2015-11-05T14:16:53.000Z"><a href="/2015/11/05/Node.js/初识单线程的Node.js/">2015-11-05</a></time>
       
       
@@ -647,273 +1001,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2015-05-07T06:45:23.000Z"><a href="/2015/05/07/redis/什么是redis/">2015-05-07</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2015/05/07/redis/什么是redis/">一.什么是redis</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-什么是redis"><a href="#1-什么是redis" class="headerlink" title="1.什么是redis"></a>1.什么是redis</h3><hr>
-<p>随着互联网的普及，用户数量的快速增长，产生的数据也越来越多，这也对我们的产品提出了新的考验，如何才能构建出高性能，而且扩展性高的应用程序呢？听说Redis是一个不错的选择，那么问题来了，什么是Redis呢？</p>
-<p>Redis—— Remote Dictionary Server，它是一个开源的使用ANSI C语言编写、支持网络、可基于内存亦可持久化的日志型、Key-Value数据库，并提供多种语言的API，我们可使用它构建高性能，可扩展的Web应用程序。</p>
-<p>Redis是目前最流行的键值对存储数据库，从2010年3月15日起，Redis的开发工作由VMware主持。从2013年5月开始，Redis的开发由Pivotal赞助。</p>
-<p>如果你想了解Redis最新的资讯，可以访问 [官方网站]:<a href="http://redis.io/" target="_blank" rel="noopener">http://redis.io/</a></p>
-<h3 id="2-什么时候使用redis"><a href="#2-什么时候使用redis" class="headerlink" title="2.什么时候使用redis"></a>2.什么时候使用redis</h3><hr>
-<p>在实际生产环境中，很多公司都曾经使用过这样的架构，使用MySQL进行海量数据存储的，通过Memcached将热点数据加载到cache，加速访问，但随着业务数据量的不断增加，和访问量的持续增长，我们遇到了很多问题：
-　　</p>
-<ul>
-<li>MySQL需要不断进行拆库拆表，Memcached也需不断跟着扩容，扩容和维护工作占据大量开发时间。</li>
-<li>Memcached与MySQL数据库数据一致性问题。</li>
-<li>Memcached数据命中率低或down机，大量访问直接穿透到DB，MySQL无法支撑。</li>
-<li>跨机房cache同步问题。</li>
-</ul>
-<p>以上问题都是非常的棘手，不过现在不用担心了，因为我们可以使用redis来完美解决，下面我们来了解下redis的特点，看看redis是如何解决以上问题的。</p>
-<h3 id="3-Redis特点"><a href="#3-Redis特点" class="headerlink" title="3.Redis特点"></a>3.Redis特点</h3><hr>
-<p>有那么多相同类型的数据库，为什么要选择redis？</p>
-<p>相对于其他的同类型数据库而言，Redis支持更多的数据类型，除了和string外，还支持lists（列表）、sets（集合）和zsets（有序集合）几种数据类型。</p>
-<p>这些数据类型都支持push/pop、add/remove及取交集、并集和差集及更丰富的操作，而且这些操作都是原子性的。Redis具备以下特点：</p>
-<ul>
-<li>异常快速: Redis数据库完全在内存中，因此处理速度非常快，每秒能执行约11万集合，每秒约81000+条记录。</li>
-<li>数据持久化： redis支持数据持久化，可以将内存中的数据存储到磁盘上，方便在宕机等突发情况下快速恢复。</li>
-<li>支持丰富的数据类型: 相比许多其他的键值对存储数据库，Redis拥有一套较为丰富的数据类型。</li>
-<li>数据一致性： 所有Redis操作是原子的，这保证了如果两个客户端同时访问的Redis服务器将获得更新后的值。</li>
-<li>多功能实用工具： Redis是一个多实用的工具，可以在多个用例如缓存，消息，队列使用(Redis原生支持发布/订阅)，任何短暂的数据，应用程序，如 Web应用程序会话，网页命中计数等。</li>
-</ul>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2015-04-12T11:45:23.000Z"><a href="/2015/04/12/Gulp/Gulp(4)写自己的gulp/">2015-04-12</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2015/04/12/Gulp/Gulp(4)写自己的gulp/">四.写自己的gulp</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-项目需求"><a href="#1-项目需求" class="headerlink" title="1.项目需求"></a>1.项目需求</h3><hr>
-<p>我们将创建一个自己的gulp，具体的需求是通过gulp把我们自己所编写的JS文件合并压缩、CSS文件进行压缩后，并且生成新的文件。我们所需要的插件为：gulp-minify-css gulp-concat gulp-uglify gulp-rename del 如下图所示，完成后的项目目录结构：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgulp_project.gif" alt=""></p>
-<h3 id="2-创建项目"><a href="#2-创建项目" class="headerlink" title="2.创建项目"></a>2.创建项目</h3><hr>
-<p>首先我们先来创建一个名为project的目录，然后进入到该目录下面，再将gulp安装到我们项目的目录中，然后在该目录下新建一个名称为gulpfile.js的文件。安装好后的目录结构为：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgulp_project_create.gif" alt=""><br>在该目录下再创建一个src目录，来存放源JS与CSS文件。建立完成后，再src目录分别建立两个js文件与一个CSS文件。完成后的目录结构为：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgulp_project_create1.gif" alt=""></p>
-<h3 id="3-安装插件"><a href="#3-安装插件" class="headerlink" title="3.安装插件"></a>3.安装插件</h3><hr>
-<p>　　根据我们项目的需求，安装所需要的插件，可以通过”npm install 插件名” 来安装插件。安装完成后的目录结构如图所示。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgulp_project_plugin.gif" alt=""><br>然后打开gulpfile.js，将我们所用到的插件引用到我们项目中，代码如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    minifycss = require(&apos;gulp-minify-css&apos;),  //CSS压缩</span><br><span class="line">    concat = require(&apos;gulp-concat&apos;),         // 文件合并</span><br><span class="line">    uglify = require(&apos;gulp-uglify&apos;),         //js压缩插件</span><br><span class="line">    rename = require(&apos;gulp-rename&apos;),         // 重命名</span><br><span class="line">    del = require(&apos;del&apos;);                    // 文件删除</span><br></pre></td></tr></table></figure></p>
-<h3 id="4-编写代码"><a href="#4-编写代码" class="headerlink" title="4.编写代码"></a>4.编写代码</h3><hr>
-<p>上一节中已经完成了对插件的引用，下面就开始我们的代码编写，可以通过gulp.start()方法来开始执行我们的任务。</p>
-<p>1.gulp默认的执行任务是 “default”，当然你也可以指定别的名称，然后通过”gulp 任务名称” 来运行。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;default&apos;,  function() &#123;</span><br><span class="line">    gulp.start(&apos;clean&apos;,&apos;minifycss&apos;, &apos;minifyjs&apos;);  // 要执行的任务</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>2.CSS压缩<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;minifycss&apos;, function() &#123;</span><br><span class="line">    return gulp.src(&apos;src/*.css&apos;)                  //压缩的文件</span><br><span class="line">         .pipe(minifycss())                       //执行压缩</span><br><span class="line">         .pipe(gulp.dest(&apos;minified/css&apos;));        //输出文件夹</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>3.JS 合并压缩<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;minifyjs&apos;, function() &#123;</span><br><span class="line">    return gulp.src(&apos;src/*.js&apos;)</span><br><span class="line">        .pipe(concat(&apos;main.js&apos;))                  //合并所有js到main.js</span><br><span class="line">        .pipe(gulp.dest(&apos;minified/js&apos;))           //输出main.js到文件夹</span><br><span class="line">        .pipe(rename(&#123;suffix: &apos;.min&apos;&#125;))           //rename压缩后的文件名</span><br><span class="line">        .pipe(uglify())                           //压缩</span><br><span class="line">        .pipe(gulp.dest(&apos;minified/js&apos;));          //输出</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>4.执行压缩前，先删除目录里的内容<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;clean&apos;, function(cb) &#123;</span><br><span class="line">    del([&apos;minified/css&apos;, &apos;minified/js&apos;], cb)</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>好了，这样我们的代码就完成了。</p>
-<h3 id="5-运行项目"><a href="#5-运行项目" class="headerlink" title="5.运行项目"></a>5.运行项目</h3><hr>
-<p>前面我们已经编写完成了代码，在命令行中先转到project目录下，就可以输入gulp命令来运行本项目了，刷新project目录看看会出现什么结果呢。运行完成后的目录如下图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgulp_project1.gif" alt=""></p>
-<p>运行过程中的消息如下图所示：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgulp_task_process.gif" alt=""></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2015-04-09T07:45:23.000Z"><a href="/2015/04/09/Gulp/Gulp(3)gulp常用插件介绍/">2015-04-09</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2015/04/09/Gulp/Gulp(3)gulp常用插件介绍/">三.gulp 常用插件</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-插件安装"><a href="#1-插件安装" class="headerlink" title="1.插件安装"></a>1.插件安装</h3><hr>
-<p>在我们编写gulp代码时候，需要用到一些gulp的插件，可以通过npm install –save-dev 插件名称 来安装。如下代码来安装自动加载插件：</p>
-<p>npm install –save-dev gulp-load-plugins<br>　　要使用gulp的插件，首先得用require来把插件加载进来。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">var gulp=require(&apos;gulp&apos;),</span><br><span class="line">    plugins=require(&apos;gulp-load-plugins&apos;)(),</span><br><span class="line">    uglify = require(&apos;gulp-uglify&apos;),</span><br><span class="line">    minifyHtml = require(&apos;gulp-minify-html&apos;),</span><br><span class="line">    rename = require(&apos;gulp-rename&apos;);</span><br></pre></td></tr></table></figure></p>
-<p>　　gulp的插件有很多种，后面介绍几个插件的用法。如还想了解更多插件，请查阅相关资料。</p>
-<h3 id="2-自动加载"><a href="#2-自动加载" class="headerlink" title="2.自动加载"></a>2.自动加载</h3><hr>
-<p>ulp-load-plugins这个插件能自动帮你加载package.json文件里的gulp插件。例如假设你的package.json文件里的依赖是这样的:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;devDependencies&quot;: &#123;</span><br><span class="line">    &quot;gulp&quot;: &quot;~3.6.0&quot;,</span><br><span class="line">    &quot;gulp-rename&quot;: &quot;~1.2.0&quot;,</span><br><span class="line">    &quot;gulp-ruby-sass&quot;: &quot;~0.4.3&quot;,</span><br><span class="line">    &quot;gulp-load-plugins&quot;: &quot;~0.5.1&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>然后我们可以在gulpfile.js中使用gulp-load-plugins来帮我们加载插件：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;);</span><br><span class="line">//加载gulp-load-plugins插件，并马上运行它</span><br><span class="line">var plugins = require(&apos;gulp-load-plugins&apos;)();</span><br></pre></td></tr></table></figure></p>
-<p>　　然后我们要使用gulp-rename和gulp-ruby-sass这两个插件的时候，就可以使用plugins.rename和plugins.rubySass来代替了,也就是原始插件名去掉gulp-前缀，之后再转换为驼峰命名。</p>
-<h3 id="3-重命名"><a href="#3-重命名" class="headerlink" title="3.重命名"></a>3.重命名</h3><hr>
-<p>gulp-rename插件用来重命名文件流中的文件。用gulp.dest()方法写入文件时，文件名使用的是文件流中的文件名，如果要想改变文件名，那可以在之前用gulp-rename插件来改变文件流中的文件名。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    rename = require(&apos;gulp-rename&apos;),</span><br><span class="line">    uglify = require(&quot;gulp-uglify&quot;); </span><br><span class="line">gulp.task(&apos;rename&apos;, function () &#123;</span><br><span class="line">    gulp.src(&apos;src/1.js&apos;)</span><br><span class="line">    .pipe(uglify())           //压缩</span><br><span class="line">    .pipe(rename(&apos;1.min.js&apos;)) //会将1.js重命名为1.min.js</span><br><span class="line">    .pipe(gulp.dest(&apos;js&apos;));</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<h3 id="4-js文件压缩"><a href="#4-js文件压缩" class="headerlink" title="4.js文件压缩"></a>4.js文件压缩</h3><hr>
-<p>gulp-uglify插件用来压缩js文件。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    uglify = require(&quot;gulp-uglify&quot;); </span><br><span class="line">gulp.task(&apos;minify-js&apos;, function () &#123;</span><br><span class="line">    gulp.src(&apos;src/*.js&apos;)          // 要压缩的js文件</span><br><span class="line">    .pipe(uglify())              //使用uglify进行压缩</span><br><span class="line">    .pipe(gulp.dest(&apos;dist/js&apos;)); //压缩后的路径</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<h3 id="5-css文件压缩"><a href="#5-css文件压缩" class="headerlink" title="5.css文件压缩"></a>5.css文件压缩</h3><hr>
-<p>gulp-minify-css插件用来压缩css文件。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    minifyCss = require(&quot;gulp-minify-css&quot;);</span><br><span class="line">gulp.task(&apos;minify-css&apos;, function () &#123;</span><br><span class="line">    gulp.src(&apos;src/*.css&apos;) // 要压缩的css文件</span><br><span class="line">    .pipe(minifyCss())    //压缩css</span><br><span class="line">    .pipe(gulp.dest(&apos;dist/css&apos;));</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<h3 id="6-html文件压缩"><a href="#6-html文件压缩" class="headerlink" title="6.html文件压缩"></a>6.html文件压缩</h3><hr>
-<p>gulp-minify-html插件用来压缩html文件。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    minifyHtml = require(&quot;gulp-minify-html&quot;); </span><br><span class="line">gulp.task(&apos;minify-html&apos;, function () &#123;</span><br><span class="line">    gulp.src(&apos;src/*.html&apos;) // 要压缩的html文件</span><br><span class="line">    .pipe(minifyHtml())    //压缩</span><br><span class="line">    .pipe(gulp.dest(&apos;dist/html&apos;));</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<h3 id="7-js代码检查"><a href="#7-js代码检查" class="headerlink" title="7.js代码检查"></a>7.js代码检查</h3><hr>
-<p>使用gulp-jshint插件，用来检查js代码。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    jshint = require(&quot;gulp-jshint&quot;);</span><br><span class="line">gulp.task(&apos;jsLint&apos;, function () &#123;</span><br><span class="line">    gulp.src(&apos;src/*.js&apos;)</span><br><span class="line">    .pipe(jshint())</span><br><span class="line">    .pipe(jshint.reporter()); // 输出检查结果</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<h3 id="8-文件合并"><a href="#8-文件合并" class="headerlink" title="8.文件合并"></a>8.文件合并</h3><hr>
-<p>使用gulp-concat插件，用来把多个文件合并为一个文件,我们可以用它来合并js或css文件等。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    concat = require(&quot;gulp-concat&quot;);</span><br><span class="line">gulp.task(&apos;concat&apos;, function () &#123;</span><br><span class="line">    gulp.src(&apos;src/*.js&apos;)     //要合并的文件</span><br><span class="line">    .pipe(concat(&apos;all.js&apos;))  // 合并匹配到的js文件并命名为 &quot;all.js&quot;</span><br><span class="line">    .pipe(gulp.dest(&apos;dist/js&apos;));</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<h3 id="9-图片压缩"><a href="#9-图片压缩" class="headerlink" title="9.图片压缩"></a>9.图片压缩</h3><hr>
-<p>可以使用gulp-imagemin插件来压缩jpg、png、gif等图片。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;);</span><br><span class="line">var imagemin = require(&apos;gulp-imagemin&apos;);</span><br><span class="line">var pngquant = require(&apos;imagemin-pngquant&apos;); //png图片压缩插件</span><br><span class="line">gulp.task(&apos;default&apos;, function () &#123;</span><br><span class="line">    return gulp.src(&apos;src/images/*&apos;)</span><br><span class="line">        .pipe(imagemin(&#123;</span><br><span class="line">            progressive: true,</span><br><span class="line">            use: [pngquant()] //使用pngquant来压缩png图片</span><br><span class="line">        &#125;))</span><br><span class="line">        .pipe(gulp.dest(&apos;dist&apos;));</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<h3 id="10-自动刷新"><a href="#10-自动刷新" class="headerlink" title="10.自动刷新"></a>10.自动刷新</h3><hr>
-<p>使用gulp-livereload插件，当代码变化时，它可以帮我们自动刷新页面。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    less = require(&apos;gulp-less&apos;),</span><br><span class="line">    livereload = require(&apos;gulp-livereload&apos;);</span><br><span class="line">gulp.task(&apos;less&apos;, function() &#123;</span><br><span class="line">  gulp.src(&apos;less/\*.less&apos;)</span><br><span class="line">    .pipe(less())</span><br><span class="line">    .pipe(gulp.dest(&apos;css&apos;))</span><br><span class="line">    .pipe(livereload());</span><br><span class="line">&#125;);</span><br><span class="line">gulp.task(&apos;watch&apos;, function() &#123;</span><br><span class="line">  livereload.listen(); //要在这里调用listen()方法</span><br><span class="line">  gulp.watch(&apos;less/*.less&apos;, [&apos;less&apos;]);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2015-04-07T07:45:23.000Z"><a href="/2015/04/07/Gulp/Gulp(2)gulp api/">2015-04-07</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2015/04/07/Gulp/Gulp(2)gulp api/">二.gulp api</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-gulp的工作方式"><a href="#1-gulp的工作方式" class="headerlink" title="1.gulp的工作方式"></a>1.gulp的工作方式</h3><hr>
-<p>在介绍gulp API之前，我们首先来说一下gulp.js工作方式。在gulp中，使用的是Nodejs中的stream(流)，首先获取到需要的stream，然后可以通过stream的pipe()方法把流导入到你想要的地方，比如gulp的插件中，经过插件处理后的流又可以继续导入到其他插件中，当然也可以把流写入到文件中。所以gulp是以stream为媒介的，它不需要频繁的生成临时文件，这也是我们应用gulp的一个原因。</p>
-<p>　　gulp的使用流程一般是：首先通过gulp.src()方法获取到想要处理的文件流，然后把文件流通过pipe方法导入到gulp的插件中，最后把经过插件处理后的流再通过pipe方法导入到gulp.dest()中，gulp.dest()方法则把流中的内容写入到文件中。例如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;);</span><br><span class="line">gulp.src(&apos;script/jquery.js&apos;)         // 获取流的api</span><br><span class="line">    .pipe(gulp.dest(&apos;dist/foo.js&apos;)); // 写放文件的api</span><br></pre></td></tr></table></figure></p>
-<h3 id="2-globs的匹配规则"><a href="#2-globs的匹配规则" class="headerlink" title="2.globs的匹配规则"></a>2.globs的匹配规则</h3><hr>
-<p>gulp用到的globs的匹配规则以及一些文件匹配技巧。</p>
-<p>　　gulp内部使用了node-glob模块来实现其文件匹配功能。我们可以使用下面这些特殊的字符来匹配我们想要的文件：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkpattern.png" alt=""><br>下面以例子来加深理解</p>
-<p>* 能匹配 a.js,x.y,abc,abc/,但不能匹配a/b.js</p>
-<p>*.* 能匹配 a.js,style.css,a.b,x.y</p>
-<p>*/*/*.js 能匹配 a/b/c.js,x/y/z.js,不能匹配a/b.js,a/b/c/d.js</p>
-<p>** 能匹配 abc,a/b.js,a/b/c.js,x/y/z,x/y/z/a.b,能用来匹配所有的目录和文件</p>
-<p>**/*.js 能匹配 foo.js,a/foo.js,a/b/foo.js,a/b/c/foo.js</p>
-<p>a/**/z 能匹配 a/z,a/b/z,a/b/c/z,a/d/g/h/j/k/z</p>
-<p>a/**b/z 能匹配 a/b/z,a/sb/z,但不能匹配a/x/sb/z,因为只有单**单独出现才能匹配多级目录</p>
-<p>?.js 能匹配 a.js,b.js,c.js</p>
-<p>a?? 能匹配 a.b,abc,但不能匹配ab/,因为它不会匹配路径分隔符</p>
-<p>[xyz].js 只能匹配 x.js,y.js,z.js,不会匹配xy.js,xyz.js等,整个中括号只代表一个字符</p>
-<p>[^xyz].js 能匹配 a.js,b.js,c.js等,不能匹配x.js,y.js,z.js</p>
-<h3 id="3-获取流"><a href="#3-获取流" class="headerlink" title="3.获取流"></a>3.获取流</h3><hr>
-<h4 id="src"><a href="#src" class="headerlink" title="src"></a>src</h4><p>　gulp.src()方法正是用来获取流的，但要注意这个流里的内容不是原始的文件流，而是一个虚拟文件对象流(Vinyl files)，这个虚拟文件对象中存储着原始文件的路径、文件名、内容等信息。其语法为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gulp.src(globs[, options]);</span><br></pre></td></tr></table></figure></p>
-<p>globs参数是文件匹配模式(类似正则表达式)，用来匹配文件路径(包括文件名)，当然这里也可以直接指定某个具体的文件路径。当有多个匹配模式时，该参数可以为一个数组;类型为String或 Array。</p>
-<p>当有多种匹配模式时可以使用数组<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">//使用数组的方式来匹配多种文件</span><br><span class="line">gulp.src([&apos;js/\*.js&apos;,&apos;css/\*.css&apos;,&apos;*.html&apos;])</span><br></pre></td></tr></table></figure></p>
-<p>options为可选参数。以下为options的选项参数:</p>
-<p><strong>options.buffer</strong></p>
-<p>类型： Boolean 默认值： true</p>
-<p>　　如果该项被设置为 false，那么将会以 stream 方式返回 file.contents 而不是文件 buffer 的形式。这在处理一些大文件的时候将会很有用。注意：插件可能并不会实现对 stream 的支持。</p>
-<p><strong>options.read</strong></p>
-<p>类型： Boolean 默认值： true</p>
-<p>如果该项被设置为 false， 那么 file.contents 会返回空值（null），也就是并不会去读取文件。</p>
-<p><strong>options.base</strong></p>
-<p>类型： String ， 设置输出路径以某个路径的某个组成部分为基础向后拼接。</p>
-<p>如, 请想像一下在一个路径为 client/js/somedir 的目录中，有一个文件叫 somefile.js ：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 匹配 'client/js/somedir/somefile.js'现在 'base' 的值为 'client/js/'</span></span><br><span class="line">gulp.src(<span class="string">'client/js/\*\*/\*.js'</span>)  </span><br><span class="line">  .pipe(minify())</span><br><span class="line">  .pipe(gulp.dest(<span class="string">'build'</span>)); </span><br><span class="line">gulp.src(<span class="string">'client/js/\*\*/*.js'</span>, &#123; <span class="attr">base</span>: <span class="string">'client'</span> &#125;) </span><br><span class="line">  .pipe(minify())</span><br><span class="line">  .pipe(gulp.dest(<span class="string">'build'</span>));</span><br></pre></td></tr></table></figure></p>
-<h3 id="4-写文件"><a href="#4-写文件" class="headerlink" title="4.写文件"></a>4.写文件</h3><hr>
-<h4 id="dest"><a href="#dest" class="headerlink" title="dest"></a>dest</h4><p>gulp.dest()方法是用来写文件的，其语法为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gulp.dest(path[,options])</span><br></pre></td></tr></table></figure></p>
-<p>path为写入文件的路径；</p>
-<p>options为一个可选的参数对象，以下为选项参数：</p>
-<p>options.cwd</p>
-<p>类型： String 默认值： process.cwd()</p>
-<p>输出目录的 cwd 参数，只在所给的输出目录是相对路径时候有效。</p>
-<p>options.mode</p>
-<p>类型： String 默认值： 0777</p>
-<p>八进制权限字符，用以定义所有在输出目录中所创建的目录的权限。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;);</span><br><span class="line">gulp.src(&apos;script/jquery.js&apos;)　       // 获取流</span><br><span class="line">    .pipe(gulp.dest(&apos;dist/foo.js&apos;)); // 写放文件</span><br></pre></td></tr></table></figure></p>
-<p>下面再说说生成的文件路径与我们给<em>gulp.dest()</em>方法传入的路径参数之间的关系。 　　<em>gulp.dest(path)</em>生成的文件路径是我们传入的<em>path</em>参数后面再加上<em>gulp.src()</em>中有通配符开始出现的那部分路径。例如：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">var gulp = reruire(&apos;gulp&apos;); //有通配符开始出现的那部分路径为 **/*.js</span><br><span class="line">gulp.src(&apos;script/**/*.js&apos;)</span><br><span class="line">    .pipe(gulp.dest(&apos;dist&apos;)); //最后生成的文件路径为 dist/**/*.js</span><br><span class="line">//如果 **/*.js 匹配到的文件为 jquery/jquery.js ,则生成的文件路径为 dist/jquery/jquery.js</span><br></pre></td></tr></table></figure>
-<p>用gulp.dest()把文件流写入文件后，文件流仍然可以继续使用。</p>
-<h3 id="5-监视文件"><a href="#5-监视文件" class="headerlink" title="5.监视文件"></a>5.监视文件</h3><hr>
-<h4 id="watch"><a href="#watch" class="headerlink" title="watch"></a>watch</h4><p>gulp.watch()用来监视文件的变化，当文件发生变化后，我们可以利用它来执行相应的任务，例如文件压缩等。其语法为</p>
-<p>gulp.watch(glob[, opts], tasks); </p>
-<p>glob 为要监视的文件匹配模式，规则和用法与gulp.src()方法中的glob相同。 opts 为一个可选的配置对象，通常不需要用到。 tasks 为文件变化后要执行的任务，为一个数组。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;uglify&apos;,function()&#123;</span><br><span class="line">  //do something</span><br><span class="line">&#125;);</span><br><span class="line">gulp.task(&apos;reload&apos;,function()&#123;</span><br><span class="line">  //do something</span><br><span class="line">&#125;);</span><br><span class="line">gulp.watch(&apos;js/**/*.js&apos;, [&apos;uglify&apos;,&apos;reload&apos;]);</span><br><span class="line">　　gulp.watch()还有另外一种使用方式：　</span><br><span class="line">gulp.watch(glob[, opts, cb]);</span><br></pre></td></tr></table></figure></p>
-<p>glob和opts参数与第一种用法相同;</p>
-<p>cb参数为一个函数。每当监视的文件发生变化时，就会调用这个函数,并且会给它传入一个对象，该对象包含了文件变化的一些信息，type属性为变化的类型，可以是added,changed,deleted；path属性为发生变化的文件的路径。</p>
-<p>gulp.watch(‘js/**/*.js’, function(event){<br>    console.log(event.type); //变化类型 added为新增,deleted为删除，changed为改变<br>    console.log(event.path); //变化的文件的路径<br>}); </p>
-<h3 id="6-定义任务"><a href="#6-定义任务" class="headerlink" title="6.定义任务"></a>6.定义任务</h3><hr>
-<h4 id="task"><a href="#task" class="headerlink" title="task"></a>task</h4><p>gulp.task方法用来定义任务，内部使用的是Orchestrator(用于排序、执行任务和最大并发依赖关系的模块)，其语法为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(name[, deps], fn)</span><br></pre></td></tr></table></figure></p>
-<p>name 为任务名；</p>
-<p>deps 是当前定义的任务需要依赖的其他任务，为一个数组。当前定义的任务会在所有依赖的任务执行完毕后才开始执行。如果没有依赖，则可省略这个参数；</p>
-<p>fn 为任务函数，我们把任务要执行的代码都写在里面。该参数也是可选的。</p>
-<p>当你定义一个简单的任务时，需要传入任务名字和执行函数两个属性。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;greet&apos;, function () &#123;</span><br><span class="line">   console.log(&apos;Hello world!&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>执行gulp greet的结果就是在控制台上打印出“Hello world”。</p>
-<p>你也可以定义一个在gulp开始运行时候默认执行的任务，并将这个任务命名为“default”：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;default&apos;, function () &#123;</span><br><span class="line">   // Your default task</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>前面已经介绍了gulp.task的语法，但是当有多个任务时，需要知道怎么来控制任务的执行顺序。</p>
-<p>可以通过任务依赖来实现。例如我想要执行one,two,three这三个任务，那我们就可以定义一个空的任务，然后把那三个任务当做这个空的任务的依赖就行了：</p>
-<p>//只要执行default任务，就相当于把one,two,three这三个任务执行了<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;default&apos;,[&apos;one&apos;,&apos;two&apos;,&apos;three&apos;]);</span><br></pre></td></tr></table></figure></p>
-<p>　　如果任务相互之间没有依赖，任务就会按你书写的顺序来执行，如果有依赖的话则会先执行依赖的任务。但是如果某个任务所依赖的任务是异步的，就要注意了，gulp并不会等待那个所依赖的异步任务完成，而是会接着执行后续的任务。例如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;one&apos;,function()&#123;</span><br><span class="line">  //one是一个异步执行的任务</span><br><span class="line">  setTimeout(function()&#123;</span><br><span class="line">    console.log(&apos;one is done&apos;)</span><br><span class="line">  &#125;,5000);</span><br><span class="line">&#125;);</span><br><span class="line">//two任务虽然依赖于one任务,但并不会等到one任务中的异步操作完成后再执行</span><br><span class="line">gulp.task(&apos;two&apos;,[&apos;one&apos;],function()&#123;</span><br><span class="line">  console.log(&apos;two is done&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>上面的例子中我们执行two任务时，会先执行one任务，但不会去等待one任务中的异步操作完成后再执行two任务，而是紧接着执行two任务。所以two任务会在one任务中的异步操作完成之前就执行了。</p>
-<p>那如果我们想等待异步任务中的异步操作完成后再执行后续的任务，该怎么做呢？</p>
-<p>有三种方法可以实现：<br>第一：在异步操作完成后执行一个回调函数来通知gulp这个异步任务已经完成,这个回调函数就是任务函数的第一个参数。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;one&apos;,function(cb)&#123; //cb为任务函数提供的回调，用来通知任务已经完成</span><br><span class="line">  //one是一个异步执行的任务</span><br><span class="line">  exec(function()&#123;</span><br><span class="line">    console.log(&apos;one is finish&apos;);</span><br><span class="line">    cb();  //执行回调，表示这个异步任务已经完成</span><br><span class="line">  &#125;,5000);</span><br><span class="line">&#125;); </span><br><span class="line">//这时two任务会在one任务中的异步操作完成后再执行</span><br><span class="line">gulp.task(&apos;two&apos;,[&apos;one&apos;],function()&#123;</span><br><span class="line">  console.log(&apos;two is finish&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>第二：定义任务时返回一个流对象。适用于任务就是操作gulp.src获取到的流的情况。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;one&apos;,function(cb)&#123;</span><br><span class="line">  var stream = gulp.src(&apos;client/**/*.js&apos;)</span><br><span class="line">      .pipe(exec()) //exec()中有某些异步操作</span><br><span class="line">      .pipe(gulp.dest(&apos;build&apos;));</span><br><span class="line">    return stream;</span><br><span class="line">&#125;);</span><br><span class="line">gulp.task(&apos;two&apos;,[&apos;one&apos;],function()&#123;</span><br><span class="line">  console.log(&apos;two is done&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>第三：返回一个promise对象，例如<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">var Q = require(&apos;q&apos;);</span><br><span class="line">gulp.task(&apos;one&apos;, function() &#123;</span><br><span class="line">  var deferred = Q.defer();</span><br><span class="line">  setTimeout(function() &#123;    // 执行异步的操作</span><br><span class="line">    deferred.resolve();</span><br><span class="line">  &#125;, 1);</span><br><span class="line">  return deferred.promise;</span><br><span class="line">&#125;);</span><br><span class="line">gulp.task(&apos;two&apos;,[&apos;one&apos;],function()&#123;</span><br><span class="line">  console.log(&apos;two is done&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<h3 id="7-执行文件"><a href="#7-执行文件" class="headerlink" title="7.执行文件"></a>7.执行文件</h3><hr>
-<h4 id="run"><a href="#run" class="headerlink" title="run"></a>run</h4><p>　gulp.run()表示要执行的任务。可能会使用单个参数的形式传递多个任务。如下代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;end&apos;,function()&#123;</span><br><span class="line">gulp.run(&apos;task1&apos;,&apos;task3&apos;,&apos;task2&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>注意：任务是尽可能多的并行执行的，并且可能不会按照指定的顺序运行。</p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -955,7 +1042,7 @@
   
     <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
   
-    <li><a href="/tags/Node-js/">Node.js</a><small>4</small></li>
+    <li><a href="/tags/Node-js/">Node.js</a><small>8</small></li>
   
     <li><a href="/tags/Node-js入门/">Node.js入门</a><small>9</small></li>
   
