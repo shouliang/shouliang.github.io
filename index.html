@@ -53,6 +53,178 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2018-01-25T14:16:53.000Z"><a href="/2018/01/25/Node.js/事件循环机制-实例/">2018-01-25</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/01/25/Node.js/事件循环机制-实例/">事件循环机制-实例</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>在node服务器端运行以下代码会出现什么输出结果？</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">setTimeout(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'setTimeout'</span>);</span><br><span class="line">    process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'nextTick1'</span>);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'main1'</span>);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">say</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'hello! '</span>);</span><br><span class="line">    process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'nextTick2'</span>);</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function"><span class="keyword">function</span>(<span class="params">resolve</span>)</span>&#123;</span><br><span class="line">    process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'nextTick3'</span>);</span><br><span class="line">    &#125;)</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'promise 1'</span>);</span><br><span class="line">    resolve(<span class="string">'promise then'</span>)</span><br><span class="line">&#125;).then(<span class="function"><span class="keyword">function</span>(<span class="params">data</span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(data);</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'main2'</span>);</span><br><span class="line"></span><br><span class="line">process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'nextTick4'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">say();</span><br></pre></td></tr></table></figure>
+<p>下面就结合这个原理图，根据问题，来一步一步分析：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/micro_macro_180703" alt=""></p>
+<p>也可参考下图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/runtime_180703.png" alt=""></p>
+<p>我们经常会听到引擎和runtime，它们的区别是什么呢？</p>
+<ul>
+<li>引擎：解释并编译代码，让它变成能交给机器运行的代码（runnable commands）。</li>
+<li>runtime：就是运行环境，它提供一些对外接口供Js调用，以跟外界打交道。不同的runtime，会提供不同的接口，比如，在 Node.js 环境中，我们可以通过 <code>require</code> 来引入模块；而在浏览器中，我们有 <code>window</code>、 DOM。</li>
+</ul>
+<p>Js引擎是单线程的，如上图中，它负责维护任务队列，并通过 Event Loop 的机制，按顺序把任务放入栈中执行。而图中的异步处理模块，就是 runtime 提供的，拥有和Js引擎互不干扰的线程。</p>
+<h3 id="任务队列"><a href="#任务队列" class="headerlink" title="任务队列"></a>任务队列</h3><p>Js 中，有两类任务队列：宏任务队列（macro tasks）和微任务队列（micro tasks）。宏任务队列可以有多个，微任务队列只有<strong>一个</strong>。那么什么任务，会分到哪个队列呢？</p>
+<ul>
+<li>宏任务：script（全局任务）, setTimeout, setInterval, setImmediate, I/O, UI rendering.</li>
+<li>微任务：process.nextTick, Promise, Object.observer, MutationObserver.</li>
+</ul>
+<p>我们上面讲到，当stack空的时候，就会从任务队列中，取任务来执行。共分3步：</p>
+<ol>
+<li>取一个宏任务来执行。执行完毕后，下一步。</li>
+<li>取一个微任务来执行，执行完毕后，再取一个微任务来执行。直到微任务队列为空，执行下一步。</li>
+</ol>
+<p>从执行步骤来看，我们发现微任务，受到了特殊待遇！我们代码开始执行都是从script（全局任务）开始，所以，一旦我们的全局任务（属于宏任务）执行完，就马上执行完整个微任务队列。</p>
+<p>我们代码的开始执行都是从script（全局任务）开始，这个全局任务属于宏任务；代码由上向下执行；</p>
+<p>第1行，遇到了一个timer异步任务，属于宏任务，放入宏任务队列；</p>
+<p>第8行，遇到log,内部没有其它函数，直接输出main1;</p>
+<p>第10行，函数的定义，不执行；</p>
+<p>第17行，遇到new Promise()，进入回调函数内部:<br>1） 遇到promise.nextTick,属于微任务，放入微任务队列nextTick3;<br>2） 遇到log,内部没有其它函数，直接输出promise 1;<br>3） 遇到resolve回调，属于微任务，放入微任务队列promise then;</p>
+<p>第27行，遇到log,内部没有其它函数，直接输出main2;</p>
+<p>第29行，遇到promise.nextTick,属于微任务，放入微任务队列nextTick4;</p>
+<p>第33行，执行say()：<br>1）遇到log,内部没有其它函数，直接输出hello;<br>2）遇到promise.nextTick,属于微任务，放入微任务队列nextTick2;<br>到此为止，我们已经做了如下事情：<br>1）宏任务队列中放入了一个timer函数；<br>2）输出了main1，promise 1，main2，hello1；<br>3）微任务队列中已经放入了promise then,nextTick3,nextTick4,nextTick2;</p>
+<p>此时，我们的全局任务已执行完成了，就要马上执行完整个微任务队列。但是在微任务中，process.nextTick 是一个特殊的任务，它会被直接插入到微任务的队首（当然了，多个process.nextTick 之间也是先入先出的），优先级最高。所以，依次输出nextTick3,nextTick4,nextTick2,promise then</p>
+<p>这时，执行栈为空了，可是别忘了，我们的宏任务队列还放者一个timer函数待执行，进入timer函数：<br>1）遇到log,内部没有其它函数，直接输出setTimeout;<br>2）遇到promise.nextTick,属于微任务，放入微任务队列nextTick1;</p>
+<p>这个timer宏任务也执行完了，就马上执行完整个微任务队列，微任务队列目前只有一个任务，直接输出nextTick1；</p>
+<p>这时，执行栈又为空了，还有其它任务吗? 没有了，大功告成；</p>
+<p>以上的这种当函数执行栈为空，从任务队列中去一个任务来执行。再次为空，再取一个任务来执行，如此循环，这就是Event Loop，事件循环机制；</p>
+<p>参考：</p>
+<p><a href="https://juejin.im/post/5a63470bf265da3e2c383068" target="_blank" rel="noopener">https://juejin.im/post/5a63470bf265da3e2c383068</a></p>
+<p><a href="https://segmentfault.com/a/1190000011198232" target="_blank" rel="noopener">https://segmentfault.com/a/1190000011198232</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2017-12-05T14:16:53.000Z"><a href="/2017/12/05/Node.js/理解事件循环机制/">2017-12-05</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2017/12/05/Node.js/理解事件循环机制/">理解事件循环机制</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><blockquote>
+<p>Node.js 是基于V8引擎的javascript运行环境. Node.js具有<code>事件驱动</code>, <code>非阻塞I/O</code>等特点. 结合Node API, Node.js 具有网络编程, 文件系统等服务端的功能, Node.js用<code>libuv</code>库进行异步事件处理.</p>
+</blockquote>
+<h3 id="线程"><a href="#线程" class="headerlink" title="线程"></a>线程</h3><blockquote>
+<p>Node.js的单线程含义, 实际上说的是执行同步代码的主线程. 一个Node程序的启动, 不止是分配了一个线程，而是我们只能在一个线程执行代码. 当出现I/O资源调用, TCP连接等外部资源申请的时候, 不会阻塞主线程, 而是委托给I/O线程进行处理,并且进入等待队列. 一旦主线程执行完成，将会消费事件队列(Event Queue). 因为只有一个主线程, 只占用CPU内核处理逻辑计算, 因此不适合在CPU密集型进行使用.</p>
+</blockquote>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/180701NodeSystem.png" alt=""></p>
+<p><strong>注意，上图的EVENT_QUEUE 给人看起来是只有一个队列, 根据Node.js官方介绍, EventLoop有6个阶段, 同时每个阶段都有对应的一个先进先出的回调队列.</strong></p>
+<h3 id="什么是事件循环-EventLoop"><a href="#什么是事件循环-EventLoop" class="headerlink" title="什么是事件循环(EventLoop) ?"></a>什么是事件循环(EventLoop) ?</h3><blockquote>
+<p>In computer science, the event loop, message dispatcher, message loop, message pump, or run loop is a programming construct that waits for and dispatches events or messages in a program. – <a href="https://en.wikipedia.org/wiki/Event_loop" target="_blank" rel="noopener">from wiki</a></p>
+</blockquote>
+<p><strong>大概含义: EventLoop 是一种常用的机制，通过对内部或外部的事件提供者发出请求, 如文件读写, 网络连接 等异步操作, 完成后调用事件处理程序. 整个过程都是异步阶段</strong></p>
+<h3 id="Node-js的事件循环机制"><a href="#Node-js的事件循环机制" class="headerlink" title="Node.js的事件循环机制"></a>Node.js的事件循环机制</h3><blockquote>
+<p>When Node.js starts, it initializes the event loop, processes the provided input script (or drops into the REPL, which is not covered in this document) which may make async API calls, schedule timers, or call process.nextTick(), then begins processing the event loop. – from <a href="https://github.com/nodejs/node/blob/v6.x/doc/topics/event-loop-timers-and-nexttick.md" target="_blank" rel="noopener">node.js doc</a></p>
+</blockquote>
+<p><strong>大致含义: 当Node.js 启动, 就会初始化一个 event loop, 处理脚本时, 可能会发生异步API行为调用, 使用定时器任务或者nexTick, 处理完成后进入事件循环处理过程</strong></p>
+<h3 id="事件循环阶段"><a href="#事件循环阶段" class="headerlink" title="事件循环阶段"></a>事件循环阶段</h3><p><a href="https://en.wikipedia.org/wiki/Node.js" target="_blank" rel="noopener">Node.js</a>采用V8作为js的解析引擎，而I/O处理方面使用了自己设计的libuv，libuv是一个基于事件驱动的跨平台抽象层，封装了不同操作系统一些底层特性，对外提供统一的API，事件循环机制也是它里面的实现<a href="https://github.com/libuv/libuv/blob/v1.x/src/unix/core.c#L348-L397" target="_blank" rel="noopener">核心源码参考</a>：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">int uv_run(uv_loop_t* loop, uv_run_mode mode) &#123;</span><br><span class="line">  int timeout;</span><br><span class="line">  int r;</span><br><span class="line">  int ran_pending;</span><br><span class="line"></span><br><span class="line">  r = uv__loop_alive(loop);</span><br><span class="line">  if (!r)</span><br><span class="line">    uv__update_time(loop);</span><br><span class="line"></span><br><span class="line">  while (r != 0 &amp;&amp; loop-&gt;stop_flag == 0) &#123;</span><br><span class="line">    uv__update_time(loop);</span><br><span class="line">    // timers阶段</span><br><span class="line">    uv__run_timers(loop);</span><br><span class="line">    // I/O callbacks阶段</span><br><span class="line">    ran_pending = uv__run_pending(loop);</span><br><span class="line">    // idle阶段</span><br><span class="line">    uv__run_idle(loop);</span><br><span class="line">    // prepare阶段</span><br><span class="line">    uv__run_prepare(loop);</span><br><span class="line"></span><br><span class="line">    timeout = 0;</span><br><span class="line">    if ((mode == UV_RUN_ONCE &amp;&amp; !ran_pending) || mode == UV_RUN_DEFAULT)</span><br><span class="line">      timeout = uv_backend_timeout(loop);</span><br><span class="line">    // poll阶段</span><br><span class="line">    uv__io_poll(loop, timeout);</span><br><span class="line">    // check阶段</span><br><span class="line">    uv__run_check(loop);</span><br><span class="line">    // close callbacks阶段</span><br><span class="line">    uv__run_closing_handles(loop);</span><br><span class="line"></span><br><span class="line">    if (mode == UV_RUN_ONCE) &#123;</span><br><span class="line">      uv__update_time(loop);</span><br><span class="line">      uv__run_timers(loop);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    r = uv__loop_alive(loop);</span><br><span class="line">    if (mode == UV_RUN_ONCE || mode == UV_RUN_NOWAIT)</span><br><span class="line">      break;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  if (loop-&gt;stop_flag != 0)</span><br><span class="line">    loop-&gt;stop_flag = 0;</span><br><span class="line"></span><br><span class="line">  return r;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>根据<a href="https://nodejs.org/en/docs/guides/event-loop-timers-and-nexttick/" target="_blank" rel="noopener">Node.js</a>官方介绍，每次事件循环都包含了6个阶段，对应到 libuv 源码中的实现，如下图所示</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/node-libuv_180703.png" alt=""></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">   ┌───────────────────────┐</span><br><span class="line">┌─&gt;│        timers         │</span><br><span class="line">│  └──────────┬────────────┘</span><br><span class="line">│  ┌──────────┴────────────┐</span><br><span class="line">│  │     I/O callbacks     │</span><br><span class="line">│  └──────────┬────────────┘</span><br><span class="line">│  ┌──────────┴────────────┐</span><br><span class="line">│  │     idle, prepare     │</span><br><span class="line">│  └──────────┬────────────┘      ┌───────────────┐</span><br><span class="line">│  ┌──────────┴────────────┐      │   incoming:   │</span><br><span class="line">│  │         poll          │&lt;─────┤  connections, │</span><br><span class="line">│  └──────────┬────────────┘      │   data, etc.  │</span><br><span class="line">│  ┌──────────┴────────────┐      └───────────────┘</span><br><span class="line">│  │        check          │</span><br><span class="line">│  └──────────┬────────────┘</span><br><span class="line">│  ┌──────────┴────────────┐</span><br><span class="line">└──┤    close callbacks    │</span><br><span class="line">   └───────────────────────┘</span><br></pre></td></tr></table></figure>
+<p><strong>每一个阶段都有一个FIFO的callbacks队列, 每个阶段都有自己的事件处理方式. 当事件循环进入某个阶段时, 将会在该阶段内执行回调，直到队列耗尽或者回调的最大数量已执行, 那么将进入下一个处理阶段.</strong></p>
+<ul>
+<li><strong>timers</strong> 阶段: 这个阶段执行setTimeout(callback) and setInterval(callback)预定的callback;</li>
+<li><strong>I/O callbacks</strong> 阶段: 执行除了close事件的callbacks、被timers(定时器，setTimeout、setInterval等)设定的callbacks、setImmediate()设定的callbacks之外的callbacks; (目前这个阶段)</li>
+<li><strong>idle, prepare</strong> 阶段: 仅node内部使用;</li>
+<li><strong>poll</strong> 阶段: 获取新的I/O事件, 适当的条件下node将阻塞在这里;</li>
+<li><strong>check</strong> 阶段: 执行setImmediate() 设定的callbacks;</li>
+<li><strong>close callbacks</strong> 阶段: 比如socket.on(‘close’, callback)的callback会在这个阶段执行.</li>
+</ul>
+<h4 id="timers阶段"><a href="#timers阶段" class="headerlink" title="timers阶段"></a><strong>timers阶段</strong></h4><p>一个timer指定一个下限时间而不是准确时间，在达到这个下限时间后执行回调。在指定时间过后，timers会尽可能早地执行回调，但系统调度或者其它回调的执行可能会延迟它们。</p>
+<p>注意：技术上来说，poll 阶段控制 timers 什么时候执行。</p>
+<p>注意：这个下限时间有个范围：[1, 2147483647]，如果设定的时间不在这个范围，将被设置为1。</p>
+<h4 id="I-O-callbacks阶段"><a href="#I-O-callbacks阶段" class="headerlink" title="I/O callbacks阶段"></a><strong>I/O callbacks阶段</strong></h4><p>这个阶段执行一些系统操作的回调。比如TCP错误，如一个TCP socket在想要连接时收到ECONNREFUSED,<br>类unix系统会等待以报告错误，这就会放到 I/O callbacks 阶段的队列执行.<br>名字会让人误解为执行I/O回调处理程序, 实际上I/O回调会由poll阶段处理.</p>
+<h4 id="poll阶段"><a href="#poll阶段" class="headerlink" title="poll阶段"></a><strong>poll阶段</strong></h4><p>poll 阶段有两个主要功能：</p>
+<p>执行下限时间已经达到的timers的回调，然后<br>处理 poll 队列里的事件。<br>当event loop进入 poll 阶段，并且 没有设定的timers（there are no timers scheduled），会发生下面两件事之一：</p>
+<p>如果 poll 队列不空，event loop会遍历队列并同步执行回调，直到队列清空或执行的回调数到达系统上限；</p>
+<p>如果 poll 队列为空，则发生以下两件事之一：</p>
+<ol>
+<li>如果代码已经被setImmediate()设定了回调, event loop将结束 poll 阶段进入 check 阶段来执行 check 队列（里的回调）。</li>
+<li>如果代码没有被setImmediate()设定回调，event loop将阻塞在该阶段等待回调被加入 poll 队列，并立即执行。</li>
+</ol>
+<p>但是，当event loop进入 poll 阶段，并且 有设定的timers，一旦 poll 队列为空（poll 阶段空闲状态）：</p>
+<ol>
+<li>event loop将检查timers,如果有1个或多个timers的下限时间已经到达，event loop将绕回 <strong>timers</strong> 阶段，并执行 <strong>timer</strong>队列。</li>
+</ol>
+<h3 id="check阶段"><a href="#check阶段" class="headerlink" title="check阶段"></a><strong>check阶段</strong></h3><p>这个阶段允许在 poll 阶段结束后立即执行回调。如果 poll 阶段空闲，并且有被setImmediate()设定的回调，event loop会转到 check 阶段而不是继续等待。</p>
+<p>setImmediate()实际上是一个特殊的timer，跑在event loop中一个独立的阶段。它使用libuv的API<br>来设定在 poll 阶段结束后立即执行回调。</p>
+<p>通常上来讲，随着代码执行，event loop终将进入 poll 阶段，在这个阶段等待 incoming connection, request 等等。但是，只要有被setImmediate()设定了回调，一旦 poll 阶段空闲，那么程序将结束 poll 阶段并进入 check 阶段，而不是继续等待 poll 事件们 （poll events）。</p>
+<h3 id="close-callbacks-阶段"><a href="#close-callbacks-阶段" class="headerlink" title="close callbacks 阶段"></a><strong>close callbacks 阶段</strong></h3><p>如果一个 socket 或 handle 被突然关掉（比如 socket.destroy()），close事件将在这个阶段被触发，否则将通过process.nextTick()触发</p>
+<p><strong>简单的 EventLoop</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">const fs = require(&apos;fs&apos;);</span><br><span class="line">let counts = 0;</span><br><span class="line"></span><br><span class="line">function wait (mstime) &#123;</span><br><span class="line">  let date = Date.now();</span><br><span class="line">  while (Date.now() - date &lt; mstime) &#123;</span><br><span class="line">    // do nothing</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">function asyncOperation (callback) &#123;</span><br><span class="line">  fs.readFile(__dirname + &apos;/&apos; + __filename, callback);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">const lastTime = Date.now();</span><br><span class="line"></span><br><span class="line">setTimeout(() =&gt; &#123;</span><br><span class="line">  console.log(&apos;timers&apos;, Date.now() - lastTime + &apos;ms&apos;);</span><br><span class="line">&#125;, 0);</span><br><span class="line"></span><br><span class="line">process.nextTick(() =&gt; &#123;</span><br><span class="line">  // 进入event loop</span><br><span class="line">  // timers阶段之前执行</span><br><span class="line">  wait(20);</span><br><span class="line">  asyncOperation(() =&gt; &#123;</span><br><span class="line">    console.log(&apos;poll&apos;);</span><br><span class="line">  &#125;);  </span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * result:</span><br><span class="line"> * timers 21ms</span><br><span class="line"> * poll</span><br><span class="line"> */</span><br></pre></td></tr></table></figure>
+<p>为了让<code>setTimeout</code>优先于<code>fs.readFile</code> 回调, 执行了process.nextTick, 表示在进入 timers阶段前, 等待20ms后执行文件读取.</p>
+<h3 id="nextTick-与-setImmediate"><a href="#nextTick-与-setImmediate" class="headerlink" title="nextTick 与 setImmediate"></a>nextTick 与 setImmediate</h3><p>process.nextTick 不属于事件循环的任何一个阶段，它属于该阶段与下阶段之间的过渡, 即本阶段执行结束, 进入下一个阶段前, 所要执行的回调。有给人一种插队的感觉.</p>
+<p>setImmediate的回调处于check阶段, 当poll阶段的队列为空, 且check阶段的事件队列存在的时候，切换到check阶段执行.</p>
+<p><strong>nextTick 递归的危害</strong><br>由于nextTick具有插队的机制，nextTick的递归会让事件循环机制无法进入下一个阶段. 导致I/O处理完成或者定时任务超时后仍然无法执行, 导致了其它事件处理程序处于饥饿状态. 为了防止递归产生的问题, Node.js 提供了一个 process.maxTickDepth (默认 1000)。</p>
+<p>递归nextTick</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">const fs = require(&apos;fs&apos;);</span><br><span class="line">let counts = 0;</span><br><span class="line"></span><br><span class="line">function wait (mstime) &#123;</span><br><span class="line">  let date = Date.now();</span><br><span class="line">  while (Date.now() - date &lt; mstime) &#123;</span><br><span class="line">    // do nothing</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">function nextTick () &#123;</span><br><span class="line">  process.nextTick(() =&gt; &#123;</span><br><span class="line">    wait(20);</span><br><span class="line">    nextTick();</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">const lastTime = Date.now();</span><br><span class="line"></span><br><span class="line">setTimeout(() =&gt; &#123;</span><br><span class="line">  console.log(&apos;timers&apos;, Date.now() - lastTime + &apos;ms&apos;);</span><br><span class="line">&#125;, 0);</span><br><span class="line"></span><br><span class="line">nextTick();</span><br></pre></td></tr></table></figure>
+<p>此时永远无法跳到timer阶段, 因为在进入timers阶段前有不断的nextTick插入执行. 除非执行了1000次到了执行上限.</p>
+<p><strong>setImmediate</strong><br>如果在一个I/O周期内进行调度，setImmediate（）将始终在任何定时器之前执行.</p>
+<h3 id="setTimeout-与-setImmediate"><a href="#setTimeout-与-setImmediate" class="headerlink" title="setTimeout 与 setImmediate"></a>setTimeout 与 setImmediate</h3><ul>
+<li>setImmediate()被设计在 poll 阶段结束后立即执行回调；</li>
+<li>setTimeout()被设计在指定下限时间到达后执行回调;</li>
+</ul>
+<p>无 I/O 处理情况下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">setTimeout(function timeout () &#123;</span><br><span class="line">  console.log(&apos;timeout&apos;);</span><br><span class="line">&#125;,0);</span><br><span class="line"></span><br><span class="line">setImmediate(function immediate () &#123;</span><br><span class="line">  console.log(&apos;immediate&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p><strong>输出结果是 不确定 的！</strong><br>setTimeout(fn, 0) 具有几毫秒的不确定性. 无法保证进入timers阶段, 定时器能够立即执行处理程序.</p>
+<p>在I/O事件处理程序下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">var fs = require(&apos;fs&apos;)</span><br><span class="line"></span><br><span class="line">fs.readFile(__filename, () =&gt; &#123;</span><br><span class="line">  setTimeout(() =&gt; &#123;</span><br><span class="line">    console.log(&apos;timeout&apos;)</span><br><span class="line">  &#125;, 0)</span><br><span class="line">  setImmediate(() =&gt; &#123;</span><br><span class="line">    console.log(&apos;immediate&apos;)</span><br><span class="line">  &#125;)</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<p>此时 <code>setImmediate</code> 优先于 <code>setTimeout</code> 执行，因为 poll阶段执行完成后 进入 check阶段. timers阶段处于下一个事件循环阶段了.</p>
+<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><p><a href="https://segmentfault.com/a/1190000012258592" target="_blank" rel="noopener">https://segmentfault.com/a/1190000012258592</a><br><a href="http://lynnelv.github.io/js-event-loop-nodejs" target="_blank" rel="noopener">http://lynnelv.github.io/js-event-loop-nodejs</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2017-06-05T06:45:23.000Z"><a href="/2017/06/05/测试/Node.js单元测试、集成测试、基准测试以及代码覆盖率测试/">2017-06-05</a></time>
       
       
@@ -807,168 +979,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2017-02-09T06:45:23.000Z"><a href="/2017/02/09/安全/详解https是如何确保安全的/">2017-02-09</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/02/09/安全/详解https是如何确保安全的/">详解https是如何确保安全的</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>Https 介绍</p>
-<h3 id="什么是Https"><a href="#什么是Https" class="headerlink" title="什么是Https"></a>什么是Https</h3><p>HTTPS（全称：Hypertext Transfer Protocol over Secure Socket Layer），是以安全为目标的HTTP通道，简单讲是HTTP的安全版。即HTTP下加入SSL层，HTTPS的安全基础是SSL，因此加密的详细内容就需要SSL</p>
-<h3 id="Https的作用"><a href="#Https的作用" class="headerlink" title="Https的作用"></a>Https的作用</h3><p><strong>内容加密</strong>建立一个信息安全通道，来保证数据传输的安全；<br><strong>身份认证</strong>确认网站的真实性<br><strong>数据完整性</strong>防止内容被第三方冒充或者篡改</p>
-<h3 id="Https的劣势"><a href="#Https的劣势" class="headerlink" title="Https的劣势"></a>Https的劣势</h3><p>对数据进行加解密决定了它比http慢<br>需要进行非对称的加解密，且需要三次握手。首次连接比较慢点，当然现在也有很多的优化。<br>出于安全考虑，浏览器不会在本地保存HTTPS缓存。实际上，只要在HTTP头中使用特定命令，HTTPS是可以缓存的。Firefox默认只在内存中缓存HTTPS。但是，只要头命令中有Cache-Control: Public，缓存就会被写到硬盘上。 IE只要http头允许就可以缓存https内容，缓存策略与是否使用HTTPS协议无关。</p>
-<h3 id="HTTPS和HTTP的区别"><a href="#HTTPS和HTTP的区别" class="headerlink" title="HTTPS和HTTP的区别"></a>HTTPS和HTTP的区别</h3><p>https协议需要到CA申请证书。<br>http是超文本传输协议，信息是明文传输；https 则是具有安全性的ssl加密传输协议。<br>http和https使用的是完全不同的连接方式，用的端口也不一样，前者是80，后者是443。<br>http的连接很简单，是无状态的；HTTPS协议是由SSL+HTTP协议构建的可进行加密传输、身份认证的网络协议，比http协议安全。<br>http默认使用80端口，https默认使用443端口</p>
-<p>下面就是https的整个架构，现在的https基本都使用TLS了，因为更加安全，所以下图中的SSL应该换为<strong>SSL/TLS</strong>。</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/sslexexplation.png" alt=""></p>
-<p>下面就上图中的知识点进行一个大概的介绍。</p>
-<h2 id="加解密相关知识"><a href="#加解密相关知识" class="headerlink" title="加解密相关知识"></a>加解密相关知识</h2><h3 id="对称加密"><a href="#对称加密" class="headerlink" title="对称加密"></a>对称加密</h3><p>对称加密(也叫私钥加密)指加密和解密使用相同密钥的加密算法。有时又叫传统密码算法，就是加密密钥能够从解密密钥中推算出来，同时解密密钥也可以从加密密钥中推算出来。而在大多数的对称算法中，加密密钥和解密密钥是相同的，所以也称这种加密算法为秘密密钥算法或单密钥算法。</p>
-<p>常见的对称加密有：DES（Data Encryption Standard）、AES（Advanced Encryption Standard）、RC4、IDEA</p>
-<h3 id="非对称加密"><a href="#非对称加密" class="headerlink" title="非对称加密"></a>非对称加密</h3><p>与对称加密算法不同，非对称加密算法需要两个密钥：公开密钥（publickey）和私有密钥（privatekey）；并且加密密钥和解密密钥是成对出现的。非对称加密算法在加密和解密过程使用了不同的密钥，非对称加密也称为公钥加密，在密钥对中，其中一个密钥是对外公开的，所有人都可以获取到，称为公钥，其中一个密钥是不公开的称为私钥。</p>
-<p>非对称加密算法对加密内容的长度有限制，不能超过公钥长度。比如现在常用的公钥长度是 2048 位，意味着待加密内容不能超过 256 个字节。</p>
-<h3 id="摘要算法"><a href="#摘要算法" class="headerlink" title="摘要算法"></a>摘要算法</h3><p>数字摘要是采用单项Hash函数将需要加密的明文“摘要”成一串固定长度（128位）的密文，这一串密文又称为数字指纹，它有固定的长度，而且不同的明文摘要成密文，其结果总是不同的，而同样的明文其摘要必定一致。“数字摘要“是https能确保数据完整性和防篡改的根本原因。</p>
-<h3 id="数字签名"><a href="#数字签名" class="headerlink" title="数字签名"></a>数字签名</h3><p>数字签名技术就是对“非对称密钥加解密”和“数字摘要“两项技术的应用，它将摘要信息用发送者的私钥加密，与原文一起传送给接收者。接收者只有用发送者的公钥才能解密被加密的摘要信息，然后用HASH函数对收到的原文产生一个摘要信息，与解密的摘要信息对比。如果相同，则说明收到的信息是完整的，在传输过程中没有被修改，否则说明信息被修改过，因此数字签名能够验证信息的完整性。</p>
-<p>数字签名的过程如下：明文 –&gt; hash运算 –&gt; 摘要 –&gt; 私钥加密 –&gt; 数字签名</p>
-<p>数字签名有两种功效：<br>一、能确定消息确实是由发送方签名并发出来的，因为别人假冒不了发送方的签名。<br>二、数字签名能确定消息的完整性。</p>
-<p><strong>注意：</strong><br>数字签名只能验证数据的完整性，数据本身是否加密不属于数字签名的控制范围</p>
-<h2 id="数字证书"><a href="#数字证书" class="headerlink" title="数字证书"></a>数字证书</h2><h3 id="为什么要有数字证书？"><a href="#为什么要有数字证书？" class="headerlink" title="为什么要有数字证书？"></a>为什么要有数字证书？</h3><p>对于请求方来说，它怎么能确定它所得到的公钥一定是从目标主机那里发布的，而且没有被篡改过呢？亦或者请求的目标主机本本身就从事窃取用户信息的不正当行为呢？这时候，我们需要有一个权威的值得信赖的第三方机构(一般是由政府审核并授权的机构)来统一对外发放主机机构的公钥，只要请求方这种机构获取公钥，就避免了上述问题的发生。</p>
-<h3 id="数字证书的颁发过程"><a href="#数字证书的颁发过程" class="headerlink" title="数字证书的颁发过程"></a>数字证书的颁发过程</h3><p>用户首先产生自己的密钥对，并将公共密钥及部分个人身份信息传送给认证中心。认证中心在核实身份后，将执行一些必要的步骤，以确信请求确实由用户发送而来，然后，认证中心将发给用户一个数字证书，该证书内包含用户的个人信息和他的公钥信息，同时还附有认证中心的签名信息(根证书私钥签名)。用户就可以使用自己的数字证书进行相关的各种活动。数字证书由独立的证书发行机构发布，数字证书各不相同，每种证书可提供不同级别的可信度。</p>
-<h3 id="证书包含哪些内容"><a href="#证书包含哪些内容" class="headerlink" title="证书包含哪些内容"></a>证书包含哪些内容</h3><p>证书颁发机构的名称<br>证书本身的数字签名<br>证书持有者公钥<br>证书签名用到的Hash算法</p>
-<h3 id="验证证书的有效性"><a href="#验证证书的有效性" class="headerlink" title="验证证书的有效性"></a>验证证书的有效性</h3><p><strong>浏览器默认都会内置CA根证书，其中根证书包含了CA的公钥</strong><br>证书颁发的机构是伪造的：浏览器不认识，直接认为是危险证书</p>
-<p>证书颁发的机构是确实存在的，于是根据CA名，找到对应内置的CA根证书、CA的公钥。用CA的公钥，对伪造的证书的摘要进行解密，发现解不了，认为是危险证书。</p>
-<p>对于篡改的证书，使用CA的公钥对数字签名进行解密得到摘要A，然后再根据签名的Hash算法计算出证书的摘要B，对比A与B，若相等则正常，若不相等则是被篡改过的。</p>
-<p>证书可在其过期前被吊销，通常情况是该证书的私钥已经失密。较新的浏览器如Chrome、Firefox、Opera和Internet Explorer都实现了在线证书状态协议（OCSP）以排除这种情形：浏览器将网站提供的证书的序列号通过OCSP发送给证书颁发机构，后者会告诉浏览器证书是否还是有效的。</p>
-<p>1、2点是对伪造证书进行的，3是对于篡改后的证书验证，4是对于过期失效的验证。</p>
-<h2 id="SSL-与-TLS"><a href="#SSL-与-TLS" class="headerlink" title="SSL 与 TLS"></a>SSL 与 TLS</h2><h3 id="SSL-Secure-Socket-Layer，安全套接字层"><a href="#SSL-Secure-Socket-Layer，安全套接字层" class="headerlink" title="SSL (Secure Socket Layer，安全套接字层)"></a>SSL (Secure Socket Layer，安全套接字层)</h3><p>SSL为Netscape所研发，用以保障在Internet上数据传输之安全，利用数据加密(Encryption)技术，可确保数据在网络上之传输过程中不会被截取，当前为3.0版本。</p>
-<p>SSL协议可分为两层： SSL记录协议（SSL Record Protocol）：它建立在可靠的传输协议（如TCP）之上，为高层协议提供数据封装、压缩、加密等基本功能的支持。 SSL握手协议（SSL Handshake Protocol）：它建立在SSL记录协议之上，用于在实际的数据传输开始前，通讯双方进行身份认证、协商加密算法、交换加密密钥等。</p>
-<h3 id="TLS-Transport-Layer-Security，传输层安全协议"><a href="#TLS-Transport-Layer-Security，传输层安全协议" class="headerlink" title="TLS (Transport Layer Security，传输层安全协议)"></a>TLS (Transport Layer Security，传输层安全协议)</h3><p>用于两个应用程序之间提供保密性和数据完整性。</p>
-<p>TLS 1.0是IETF（Internet Engineering Task Force，Internet工程任务组）制定的一种新的协议，它建立在SSL 3.0协议规范之上，是SSL 3.0的后续版本，可以理解为SSL 3.1，它是写入了 RFC 的。该协议由两层组成： TLS 记录协议（TLS Record）和 TLS 握手协议（TLS Handshake）。较低的层为 TLS 记录协议，位于某个可靠的传输协议（例如 TCP）上面。</p>
-<h3 id="SSL-TLS协议作用："><a href="#SSL-TLS协议作用：" class="headerlink" title="SSL/TLS协议作用："></a>SSL/TLS协议作用：</h3><p>认证用户和服务器，确保数据发送到正确的客户机和服务器；<br>加密数据以防止数据中途被窃取；<br>维护数据的完整性，确保数据在传输过程中不被改变。</p>
-<h3 id="TLS比SSL的优势"><a href="#TLS比SSL的优势" class="headerlink" title="TLS比SSL的优势"></a>TLS比SSL的优势</h3><p>对于消息认证使用密钥散列法：TLS 使用“消息认证代码的密钥散列法”（HMAC），当记录在开放的网络（如因特网）上传送时，该代码确保记录不会被变更。SSLv3.0还提供键控消息认证，但HMAC比SSLv3.0使用的（消息认证代码）MAC 功能更安全。</p>
-<p>增强的伪随机功能（PRF）：PRF生成密钥数据。在TLS中，HMAC定义PRF。PRF使用两种散列算法保证其安全性。如果任一算法暴露了，只要第二种算法未暴露，则数据仍然是安全的。</p>
-<p>改进的已完成消息验证：TLS和SSLv3.0都对两个端点提供已完成的消息，该消息认证交换的消息没有被变更。然而，TLS将此已完成消息基于PRF和HMAC值之上，这也比SSLv3.0更安全。</p>
-<p>一致证书处理：与SSLv3.0不同，TLS试图指定必须在TLS之间实现交换的证书类型。</p>
-<p>特定警报消息：TLS提供更多的特定和附加警报，以指示任一会话端点检测到的问题。TLS还对何时应该发送某些警报进行记录。</p>
-<h3 id="SSL、TLS的握手过程"><a href="#SSL、TLS的握手过程" class="headerlink" title="SSL、TLS的握手过程"></a>SSL、TLS的握手过程</h3><p>SSL与TLS握手整个过程如下图所示，下面会详细介绍每一步的具体内容：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/clientHello.png" alt=""></p>
-<h3 id="客户端首次发出请求"><a href="#客户端首次发出请求" class="headerlink" title="客户端首次发出请求"></a>客户端首次发出请求</h3><p>由于客户端(如浏览器)对一些加解密算法的支持程度不一样，但是在TLS协议传输过程中必须使用同一套加解密算法才能保证数据能够正常的加解密。在TLS握手阶段，客户端首先要告知服务端，自己支持哪些加密算法，所以客户端需要将本地支持的加密套件(Cipher Suite)的列表传送给服务端。除此之外，客户端还要产生一个随机数，这个随机数一方面需要在客户端保存，另一方面需要传送给服务端，客户端的随机数需要跟服务端产生的随机数结合起来产生后面要讲到的 Master Secret 。</p>
-<p>客户端需要提供如下信息：<br>支持的协议版本，比如TLS 1.0版<br>一个客户端生成的随机数，稍后用于生成”对话密钥”<br>支持的加密方法，比如RSA公钥加密<br>支持的压缩方法</p>
-<h3 id="服务端首次回应"><a href="#服务端首次回应" class="headerlink" title="服务端首次回应"></a>服务端首次回应</h3><p>服务端在接收到客户端的Client Hello之后，服务端需要确定加密协议的版本，以及加密的算法，然后也生成一个随机数，以及将自己的证书发送给客户端一并发送给客户端，这里的随机数是整个过程的第二个随机数。</p>
-<p>服务端需要提供的信息：<br>协议的版本<br>加密的算法<br>随机数<br>服务器证书</p>
-<h3 id="客户端再次回应"><a href="#客户端再次回应" class="headerlink" title="客户端再次回应"></a>客户端再次回应</h3><p>客户端首先会对服务器下发的证书进行验证，验证通过之后，则会继续下面的操作，客户端再次产生一个随机数（第三个随机数），然后使用服务器证书中的公钥进行加密，以及放一个ChangeCipherSpec消息即编码改变的消息，还有整个前面所有消息的hash值，进行服务器验证，然后用新秘钥加密一段数据一并发送到服务器，确保正式通信前无误。</p>
-<p>客户端使用前面的两个随机数以及刚刚新生成的新随机数，使用与服务器确定的加密算法，生成一个Session Secret。</p>
-<p>ChangeCipherSpec</p>
-<p>ChangeCipherSpec是一个独立的协议，体现在数据包中就是一个字节的数据，用于告知服务端，客户端已经切换到之前协商好的加密套件（Cipher Suite）的状态，准备使用之前协商好的加密套件加密数据并传输了。</p>
-<h3 id="服务器再次响应"><a href="#服务器再次响应" class="headerlink" title="服务器再次响应"></a>服务器再次响应</h3><p>服务端在接收到客户端传过来的第三个随机数的 加密数据之后，使用私钥对这段加密数据进行解密，并对数据进行验证，也会使用跟客户端同样的方式生成秘钥，一切准备好之后，也会给客户端发送一个 ChangeCipherSpec，告知客户端已经切换到协商过的加密套件状态，准备使用加密套件和 Session Secret加密数据了。之后，服务端也会使用 Session Secret 加密一段 Finish 消息发送给客户端，以验证之前通过握手建立起来的加解密通道是否成功。</p>
-<h3 id="后续客户端与服务器间通信"><a href="#后续客户端与服务器间通信" class="headerlink" title="后续客户端与服务器间通信"></a>后续客户端与服务器间通信</h3><p>确定秘钥之后，服务器与客户端之间就会通过商定的秘钥加密消息了，进行通讯了。整个握手过程也就基本完成了。</p>
-<p>值得特别提出的是：<br>SSL协议在握手阶段使用的是非对称加密，在传输阶段使用的是对称加密，也就是说在SSL上传送的数据是使用对称密钥加密的！因为非对称加密的速度缓慢，耗费资源。其实当客户端和主机使用非对称加密方式建立连接后，客户端和主机已经决定好了在传输过程使用的对称加密算法和关键的对称加密密钥，由于这个过程本身是安全可靠的，也即对称加密密钥是不可能被窃取盗用的，因此，保证了在传输过程中对数据进行对称加密也是安全可靠的，因为除了客户端和主机之外，不可能有第三方窃取并解密出对称加密密钥！如果有人窃听通信，他可以知道双方选择的加密方法，以及三个随机数中的两个。整个通话的安全，只取决于第三个随机数（Premaster secret）能不能被破解。</p>
-<h3 id="其他补充"><a href="#其他补充" class="headerlink" title="其他补充"></a>其他补充</h3><p>对于非常重要的保密数据，服务端还需要对客户端进行验证，以保证数据传送给了安全的合法的客户端。服务端可以向客户端发出 Cerficate Request 消息，要求客户端发送证书对客户端的合法性进行验证。比如，金融机构往往只允许认证客户连入自己的网络，就会向正式客户提供USB密钥，里面就包含了一张客户端证书。</p>
-<p>PreMaster secret前两个字节是TLS的版本号，这是一个比较重要的用来核对握手数据的版本号，因为在Client Hello阶段，客户端会发送一份加密套件列表和当前支持的SSL/TLS的版本号给服务端，而且是使用明文传送的，如果握手的数据包被破解之后，攻击者很有可能串改数据包，选择一个安全性较低的加密套件和版本给服务端，从而对数据进行破解。所以，服务端需要对密文中解密出来对的PreMaster版本号跟之前Client Hello阶段的版本号进行对比，如果版本号变低，则说明被串改，则立即停止发送任何消息。</p>
-<h3 id="session的恢复"><a href="#session的恢复" class="headerlink" title="session的恢复"></a>session的恢复</h3><p>有两种方法可以恢复原来的session：一种叫做session ID，另一种叫做session ticket。</p>
-<h3 id="session-ID"><a href="#session-ID" class="headerlink" title="session ID"></a>session ID</h3><p>session ID的思想很简单，就是每一次对话都有一个编号（session ID）。如果对话中断，下次重连的时候，只要客户端给出这个编号，且服务器有这个编号的记录，双方就可以重新使用已有的”对话密钥”，而不必重新生成一把。</p>
-<p>session ID是目前所有浏览器都支持的方法，但是它的缺点在于session ID往往只保留在一台服务器上。所以，如果客户端的请求发到另一台服务器，就无法恢复对话</p>
-<h3 id="session-ticket"><a href="#session-ticket" class="headerlink" title="session ticket"></a>session ticket</h3><p>客户端发送一个服务器在上一次对话中发送过来的session ticket。这个session ticket是加密的，只有服务器才能解密，其中包括本次对话的主要信息，比如对话密钥和加密方法。当服务器收到session ticket以后，解密后就不必重新生成对话密钥了。<br>目前只有Firefox和Chrome浏览器支持。</p>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>https实际就是在TCP层与http层之间加入了SSL/TLS来为上层的安全保驾护航，主要用到对称加密、非对称加密、证书，等技术进行客户端与服务器的数据加密传输，最终达到保证整个通信的安全性。</p>
-<p><a href="http://www.wxtlife.com/2016/03/27/%E8%AF%A6%E8%A7%A3https%E6%98%AF%E5%A6%82%E4%BD%95%E7%A1%AE%E4%BF%9D%E5%AE%89%E5%85%A8%E7%9A%84%EF%BC%9F/" target="_blank" rel="noopener">原文</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2017-01-07T06:45:23.000Z"><a href="/2017/01/07/存储/数据库范式那些事/">2017-01-07</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/01/07/存储/数据库范式那些事/">数据库范式那些事</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <ol>
-<li><h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a><strong>简介</strong></h2></li>
-</ol>
-<p>​      数据库范式在数据库设计中的地位一直很暧昧，教科书中对于数据库范式倒是都给出了学术性的定义，但实际应用中范式的应用却不甚乐观，这篇文章会用简单的语言和一个简单的数据库DEMO将一个不符合范式的数据库一步步从第一范式实现到第四范式。</p>
-<h2 id="范式的目标"><a href="#范式的目标" class="headerlink" title="范式的目标"></a><strong>范式的目标</strong></h2><p>​      应用数据库范式可以带来许多好处，但是最重要的好处归结为三点：<br>​      1.减少数据冗余（这是最主要的好处，其他好处都是由此而附带的）<br>​      2.消除异常（插入异常，更新异常，删除异常）<br>​      3.让数据组织的更加和谐，但剑是双刃的，应用数据库范式同样也会带来弊端。</p>
-<h2 id="什么是范式"><a href="#什么是范式" class="headerlink" title="什么是范式"></a><strong>什么是范式</strong></h2><p>​      简单的说，范式是为了消除重复数据减少冗余数据，从而让数据库内的数据更好的组织，让磁盘空间得到更有效利用的一种标准化标准，满足高等级的范式的先决条件是满足低等级范式。(比如满足2nf一定满足1nf)</p>
-<h2 id="DEMO"><a href="#DEMO" class="headerlink" title="DEMO"></a><strong>DEMO</strong></h2><p>让我们先从一个未经范式化的表看起,表如下：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/fansh01.png" alt=""></p>
-<p>先对表做一个简单说明，employeeId是员工id,departmentName是部门名称，job代表岗位，jobDescription是岗位说明，skill是员工技能，departmentDescription是部门说明，address是员工住址。</p>
-<p><strong>对表进行第一范式(1NF)</strong></p>
-<p>​    <em>如果一个关系模式R的所有属性都是不可分的基本数据项，则R∈1NF。</em></p>
-<p>​    简单的说,第一范式就是每一个属性都不可再分。不符合第一范式则不能称为关系数据库。对于上表，不难看出Address是可以再分的，比如”北京市XX路XX小区XX号”，着显然不符合第一范式，对其应用第一范式则需要将此属性分解到另一个表,如下:</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/fansh02.png" alt=""></p>
-<p><strong>对表进行第二范式(2NF)</strong></p>
-<p>   <em>若关系模式R∈1NF，并且每一个非主属性都</em><a href="http://baike.baidu.com/view/228997.htm" target="_blank" rel="noopener"><em>完全函数依赖</em></a><em>于R的码，则R∈2NF</em></p>
-<p>   简单的说，是表中的属性必须完全依赖于全部主键，而不是部分主键.所以只有一个主键的表如果符合第一范式，那一定是第二范式。这样做的目的是进一步减少插入异常和更新异常。在上表中，departmentDescription是由主键DepartmentName所决定，但却不是由主键EmployeeID决定，所以departmentDescription只依赖于两个主键中的一个，故要departmentDescription对主键是部分依赖，对其应用第二范式如下表：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/fansh03.png" alt=""></p>
-<p>  <strong>对表进行第三范式(3NF)</strong></p>
-<p><a href="http://baike.baidu.com/view/68347.htm" target="_blank" rel="noopener"><em>关系模式</em></a><em>R&lt;U，F&gt; 中若不存在这样的码X、属性组Y及非主属性Z（Z  Y）, 使得X→Y，Y→Z，成立，则称R&lt;U，F&gt; ∈ 3NF。</em></p>
-<p>  简单的说，第三范式是为了消除数据库中关键字之间的依赖关系，在上面经过第二范式化的表中，可以看出jobDescription(岗位职责)是由job(岗位)所决定，则jobDescription依赖于job,可以看出这不符合第三范式，对表进行第三范式后的关系图为：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/fansh04.png" alt=""></p>
-<p>上表中，已经不存在数据库属性互相依赖的问题，所以符合第三范式</p>
-<p><strong>对表进行BC范式(BCNF)</strong></p>
-<p><em>设</em><a href="http://baike.baidu.com/view/68347.htm" target="_blank" rel="noopener"><em>关系模式</em></a><em>R&lt;U，F&gt;∈1NF，如果对于R的每个函数依赖X→Y，若Y不属于X，则X必含有候选码，那么R∈BCNF。</em></p>
-<p>  简单的说，bc范式是在第三范式的基础上的一种特殊情况，既每个表中只有一个候选键（在一个数据库中每行的值都不相同，则可称为候选键），在上面第三范式的noNf表中可以看出，每一个员工的email都是唯一的（难道两个人用同一个email??）则，此表不符合bc范式，对其进行bc范式化后的关系图为:</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/fansh05.png" alt=""></p>
-<p>   <strong>对表进行第四范式(4NF)</strong></p>
-<p>   <a href="http://baike.baidu.com/view/68347.htm" target="_blank" rel="noopener"><em>关系模式</em></a><em>R&lt;U，F&gt;∈1NF，如果对于R的每个非平凡多值依赖X→→Y（Y  X），X都含有候选码，则R∈4NF。</em></p>
-<p>  简单的说，第四范式是消除表中的多值依赖，也就是说可以减少维护数据一致性的工作。对于上面bc范式化的表中，对于员工的skill，两个可能的值是”C#,sql,javascript”和“C#，UML,Ruby”,可以看出，这个数据库属性存在多个值，这就可能造成数据库内容不一致的问题，比如第一个值写的是”C#”,而第二个值写的是”C#.net”,解决办法是将多值属性放入一个新表，则第四范式化后的关系图如下：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/fansh06.png" alt=""></p>
-<p>而对于skill表则可能的值为:</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/fansh07.png" alt=""></p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a><strong>总结</strong></h2><p>上面对于数据库范式进行分解的过程中不难看出，应用的范式登记越高，则表越多。表多会带来很多问题：</p>
-<ol>
-<li><p>查询时要连接多个表，增加了查询的复杂度</p>
-</li>
-<li><p>查询时需要连接多个表，降低了数据库查询性能，而现在的情况，磁盘空间成本基本可以忽略不计，所以数据冗余所造成的问题也并不是应用数据库范式的理由。</p>
-</li>
-<li><p>因此，并不是应用的范式越高越好，要看实际情况而定。第三范式已经很大程度上减少了数据冗余，并且减少了造成插入异常，更新异常，和删除异常了。我个人观点认为，大多数情况应用到第三范式已经足够，在一定情况下第二范式也是可以的。</p>
-</li>
-</ol>
-<p>参考原文：<a href="http://www.cnblogs.com/CareySon/archive/2010/02/16/1668803.html" target="_blank" rel="noopener">http://www.cnblogs.com/CareySon/archive/2010/02/16/1668803.html</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -1008,7 +1018,7 @@
   
     <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
   
-    <li><a href="/tags/Node-js/">Node.js</a><small>1</small></li>
+    <li><a href="/tags/Node-js/">Node.js</a><small>4</small></li>
   
     <li><a href="/tags/Node-js入门/">Node.js入门</a><small>9</small></li>
   
