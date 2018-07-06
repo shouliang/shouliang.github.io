@@ -53,6 +53,84 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2014-04-06T07:45:23.000Z"><a href="/2014/04/06/MongoDB/MongoDB(2)文档的增删改查/">2014-04-06</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2014/04/06/MongoDB/MongoDB(2)文档的增删改查/">二.文档的增删改查</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-简单插入文档"><a href="#1-简单插入文档" class="headerlink" title="1.简单插入文档"></a>1.简单插入文档</h3><hr>
+<p>在数据库中，数据插入是最基本的操作，在MongoDB使用db.collection.insert(document)语句来插入文档，如下图：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkinsert1.png" alt=""></p>
+<p>document是文档数据，collection是存放文档数据的集合。</p>
+<p>例如：所有用户的信息存放在users集合中，每个用户的信息为一个user文档，插入数据:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">db.users.insert(user);</span><br></pre></td></tr></table></figure></p>
+<p>如果collection存在，document会添加到collection目录下， 如果collection不存在，数据库会先创建collection，然后再保存document。</p>
+<h3 id="2-批量插入文档"><a href="#2-批量插入文档" class="headerlink" title="2.批量插入文档"></a>2.批量插入文档</h3><hr>
+<p>nsert语句不但可以插入单个文档，还可以一次性插入多个文档。</p>
+<p>插入多个文档时，insert命令的参数为一个数组，数组元素为BSON格式的文档。</p>
+<p>多个文档可以放在一个数组内，一次插入多条数据，例如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">db.users.insert([&#123;name:&quot;tommy&quot;&#125;,&#123;name:&quot;xiaoming&quot;&#125;])</span><br></pre></td></tr></table></figure></p>
+<p>文档批量插入非常方便，但是使用批量插入时也有一些问题需要注意，因为BSON格式的限制，一次插入的数据量不能超过16M，在一个insert命令中插入多条数据时，MongoDB不保证完全成功或完全失败。</p>
+<h3 id="3-查询与投影"><a href="#3-查询与投影" class="headerlink" title="3.查询与投影"></a>3.查询与投影</h3><hr>
+<p>在MongoDB中，查询指向特定的文档集合，查询设定条件，指明MongoDB需要返回的文档；查询也可以包含一个投影，指定返回的字段。</p>
+<p>如下图，在查询过程指定了一个查询条件和一个排序修饰。</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkquery.jpg" alt=""></p>
+<p>在关系型数据库中，投影指的是对列的筛选，类似的，在MongoDB中，投影指的是对出现在结果集中的对象属性的筛选。</p>
+<h3 id="4-find-方法"><a href="#4-find-方法" class="headerlink" title="4.find()方法"></a>4.find()方法</h3><hr>
+<p>MongoDB中查询检索数据时使用find命令，使用方法如下：</p>
+<p>语法：<br>db.collection.find(criteria,projection);<br>参数：<br>criteria – 查询条件，文档类型，可选。</p>
+<p>projection– 返回的字段，文档类型，可选,若需返回所有字段，则忽略此参数。</p>
+<p>find命令两个可选参数，criteria为查询条件，projection为返回的字段，如果不传入条件数据库会返回该集合的所有文档。</p>
+<p>如下图简单示例：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkfind.jpg" alt=""></p>
+<h3 id="5-修改文档-update命令"><a href="#5-修改文档-update命令" class="headerlink" title="5.修改文档 - update命令"></a>5.修改文档 - update命令</h3><hr>
+<p>update命令可以更新指定文档的特定字段值，也可以替换整个文档，如果更新操作会增加文档大小，MongoDB将重新分配空间并重新定位。</p>
+<p>语法：<br>db.collection.update(query,update,{upsert:boolean,multi:boolean});<br>参数：<br>query：查询条件，文档，和find中的查询条件写法一致。</p>
+<p>update：修改内容，文档。</p>
+<p>upsert(可选)：如果值为true，那么当集合中没有匹配文档时，创建文档。默认false。</p>
+<p>multi(可选)：如果值为true，那么将更新全部符合条件的文档，否则仅更新一个文档，默认false。</p>
+<p>如下示例：将users集合中所有符合条件”age&gt;18”文档的status字段更新为”A”。</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkupdate.jpg" alt=""></p>
+<h3 id="6-修改文档-save命令"><a href="#6-修改文档-save命令" class="headerlink" title="6.修改文档 - save命令"></a>6.修改文档 - save命令</h3><hr>
+<p>save命令可以更新或插入一个新文档，与update命令不同的是，save只能对一个文档进行操作。</p>
+<p>语法：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">db.collection.save();</span><br></pre></td></tr></table></figure></p>
+<p>参数：<br>document：新的文档；</p>
+<h3 id="7-删除文档-remove命令"><a href="#7-删除文档-remove命令" class="headerlink" title="7.删除文档 - remove命令"></a>7.删除文档 - remove命令</h3><hr>
+<p>需要删除文档时使用remove命令，删除文档可以清理掉不需要的数据，释放存储空间，提升检索效率，但是错误的删除会是一场灾难，因此在执行数据删除操作时需要非常的谨慎！</p>
+<p>语法：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">db.collection.remove(</span><br><span class="line">    query,</span><br><span class="line">    justOne</span><br><span class="line"> )</span><br></pre></td></tr></table></figure></p>
+<p>参数：<br>query：BSON类型，删除文档的条件。</p>
+<p>justOne：布尔类型，true：只删除一个文档，false：默认值，删除所有符合条件的文档。</p>
+<p>下面是一个是将users集合中所有status=”D”的文档删除操作，对比一下MongoDB和传统SQL数据库删除的操作，看看有哪些不同之处。</p>
+<p>与传统SQL比较 - 删除文档</p>
+<p>MongoDB</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkremove.jpg" alt=""></p>
+<p>传统SQL</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkremove-sql.jpg" alt=""></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2014-04-03T06:45:23.000Z"><a href="/2014/04/03/MongoDB/MongoDB(1)简单介绍/">2014-04-03</a></time>
       
       
@@ -618,63 +696,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2014-02-04T06:45:23.000Z"><a href="/2014/02/04/Node.js异步编程/Node.js异步编程(1)简介/">2014-02-04</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2014/02/04/Node.js异步编程/Node.js异步编程(1)简介/">一.简介</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-简介"><a href="#1-简介" class="headerlink" title="1.简介"></a>1.简介</h3><hr>
-<p>异步编程是指由于异步I/O等因素，无法同步获得执行结果时，在回调函数中进行下一步操作的代码编写风格,常见的如setTimeout函数、ajax请求等等。</p>
-<p>示例：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">console.log(&apos;hi!&apos;);</span><br><span class="line">setTimeout(function()&#123;</span><br><span class="line">   console.log(&apos;hello!&apos;);</span><br><span class="line">&#125;,1000);</span><br><span class="line">console.log(&apos;wow!&apos;);</span><br></pre></td></tr></table></figure></p>
-<p>从示例中可以看到，hello是在wow输出后才输出的，因为setTimeout函数设置了延迟1000毫秒才异步执行，<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">function()&#123; console.log(&apos;hello&apos;); &#125;</span><br></pre></td></tr></table></figure></p>
-<p>就是异步回调函数，这样的编程风格就是异步编程。</p>
-<h3 id="2-优势"><a href="#2-优势" class="headerlink" title="2.优势"></a>2.优势</h3><hr>
-<p>为什么选择node.js？它有哪些优势呢？</p>
-<p>1.性能：相对于多线程，异步I/O没有了线程间的上下文切换开销，由此带来可观的性能提升是选择它的主要原因。</p>
-<p>2.成本：由于性能的提升，相同的硬件可以发挥更大的作用，变相的降低了运营成本，由于node.js采用javascript作为开发语言，而javascript的使用已经非常广泛，所以降低了node.js的学习成本。</p>
-<p>3.效率：node.js采用javascript作为开发语言，使前后端开发语言统一，不需要切换开发语言，使开发效率更高，加之javascript使用者众多，使得node.js迅速的流行起来。</p>
-<h3 id="3-思维习惯"><a href="#3-思维习惯" class="headerlink" title="3.思维习惯"></a>3.思维习惯</h3><hr>
-<p><strong>不符合线性思维习惯</strong><br>虽然异步会带来很多好处，但是也衍生了很多问题。 异步编程在流程控制中业务表达不太适合自然语言的线性思维习惯。</p>
-<p>实例 - 获取数据<br>线性表达<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var data = getData(id);</span><br></pre></td></tr></table></figure></p>
-<p>异步编程:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">getData(id,function(data)&#123;</span><br><span class="line">   //在回调函数中才能获取到data数据</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<h3 id="4-异常捕获"><a href="#4-异常捕获" class="headerlink" title="4.异常捕获"></a>4.异常捕获</h3><hr>
-<p>异步I/O的实现主要有两个阶段，①提交请求；②处理结果； 这两个阶段彼此不关联，而异常并不一定发生在请求提交（即调用函数）时，平常的try/catch并不能有效的捕捉到程序的异常。</p>
-<p>示例1：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">try&#123;</span><br><span class="line">    setTimeout(function()&#123;</span><br><span class="line">        var data = a/1; //错误的计算</span><br><span class="line">    &#125;,1000);</span><br><span class="line">&#125;catch (e)&#123;</span><br><span class="line">  console.log(e);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>因为计算并不会马上执行，所以即便是发生了错误，也无法捕获到相关信息，那么异步编程中应该如何处理异常的呢？请看示例2：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">setTimeout(function()&#123;</span><br><span class="line">    try&#123;</span><br><span class="line">        var data = a/1; //错误的计算</span><br><span class="line">    &#125;catch(e)&#123;</span><br><span class="line">       console.log(e);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;,1000);</span><br></pre></td></tr></table></figure></p>
-<h3 id="5-函数嵌套"><a href="#5-函数嵌套" class="headerlink" title="5.函数嵌套"></a>5.函数嵌套</h3><hr>
-<p>os模块可提供操作系统的一些基本信息，它的一些常用方法如下：<br>函数嵌套<br>刚刚接触node.js的朋友们都有一个共同的烦恼，在进行较复杂的业务处理时，茫茫多的callback看得人头昏眼花，写着写着自己都糊涂了，更何况普遍患有强迫症的程序猿，面对如此难看的代码，如何能忍？<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">test1(function(v1)&#123;</span><br><span class="line">  test2(funciton(v1,function(v2)&#123;</span><br><span class="line">    test3(function(v2,fcuntion(v3)&#123;</span><br><span class="line">      test4(v3,function(v4)&#123;</span><br><span class="line">        callback(v4);</span><br><span class="line">      &#125;);</span><br><span class="line">    &#125;));</span><br><span class="line">  &#125;));</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>异步编程中，函数嵌套是一个普遍存在的问题，也因此常常被人诟病，如何解决函数嵌套，且看下回分解。</p>
-<h3 id="6-小结"><a href="#6-小结" class="headerlink" title="6.小结"></a>6.小结</h3><hr>
-<p>非线性的思维只是因为和以前的习惯不太一样，才会觉得不太适应，但是长期使用锻炼你也会发现它并非一无是处。</p>
-<p>异常捕获在node.js中也有了统一的约定，将异常信息作为回调函数的第一个实参传递给回调函数。 深层嵌套的问题也有很多解决办法。</p>
-<p>思维方式 ===&gt; 非线性思维需要多使用锻炼，适应这种思维方式。<br>异常捕获 ===&gt; 遵守node.js统一的回调函数格式，将异常信息传入回调函数。<br>函数嵌套 ===&gt; 相应解决方案，专门课程讲解。</p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -710,17 +731,17 @@
   
     <li><a href="/tags/Javascript/">Javascript</a><small>2</small></li>
   
-    <li><a href="/tags/Linux/">Linux</a><small>1</small></li>
-  
     <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
   
     <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
   
-    <li><a href="/tags/Node-js/">Node.js</a><small>8</small></li>
+    <li><a href="/tags/Node-js/">Node.js</a><small>9</small></li>
   
     <li><a href="/tags/Node-js入门/">Node.js入门</a><small>9</small></li>
   
     <li><a href="/tags/Node错误处理和调试/">Node错误处理和调试</a><small>5</small></li>
+  
+    <li><a href="/tags/Unix/">Unix</a><small>3</small></li>
   
     <li><a href="/tags/express/">express</a><small>2</small></li>
   

@@ -287,6 +287,112 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2017-09-11T14:16:53.000Z"><a href="/2017/09/11/Node.js/深入理解Node.js中Stream内部机制/">2017-09-11</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2017/09/11/Node.js/深入理解Node.js中Stream内部机制/">深入理解Node.js Stream内部机制</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>相信很多人对 Node.js 的 Stream 已经不陌生了，不论是请求流、响应流、文件流还是 socket 流，这些流的底层都是使用 <code>stream</code> 模块封装的，甚至我们平时用的最多的 <code>console.log</code> 打印日志也使用了它，不信你打开 Node.js runtime 的源码，看看 <a href="https://github.com/nodejs/node/blob/master/lib/console.js#L82-L109" target="_blank" rel="noopener"><code>lib/console.js</code></a>：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">function write(ignoreErrors, stream, string, errorhandler) &#123;</span><br><span class="line">  // ...</span><br><span class="line">  stream.once(&apos;error&apos;, noop);</span><br><span class="line">  stream.write(string, errorhandler);</span><br><span class="line">  //...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Console.prototype.log = function log(...args) &#123;</span><br><span class="line">  write(this._ignoreErrors,</span><br><span class="line">        this._stdout,</span><br><span class="line">        `$&#123;util.format.apply(null, args)&#125;\n`,</span><br><span class="line">        this._stdoutErrorHandler);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>Stream 模块做了很多事情，了解了 Stream，那么 Node.js 中其他很多模块理解起来就顺畅多了。</p>
+<h3 id="stream-模块"><a href="#stream-模块" class="headerlink" title="stream 模块"></a>stream 模块</h3><p>如果你了解 <a href="https://zh.wikipedia.org/zh-hans/%E7%94%9F%E4%BA%A7%E8%80%85%E6%B6%88%E8%B4%B9%E8%80%85%E9%97%AE%E9%A2%98" target="_blank" rel="noopener">生产者和消费者问题</a> 的解法，那理解 stream 就基本没有压力了，它不仅仅是资料的起点和落点，还包含了一系列状态控制，可以说一个 stream 就是一个状态管理单元。了解内部机制的最佳方式除了看 <a href="https://nodejs.org/api/stream.html" target="_blank" rel="noopener">Node.js 官方文档</a>，还可以去看看 Node.js 的 <a href="https://github.com/nodejs/node/blob/master/lib/" target="_blank" rel="noopener">源码</a>：</p>
+<ul>
+<li><code>lib/module.js</code></li>
+<li><code>lib/_stream_readable.js</code></li>
+<li><code>lib/_stream_writable.js</code></li>
+<li><code>lib/_stream_tranform.js</code></li>
+<li><code>lib/_stream_duplex.js</code></li>
+</ul>
+<p>把 <code>Readable</code> 和 <code>Writable</code> 看明白，Tranform 和 Duplex 就不难理解了。</p>
+<h3 id="Readable-Stream"><a href="#Readable-Stream" class="headerlink" title="Readable Stream"></a>Readable Stream</h3><p>Readable Stream 存在两种模式，一种是叫做 <code>Flowing Mode</code>，流动模式，在 Stream 上绑定 ondata 方法就会自动触发这个模式，比如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">const readable = getReadableStreamSomehow();</span><br><span class="line">readable.on(&apos;data&apos;, (chunk) =&gt; &#123;</span><br><span class="line">  console.log(`Received $&#123;chunk.length&#125; bytes of data.`);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>这个模式的流程图如下：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream01_180706.png" alt=""></p>
+<p>资源的数据流并不是直接流向消费者，而是先 push 到缓存池，缓存池有一个水位标记 <code>highWatermark</code>，超过这个标记阈值，push 的时候会返回 <code>false</code>，什么场景下会出现这种情况呢？</p>
+<ul>
+<li>消费者主动执行了 <code>.pause()</code></li>
+<li>消费速度比数据 push 到缓存池的生产速度慢</li>
+</ul>
+<p>有个专有名词来形成这种情况，叫做「背压」，Writable Stream 也存在类似的情况。</p>
+<p>流动模式，这个名词还是很形象的，缓存池就像一个水桶，消费者通过管口接水，同时，资源池就像一个水泵，不断地往水桶中泵水，而 highWaterMark 是水桶的浮标，达到阈值就停止蓄水。<br>下面是一个简单的 Demo：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">const Readable = require(&apos;stream&apos;).Readable;</span><br><span class="line"></span><br><span class="line">// Stream 实现</span><br><span class="line">class MyReadable extends Readable &#123;</span><br><span class="line">  constructor(dataSource, options) &#123;</span><br><span class="line">    super(options);</span><br><span class="line">    this.dataSource = dataSource;</span><br><span class="line">  &#125;</span><br><span class="line">  // 继承了 Readable 的类必须实现这个函数</span><br><span class="line">  // 触发系统底层对流的读取</span><br><span class="line">  _read() &#123;</span><br><span class="line">    const data = this.dataSource.makeData();</span><br><span class="line">    this.push(data);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 模拟资源池</span><br><span class="line">const dataSource = &#123;</span><br><span class="line">  data: new Array(10).fill(&apos;-&apos;),</span><br><span class="line">  // 每次读取时 pop 一个数据</span><br><span class="line">  makeData() &#123;</span><br><span class="line">    if (!dataSource.data.length) return null;</span><br><span class="line">    return dataSource.data.pop();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">const myReadable = new MyReadable(dataSource);</span><br><span class="line">myReadable.setEncoding(&apos;utf8&apos;);</span><br><span class="line">myReadable.on(&apos;data&apos;, (chunk) =&gt; &#123;</span><br><span class="line">  console.log(chunk);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>另外一种模式是 <code>Non-Flowing Mode</code>，没流动，也就是暂停模式，这是 Stream 的预设模式，Stream 实例的 <code>_readableState.flow</code> 有三个状态，分别是：</p>
+<ul>
+<li><code>_readableState.flow = null</code>，暂时没有消费者过来</li>
+<li><code>_readableState.flow = false</code>，主动触发了 <code>.pause()</code></li>
+<li><code>_readableState.flow = true</code>，流动模式</li>
+</ul>
+<p>当我们监听了 onreadable 事件后，会进入这种模式，比如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">const myReadable = new MyReadable(dataSource);</span><br><span class="line">myReadable.setEncoding(&apos;utf8&apos;);</span><br><span class="line">myReadable.on(&apos;readable&apos;, () =&gt; &#123;&#125;);</span><br></pre></td></tr></table></figure>
+<p>监听 <code>readable</code> 的回调函数第一个参数不会传递内容，需要我们通过 <code>myReadable.read()</code> 主动读取，为啥呢，可以看看下面这张图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream02_180706.png" alt=""></p>
+<p>资源池会不断地往缓存池输送数据，直到 highWaterMark 阈值，消费者监听了 readable 事件并不会消费数据，需要主动调用 <code>.read([size])</code> 函数才会从缓存池取出，并且可以带上 size 参数，用多少就取多少：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">const myReadable = new MyReadable(dataSource);</span><br><span class="line">myReadable.setEncoding(&apos;utf8&apos;);</span><br><span class="line">myReadable.on(&apos;readable&apos;, () =&gt; &#123;</span><br><span class="line">  let chunk;</span><br><span class="line">  while (null !== (chunk = myReadable.read())) &#123;</span><br><span class="line">    console.log(`Received $&#123;chunk.length&#125; bytes of data.`);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>这里需要注意一点，只要数据达到缓存池都会触发一次 readable 事件，有可能出现「消费者正在消费数据的时候，又触发了一次 readable 事件，那么下次回调中 read 到的数据可能为空」的情况。我们可以通过 <code>_readableState.buffer</code> 来查看缓存池到底缓存了多少资源：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">let once = false;</span><br><span class="line">myReadable.on(&apos;readable&apos;, (chunk) =&gt; &#123;</span><br><span class="line">  console.log(myReadable._readableState.buffer.length);</span><br><span class="line">  if (once) return;</span><br><span class="line">  once = true;</span><br><span class="line">  console.log(myReadable.read());</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>上面的代码我们只消费一次缓存池的数据，那么在消费后，缓存池又收到了一次资源池的 push 操作，此时还会触发一次 readable 事件，我们可以看看这次存了多大的 buffer。</p>
+<p>需要注意的是，buffer 大小也是有上限的，默认设置为 16kb，也就是 16384 个字节长度，它最大可设置为 8Mb，没记错的话，这个值好像是 Node 的 new space memory 的大小。</p>
+<p>上面介绍了 Readable Stream 大概的机制，还有很多细节部分没有提到，比如 <code>Flowing Mode</code> 在不同 Node 版本中的 Stream 实现不太一样，实际上，它有三个版本，上面提到的是第 2 和 第 3 个版本的实现；再比如 <code>Mixins Mode</code> 模式，一般我们只推荐（允许）使用 ondata 和 onreadable 的一种来处理 Readable Stream，但是如果要求在 <code>Non-Flowing Mode</code> 的情况下使用 ondata 如何实现呢？那么就可以考虑 <code>Mixins Mode</code> 了。</p>
+<h3 id="Writable-Stream"><a href="#Writable-Stream" class="headerlink" title="Writable Stream"></a>Writable Stream</h3><p>原理与 Readable Stream 是比较相似的，数据流过来的时候，会直接写入到资源池，当写入速度比较缓慢或者写入暂停时，数据流会进入队列池缓存起来，如下图所示：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream03_180706.png" alt=""></p>
+<p>当生产者写入速度过快，把队列池装满了之后，就会出现「背压」，这个时候是需要告诉生产者暂停生产的，当队列释放之后，Writable Stream 会给生产者发送一个 <code>drain</code> 消息，让它恢复生产。下面是一个写入一百万条数据的 Demo：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">function writeOneMillionTimes(writer, data, encoding, callback) &#123;</span><br><span class="line">  let i = 10000;</span><br><span class="line">  write();</span><br><span class="line">  function write() &#123;</span><br><span class="line">    let ok = true;</span><br><span class="line">    while(i-- &gt; 0 &amp;&amp; ok) &#123;</span><br><span class="line">      // 写入结束时回调</span><br><span class="line">      ok = writer.write(data, encoding, i === 0 ? callback : null);</span><br><span class="line">    &#125;</span><br><span class="line">    if (i &gt; 0) &#123;</span><br><span class="line">      // 这里提前停下了，&apos;drain&apos; 事件触发后才可以继续写入  </span><br><span class="line">      console.log(&apos;drain&apos;, i);</span><br><span class="line">      writer.once(&apos;drain&apos;, write);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们构造一个 Writable Stream，在写入到资源池的时候，我们稍作处理，让它效率低一点：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">const Writable = require(&apos;stream&apos;).Writable;</span><br><span class="line">const writer = new Writable(&#123;</span><br><span class="line">  write(chunk, encoding, callback) &#123;</span><br><span class="line">    // 比 process.nextTick() 稍慢</span><br><span class="line">    setTimeout(() =&gt; &#123;</span><br><span class="line">      callback &amp;&amp; callback();</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">writeOneMillionTimes(writer, &apos;simple&apos;, &apos;utf8&apos;, () =&gt; &#123;</span><br><span class="line">  console.log(&apos;end&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>最后执行的结果是：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">drain 7268</span><br><span class="line">drain 4536</span><br><span class="line">drain 1804</span><br><span class="line">end</span><br></pre></td></tr></table></figure>
+<p>说明程序遇到了三次「背压」，如果我们没有在上面绑定 <code>writer.once(&#39;drain&#39;)</code>，那么最后的结果就是 Stream 将第一次获取的数据消耗完变结束了程序。</p>
+<h3 id="pipe"><a href="#pipe" class="headerlink" title="pipe"></a>pipe</h3><p>了解了 Readable 和 Writable，pipe 这个常用的函数应该就很好理解了，</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">readable.pipe(writable);</span><br></pre></td></tr></table></figure>
+<p>这句代码的语意性很强，readable 通过 pipe（管道）传输给 writable，pipe 的实现大致如下（伪代码）：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">Readable.prototype.pipe = function(writable, options) &#123;</span><br><span class="line">  this.on(&apos;data&apos;, (chunk) =&gt; &#123;</span><br><span class="line">    let ok = writable.write(chunk);</span><br><span class="line">	// 背压，暂停</span><br><span class="line">    !ok &amp;&amp; this.pause();</span><br><span class="line">  &#125;);</span><br><span class="line">  writable.on(&apos;drain&apos;, () =&gt; &#123;</span><br><span class="line">    // 恢复</span><br><span class="line">    this.resume();</span><br><span class="line">  &#125;);</span><br><span class="line">  // 告诉 writable 有流要导入</span><br><span class="line">  writable.emit(&apos;pipe&apos;, this);</span><br><span class="line">  // 支持链式调用</span><br><span class="line">  return writable;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>上面做了五件事情：</p>
+<ul>
+<li><code>emit(pipe)</code>，通知写入</li>
+<li><code>.write()</code>，新数据过来，写入</li>
+<li><code>.pause()</code>，消费者消费速度慢，暂停写入</li>
+<li><code>.resume()</code>，消费者完成消费，继续写入</li>
+<li><code>return writable</code>，支持链式调用</li>
+</ul>
+<p>当然，上面只是最简单的逻辑，还有很多异常和临界判断没有加入，具体可以去看看 Node.js 的代码（ <a href="https://github.com/nodejs/node/blob/master/lib/_stream_readable.js#L541-L684" target="_blank" rel="noopener">/lib/_stream_readable.js</a>）。</p>
+<h3 id="Duplex-Stream"><a href="#Duplex-Stream" class="headerlink" title="Duplex Stream"></a>Duplex Stream</h3><p>Duplex，双工的意思，它的输入和输出可以没有任何关系，<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream04_180706.png" alt=""></p>
+<p>Duplex Stream 实现特别简单，不到一百行代码，它继承了 Readable Stream，并拥有 Writable Stream 的方法（<a href="https://github.com/nodejs/node/blob/master/lib/_stream_duplex.js#L31-L42" target="_blank" rel="noopener">源码地址</a>）：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">const util = require(&apos;util&apos;);</span><br><span class="line">const Readable = require(&apos;_stream_readable&apos;);</span><br><span class="line">const Writable = require(&apos;_stream_writable&apos;);</span><br><span class="line"></span><br><span class="line">util.inherits(Duplex, Readable);</span><br><span class="line"></span><br><span class="line">var keys = Object.keys(Writable.prototype);</span><br><span class="line">for (var v = 0; v &lt; keys.length; v++) &#123;</span><br><span class="line">  var method = keys[v];</span><br><span class="line">  if (!Duplex.prototype[method])</span><br><span class="line">    Duplex.prototype[method] = Writable.prototype[method];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们可以通过 options 参数来配置它为只可读、只可写或者半工模式，一个简单的 Demo：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">var Duplex = require(&apos;stream&apos;).Duplex</span><br><span class="line"></span><br><span class="line">const duplex = Duplex();</span><br><span class="line"></span><br><span class="line">// readable</span><br><span class="line">let i = 2;</span><br><span class="line">duplex._read = function () &#123;</span><br><span class="line">  this.push(i-- ? &apos;read &apos; + i : null);</span><br><span class="line">&#125;;</span><br><span class="line">duplex.on(&apos;data&apos;, data =&gt; console.log(data.toString()));</span><br><span class="line"></span><br><span class="line">// writable</span><br><span class="line">duplex._write = function (chunk, encoding, callback) &#123;</span><br><span class="line">  console.log(chunk.toString());</span><br><span class="line">  callback();</span><br><span class="line">&#125;;</span><br><span class="line">duplex.write(&apos;write&apos;);</span><br></pre></td></tr></table></figure>
+<p>输出的结果为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">write</span><br><span class="line">read 1</span><br><span class="line">read 0</span><br></pre></td></tr></table></figure>
+<p>可以看出，两个管道是相互之间不干扰的。</p>
+<h3 id="Transform-Stream"><a href="#Transform-Stream" class="headerlink" title="Transform Stream"></a>Transform Stream</h3><p>Transform Stream 集成了 Duplex Stream，它同样具备 Readable 和 Writable 的能力，只不过它的输入和输出是存在相互关联的，中间做了一次转换处理。常见的处理有 Gzip 压缩、解压等。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream05_180706.png" alt=""></p>
+<p>Transform 的处理就是通过 <code>_transform</code> 函数将 Duplex 的 Readable 连接到 Writable，由于 Readable 的生产效率与 Writable 的消费效率是一样的，所以这里 Transform 内部不存在「背压」问题，背压问题的源头是外部的生产者和消费者速度差造成的。</p>
+<p>关于 Transfrom Stream，我写了一个简单的 Demo：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">const Transform = require(&apos;stream&apos;).Transform;</span><br><span class="line">const MAP = &#123;</span><br><span class="line">  &apos;Barret&apos;: &apos;靖&apos;,</span><br><span class="line">  &apos;Lee&apos;: &apos;李&apos;</span><br><span class="line">&#125;;</span><br><span class="line">  </span><br><span class="line">class Translate extends Transform &#123;</span><br><span class="line">  constructor(dataSource, options) &#123;</span><br><span class="line">    super(options);</span><br><span class="line">  &#125;</span><br><span class="line">  _transform(buf, enc, next) &#123;</span><br><span class="line">    const key = buf.toString();</span><br><span class="line">    const data = MAP[key];</span><br><span class="line">    this.push(data);</span><br><span class="line">    next();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var transform = new Translate();</span><br><span class="line">transform.on(&apos;data&apos;, data =&gt; console.log(data.toString()));</span><br><span class="line">transform.write(&apos;Lee&apos;);</span><br><span class="line">transform.write(&apos;Barret&apos;);</span><br><span class="line">transform.end();</span><br></pre></td></tr></table></figure>
+<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><p>本文主要参考和查阅 Node.js 官网的文档和源码，细节问题都是从源码中找到的答案，如有理解不准确之处，还请斧正。关于 Stream，这篇文章只是讲述了基础的原理，还有很多细节之处没有讲到，要真正理解它，还是需要多读读文档，写写代码。</p>
+<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="http://taobaofed.org/blog/2017/08/31/nodejs-stream/" target="_blank" rel="noopener">http://taobaofed.org/blog/2017/08/31/nodejs-stream/</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2017-06-05T06:45:23.000Z"><a href="/2017/06/05/测试/Node.js单元测试、集成测试、基准测试以及代码覆盖率测试/">2017-06-05</a></time>
       
       
@@ -770,140 +876,6 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2017-02-12T06:45:23.000Z"><a href="/2017/02/12/安全/Node.js中crypto模块/">2017-02-12</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/02/12/安全/Node.js中crypto模块/">Node.js中的crypto模块</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>原文：<a href="https://www.cnblogs.com/chyingp/p/nodejs-learning-crypto-theory.html" target="_blank" rel="noopener">https://www.cnblogs.com/chyingp/p/nodejs-learning-crypto-theory.html</a></p>
-<h2 id="一、-概述"><a href="#一、-概述" class="headerlink" title="一、 概述"></a>一、 概述</h2><p>互联网时代，网络上的数据量每天都在以惊人的速度增长。同时，各类网络安全问题层出不穷。在信息安全重要性日益凸显的今天，作为一名开发者，需要加强对安全的认识，并通过技术手段增强服务的安全性。</p>
-<p><code>crypto</code>模块是nodejs的核心模块之一，它提供了安全相关的功能，如摘要运算、加密、电子签名等。很多初学者对着长长的API列表，不知如何上手，因此它背后涉及了大量安全领域的知识。</p>
-<p>本文重点讲解API背后的理论知识，主要包括如下内容：</p>
-<ol>
-<li>摘要（hash）、基于摘要的消息验证码（HMAC）</li>
-<li>对称加密、非对称加密、电子签名</li>
-<li>分组加密模式</li>
-</ol>
-<h2 id="二、摘要（hash）"><a href="#二、摘要（hash）" class="headerlink" title="二、摘要（hash）"></a>二、摘要（hash）</h2><p>摘要（digest）：将长度不固定的消息作为输入，通过运行hash函数，生成固定长度的输出，这段输出就叫做摘要。通常用来验证消息完整、未被篡改。</p>
-<p>摘要运算是不可逆的。也就是说，输入固定的情况下，产生固定的输出。但知道输出的情况下，无法反推出输入。</p>
-<p>伪代码如下。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">digest = Hash(message)</span><br></pre></td></tr></table></figure></p>
-<p>常见的摘要算法 与 对应的输出位数如下：</p>
-<ul>
-<li>MD5：128位</li>
-<li>SHA-1：160位</li>
-<li>SHA256 ：256位</li>
-<li>SHA512：512位</li>
-</ul>
-<p>nodejs中的例子：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> crypto = <span class="built_in">require</span>(<span class="string">'crypto'</span>);</span><br><span class="line"><span class="keyword">var</span> md5 = crypto.createHash(<span class="string">'md5'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> message = <span class="string">'hello'</span>;</span><br><span class="line"><span class="keyword">var</span> digest = md5.update(message, <span class="string">'utf8'</span>).digest(<span class="string">'hex'</span>); </span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(digest);</span><br><span class="line"><span class="comment">// 输出如下：注意这里是16进制</span></span><br><span class="line"><span class="comment">// 5d41402abc4b2a76b9719d911017c592</span></span><br></pre></td></tr></table></figure>
-<p>备注：在各类文章或文献中，摘要、hash、散列 这几个词经常会混用，导致不少初学者看了一脸懵逼，其实大部分时候指的都是一回事，记住上面对摘要的定义就好了。</p>
-<h2 id="三、MAC、HMAC"><a href="#三、MAC、HMAC" class="headerlink" title="三、MAC、HMAC"></a>三、MAC、HMAC</h2><p>MAC（Message Authentication Code）：消息认证码，用以保证数据的完整性。运算结果取决于消息本身、秘钥。</p>
-<p>MAC可以有多种不同的实现方式，比如HMAC。</p>
-<p>HMAC（Hash-based Message Authentication Code）：可以粗略地理解为带秘钥的hash函数。</p>
-<p>nodejs例子如下：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> crypto = <span class="built_in">require</span>(<span class="string">'crypto'</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 参数一：摘要函数</span></span><br><span class="line"><span class="comment">// 参数二：秘钥</span></span><br><span class="line"><span class="keyword">let</span> hmac = crypto.createHmac(<span class="string">'md5'</span>, <span class="string">'123456'</span>);</span><br><span class="line"><span class="keyword">let</span> ret = hmac.update(<span class="string">'hello'</span>).digest(<span class="string">'hex'</span>);</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(ret);</span><br><span class="line"><span class="comment">// 9c699d7af73a49247a239cb0dd2f8139</span></span><br></pre></td></tr></table></figure>
-<h2 id="四、对称加密、非对称加密"><a href="#四、对称加密、非对称加密" class="headerlink" title="四、对称加密、非对称加密"></a>四、对称加密、非对称加密</h2><p><strong>加密/解密</strong>：给定明文，通过一定的算法，产生加密后的密文，这个过程叫加密。反过来就是解密。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">encryptedText = encrypt( plainText )</span><br><span class="line">plainText = decrypt( encryptedText )</span><br></pre></td></tr></table></figure></p>
-<p><strong>秘钥</strong>：为了进一步增强加/解密算法的安全性，在加/解密的过程中引入了秘钥。秘钥可以视为加/解密算法的参数，在已知密文的情况下，如果不知道解密所用的秘钥，则无法将密文解开。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">encryptedText = encrypt(plainText, encryptKey)</span><br><span class="line">plainText = decrypt(encryptedText, decryptKey)</span><br></pre></td></tr></table></figure></p>
-<p>根据加密、解密所用的秘钥是否相同，可以将加密算法分为<strong>对称加密</strong>、<strong>非对称加密</strong>。</p>
-<h3 id="1、对称加密"><a href="#1、对称加密" class="headerlink" title="1、对称加密"></a>1、对称加密</h3><p>加密、解密所用的秘钥是相同的，即<code>encryptKey === decryptKey</code>。</p>
-<p>常见的对称加密算法：DES、3DES、AES、Blowfish、RC5、IDEA。</p>
-<p>加、解密伪代码：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">encryptedText = encrypt(plainText, key); <span class="comment">// 加密</span></span><br><span class="line">plainText = decrypt(encryptedText, key); <span class="comment">// 解密</span></span><br></pre></td></tr></table></figure></p>
-<h3 id="2、非对称加密"><a href="#2、非对称加密" class="headerlink" title="2、非对称加密"></a>2、非对称加密</h3><p>又称公开秘钥加密。加密、解密所用的秘钥是不同的，即<code>encryptKey !== decryptKey</code>。</p>
-<p>加密秘钥公开，称为公钥。解密秘钥保密，称为秘钥。</p>
-<p>常见的非对称加密算法：RSA、DSA、ElGamal。</p>
-<p>加、解密伪代码：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">encryptedText = encrypt(plainText, publicKey);  <span class="comment">// 加密</span></span><br><span class="line">plainText = decrypt(encryptedText, priviteKey); <span class="comment">// 解密</span></span><br></pre></td></tr></table></figure></p>
-<h3 id="3、对比与应用"><a href="#3、对比与应用" class="headerlink" title="3、对比与应用"></a>3、对比与应用</h3><p>除了秘钥的差异，还有运算速度上的差异。通常来说：</p>
-<ol>
-<li>对称加密速度要快于非对称加密。</li>
-<li>非对称加密通常用于加密短文本，对称加密通常用于加密长文本。</li>
-</ol>
-<p>两者可以结合起来使用，比如HTTPS协议，可以在握手阶段，通过RSA来交换生成对称秘钥。在之后的通讯阶段，可以使用对称加密算法对数据进行加密，秘钥则是握手阶段生成的。 </p>
-<p>备注：对称秘钥交换不一定通过RSA，还可以通过类似DH来完成，这里不展开。</p>
-<h2 id="五、数字签名"><a href="#五、数字签名" class="headerlink" title="五、数字签名"></a>五、数字签名</h2><p>从<strong>签名</strong>大致可以猜到<strong>数字签名</strong>的用途。主要作用如下：</p>
-<ol>
-<li>确认信息来源于特定的主体。</li>
-<li>确认信息完整、未被篡改。</li>
-</ol>
-<p>为了达到上述目的，需要有两个过程：</p>
-<ol>
-<li>发送方：生成签名。</li>
-<li>接收方：验证签名。</li>
-</ol>
-<h3 id="1、发送方生成签名"><a href="#1、发送方生成签名" class="headerlink" title="1、发送方生成签名"></a>1、发送方生成签名</h3><ol>
-<li>计算原始信息的摘要。</li>
-<li>通过私钥对摘要进行签名，得到电子签名。</li>
-<li>将原始信息、电子签名，发送给接收方。</li>
-</ol>
-<p>附：签名伪代码<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">digest = hash(message); <span class="comment">// 计算摘要</span></span><br><span class="line">digitalSignature = sign(digest,  priviteKey); <span class="comment">// 计算数字签名</span></span><br></pre></td></tr></table></figure></p>
-<h3 id="2、接收方验证签名"><a href="#2、接收方验证签名" class="headerlink" title="2、接收方验证签名"></a>2、接收方验证签名</h3><ol>
-<li>通过公钥解开电子签名，得到摘要D1。（如果解不开，信息来源主体校验失败）</li>
-<li>计算原始信息的摘要D2。</li>
-<li>对比D1、D2，如果D1等于D2，说明原始信息完整、未被篡改。</li>
-</ol>
-<p>附：签名验证伪代码<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">digest1 = verify(digitalSignature, publicKey); <span class="comment">// 获取摘要</span></span><br><span class="line">digest2 = hash(message); <span class="comment">// 计算原始信息的摘要</span></span><br><span class="line">digest1 === digest2      <span class="comment">// 验证是否相等</span></span><br></pre></td></tr></table></figure></p>
-<h3 id="3、对比非对称加密"><a href="#3、对比非对称加密" class="headerlink" title="3、对比非对称加密"></a>3、对比非对称加密</h3><p>由于RSA算法的特殊性，加密/解密、签名/验证 看上去特别像，很多同学都很容易混淆。先记住下面结论，后面有时间再详细介绍。</p>
-<ol>
-<li>加密/解密：公钥加密，私钥解密。</li>
-<li>签名/验证：私钥签名，公钥验证。</li>
-</ol>
-<h2 id="六、分组加密模式、填充、初始化向量"><a href="#六、分组加密模式、填充、初始化向量" class="headerlink" title="六、分组加密模式、填充、初始化向量"></a>六、分组加密模式、填充、初始化向量</h2><p>常见的对称加密算法，如AES、DES都采用了分组加密模式。这其中，有三个关键的概念需要掌握：模式、填充、初始化向量。</p>
-<p>搞清楚这三点，才会知道crypto模块对称加密API的参数代表什么含义，出了错知道如何去排查。</p>
-<h3 id="1、分组加密模式"><a href="#1、分组加密模式" class="headerlink" title="1、分组加密模式"></a>1、分组加密模式</h3><p>所谓的分组加密，就是将（较长的）明文拆分成固定长度的块，然后对拆分的块按照特定的模式进行加密。</p>
-<p>常见的分组加密模式有：ECB（不安全）、CBC（最常用）、CFB、OFB、CTR等。</p>
-<p>以最简单的ECB为例，先将消息拆分成等分的模块，然后利用秘钥进行加密。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-ECB_encryption.svg.png" alt=""><br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-ECB_decryption.svg.png" alt=""><br>更多关于分组加密模式的介绍可以参考 <a href="https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Common_modes" target="_blank" rel="noopener">wiki</a>。</p>
-<p>后面假设每个块的长度为128位</p>
-<h3 id="2、初始化向量：IV"><a href="#2、初始化向量：IV" class="headerlink" title="2、初始化向量：IV"></a>2、初始化向量：IV</h3><p>为了增强算法的安全性，部分分组加密模式（CFB、OFB、CTR）中引入了初始化向量（IV），使得加密的结果随机化。也就是说，对于同一段明文，IV不同，加密的结果不同。</p>
-<p>以CBC为例，每一个数据块，都与前一个加密块进行亦或运算后，再进行加密。对于第一个数据块，则是与IV进行亦或。</p>
-<p>IV的大小跟数据块的大小有关（128位），跟秘钥的长度无关。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-CBC_encryption.svg.png" alt=""><br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-CBC_decryption.svg.png" alt=""></p>
-<h3 id="3、填充：padding"><a href="#3、填充：padding" class="headerlink" title="3、填充：padding"></a>3、填充：padding</h3><p>分组加密模式需要对长度固定的块进行加密。分组拆分完后，最后一个数据块长度可能小于128位，此时需要进行填充以满足长度要求。</p>
-<p>填充方式有多重。常见的填充方式有<a href="https://tools.ietf.org/html/rfc5652#section-6.3" target="_blank" rel="noopener">PKCS7</a>。</p>
-<p>假设分组长度为k字节，最后一个分组长度为k-last，可以看到：</p>
-<ol>
-<li>不管明文长度是多少，加密之前都会会对明文进行填充 （不然解密函数无法区分最后一个分组是否被填充了，因为存在最后一个分组长度刚好等于k的情况）</li>
-<li>如果最后一个分组长度等于k-last === k，那么填充内容为一个完整的分组 k k k … k （k个字节）</li>
-<li>如果最后一个分组长度小于k-last &lt; k，那么填充内容为 k-last mod k </li>
-</ol>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">         01 -- if lth mod k = k-1</span><br><span class="line">      02 02 -- if lth mod k = k-2</span><br><span class="line">          .</span><br><span class="line">          .</span><br><span class="line">          .</span><br><span class="line">k k ... k k -- if lth mod k = 0</span><br></pre></td></tr></table></figure>
-<h3 id="概括来说"><a href="#概括来说" class="headerlink" title="概括来说"></a>概括来说</h3><ol>
-<li>分组加密：先将明文切分成固定长度的块（128位），再进行加密。</li>
-<li>分组加密的几种模式：ECB（不安全）、CBC（最常用）、CFB、OFB、CTR。</li>
-<li>填充(padding)：部分加密模式，当最后一个块的长度小于128位时，需要通过特定的方式进行填充。（ECB、CBC需要填充，CFB、OFB、CTR不需要填充）</li>
-<li>初始化向量（IV）：部分加密模式（CFB、OFB、CTR）会将 明文块 与 前一个密文块进行亦或操作。对于第一个明文块，不存在前一个密文块，因此需要提供初始化向量IV（把IV当做第一个明文块 之前的 密文块）。此外，IV也可以让加密结果随机化。</li>
-</ol>
-<h2 id="七、相关链接"><a href="#七、相关链接" class="headerlink" title="七、相关链接"></a>七、相关链接</h2><p><a href="https://github.com/chyingp/nodejs-learning-guide" target="_blank" rel="noopener">Nodejs学习笔记</a></p>
-<p><a href="https://en.wikipedia.org/wiki/Cryptographic_hash_function" target="_blank" rel="noopener">Cryptographic hash function</a></p>
-<p><a href="https://en.wikipedia.org/wiki/Hash-based_message_authentication_code" target="_blank" rel="noopener">Hash-based message authentication code</a></p>
-<p><a href="https://crypto.stackexchange.com/questions/2936/hmac-vs-mac-functions" target="_blank" rel="noopener">HMAC vs MAC functions</a></p>
-<p><a href="https://crypto.stackexchange.com/questions/6523/what-is-the-difference-between-mac-and-hmac" target="_blank" rel="noopener">What is the difference between MAC and HMAC?</a></p>
-<p><a href="https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation" target="_blank" rel="noopener">Block cipher mode of operation</a></p>
-<p><a href="https://www.zhihu.com/question/25912483/answer/31653639" target="_blank" rel="noopener">RSA的公钥和私钥到底哪个才是用来加密和哪个用来解密？ - 刘巍然-学酥的回答 - 知乎</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
         <time datetime="2017-02-12T06:45:23.000Z"><a href="/2017/02/12/安全/数字证书的基础知识/">2017-02-12</a></time>
       
       
@@ -1035,17 +1007,17 @@
   
     <li><a href="/tags/Javascript/">Javascript</a><small>2</small></li>
   
-    <li><a href="/tags/Linux/">Linux</a><small>1</small></li>
-  
     <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
   
     <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
   
-    <li><a href="/tags/Node-js/">Node.js</a><small>8</small></li>
+    <li><a href="/tags/Node-js/">Node.js</a><small>9</small></li>
   
     <li><a href="/tags/Node-js入门/">Node.js入门</a><small>9</small></li>
   
     <li><a href="/tags/Node错误处理和调试/">Node错误处理和调试</a><small>5</small></li>
+  
+    <li><a href="/tags/Unix/">Unix</a><small>3</small></li>
   
     <li><a href="/tags/express/">express</a><small>2</small></li>
   
