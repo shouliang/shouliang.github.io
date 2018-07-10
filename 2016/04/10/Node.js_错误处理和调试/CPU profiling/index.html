@@ -1,0 +1,241 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>CPU profiling | shouliang&#39;s blog</title>
+  <meta name="author" content="shouliang">
+  
+  <meta name="description" content="Node">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="CPU profiling"/>
+  <meta property="og:site_name" content="shouliang&#39;s blog"/>
+
+  
+    <meta property="og:image" content=""/>
+  
+
+  <link href="/favicon.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="shouliang&#39;s blog" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+
+</head>
+
+
+<body>
+  <header id="header" class="inner"><div class="alignleft">
+  <h1><a href="/">shouliang&#39;s blog</a></h1>
+  <h2><a href="/"></a></h2>
+</div>
+<nav id="main-nav" class="alignright">
+  <ul>
+    
+      <li><a href="/">首页</a></li>
+    
+      <li><a href="/archives">归档</a></li>
+    
+      <li><a href="/about">关于</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+<div class="clearfix"></div></header>
+  <div id="content" class="inner">
+    <div id="main-col" class="alignleft"><div id="wrapper"><article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2016-04-10T14:16:53.000Z"><a href="/2016/04/10/Node.js_错误处理和调试/CPU profiling/">2016-04-10</a></time>
+      
+      
+  
+    <h1 class="title">CPU profiling</h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>There are many third party tools available for profiling Node.js applications but, in many cases, the easiest option is to use the Node.js built in profiler. The built in profiler uses the <a href="https://developers.google.com/v8/profiler_example" target="_blank" rel="noopener">profiler inside V8</a> which samples the stack at regular intervals during program execution. It records the results of these samples, along with important optimization events such as jit compiles, as a series of ticks:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">code-creation,LazyCompile,0,0x2d5000a337a0,396,&quot;bp native array.js:1153:16&quot;,0x289f644df68,~</span><br><span class="line">code-creation,LazyCompile,0,0x2d5000a33940,716,&quot;hasOwnProperty native v8natives.js:198:30&quot;,0x289f64438d0,~</span><br><span class="line">code-creation,LazyCompile,0,0x2d5000a33c20,284,&quot;ToName native runtime.js:549:16&quot;,0x289f643bb28,~</span><br><span class="line">code-creation,Stub,2,0x2d5000a33d40,182,&quot;DoubleToIStub&quot;</span><br><span class="line">code-creation,Stub,2,0x2d5000a33e00,507,&quot;NumberToStringStub&quot;</span><br></pre></td></tr></table></figure>
+<p>In the past you need the V8 source code to be able to interpret the ticks. Luckily, tools have recently been introduced into Node.js 4.4.0 that facilitate the consumption of this information without separately building V8 from source. Let’s see how the built-in profiler can help provide insight into application performance.</p>
+<p>To illustrate the use of the tick profiler, we will work with a simple Express application. Our application will have two handlers, one for adding new users to our system:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">app.get(<span class="string">'/newUser'</span>, (req, res) =&gt; &#123;</span><br><span class="line">  <span class="keyword">let</span> username = req.query.username || <span class="string">''</span>;</span><br><span class="line">  <span class="keyword">const</span> password = req.query.password || <span class="string">''</span>;</span><br><span class="line"></span><br><span class="line">  username = username.replace(<span class="regexp">/[!@#$%^&amp;*]/g</span>, <span class="string">''</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!username || !password || users.username) &#123;</span><br><span class="line">    <span class="keyword">return</span> res.sendStatus(<span class="number">400</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> salt = crypto.randomBytes(<span class="number">128</span>).toString(<span class="string">'base64'</span>);</span><br><span class="line">  <span class="keyword">const</span> hash = crypto.pbkdf2Sync(password, salt, <span class="number">10000</span>, <span class="number">512</span>);</span><br><span class="line"></span><br><span class="line">  users[username] = &#123; salt, hash &#125;;</span><br><span class="line"></span><br><span class="line">  res.sendStatus(<span class="number">200</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>and another for validating user authentication attempts:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">app.get(<span class="string">'/auth'</span>, (req, res) =&gt; &#123;</span><br><span class="line">  <span class="keyword">let</span> username = req.query.username || <span class="string">''</span>;</span><br><span class="line">  <span class="keyword">const</span> password = req.query.password || <span class="string">''</span>;</span><br><span class="line"></span><br><span class="line">  username = username.replace(<span class="regexp">/[!@#$%^&amp;*]/g</span>, <span class="string">''</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!username || !password || !users[username]) &#123;</span><br><span class="line">    <span class="keyword">return</span> res.sendStatus(<span class="number">400</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> hash = crypto.pbkdf2Sync(password, users[username].salt, <span class="number">10000</span>, <span class="number">512</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (users[username].hash.toString() === hash.toString()) &#123;</span><br><span class="line">    res.sendStatus(<span class="number">200</span>);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    res.sendStatus(<span class="number">401</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p><em>Please note that these are NOT recommended handlers for authenticating users in your Node.js applications and are used purely for illustration purposes. You should not be trying to design your own cryptographic authentication mechanisms in general. It is much better to use existing, proven authentication solutions.</em></p>
+<p>Now assume that we’ve deployed our application and users are complaining about high latency on requests. We can easily run the app with the built in profiler:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">NODE_ENV=production node --prof app.js</span><br></pre></td></tr></table></figure>
+<p>and put some load on the server using <code>ab</code> (ApacheBench):</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">curl -X GET &quot;http://localhost:8080/newUser?username=matt&amp;password=password&quot;</span><br><span class="line">ab -k -c 20 -n 250 &quot;http://localhost:8080/auth?username=matt&amp;password=password&quot;</span><br></pre></td></tr></table></figure>
+<p>and get an ab output of:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">Concurrency Level:      20</span><br><span class="line">Time taken for tests:   46.932 seconds</span><br><span class="line">Complete requests:      250</span><br><span class="line">Failed requests:        0</span><br><span class="line">Keep-Alive requests:    250</span><br><span class="line">Total transferred:      50250 bytes</span><br><span class="line">HTML transferred:       500 bytes</span><br><span class="line">Requests per second:    5.33 [#/sec] (mean)</span><br><span class="line">Time per request:       3754.556 [ms] (mean)</span><br><span class="line">Time per request:       187.728 [ms] (mean, across all concurrent requests)</span><br><span class="line">Transfer rate:          1.05 [Kbytes/sec] received</span><br><span class="line"></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">Percentage of the requests served within a certain time (ms)</span><br><span class="line">  50%   3755</span><br><span class="line">  66%   3804</span><br><span class="line">  75%   3818</span><br><span class="line">  80%   3825</span><br><span class="line">  90%   3845</span><br><span class="line">  95%   3858</span><br><span class="line">  98%   3874</span><br><span class="line">  99%   3875</span><br><span class="line"> 100%   4225 (longest request)</span><br></pre></td></tr></table></figure>
+<p>From this output, we see that we’re only managing to serve about 5 requests per second and that the average request takes just under 4 seconds round trip. In a real world example, we could be doing lots of work in many functions on behalf of a user request but even in our simple example, time could be lost compiling regular expressions, generating random salts, generating unique hashes from user passwords, or inside the Express framework itself.</p>
+<p>Since we ran our application using the <code>--prof</code> option, a tick file was generated in the same directory as your local run of the application. It should have the form <code>isolate-0xnnnnnnnnnnnn-v8.log</code> (where <code>n</code> is a digit).</p>
+<p>In order to make sense of this file, we need to use the tick processor bundled with the Node.js binary. To run the processor, use the <code>--prof-process</code> flag:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">node --prof-process isolate-0xnnnnnnnnnnnn-v8.log &gt; processed.txt</span><br></pre></td></tr></table></figure>
+<p>Opening processed.txt in your favorite text editor will give you a few different types of information. The file is broken up into sections which are again broken up by language. First, we look at the summary section and see:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[Summary]:</span><br><span class="line">  ticks  total  nonlib   name</span><br><span class="line">    79    0.2%    0.2%  JavaScript</span><br><span class="line"> 36703   97.2%   99.2%  C++</span><br><span class="line">     7    0.0%    0.0%  GC</span><br><span class="line">   767    2.0%          Shared libraries</span><br><span class="line">   215    0.6%          Unaccounted</span><br></pre></td></tr></table></figure>
+<p>This tells us that 97% of all samples gathered occurred in C++ code and that when viewing other sections of the processed output we should pay most attention to work being done in C++ (as opposed to Javascript). With this in mind, we next find the [C++] section which contains information about which C++ functions are taking the most CPU time and see:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[C++]:</span><br><span class="line">  ticks  total  nonlib   name</span><br><span class="line"> 19557   51.8%   52.9%  node::crypto::PBKDF2(v8::FunctionCallbackInfo&lt;v8::Value&gt; const&amp;)</span><br><span class="line">  4510   11.9%   12.2%  _sha1_block_data_order</span><br><span class="line">  3165    8.4%    8.6%  _malloc_zone_malloc</span><br></pre></td></tr></table></figure>
+<p>We see that the top 3 entries account for 72.1% of CPU time taken by the program. From this output, we immediately see that at least 51.8% of CPU time is taken up by a function called PBKDF2 which corresponds to our hash generation from a user’s password. However, it may not be immediately obvious how the lower two entries factor into our application (or if it is we will pretend otherwise for the sake of example). To better understand the relationship between these functions, we will next look at the [Bottom up (heavy) profile] section which provides information about the primary callers of each function. Examining this section, we find:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"> ticks parent  name</span><br><span class="line">19557   51.8%  node::crypto::PBKDF2(v8::FunctionCallbackInfo&lt;v8::Value&gt; const&amp;)</span><br><span class="line">19557  100.0%    v8::internal::Builtins::~Builtins()</span><br><span class="line">19557  100.0%      LazyCompile: ~pbkdf2 crypto.js:557:16</span><br><span class="line"></span><br><span class="line"> 4510   11.9%  _sha1_block_data_order</span><br><span class="line"> 4510  100.0%    LazyCompile: *pbkdf2 crypto.js:557:16</span><br><span class="line"> 4510  100.0%      LazyCompile: *exports.pbkdf2Sync crypto.js:552:30</span><br><span class="line"></span><br><span class="line"> 3165    8.4%  _malloc_zone_malloc</span><br><span class="line"> 3161   99.9%    LazyCompile: *pbkdf2 crypto.js:557:16</span><br><span class="line"> 3161  100.0%      LazyCompile: *exports.pbkdf2Sync crypto.js:552:30</span><br></pre></td></tr></table></figure>
+<p>Parsing this section takes a little more work than the raw tick counts above. Within each of the “call stacks” above, the percentage in the parent column tells you the percentage of samples for which the function in the row above was called by the function in the current row. For example, in the middle “call stack” above for _sha1_block_data_order, we see that _sha1_block_data_order occurred in 11.9% of samples, which we knew from the raw counts above. However, here, we can also tell that it was always called by the pbkdf2 function inside the Node.js crypto module. We see that similarly, _malloc_zone_malloc was called almost exclusively by the same pbkdf2 function. Thus, using the information in this view, we can tell that our hash computation from the user’s password accounts not only for the 51.8% from above but also for all CPU time in the top 3 most sampled functions since the calls to _sha1_block_data_order and _malloc_zone_malloc were made on behalf of the pbkdf2 function.</p>
+<p>At this point, it is very clear that the password based hash generation should be the target of our optimization. Thankfully, you’ve fully internalized the <a href="https://nodesource.com/blog/why-asynchronous" target="_blank" rel="noopener">benefits of asynchronous programming</a> and you realize that the work to generate a hash from the user’s password is being done in a synchronous way and thus tying down the event loop. This prevents us from working on other incoming requests while computing a hash.</p>
+<p>To remedy this issue, you make a small modification to the above handlers to use the asynchronous version of the pbkdf2 function:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">app.get(<span class="string">'/auth'</span>, (req, res) =&gt; &#123;</span><br><span class="line">  <span class="keyword">let</span> username = req.query.username || <span class="string">''</span>;</span><br><span class="line">  <span class="keyword">const</span> password = req.query.password || <span class="string">''</span>;</span><br><span class="line"></span><br><span class="line">  username = username.replace(<span class="regexp">/[!@#$%^&amp;*]/g</span>, <span class="string">''</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!username || !password || !users[username]) &#123;</span><br><span class="line">    <span class="keyword">return</span> res.sendStatus(<span class="number">400</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  crypto.pbkdf2(password, users[username].salt, <span class="number">10000</span>, <span class="number">512</span>, (err, hash) =&gt; &#123;</span><br><span class="line">    <span class="keyword">if</span> (users[username].hash.toString() === hash.toString()) &#123;</span><br><span class="line">      res.sendStatus(<span class="number">200</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      res.sendStatus(<span class="number">401</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>A new run of the ab benchmark above with the asynchronous version of your app yields:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">Concurrency Level:      20</span><br><span class="line">Time taken for tests:   12.846 seconds</span><br><span class="line">Complete requests:      250</span><br><span class="line">Failed requests:        0</span><br><span class="line">Keep-Alive requests:    250</span><br><span class="line">Total transferred:      50250 bytes</span><br><span class="line">HTML transferred:       500 bytes</span><br><span class="line">Requests per second:    19.46 [#/sec] (mean)</span><br><span class="line">Time per request:       1027.689 [ms] (mean)</span><br><span class="line">Time per request:       51.384 [ms] (mean, across all concurrent requests)</span><br><span class="line">Transfer rate:          3.82 [Kbytes/sec] received</span><br><span class="line"></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">Percentage of the requests served within a certain time (ms)</span><br><span class="line">  50%   1018</span><br><span class="line">  66%   1035</span><br><span class="line">  75%   1041</span><br><span class="line">  80%   1043</span><br><span class="line">  90%   1049</span><br><span class="line">  95%   1063</span><br><span class="line">  98%   1070</span><br><span class="line">  99%   1071</span><br><span class="line"> 100%   1079 (longest request)</span><br></pre></td></tr></table></figure>
+<p>Yay! Your app is now serving about 20 requests per second, roughly 4 times more than it was with the synchronous hash generation. Additionally, the average latency is down from the 4 seconds before to just over 1 second.</p>
+<p>Hopefully, through the performance investigation of this (admittedly contrived) example, you’ve seen how the V8 tick processor can help you gain a better understanding of the performance of your Node.js applications.</p>
+<p>原文：<a href="https://nodejs.org/en/docs/guides/simple-profiling/" target="_blank" rel="noopener">https://nodejs.org/en/docs/guides/simple-profiling/</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+  
+  <div class="tags">
+    <a href="/tags/Node-js-错误处理和调试/">Node.js_错误处理和调试</a>
+  </div>
+
+        
+  <div class="addthis addthis_toolbox addthis_default_style">
+    
+      <a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+    
+    
+      <a class="addthis_button_tweet"></a>
+    
+    
+      <a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+    
+    
+      <a class="addthis_button_pinterest_pinit" pi:pinit:layout="horizontal"></a>
+    
+    <a class="addthis_counter addthis_pill_style"></a>
+  </div>
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js"></script>
+
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">留言</h1>
+
+  
+      <div id="fb-root"></div>
+<script>
+  (function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=shouliang0816";
+    fjs.parentNode.insertBefore(js, fjs);
+  }(document, 'script', 'facebook-jssdk'));
+</script>
+
+<div class="fb-comments" data-href="https://shouliang.github.io/2016/04/10/Node.js_错误处理和调试/CPU profiling/index.html" data-num-posts="5" data-width="840" data-colorscheme="light"></div>
+      
+  
+</section>
+
+</div></div>
+    <aside id="sidebar" class="alignright">
+  <div class="search">
+  <form action="//google.com/search" method="get" accept-charset="utf-8">
+    <input type="search" name="q" results="0" placeholder="搜索">
+    <input type="hidden" name="q" value="site:shouliang.github.io">
+  </form>
+</div>
+
+  
+
+  
+<div class="widget tag">
+  <h3 class="title">标签</h3>
+  <ul class="entry">
+  
+    <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
+  
+    <li><a href="/tags/Git/">Git</a><small>7</small></li>
+  
+    <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
+  
+    <li><a href="/tags/HTTP/">HTTP</a><small>1</small></li>
+  
+    <li><a href="/tags/Javascript/">Javascript</a><small>2</small></li>
+  
+    <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
+  
+    <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
+  
+    <li><a href="/tags/Node-js/">Node.js</a><small>1</small></li>
+  
+    <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>2</small></li>
+  
+    <li><a href="/tags/Node-js-事件/">Node.js_事件</a><small>4</small></li>
+  
+    <li><a href="/tags/Node-js-入门/">Node.js_入门</a><small>9</small></li>
+  
+    <li><a href="/tags/Node-js-异步编程/">Node.js_异步编程</a><small>3</small></li>
+  
+    <li><a href="/tags/Node-js-测试/">Node.js_测试</a><small>5</small></li>
+  
+    <li><a href="/tags/Node-js-进程/">Node.js_进程</a><small>2</small></li>
+  
+    <li><a href="/tags/Node-js-错误处理和调试/">Node.js_错误处理和调试</a><small>5</small></li>
+  
+    <li><a href="/tags/Unix/">Unix</a><small>3</small></li>
+  
+    <li><a href="/tags/express/">express</a><small>2</small></li>
+  
+    <li><a href="/tags/redis/">redis</a><small>2</small></li>
+  
+    <li><a href="/tags/shell/">shell</a><small>1</small></li>
+  
+    <li><a href="/tags/存储/">存储</a><small>3</small></li>
+  
+    <li><a href="/tags/安全/">安全</a><small>8</small></li>
+  
+  </ul>
+</div>
+
+</aside>
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div class="alignleft">
+  
+  &copy; 2018 shouliang
+  
+</div>
+<div class="clearfix"></div></footer>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+</body>
+</html>
