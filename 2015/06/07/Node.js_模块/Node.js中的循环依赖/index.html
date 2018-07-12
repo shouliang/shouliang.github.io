@@ -1,0 +1,282 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>Node.js 中的循环依赖 | shouliang&#39;s blog</title>
+  <meta name="author" content="shouliang">
+  
+  <meta name="description" content="Node">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="Node.js 中的循环依赖"/>
+  <meta property="og:site_name" content="shouliang&#39;s blog"/>
+
+  
+    <meta property="og:image" content=""/>
+  
+
+  <link href="/favicon.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="shouliang&#39;s blog" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+
+</head>
+
+
+<body>
+  <header id="header" class="inner"><div class="alignleft">
+  <h1><a href="/">shouliang&#39;s blog</a></h1>
+  <h2><a href="/"></a></h2>
+</div>
+<nav id="main-nav" class="alignright">
+  <ul>
+    
+      <li><a href="/">首页</a></li>
+    
+      <li><a href="/archives">归档</a></li>
+    
+      <li><a href="/about">关于</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+<div class="clearfix"></div></header>
+  <div id="content" class="inner">
+    <div id="main-col" class="alignleft"><div id="wrapper"><article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2015-06-07T06:45:23.000Z"><a href="/2015/06/07/Node.js_模块/Node.js中的循环依赖/">2015-06-07</a></time>
+      
+      
+  
+    <h1 class="title">Node.js 中的循环依赖</h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>我们在写node的时候有可能会遇到循环依赖的情况，什么是循环依赖，怎么避免或解决循环依赖问题？</p>
+<p>先看一段官网给出的循环依赖的代码:</p>
+<p><code>a.js</code>:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">console.log(&apos;a starting&apos;); </span><br><span class="line">exports.done = false;</span><br><span class="line">var b = require(&apos;./b.js&apos;); // ---&gt; 1</span><br><span class="line">console.log(&apos;in a, b.done = %j&apos;, b.done);</span><br><span class="line">exports.done = true;</span><br><span class="line">console.log(&apos;a done&apos;) // ---&gt; 4</span><br></pre></td></tr></table></figure>
+<p><code>b.js</code>:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">console.log(&apos;b starting&apos;); </span><br><span class="line">exports.done = false;</span><br><span class="line">var a = require(&apos;./a.js&apos;);  // ---&gt; 2</span><br><span class="line">// console.log(a);  ---&gt; &#123;done:false&#125;</span><br><span class="line">console.log(&apos;in b, a.done = %j&apos;, a.done); // ---&gt; 3</span><br><span class="line">exports.done = true;</span><br><span class="line">console.log(&apos;b done&apos;);</span><br></pre></td></tr></table></figure>
+<p><code>main.js</code>:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">console.log(&apos;main starting&apos;); </span><br><span class="line">var a = require(&apos;./a.js&apos;); // --&gt; 0</span><br><span class="line">var b = require(&apos;./b.js&apos;);</span><br><span class="line">console.log(&apos;in main, a.done=%j, b.done=%j&apos;, a.done, b.done);</span><br></pre></td></tr></table></figure>
+<p>如果我们启动 <code>main.js</code> 会出现什么情况？ 在 <code>a.js</code> 中加载 <code>b.js</code>，然后在<code>b.js</code>中加载 <code>a.js</code>，然后再在 <code>a.js</code>中加载 <code>b.js</code> 吗？这样就会造成循环依赖死循环。</p>
+<p>让我们执行看看：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$ node main.js</span><br><span class="line"></span><br><span class="line">main starting</span><br><span class="line">a starting</span><br><span class="line">b starting</span><br><span class="line">in b, a.done = false</span><br><span class="line">b done</span><br><span class="line">in a, b.done = true</span><br><span class="line">a done</span><br><span class="line">in main, a.done=true, b.done=true</span><br></pre></td></tr></table></figure>
+<p>可以看到程序并没有陷入死循环，从上面的执行结果可以看到 <code>main.js</code> 中先<code>require</code>了 <code>a.js</code> ，<code>a.js</code> 中执行完了<code>console</code>和<code>export.done=fasle</code>之后，转而去加载<code>b.js</code>，待<code>b.js</code>被load完之后，再返回<code>a.js</code>中执行完剩下的代码。</p>
+<p>我在官网的代码基础上增加了一些注释，基本 load 顺序就是按照这个<code>0--&gt;1--&gt;2--&gt;3--&gt;4</code>的顺序去执行的，然后在第二步下面我打印出了<code>require(&#39;./a&#39;)</code>的结果，可以看到是<code>{done:false}</code>，可以猜测在<code>b.js</code>中<code>require(&#39;./a&#39;)</code>的结果是<code>a.js</code>中已经执行到的<code>exports</code>出的值。</p>
+<p>上面所说的还只是基于结果基础上的猜测，没有什么说服力，为了验证我的猜测是正确的，我把 Node 的源码稍微翻看了一些，C++ 的代码看不懂没关系，能看懂 JS 的部分就可以了，下面就是 Node 源码的分析（主要是 module 的分析， <a href="https://github.com/nodejs/node" target="_blank" rel="noopener">Node 源码在此</a>）：</p>
+<p>将会分析的主要源码：</p>
+<ol>
+<li>node/src/node.js</li>
+<li>node/lib/module.js</li>
+</ol>
+<h2 id="启动-node-main-js"><a href="#启动-node-main-js" class="headerlink" title="启动 $ node main.js"></a>启动 $ node main.js</h2><p>C++ 的代码我看不懂，总而言之，在我查了资料之后知道当我们在<code>shell</code>中输入<code>node main.js</code>之后，会先执行 <code>node/src/node.cc</code>，然后会执行 <code>node/src/node.js</code>， 所以C++代码不分析，从分析 <code>node/src/node.js</code> 开始（只会分析和主题相关的代码）。</p>
+<h2 id="node-js-源码分析"><a href="#node-js-源码分析" class="headerlink" title="node.js 源码分析"></a>node.js 源码分析</h2><p><code>node.js</code>文件主要结构为</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">(function(process) &#123;</span><br><span class="line"></span><br><span class="line">    this.global = this</span><br><span class="line">    </span><br><span class="line">    function startup() &#123;</span><br><span class="line">      ...</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    startup()</span><br><span class="line"></span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<p>这种闭包代码很常见，从名字可以看出，此处为启动文件。接下来看看 startup 函数中有一大块条件语句，我删除大多数无关代码，如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">if (process.argv[1]) &#123;</span><br><span class="line">     // ...</span><br><span class="line">    </span><br><span class="line">    var Module = NativeModule.require(&apos;module&apos;);</span><br><span class="line">    Module.runMain();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我把无关的代码基本都删除了。可以看到这段代码主要做的事是先通过 Native 引入<code>module</code>模块，执行 <code>Module.runMain()</code>。</p>
+<p>很多人都知道 <code>require</code> 核心代码，如 require(‘path’)，不需要写全路径，Node 是怎样做到的呢？</p>
+<blockquote>
+<p>Node 采用了 V8 附带的 js2c.py 工具，将所有内置的 JavasSript 代码( src/node.js 和 lib/*.js) 转成 c++ 里面的数组生成 node_navtives.h 头文件。<br>在这个过程中， JavasSript 以字符串的形式存储在 node 命名空间中， 是不可直接执行的。<br>在启动 Node 进程时， JavaScript 代码直接加载进内存中。</p>
+<p>Node 在启动时，会生成一个全局变量 process， 并提供 binding() 方法来协助加载内建模块。</p>
+</blockquote>
+<p>上面大段介绍基本引自朴老师的「深入浅出 Node.js」。大概理解就是在启动命令的时候，Node 会把 <code>node.js</code> 和 <code>lib/*.js</code> 的内容都放到 <code>process</code> 中传入当前闭包中，我们在当前函数就可以通过<code>process.binding(&#39;natives&#39;)</code>取出来放到 _source 中，如下代码所示：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">function NativeModule(id) &#123;</span><br><span class="line">  this.filename = id + &apos;.js&apos;;</span><br><span class="line">  this.id = id;</span><br><span class="line">  this.exports = &#123;&#125;;</span><br><span class="line">  this.loaded = false;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">NativeModule._source = process.binding(&apos;natives&apos;);</span><br><span class="line">NativeModule._cache = &#123;&#125;;</span><br></pre></td></tr></table></figure>
+<p>接下来看看<code>NativeModule.require</code>做了哪些事情：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">NativeModule.require = function(id) &#123;</span><br><span class="line">  if (id == &apos;native_module&apos;) &#123;</span><br><span class="line">    return NativeModule;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  var cached = NativeModule.getCached(id);</span><br><span class="line">  if (cached) &#123;</span><br><span class="line">    return cached.exports;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  var nativeModule = new NativeModule(id);</span><br><span class="line"></span><br><span class="line">  nativeModule.cache();</span><br><span class="line">  nativeModule.compile();</span><br><span class="line"></span><br><span class="line">  return nativeModule.exports;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>这上面的代码表明内建模块被缓存，就直接返回内建模块的<code>exports</code>，如果没有的话，就生成一个核心模块的实例，然后先把模块根据id来<code>cache</code>，然后调用<code>nativeModule.compile</code>接口编译源文件：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">NativeModule.getSource = function(id) &#123;</span><br><span class="line">  return NativeModule._source[id];</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">NativeModule.wrap = function(script) &#123;</span><br><span class="line">  return NativeModule.wrapper[0] + script + NativeModule.wrapper[1];</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">NativeModule.wrapper = [</span><br><span class="line">  &apos;(function (exports, require, module, __filename, __dirname) &#123;\n&apos;,</span><br><span class="line">  &apos;\n&#125;);&apos;</span><br><span class="line">];</span><br><span class="line"></span><br><span class="line">NativeModule.prototype.compile = function() &#123;</span><br><span class="line">  var source = NativeModule.getSource(this.id);</span><br><span class="line">  source = NativeModule.wrap(source);</span><br><span class="line"></span><br><span class="line">  var fn = runInThisContext(source, &#123;</span><br><span class="line">    filename: this.filename,</span><br><span class="line">    lineOffset: -1</span><br><span class="line">  &#125;);</span><br><span class="line">  fn(this.exports, NativeModule.require, this, this.filename);</span><br><span class="line"></span><br><span class="line">  this.loaded = true;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">NativeModule.prototype.cache = function() &#123;</span><br><span class="line">  NativeModule._cache[this.id] = this;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>cache 是把实例根据 id 放到 _cache 对象中。先从 _source 中取出对应id的源文件字符串，包上一层<br><code>(function (exports, require, module, __filename, __dirname) {\n&#39;,&#39;\n});</code>。比如<code>main.js</code>最终变成如下JS代码的字符串:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">(function (exports, require, module, __filename, __dirname) &#123;</span><br><span class="line"> // 如果是main.js</span><br><span class="line">     console.log(&apos;main starting&apos;); </span><br><span class="line">    var a = require(&apos;./a.js&apos;); // --&gt; 0</span><br><span class="line">    var b = require(&apos;./b.js&apos;);</span><br><span class="line">    console.log(&apos;in main, a.done=%j, b.done=%j&apos;, a.done, b.done);</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<p><code>runInThisContext</code>是将被包装后的源字符串转成可执行函数，（<code>runInThisContext</code>来自<code>contextify</code>模块），<code>runInThisContext</code>的作用，类似<code>eval</code>，再执行这个被<code>eval</code>后的函数，就算被 load 完成了，最后把 load 设为 true。</p>
+<p>可以看到<code>fn</code>的实参为 <code>this.exports; NativeModule.require; this; this.filename;</code>。</p>
+<p>所以<code>require(&#39;module&#39;)</code>的作用是加载<code>/lib/module.js</code>文件。让我们再回到 startup 函数，加载完 module.js，紧接着运行 <code>Module.runMain()</code>方法。（估计有人忘了前面的startup函数是干嘛的，我再放一次，省得再拉回去了）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">if (process.argv[1]) &#123;</span><br><span class="line">     // ...</span><br><span class="line">    </span><br><span class="line">    var Module = NativeModule.require(&apos;module&apos;);</span><br><span class="line">    Module.runMain();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="module-js源码分析"><a href="#module-js源码分析" class="headerlink" title="module.js源码分析"></a>module.js源码分析</h2><p>上面走完了<code>NatvieModule</code>的加载代码。再看看<code>module.js</code>是怎样加载用户使用的文件的。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">function Module(id, parent) &#123;</span><br><span class="line">  this.id = id;</span><br><span class="line">  this.exports = &#123;&#125;;</span><br><span class="line">  this.parent = parent;</span><br><span class="line">  if (parent &amp;&amp; parent.children) &#123;</span><br><span class="line">    parent.children.push(this);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  this.filename = null;</span><br><span class="line">  this.loaded = false;</span><br><span class="line">  this.children = [];</span><br><span class="line">&#125;</span><br><span class="line">module.exports = Module;</span><br><span class="line"></span><br><span class="line">Module._cache = &#123;&#125;;</span><br><span class="line">Module._pathCache = &#123;&#125;;</span><br><span class="line">Module._extensions = &#123;&#125;;</span><br><span class="line">var modulePaths = [];</span><br><span class="line">Module.globalPaths = [];</span><br><span class="line"></span><br><span class="line">Module.wrapper = NativeModule.wrapper;</span><br><span class="line">Module.wrap = NativeModule.wrap;</span><br></pre></td></tr></table></figure>
+<p>这是<code>Module</code>的构造函数，<code>Module.wrapper</code>和<code>Module.wrap</code>，是由<code>NativeModule</code>赋值来的，<code>Module._cache</code>是个空对象，存放所有被 load 后的模块 id。</p>
+<p>在<code>node.js</code>文件的 startup 函数中，最后一步走到<code>Module.runMain()</code>:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Module.runMain = function() &#123;</span><br><span class="line">  // Load the main module--the command line argument.</span><br><span class="line">  Module._load(process.argv[1], null, true);</span><br><span class="line">  // Handle any nextTicks added in the first tick of the program</span><br><span class="line">  process._tickCallback();</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>在<code>runMain</code>方法中调用了<code>_load</code>方法:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">Module._load = function(request, parent, isMain) &#123;</span><br><span class="line">  var filename = Module._resolveFilename(request, parent);</span><br><span class="line">  var cachedModule = Module._cache[filename];</span><br><span class="line">  </span><br><span class="line">  if (cachedModule) &#123;</span><br><span class="line">    return cachedModule.exports;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  var module = new Module(filename, parent);</span><br><span class="line">  Module._cache[filename] = module;</span><br><span class="line"></span><br><span class="line">  module.load(filename);</span><br><span class="line">  </span><br><span class="line">  return module.exports;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>上述代码照例我删除了一些不是很相关的代码，从剩下的代码可以看出<code>_load</code>函数的主要干了两件事（还有一件加载NativeModule的代码被我删掉了）:</p>
+<ol>
+<li>先判断当前的源文件有没有被加载过，如果 _cache 对象中存在，直接返回 _cache 中的exports对象</li>
+<li>如果没有被加载过，新建这个源文件的 module 的实例，并存放到 _cache 中，然后调用 load 方法。</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">Module.prototype.load = function(filename) &#123;</span><br><span class="line">  this.filename = filename;</span><br><span class="line">  this.paths = Module._nodeModulePaths(path.dirname(filename));</span><br><span class="line"></span><br><span class="line">  var extension = path.extname(filename) || &apos;.js&apos;;</span><br><span class="line">  if (!Module._extensions[extension]) extension = &apos;.js&apos;;</span><br><span class="line">  Module._extensions[extension](this, filename);</span><br><span class="line">  this.loaded = true;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>在<code>load</code>方法中判断源文件的扩展名是什么，默认是<code>&#39;.js&#39;</code>，（我这里也只分析后缀是 <code>.js</code> 的情况），然后调用 <code>Module._extensions[extension]()</code> 方法，并传入 this 和 filename；当<code>extension</code>是<code>&#39;.js&#39;</code>的时候， 调用<code>Module._extensions[&#39;.js&#39;]()</code> 方法。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">// Native extension for .js</span><br><span class="line">Module._extensions[&apos;.js&apos;] = function(module, filename) &#123;</span><br><span class="line">  var content = fs.readFileSync(filename, &apos;utf8&apos;);</span><br><span class="line">  module._compile(internalModule.stripBOM(content), filename);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>这个方法是读到源文件的字符串后，调用<code>module._compile</code>方法。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">Module.prototype._compile = function(content, filename) &#123;</span><br><span class="line"></span><br><span class="line">  var self = this;</span><br><span class="line"></span><br><span class="line">  function require(path) &#123;</span><br><span class="line">    return self.require(path);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  var dirname = path.dirname(filename);</span><br><span class="line">  // create wrapper function</span><br><span class="line">  var wrapper = Module.wrap(content);</span><br><span class="line"></span><br><span class="line">  var compiledWrapper = runInThisContext(wrapper,</span><br><span class="line">                                      &#123; filename: filename, lineOffset: -1 &#125;);</span><br><span class="line"></span><br><span class="line">  var args = [self.exports, require, self, filename, dirname];</span><br><span class="line">  return compiledWrapper.apply(self.exports, args);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>其实跟<code>NativeModule</code>的<code>_complie</code>做的事情差不多。先把源文件<code>content</code>包装一层<code>(function (exports, require, module, __filename, __dirname) {\n&#39;,&#39;\n});</code>， 然后通过 <code>runInThisContext</code>把字符串转成可执行的函数，最后把<br><code>self.exports, require, self, filename, dirname</code> 这几个实参传入可执行函数中。</p>
+<p><code>require</code> 方法为:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Module.prototype.require = function(path) &#123;</span><br><span class="line">  return Module._load(path, this);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h2 id="循环依赖的时候为什么不会无限循环引用"><a href="#循环依赖的时候为什么不会无限循环引用" class="headerlink" title="循环依赖的时候为什么不会无限循环引用"></a>循环依赖的时候为什么不会无限循环引用</h2><p>所谓的循环依赖就是在两个不同的文件中互相应用了对方。假设按照最上面官网给出的例子中，</p>
+<p>在 <code>main.js</code> 中:</p>
+<ol>
+<li><code>require(&#39;./a.js&#39;)</code>；此时会调用 <code>self.require()</code>,<br>然后会走到<code>module._load</code>，在<code>_load</code>中会判断<code>./a.js</code>是否被load过，当然运行到这里，<code>./a.js</code>还没被 load 过，所以会走完整个load流程，直到<code>_compile</code>。</li>
+<li>运行<code>./a.js</code>，运行到 <code>exports.done = false</code> 的时候，给 esports 增加了一个属性。此时的 <code>exports={done: false}</code>。</li>
+<li>运行<code>require(&#39;./b.js&#39;)</code>，同 第 1 步。</li>
+<li>运行<code>./b.js</code>，到<code>require(&#39;./a.js&#39;)</code>。此时走到<code>_load</code>函数的时候发现<code>./a.js</code>已经被load过了，所以会直接从<code>_cache</code>中返回。所以此时<code>./a.js</code>还没有运行完，<code>exports = {done.false}</code>，那么返回的结果就是 <code>in b, a.done = false</code>;</li>
+<li><code>./b.js</code>全部运行完毕，回到<code>./a.js</code>中，继续向下运行，此时的<code>./b.js</code>的 <code>exports={done:true}</code>， 结果自然是<code>in main, a.done=true, b.done=true</code></li>
+</ol>
+<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="https://segmentfault.com/a/1190000004151411" target="_blank" rel="noopener">https://segmentfault.com/a/1190000004151411</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+  
+  <div class="tags">
+    <a href="/tags/Node-js-模块/">Node.js_模块</a>
+  </div>
+
+        
+  <div class="addthis addthis_toolbox addthis_default_style">
+    
+      <a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+    
+    
+      <a class="addthis_button_tweet"></a>
+    
+    
+      <a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+    
+    
+      <a class="addthis_button_pinterest_pinit" pi:pinit:layout="horizontal"></a>
+    
+    <a class="addthis_counter addthis_pill_style"></a>
+  </div>
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js"></script>
+
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">留言</h1>
+
+  
+      <div id="fb-root"></div>
+<script>
+  (function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=shouliang0816";
+    fjs.parentNode.insertBefore(js, fjs);
+  }(document, 'script', 'facebook-jssdk'));
+</script>
+
+<div class="fb-comments" data-href="https://shouliang.github.io/2015/06/07/Node.js_模块/Node.js中的循环依赖/index.html" data-num-posts="5" data-width="840" data-colorscheme="light"></div>
+      
+  
+</section>
+
+</div></div>
+    <aside id="sidebar" class="alignright">
+  <div class="search">
+  <form action="//google.com/search" method="get" accept-charset="utf-8">
+    <input type="search" name="q" results="0" placeholder="搜索">
+    <input type="hidden" name="q" value="site:shouliang.github.io">
+  </form>
+</div>
+
+  
+
+  
+<div class="widget tag">
+  <h3 class="title">标签</h3>
+  <ul class="entry">
+  
+    <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
+  
+    <li><a href="/tags/Git/">Git</a><small>7</small></li>
+  
+    <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
+  
+    <li><a href="/tags/Javascript/">Javascript</a><small>2</small></li>
+  
+    <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
+  
+    <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
+  
+    <li><a href="/tags/Node-js/">Node.js</a><small>2</small></li>
+  
+    <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>3</small></li>
+  
+    <li><a href="/tags/Node-js-事件/">Node.js_事件</a><small>4</small></li>
+  
+    <li><a href="/tags/Node-js-入门/">Node.js_入门</a><small>9</small></li>
+  
+    <li><a href="/tags/Node-js-异步编程/">Node.js_异步编程</a><small>3</small></li>
+  
+    <li><a href="/tags/Node-js-模块/">Node.js_模块</a><small>4</small></li>
+  
+    <li><a href="/tags/Node-js-测试/">Node.js_测试</a><small>5</small></li>
+  
+    <li><a href="/tags/Node-js-进程/">Node.js_进程</a><small>2</small></li>
+  
+    <li><a href="/tags/Node-js-错误处理和调试/">Node.js_错误处理和调试</a><small>5</small></li>
+  
+    <li><a href="/tags/Unix/">Unix</a><small>3</small></li>
+  
+    <li><a href="/tags/express/">express</a><small>2</small></li>
+  
+    <li><a href="/tags/redis/">redis</a><small>2</small></li>
+  
+    <li><a href="/tags/shell/">shell</a><small>1</small></li>
+  
+    <li><a href="/tags/存储/">存储</a><small>3</small></li>
+  
+    <li><a href="/tags/安全/">安全</a><small>8</small></li>
+  
+    <li><a href="/tags/计算机网络/">计算机网络</a><small>1</small></li>
+  
+  </ul>
+</div>
+
+</aside>
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div class="alignleft">
+  
+  &copy; 2018 shouliang
+  
+</div>
+<div class="clearfix"></div></footer>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+</body>
+</html>

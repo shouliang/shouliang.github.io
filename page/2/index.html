@@ -116,110 +116,6 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2017-02-12T06:45:23.000Z"><a href="/2017/02/12/安全/数字证书的基础知识/">2017-02-12</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/02/12/安全/数字证书的基础知识/">数字证书的基础知识</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>在讲数字证书之前必须要讲<strong>非对称加密算法</strong>和<strong>摘要算法</strong>，因为数字证书的基础就是各种加解密算法（非对称加密、摘要算法），而其中的核心就是非对称加密算法了。目前而言加密方法可以分为两大类。一类是<strong>单钥加密</strong>（private key cryptography）也可以称为对称加密，还有一类叫做<strong>双钥加密</strong>（public key cryptography）也可称为非对称加密。前者的加密和解密过程都用同一套密码，后者的加密和解密过程用的是不同的密码。下面来看看对称加密、非对称加密以及摘要算法，他们是怎样应用在数字证书中的。</p>
-<h3 id="对称加密"><a href="#对称加密" class="headerlink" title="对称加密"></a>对称加密</h3><p>对称加密(也叫私钥加密)指加密和解密使用相同密钥的加密算法。有时又叫传统密码算法，就是加密密钥能够从解密密钥中推算出来，同时解密密钥也可以从加密密钥中推算出来。而在大多数的对称算法中，加密密钥和解密密钥是相同的，所以也称这种加密算法为秘密密钥算法或单密钥算法。</p>
-<p>在应用该算法时，它要求发送方和接收方在安全通信之前，商定一个密钥。对称算法的安全性依赖于密钥，泄漏密钥就意味着任何人都可以对他们发送或接收的消息解密，所以密钥的保密性对通信性至关重要。对称加密算法的特点是算法公开、计算量小、加密速度快、加密效率高。对称加密有很多种算法，由于它效率很高，所以被广泛使用在很多加密协议的核心当中。不足之处是，交易双方都使用同样钥匙，安全性得不到保证。</p>
-<h4 id="常见的对称加密算法"><a href="#常见的对称加密算法" class="headerlink" title="常见的对称加密算法"></a>常见的对称加密算法</h4><ul>
-<li><strong>DES</strong>：数据加密标准（DES，Data Encryption Standard）是一种使用密钥加密的块密码，它基于使用<strong>56位密钥</strong>的对称算法，这个算法因为包含一些机密设计元素，相对短的密钥长度以及被怀疑内含美国国家安全局（NSA）的后门而在开始时是有争议的，DES现在已经不被视为一种安全的加密算法，主要因为它使用的56位密钥过短，导致容易被破解。为了提供实用所需的安全性，可以使用DES的派生算法3DES来进行加密，虽然3DES也存在理论上的攻击方法。</li>
-<li><strong>AES</strong>：高级加密标准（英语：Advanced Encryption Standard，缩写：AES），这个标准用来替代原先的DES，已经被多方分析且广为全世界所使用，2006年，高级加密标准已然成为对称密钥加密中最流行的算法之一。AES的区块长度固定为128比特，<strong>密钥长度则可以是128，192或256比特</strong>。</li>
-<li><strong>RC4</strong>：RC4加密算法是大名鼎鼎的RSA三人组中的头号人物Ronald Rivest在1987年设计的密钥长度可变的流加密算法簇。该算法的速度可以达到DES加密的10倍左右，且具有很高级别的非线性。RC4起初是用于保护商业机密的。但是在1994年9月，它的算法被发布在互联网上，也就不再有什么商业机密了。</li>
-<li><strong>IDEA</strong>：是旅居瑞士中国青年学者来学嘉和著名密码专家J.Massey于1990年提出的。它在1990年正式公布并在以后得到增强。这种算法是在DES算法的基础上发展出来的，类似于三重DES，和DES一样IDEA也是属于对称密钥算法。发展IDEA也是因为感到DES具有密钥太短等缺点，已经过时。<strong>IDEA的密钥为128位</strong>，这么长的密钥在今后若干年内应该是安全的。</li>
-</ul>
-<h3 id="非对称加密"><a href="#非对称加密" class="headerlink" title="非对称加密"></a>非对称加密</h3><p>与对称加密算法不同，非对称加密算法需要两个密钥：公开密钥（publickey）和私有密钥（privatekey）；并且加密密钥和解密密钥是成对出现的。非对称加密算法在加密和解密过程使用了不同的密钥，非对称加密也称为公钥加密，在密钥对中，其中一个密钥是对外公开的，所有人都可以获取到，称为公钥，其中一个密钥是不公开的称为私钥。</p>
-<h4 id="非对称加密的特性"><a href="#非对称加密的特性" class="headerlink" title="非对称加密的特性"></a>非对称加密的特性</h4><ul>
-<li>对于一个公钥，有且只有一个对应的私钥。</li>
-<li>公钥是公开的，并且不能通过公钥反推出私钥。</li>
-<li>通过私钥加密的密文只能通过公钥能解密，通过公钥加密的密文也只能通过私钥能解密。</li>
-</ul>
-<p>通过公钥是极难推算出私钥的，只能通过穷举，所以只要密钥足够长，要想从公钥推算出私钥几乎不可能的。</p>
-<h4 id="非对称加密的主要用途"><a href="#非对称加密的主要用途" class="headerlink" title="非对称加密的主要用途"></a>非对称加密的主要用途</h4><ul>
-<li><strong>对信息保密，防止中间人攻击</strong>：将明文使用公钥加密，传输给接收者，这样确保信息只能被有私钥的拥有者解密，其他人无法获得明文信息，因为没有私钥无法进行解密。该方法一般用于交换<strong>对称密钥</strong>。</li>
-<li><strong>身份验证和防止信息篡改</strong>：私钥拥有者使用私钥加密一段授权明文，并将授权明文和加密后的密文，以及公钥一并发送出来，接收方只需要通过公钥将密文解密后与授权明文对比是否一致，就可以判断明文在中途是否被篡改过。此方法用于<strong>数字签名</strong>。</li>
-</ul>
-<h4 id="常见的非对称加密算法"><a href="#常见的非对称加密算法" class="headerlink" title="常见的非对称加密算法"></a>常见的非对称加密算法</h4><ul>
-<li><strong>RSA</strong>：1977年，三位数学家Rivest、Shamir 和 Adleman 设计了一种算法，可以实现非对称加密。这种算法用他们三个人的名字命名，叫做RSA算法。从那时直到现在，RSA算法一直是最广为使用的”非对称加密算法”。毫不夸张地说，只要有计算机网络的地方，就有RSA算法。这种算法非常可靠，密钥越长，它就越难破解。根据已经披露的文献，目前被破解的最长RSA密钥是768个二进制位。也就是说，长度超过768位的密钥，还无法破解（至少没人公开宣布）。因此可以认为，<strong>1024位的RSA密钥基本安全，2048位的密钥极其安全</strong>。适用于数字签名和密钥交换。 该算法是目前应用最广泛的公钥加密算法，特别适用于通过 Internet 传送的数据。</li>
-<li><strong>DSA</strong>：数字签名算法 (Digital Signature Algorithm, DSA) 由美国国家安全署 (United States National Security Agency, NSA) 发明，已作为数字签名的标准。在DSA数字签名和认证中，发送者使用自己的私钥对文件或消息进行签名，接受者收到消息后使用发送者的公钥来验证签名的真实性。DSA只是一种算法，和RSA不同之处在于它不能用作加密和解密，也不能进行密钥交换，只用于签名，它比RSA要快很多。DSA 算法的安全性取决于自计算离散算法的困难。这种算法，不适用于数据加密，仅适用于数字签名。</li>
-<li><strong>Diffie-Hellman</strong>：一种确保共享KEY安全穿越不安全网络的方法。Whitefield与Martin Hellman在1976年提出了一个奇妙的密钥交换协议，称为Diffie-Hellman密钥交换协议/算法(Diffie-Hellman Key Exchange/Agreement Algorithm)。这个机制的巧妙在于需要安全通信的双方可以用这个方法确定对称密钥。然后可以用这个密钥进行加密和解密。但是注意，这个密钥交换协议/算法只能用于密钥的交换，而不能进行消息的加密和解密。双方确定要用的密钥后，要使用其他对称密钥操作加密算法实际加密和解密消息。该算法仅适用于密钥交换。</li>
-<li><strong>ECC</strong>：椭圆加密算法（ECC）是一种公钥加密体制，最初由Koblitz和Miller两人于1985年提出，与经典的RSA，DSA等公钥密码体制相比，椭圆密码体制有以下优点：160位的椭圆密钥与1024位的RSA密钥安全性相同；在私钥的加密解密速度上，ECC算法比RSA、DSA速度更快；存储空间占用小；带宽要求低；ECC算法的数学理论非常深奥和复杂，在工程应用中比较难于实现，但它的单位安全强度相对较高。</li>
-</ul>
-<p>非对称加密算法可能是世界上最重要的算法，它是当今电子商务等领域的基石。非对称加密算法如此强大可靠，却有一个弊端，就是加解密比较耗时。因此，在实际使用中，往往与对称加密和摘要算法结合使用。列如在实体之间交换对称密钥时，或者在签署一封邮件的散列时（数字签名）。</p>
-<p>散列是通过应用一种单向数学函数获得的一个定长结果，对于数据而言，叫做散列算法。</p>
-<h3 id="摘要算法"><a href="#摘要算法" class="headerlink" title="摘要算法"></a>摘要算法</h3><p>摘要算法是一个神奇的算法，也称为散列或者散列值。是一种与基于密钥（对称密钥或公钥）的加密不同的数据转换类型。散列就是通过把一个叫做散列算法的单向数学函数应用于数据，将任意长度的一块数据转换为一个定长的、不可逆转的数字，其长度通常在128～256位之间。所产生的散列值的长度应足够长，因此使找到两块具有相同散列值的数据的机会很少。</p>
-<h4 id="摘要算法具有以下特性："><a href="#摘要算法具有以下特性：" class="headerlink" title="摘要算法具有以下特性："></a>摘要算法具有以下特性：</h4><ul>
-<li>只要源文本不同，计算得到的结果，必然不同（或者说机会很少）。</li>
-<li>无法从结果反推出源数据（那是当然的，不然就能量不守恒了）。</li>
-</ul>
-<h4 id="常见的摘要算法："><a href="#常见的摘要算法：" class="headerlink" title="常见的摘要算法："></a>常见的摘要算法：</h4><ul>
-<li><strong>MD5</strong>：是RSA数据安全公司开发的一种单向散列算法，MD5被广泛使用，可以用来把不同长度的数据块进行暗码运算成一个固定位位的数值（通常是128位）。</li>
-<li><strong>SHA-1</strong>：与 DSA 公钥算法相似，安全散列算法1（SHA-1）也是由 NSA 设计的，并由 NIST 将其收录到 FIPS 中，作为散列数据的标准。它可产生一个 160 位的散列值。SHA-1 是流行的用于创建数字签名的单向散列算法。</li>
-<li><strong>MAC（Message Authentication Code）</strong>：消息认证代码，是一种使用密钥的单向函数，可以用它们在系统上或用户之间认证文件或消息，常见的是HMAC（用于消息认证的密钥散列算法）。</li>
-<li><strong>CRC（Cyclic Redundancy Check）</strong>：循环冗余校验码，CRC校验由于实现简单，检错能力强，被广泛使用在各种数据校验应用中。占用系统资源少，用软硬件均能实现，是进行数据传输差错检测地一种很好的手段（CRC 并不是严格意义上的散列算法，但它的作用与散列算法大致相同，所以归于此类）。</li>
-</ul>
-<p>摘要算法用于对比信息源是否一致，因为只要源数据发生变化，得到的摘要必然不同。因为通常结果比源数据要短很多，所以称为“摘要”。</p>
-<p>应用场景，如发件人生成邮件的散列值并加密它，然后将它与邮件本身一起发送。而收件人同时解密邮件和散列值，并由接收到的邮件产生另外一个散列值，然后将两个散列值进行比较。如果两者相同，邮件极有可能在传输期间没有发生任何改变。</p>
-<h3 id="数字签名"><a href="#数字签名" class="headerlink" title="数字签名"></a>数字签名</h3><p>数字签名就是对非对称加密和摘要算法的一种应用，能够确保信息在发布后不会被篡改（摘要算法特性），保证数据的完整性和可信性；同时也可以防止数据被他人伪造（非对称加密算法特性）；列如，我们有一段授权文本需要发布时，为了防止中途篡改发布的内容，保证发布文本的完整性，以及文本是由指定的发布者发布的。那么，可以通过摘要算法得到发布内容的摘要，得到摘要之后，发布者使用私钥加密得到密文（签名），这时候将源文本、密文（签名）以及公钥一起发布出去即可。</p>
-<p>验证过程为：首先验证公钥是否是发布者的公钥，然后用公钥对密文进行解密，得到摘要，使用发布者对文本同样的摘要算法得到摘要文本，比对摘要是否一致即可确认信息是否被篡改或者是指定发布者发布的。</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/ditialSig.jpg" alt=""></p>
-<p>数字签名可以快速验证文本的完整性和合法性，已广泛应用于各个领域。</p>
-<p>公钥的验证在后续数字证书的授权链中提到验证方法。</p>
-<h3 id="数字证书"><a href="#数字证书" class="headerlink" title="数字证书"></a>数字证书</h3><h4 id="现实生活中的证书"><a href="#现实生活中的证书" class="headerlink" title="现实生活中的证书"></a>现实生活中的证书</h4><p>在现实生活中，证书顾名思义，就是权限机构颁发的证明。比如英语6级证书，就是教育部门颁发给通过了6级考核的个人的证明，证明这个人的英语能力。我们来看一下这个证书的组成：</p>
-<ul>
-<li>被证明人：老王</li>
-<li>内容：通过了英语六级</li>
-<li>盖章：教育部门的公章或钢印</li>
-</ul>
-<p>当老王用这张证书找工作时，用人单位会通过查看证书的各项内容（尤其是公章），来验证证书的合法性和老王的能力。在现实生活中经常有假的6级证书，这些假证书最重要的就是有一个假公章。现实生活中使用法律法规来约束私刻假公章的行为，但是用人单位可能不能十分准确的判断公章是真是假。而数字签字可以来解决该类问题。</p>
-<h4 id="数字证书-1"><a href="#数字证书-1" class="headerlink" title="数字证书"></a>数字证书</h4><p>数字证书就是通过数字签名实现的数字化的证书，在现实生活中公章可以被伪造，但是在计算数字世界中，数字签名是没办法被伪造的，比如上述证书中，在一个证书文件中写明了证书内容，颁发证书时，教育部门用他们的私钥对文件的摘要信息进行签名，将签名和证书文件一起发布，这样就能确保该证书无法被伪造。验证证书是否合法时，首先用教育部门的公钥（公钥是公开的谁都可以获取到）对签名进行解密得到一个摘要信息，使用教育部门同样的摘要算法得到证书的另一个摘要信息，对比两个摘要信息是否一致就能确定该证书是否合法。在一般的证书组成中部分中，还加入了一些其他信息，比如证书的有效期。</p>
-<p>数字证书也有很多的签发机构，不同的签发机构签发的证书，用途也是不一样的，比如iOS开发中，使用到的ipa文件签名证书，需要到苹果申请。而在Web访问中为了防止Web内容在网络中安全传输，需要用到的SSL证书则需要向几家公认的机构签发。这些签发机构统称为CA（Certificate Authority）。</p>
-<p>Web访问相关的证书可以向国际公认的几个机构：</p>
-<ol>
-<li><a href="http://www.webtrust.net/" target="_blank" rel="noopener"><strong>WebTrust</strong></a></li>
-<li><a href="http://cn.globalsign.com/" target="_blank" rel="noopener"><strong>GlobalSign</strong></a></li>
-<li><a href="http://certificate.fyicenter.com/335_Root_CA_GTE_CyberTrust_Global_Root_GTE_CyberTrust_Solutions.html" target="_blank" rel="noopener"><strong>GTE</strong></a></li>
-<li><a href="http://www.nortel.com/" target="_blank" rel="noopener"><strong>Nortel</strong></a></li>
-<li><a href="http://www.verisign.com/" target="_blank" rel="noopener"><strong>Verisign</strong></a></li>
-</ol>
-<h4 id="数字证书的验证"><a href="#数字证书的验证" class="headerlink" title="数字证书的验证"></a>数字证书的验证</h4><p>申请证书是为了验证，比如Web应用相关的SSL证书验证方是浏览器，iOS各种证书的验证方是iOS设备。因为数字证书是基于数字签名的，所有数字证书的合法性验证就是验证数字证书的签名是否正确，对于签名的验证在是需要签发机构的公钥才能验证；</p>
-<p>对于iOS开发证书来说，申请完签名证书后，还需要安装苹果的公钥证书（XCode安装后会自动安装），这样才能确保我们申请的证书是可以被验证通过的（合法的），可用来进行ipa文件签名的。对于Web相关的证书签名的验证，则是由浏览器来验证，对于国际公认的几个证书签发机构浏览器会内置其公钥证书，用来验证数字证书的可信性。</p>
-<p>当数字证书通过验证后，便可以用数字证书做对应的事情，iOS开发证书可以用来对APP进行签名，SSL证书可以用来做Web内容加密处理相关的事情。所以有了这些证书之后，能保证在数据的传输过程中，数据是不会被篡改的，并且信息来源也是不能不修改的，从而确保信息安全。</p>
-<p>对于iOS，iOS系统已经将这个验证过程固化在系统中了，除非越狱，否则无法绕过</p>
-<h4 id="数字证书的授权链"><a href="#数字证书的授权链" class="headerlink" title="数字证书的授权链"></a>数字证书的授权链</h4><p>数字证书还包含一个授权链信息，举个例子：如果你要申请休假1周，需要你的上司审批，你的上司需要他的上司同意，最终需要大老板同意，那么这一层层的授权，形成了一个授权链，大老板是授权链的根(root)，中间这些环节分别是被更接近root的人授权的。</p>
-<p>比如苹果开发者的APP签名证书，该证书可以用来对APP进行签名，该证书实际上是由苹果的Worldwide Developer Relations Certificate Authority（WDRCA）授权签名的，而它是由Apple Certificate Authority授权签名的。在这个关系链中苹果的CA是根。 苹果CA根证书默认是内置在苹果系统中的，所以WDRCA的可信性可以由苹果内置的CA根证书来验证其可信性。</p>
-<p>Web相关的SSL证书顶部CA根，则就是上述提到的几家公认的签发机构，当我们需要Web做SSL的证书时，便可以向上述机构申请，通常向根机构申请费用都会比较高，也可以向一些二级授权机构进行申请，选择根机构证书签发的好处就是目前大多数的浏览器都会预装内置了这些权威CA的公钥证书，这样，在使用这些权威CA签发过的证书的时候，浏览器一般不会报风险提示。</p>
-<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>数字证书签名的基础是非对称加密算法，利用了非对称加密的身份验证和防止信息篡改的特性来实现的，在一些其他方面比如HTTPS中密钥交换用的就是非对称加密的保密特性来实现的，在非对称加密算法中RSA应用最广。非对称加密虽好，但却有一个弊端，就是加解密比较耗时，所以一般都是配合对称加密一起使用。</p>
-<p>原文：<a href="http://www.enkichen.com/2016/02/26/digital-certificate-based/" target="_blank" rel="noopener">http://www.enkichen.com/2016/02/26/digital-certificate-based/</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
         <time datetime="2017-02-12T06:45:23.000Z"><a href="/2017/02/12/安全/Node.js中crypto模块/">2017-02-12</a></time>
       
       
@@ -332,6 +228,110 @@
 <p><a href="https://crypto.stackexchange.com/questions/6523/what-is-the-difference-between-mac-and-hmac" target="_blank" rel="noopener">What is the difference between MAC and HMAC?</a></p>
 <p><a href="https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation" target="_blank" rel="noopener">Block cipher mode of operation</a></p>
 <p><a href="https://www.zhihu.com/question/25912483/answer/31653639" target="_blank" rel="noopener">RSA的公钥和私钥到底哪个才是用来加密和哪个用来解密？ - 刘巍然-学酥的回答 - 知乎</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2017-02-12T06:45:23.000Z"><a href="/2017/02/12/安全/数字证书的基础知识/">2017-02-12</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2017/02/12/安全/数字证书的基础知识/">数字证书的基础知识</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>在讲数字证书之前必须要讲<strong>非对称加密算法</strong>和<strong>摘要算法</strong>，因为数字证书的基础就是各种加解密算法（非对称加密、摘要算法），而其中的核心就是非对称加密算法了。目前而言加密方法可以分为两大类。一类是<strong>单钥加密</strong>（private key cryptography）也可以称为对称加密，还有一类叫做<strong>双钥加密</strong>（public key cryptography）也可称为非对称加密。前者的加密和解密过程都用同一套密码，后者的加密和解密过程用的是不同的密码。下面来看看对称加密、非对称加密以及摘要算法，他们是怎样应用在数字证书中的。</p>
+<h3 id="对称加密"><a href="#对称加密" class="headerlink" title="对称加密"></a>对称加密</h3><p>对称加密(也叫私钥加密)指加密和解密使用相同密钥的加密算法。有时又叫传统密码算法，就是加密密钥能够从解密密钥中推算出来，同时解密密钥也可以从加密密钥中推算出来。而在大多数的对称算法中，加密密钥和解密密钥是相同的，所以也称这种加密算法为秘密密钥算法或单密钥算法。</p>
+<p>在应用该算法时，它要求发送方和接收方在安全通信之前，商定一个密钥。对称算法的安全性依赖于密钥，泄漏密钥就意味着任何人都可以对他们发送或接收的消息解密，所以密钥的保密性对通信性至关重要。对称加密算法的特点是算法公开、计算量小、加密速度快、加密效率高。对称加密有很多种算法，由于它效率很高，所以被广泛使用在很多加密协议的核心当中。不足之处是，交易双方都使用同样钥匙，安全性得不到保证。</p>
+<h4 id="常见的对称加密算法"><a href="#常见的对称加密算法" class="headerlink" title="常见的对称加密算法"></a>常见的对称加密算法</h4><ul>
+<li><strong>DES</strong>：数据加密标准（DES，Data Encryption Standard）是一种使用密钥加密的块密码，它基于使用<strong>56位密钥</strong>的对称算法，这个算法因为包含一些机密设计元素，相对短的密钥长度以及被怀疑内含美国国家安全局（NSA）的后门而在开始时是有争议的，DES现在已经不被视为一种安全的加密算法，主要因为它使用的56位密钥过短，导致容易被破解。为了提供实用所需的安全性，可以使用DES的派生算法3DES来进行加密，虽然3DES也存在理论上的攻击方法。</li>
+<li><strong>AES</strong>：高级加密标准（英语：Advanced Encryption Standard，缩写：AES），这个标准用来替代原先的DES，已经被多方分析且广为全世界所使用，2006年，高级加密标准已然成为对称密钥加密中最流行的算法之一。AES的区块长度固定为128比特，<strong>密钥长度则可以是128，192或256比特</strong>。</li>
+<li><strong>RC4</strong>：RC4加密算法是大名鼎鼎的RSA三人组中的头号人物Ronald Rivest在1987年设计的密钥长度可变的流加密算法簇。该算法的速度可以达到DES加密的10倍左右，且具有很高级别的非线性。RC4起初是用于保护商业机密的。但是在1994年9月，它的算法被发布在互联网上，也就不再有什么商业机密了。</li>
+<li><strong>IDEA</strong>：是旅居瑞士中国青年学者来学嘉和著名密码专家J.Massey于1990年提出的。它在1990年正式公布并在以后得到增强。这种算法是在DES算法的基础上发展出来的，类似于三重DES，和DES一样IDEA也是属于对称密钥算法。发展IDEA也是因为感到DES具有密钥太短等缺点，已经过时。<strong>IDEA的密钥为128位</strong>，这么长的密钥在今后若干年内应该是安全的。</li>
+</ul>
+<h3 id="非对称加密"><a href="#非对称加密" class="headerlink" title="非对称加密"></a>非对称加密</h3><p>与对称加密算法不同，非对称加密算法需要两个密钥：公开密钥（publickey）和私有密钥（privatekey）；并且加密密钥和解密密钥是成对出现的。非对称加密算法在加密和解密过程使用了不同的密钥，非对称加密也称为公钥加密，在密钥对中，其中一个密钥是对外公开的，所有人都可以获取到，称为公钥，其中一个密钥是不公开的称为私钥。</p>
+<h4 id="非对称加密的特性"><a href="#非对称加密的特性" class="headerlink" title="非对称加密的特性"></a>非对称加密的特性</h4><ul>
+<li>对于一个公钥，有且只有一个对应的私钥。</li>
+<li>公钥是公开的，并且不能通过公钥反推出私钥。</li>
+<li>通过私钥加密的密文只能通过公钥能解密，通过公钥加密的密文也只能通过私钥能解密。</li>
+</ul>
+<p>通过公钥是极难推算出私钥的，只能通过穷举，所以只要密钥足够长，要想从公钥推算出私钥几乎不可能的。</p>
+<h4 id="非对称加密的主要用途"><a href="#非对称加密的主要用途" class="headerlink" title="非对称加密的主要用途"></a>非对称加密的主要用途</h4><ul>
+<li><strong>对信息保密，防止中间人攻击</strong>：将明文使用公钥加密，传输给接收者，这样确保信息只能被有私钥的拥有者解密，其他人无法获得明文信息，因为没有私钥无法进行解密。该方法一般用于交换<strong>对称密钥</strong>。</li>
+<li><strong>身份验证和防止信息篡改</strong>：私钥拥有者使用私钥加密一段授权明文，并将授权明文和加密后的密文，以及公钥一并发送出来，接收方只需要通过公钥将密文解密后与授权明文对比是否一致，就可以判断明文在中途是否被篡改过。此方法用于<strong>数字签名</strong>。</li>
+</ul>
+<h4 id="常见的非对称加密算法"><a href="#常见的非对称加密算法" class="headerlink" title="常见的非对称加密算法"></a>常见的非对称加密算法</h4><ul>
+<li><strong>RSA</strong>：1977年，三位数学家Rivest、Shamir 和 Adleman 设计了一种算法，可以实现非对称加密。这种算法用他们三个人的名字命名，叫做RSA算法。从那时直到现在，RSA算法一直是最广为使用的”非对称加密算法”。毫不夸张地说，只要有计算机网络的地方，就有RSA算法。这种算法非常可靠，密钥越长，它就越难破解。根据已经披露的文献，目前被破解的最长RSA密钥是768个二进制位。也就是说，长度超过768位的密钥，还无法破解（至少没人公开宣布）。因此可以认为，<strong>1024位的RSA密钥基本安全，2048位的密钥极其安全</strong>。适用于数字签名和密钥交换。 该算法是目前应用最广泛的公钥加密算法，特别适用于通过 Internet 传送的数据。</li>
+<li><strong>DSA</strong>：数字签名算法 (Digital Signature Algorithm, DSA) 由美国国家安全署 (United States National Security Agency, NSA) 发明，已作为数字签名的标准。在DSA数字签名和认证中，发送者使用自己的私钥对文件或消息进行签名，接受者收到消息后使用发送者的公钥来验证签名的真实性。DSA只是一种算法，和RSA不同之处在于它不能用作加密和解密，也不能进行密钥交换，只用于签名，它比RSA要快很多。DSA 算法的安全性取决于自计算离散算法的困难。这种算法，不适用于数据加密，仅适用于数字签名。</li>
+<li><strong>Diffie-Hellman</strong>：一种确保共享KEY安全穿越不安全网络的方法。Whitefield与Martin Hellman在1976年提出了一个奇妙的密钥交换协议，称为Diffie-Hellman密钥交换协议/算法(Diffie-Hellman Key Exchange/Agreement Algorithm)。这个机制的巧妙在于需要安全通信的双方可以用这个方法确定对称密钥。然后可以用这个密钥进行加密和解密。但是注意，这个密钥交换协议/算法只能用于密钥的交换，而不能进行消息的加密和解密。双方确定要用的密钥后，要使用其他对称密钥操作加密算法实际加密和解密消息。该算法仅适用于密钥交换。</li>
+<li><strong>ECC</strong>：椭圆加密算法（ECC）是一种公钥加密体制，最初由Koblitz和Miller两人于1985年提出，与经典的RSA，DSA等公钥密码体制相比，椭圆密码体制有以下优点：160位的椭圆密钥与1024位的RSA密钥安全性相同；在私钥的加密解密速度上，ECC算法比RSA、DSA速度更快；存储空间占用小；带宽要求低；ECC算法的数学理论非常深奥和复杂，在工程应用中比较难于实现，但它的单位安全强度相对较高。</li>
+</ul>
+<p>非对称加密算法可能是世界上最重要的算法，它是当今电子商务等领域的基石。非对称加密算法如此强大可靠，却有一个弊端，就是加解密比较耗时。因此，在实际使用中，往往与对称加密和摘要算法结合使用。列如在实体之间交换对称密钥时，或者在签署一封邮件的散列时（数字签名）。</p>
+<p>散列是通过应用一种单向数学函数获得的一个定长结果，对于数据而言，叫做散列算法。</p>
+<h3 id="摘要算法"><a href="#摘要算法" class="headerlink" title="摘要算法"></a>摘要算法</h3><p>摘要算法是一个神奇的算法，也称为散列或者散列值。是一种与基于密钥（对称密钥或公钥）的加密不同的数据转换类型。散列就是通过把一个叫做散列算法的单向数学函数应用于数据，将任意长度的一块数据转换为一个定长的、不可逆转的数字，其长度通常在128～256位之间。所产生的散列值的长度应足够长，因此使找到两块具有相同散列值的数据的机会很少。</p>
+<h4 id="摘要算法具有以下特性："><a href="#摘要算法具有以下特性：" class="headerlink" title="摘要算法具有以下特性："></a>摘要算法具有以下特性：</h4><ul>
+<li>只要源文本不同，计算得到的结果，必然不同（或者说机会很少）。</li>
+<li>无法从结果反推出源数据（那是当然的，不然就能量不守恒了）。</li>
+</ul>
+<h4 id="常见的摘要算法："><a href="#常见的摘要算法：" class="headerlink" title="常见的摘要算法："></a>常见的摘要算法：</h4><ul>
+<li><strong>MD5</strong>：是RSA数据安全公司开发的一种单向散列算法，MD5被广泛使用，可以用来把不同长度的数据块进行暗码运算成一个固定位位的数值（通常是128位）。</li>
+<li><strong>SHA-1</strong>：与 DSA 公钥算法相似，安全散列算法1（SHA-1）也是由 NSA 设计的，并由 NIST 将其收录到 FIPS 中，作为散列数据的标准。它可产生一个 160 位的散列值。SHA-1 是流行的用于创建数字签名的单向散列算法。</li>
+<li><strong>MAC（Message Authentication Code）</strong>：消息认证代码，是一种使用密钥的单向函数，可以用它们在系统上或用户之间认证文件或消息，常见的是HMAC（用于消息认证的密钥散列算法）。</li>
+<li><strong>CRC（Cyclic Redundancy Check）</strong>：循环冗余校验码，CRC校验由于实现简单，检错能力强，被广泛使用在各种数据校验应用中。占用系统资源少，用软硬件均能实现，是进行数据传输差错检测地一种很好的手段（CRC 并不是严格意义上的散列算法，但它的作用与散列算法大致相同，所以归于此类）。</li>
+</ul>
+<p>摘要算法用于对比信息源是否一致，因为只要源数据发生变化，得到的摘要必然不同。因为通常结果比源数据要短很多，所以称为“摘要”。</p>
+<p>应用场景，如发件人生成邮件的散列值并加密它，然后将它与邮件本身一起发送。而收件人同时解密邮件和散列值，并由接收到的邮件产生另外一个散列值，然后将两个散列值进行比较。如果两者相同，邮件极有可能在传输期间没有发生任何改变。</p>
+<h3 id="数字签名"><a href="#数字签名" class="headerlink" title="数字签名"></a>数字签名</h3><p>数字签名就是对非对称加密和摘要算法的一种应用，能够确保信息在发布后不会被篡改（摘要算法特性），保证数据的完整性和可信性；同时也可以防止数据被他人伪造（非对称加密算法特性）；列如，我们有一段授权文本需要发布时，为了防止中途篡改发布的内容，保证发布文本的完整性，以及文本是由指定的发布者发布的。那么，可以通过摘要算法得到发布内容的摘要，得到摘要之后，发布者使用私钥加密得到密文（签名），这时候将源文本、密文（签名）以及公钥一起发布出去即可。</p>
+<p>验证过程为：首先验证公钥是否是发布者的公钥，然后用公钥对密文进行解密，得到摘要，使用发布者对文本同样的摘要算法得到摘要文本，比对摘要是否一致即可确认信息是否被篡改或者是指定发布者发布的。</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/ditialSig.jpg" alt=""></p>
+<p>数字签名可以快速验证文本的完整性和合法性，已广泛应用于各个领域。</p>
+<p>公钥的验证在后续数字证书的授权链中提到验证方法。</p>
+<h3 id="数字证书"><a href="#数字证书" class="headerlink" title="数字证书"></a>数字证书</h3><h4 id="现实生活中的证书"><a href="#现实生活中的证书" class="headerlink" title="现实生活中的证书"></a>现实生活中的证书</h4><p>在现实生活中，证书顾名思义，就是权限机构颁发的证明。比如英语6级证书，就是教育部门颁发给通过了6级考核的个人的证明，证明这个人的英语能力。我们来看一下这个证书的组成：</p>
+<ul>
+<li>被证明人：老王</li>
+<li>内容：通过了英语六级</li>
+<li>盖章：教育部门的公章或钢印</li>
+</ul>
+<p>当老王用这张证书找工作时，用人单位会通过查看证书的各项内容（尤其是公章），来验证证书的合法性和老王的能力。在现实生活中经常有假的6级证书，这些假证书最重要的就是有一个假公章。现实生活中使用法律法规来约束私刻假公章的行为，但是用人单位可能不能十分准确的判断公章是真是假。而数字签字可以来解决该类问题。</p>
+<h4 id="数字证书-1"><a href="#数字证书-1" class="headerlink" title="数字证书"></a>数字证书</h4><p>数字证书就是通过数字签名实现的数字化的证书，在现实生活中公章可以被伪造，但是在计算数字世界中，数字签名是没办法被伪造的，比如上述证书中，在一个证书文件中写明了证书内容，颁发证书时，教育部门用他们的私钥对文件的摘要信息进行签名，将签名和证书文件一起发布，这样就能确保该证书无法被伪造。验证证书是否合法时，首先用教育部门的公钥（公钥是公开的谁都可以获取到）对签名进行解密得到一个摘要信息，使用教育部门同样的摘要算法得到证书的另一个摘要信息，对比两个摘要信息是否一致就能确定该证书是否合法。在一般的证书组成中部分中，还加入了一些其他信息，比如证书的有效期。</p>
+<p>数字证书也有很多的签发机构，不同的签发机构签发的证书，用途也是不一样的，比如iOS开发中，使用到的ipa文件签名证书，需要到苹果申请。而在Web访问中为了防止Web内容在网络中安全传输，需要用到的SSL证书则需要向几家公认的机构签发。这些签发机构统称为CA（Certificate Authority）。</p>
+<p>Web访问相关的证书可以向国际公认的几个机构：</p>
+<ol>
+<li><a href="http://www.webtrust.net/" target="_blank" rel="noopener"><strong>WebTrust</strong></a></li>
+<li><a href="http://cn.globalsign.com/" target="_blank" rel="noopener"><strong>GlobalSign</strong></a></li>
+<li><a href="http://certificate.fyicenter.com/335_Root_CA_GTE_CyberTrust_Global_Root_GTE_CyberTrust_Solutions.html" target="_blank" rel="noopener"><strong>GTE</strong></a></li>
+<li><a href="http://www.nortel.com/" target="_blank" rel="noopener"><strong>Nortel</strong></a></li>
+<li><a href="http://www.verisign.com/" target="_blank" rel="noopener"><strong>Verisign</strong></a></li>
+</ol>
+<h4 id="数字证书的验证"><a href="#数字证书的验证" class="headerlink" title="数字证书的验证"></a>数字证书的验证</h4><p>申请证书是为了验证，比如Web应用相关的SSL证书验证方是浏览器，iOS各种证书的验证方是iOS设备。因为数字证书是基于数字签名的，所有数字证书的合法性验证就是验证数字证书的签名是否正确，对于签名的验证在是需要签发机构的公钥才能验证；</p>
+<p>对于iOS开发证书来说，申请完签名证书后，还需要安装苹果的公钥证书（XCode安装后会自动安装），这样才能确保我们申请的证书是可以被验证通过的（合法的），可用来进行ipa文件签名的。对于Web相关的证书签名的验证，则是由浏览器来验证，对于国际公认的几个证书签发机构浏览器会内置其公钥证书，用来验证数字证书的可信性。</p>
+<p>当数字证书通过验证后，便可以用数字证书做对应的事情，iOS开发证书可以用来对APP进行签名，SSL证书可以用来做Web内容加密处理相关的事情。所以有了这些证书之后，能保证在数据的传输过程中，数据是不会被篡改的，并且信息来源也是不能不修改的，从而确保信息安全。</p>
+<p>对于iOS，iOS系统已经将这个验证过程固化在系统中了，除非越狱，否则无法绕过</p>
+<h4 id="数字证书的授权链"><a href="#数字证书的授权链" class="headerlink" title="数字证书的授权链"></a>数字证书的授权链</h4><p>数字证书还包含一个授权链信息，举个例子：如果你要申请休假1周，需要你的上司审批，你的上司需要他的上司同意，最终需要大老板同意，那么这一层层的授权，形成了一个授权链，大老板是授权链的根(root)，中间这些环节分别是被更接近root的人授权的。</p>
+<p>比如苹果开发者的APP签名证书，该证书可以用来对APP进行签名，该证书实际上是由苹果的Worldwide Developer Relations Certificate Authority（WDRCA）授权签名的，而它是由Apple Certificate Authority授权签名的。在这个关系链中苹果的CA是根。 苹果CA根证书默认是内置在苹果系统中的，所以WDRCA的可信性可以由苹果内置的CA根证书来验证其可信性。</p>
+<p>Web相关的SSL证书顶部CA根，则就是上述提到的几家公认的签发机构，当我们需要Web做SSL的证书时，便可以向上述机构申请，通常向根机构申请费用都会比较高，也可以向一些二级授权机构进行申请，选择根机构证书签发的好处就是目前大多数的浏览器都会预装内置了这些权威CA的公钥证书，这样，在使用这些权威CA签发过的证书的时候，浏览器一般不会报风险提示。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>数字证书签名的基础是非对称加密算法，利用了非对称加密的身份验证和防止信息篡改的特性来实现的，在一些其他方面比如HTTPS中密钥交换用的就是非对称加密的保密特性来实现的，在非对称加密算法中RSA应用最广。非对称加密虽好，但却有一个弊端，就是加解密比较耗时，所以一般都是配合对称加密一起使用。</p>
+<p>原文：<a href="http://www.enkichen.com/2016/02/26/digital-certificate-based/" target="_blank" rel="noopener">http://www.enkichen.com/2016/02/26/digital-certificate-based/</a></p>
 
       
     </div>
@@ -657,6 +657,87 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2016-10-16T06:45:23.000Z"><a href="/2016/10/16/Node.js_模块/Node.js中的模块循环依赖及其解决/">2016-10-16</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2016/10/16/Node.js_模块/Node.js中的模块循环依赖及其解决/">Node.js 中的模块循环依赖及其解决</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>Node.js 开发一般不容易遇到真正的模块循环依赖的情况，可是当你的项目开始达到一定的复杂度之后，你很有可能在你的 Node.js 编码生涯中遇到几次。而且如果你之前没有关于这方面的意识，Debug 可能会花费不少的时间。</p>
+<p>我在最近的项目中就遇到了这种情况，而且不能轻易通过项目架构的重构来解决。具体来说，A 文件中需要用 B 文件中某些函数，B 文件又需要用到 A 文件中的某些函数。</p>
+<h3 id="定义问题"><a href="#定义问题" class="headerlink" title="定义问题"></a>定义问题</h3><p>实际上，Node.js 官网上就有<a href="https://nodejs.org/api/modules.html#modules_cycles" target="_blank" rel="noopener">关于模块循环 <code>require()</code> 的说明</a>。</p>
+<p>在官网给出的例子中，有 3 个模块：<code>main.js</code>、<code>a.js</code>、<code>b.js</code>。其中 <code>main.js</code> 有对 <code>a.js</code> 和 <code>b.js</code> 的引用，而 <code>a.js</code> 和 <code>b.js</code> 又是相互引用的关系（详细情况请参阅上段末的超链接）。</p>
+<p>官网上点出了这种模块循环的情况，并且解释清楚了原因（但并没有给出具体可行的解决方案）：</p>
+<blockquote>
+<p>When <code>main.js</code> loads <code>a.js</code>, then <code>a.js</code> in turn loads <code>b.js</code>. At that point, <code>b.js</code> tries to load <code>a.js</code>. In order to prevent an infinite loop, an <strong>unfinished copy</strong> of the <code>a.js</code>exports object is returned to the <code>b.js</code> module. <code>b.js</code> then finishes loading, and its exports object is provided to the <code>a.js</code> module.</p>
+</blockquote>
+<p>简单说就是，为了防止模块载入的死循环，Node.js 在模块第一次载入后会把它的结果进行缓存，下一次再对它进行载入的时候会直接从缓存中取出结果。所以在这种循环依赖情形下，不会有死循环，但是却会因为缓存造成模块没有按照我们预想的那样被导出（export，详细的案例分析见下文）。</p>
+<p>官网给出了三个模块还不是循环依赖最简单的情形。实际上，两个模块就可以很清楚的表达出这种情况。根据递归的思想，解决了最简单的情形，这一类任意大小规模的问题也就解决了一半（另一半还需要探明随着问题规模增长，问题的解将会如何变化）。</p>
+<p>下面是一个两个模块循环依赖的问题最简情形：</p>
+<p><code>A.js</code>:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">let b = require(&apos;./B&apos;);</span><br><span class="line"></span><br><span class="line">console.log(&apos;A: before logging b&apos;);</span><br><span class="line">console.log(b);</span><br><span class="line">console.log(&apos;A: after logging b&apos;);</span><br><span class="line"></span><br><span class="line">module.exports = &#123;</span><br><span class="line">    A: &apos;this is a Object&apos;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p><code>B.js</code>:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">let a = require(&apos;./A&apos;);</span><br><span class="line"></span><br><span class="line">console.log(&apos;B: before logging a&apos;);</span><br><span class="line">console.log(a);</span><br><span class="line">console.log(&apos;B: after logging a&apos;);</span><br><span class="line"></span><br><span class="line">module.exports = &#123;</span><br><span class="line">    B: &apos;this is b Object&apos;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>运行 <code>A.js</code>，将会看到如下输出：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">B: before logging a</span><br><span class="line">&#123;&#125;</span><br><span class="line">B: after logging a</span><br><span class="line">A: before logging b</span><br><span class="line">&#123; B: &apos;this is b Object&apos; &#125;</span><br><span class="line">A: after logging b</span><br></pre></td></tr></table></figure>
+<p>JavaScript 作为一门解释型的语言，上面的打印输出清晰的展示出了程序运行的轨迹。在这个例子中，<code>A.js</code> 首先 <code>require</code> 了 <code>B.js</code>, 程序进入 <code>B.js</code>，在 <code>B.js</code> 中第一行又 <code>require</code> 了 <code>A.js</code>。</p>
+<p>如前文所述，为了避免无限循环的模块依赖，在 Node.js 运行 <code>A.js</code> 之后，它就被缓存了，但需要注意的是，此时缓存的仅仅是一个未完工的 <code>A.js</code>（an <strong>unfinished copy</strong> of the <code>a.js</code>）。所以在 <code>B.js</code> <code>require</code> <code>A.js</code> 时，得到的仅仅是缓存中一个未完工的 <code>A.js</code>，具体来说，它并没有明确被导出的具体内容（<code>A.js</code> 尾端）。所以 <code>B.js</code> 中输出的 <code>a</code> 是一个空对象。</p>
+<p>之后，<code>B.js</code> 顺利执行完，回到 <code>A.js</code> 的 <code>require</code> 语句之后，继续执行完成。</p>
+<h3 id="解决问题"><a href="#解决问题" class="headerlink" title="解决问题"></a>解决问题</h3><p>想要解决这个问题有一个很简明的方法，那就是在循环依赖的每个模块中先导出自身，然后再导入其他模块（对于本文的举例来说，实际只需改动 <code>A.js</code> 就可以达到效果）。</p>
+<p>话不多说，放码过来：</p>
+<p><code>A.js</code>:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">module.exports = &#123;</span><br><span class="line">    A: &apos;this is a Object&apos;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">let b = require(&apos;./B&apos;);</span><br><span class="line"></span><br><span class="line">console.log(&apos;A: before log b&apos;);</span><br><span class="line">console.log(b);</span><br><span class="line">console.log(&apos;A: after log b&apos;);</span><br></pre></td></tr></table></figure>
+<p><code>B.js</code>:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">module.exports = &#123;</span><br><span class="line">    B: &apos;this is b Object&apos;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">let a = require(&apos;./A&apos;);</span><br><span class="line"></span><br><span class="line">console.log(&apos;B: before log a&apos;);</span><br><span class="line">console.log(a);</span><br><span class="line">console.log(&apos;B: after log a&apos;);</span><br></pre></td></tr></table></figure>
+<p>此时，在 A 和 B 中，都在 <code>require</code> 之前就导出了自身需要导出的模块，此时输出则是这样：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">B: before log a</span><br><span class="line">&#123; A: &apos;this is a Object&apos; &#125;</span><br><span class="line">B: after log a</span><br><span class="line">A: before log b</span><br><span class="line">&#123; B: &apos;this is b Object&apos; &#125;</span><br><span class="line">A: after log b</span><br></pre></td></tr></table></figure>
+<p>可以看到 B 中按我们的预期输出了 A 中导出的值。</p>
+<p>这种解决办法可行的原因也很简单，还是因为 JavaScript 是一门解释型的语言，在 <code>require</code> 其他模块之前，已经把自身需要导出的部分都导出了，所以即便有模块载入缓存，也不影响最终结果按预期进行。</p>
+<p>这种办法几乎没什么副作用，唯一稍令强迫症感到不快就是这种顺序与我们通常的书写顺序不符。一般我们都会先把 <code>require</code> 写在源文件开头，<code>exports</code> 放到后面的位置。唯一需要祈祷的是，之后接手项目的代码猴儿不会因为觉得这个顺序看着碍眼又把它改回去。鉴于此点，<strong>在导入导出语句上添加合理的解释性注释变得很重要</strong>。</p>
+<h3 id="其他相关问题"><a href="#其他相关问题" class="headerlink" title="其他相关问题"></a>其他相关问题</h3><p>实际上，我还自己实验并查阅了一些资料来探索是否有其他的解决办法，但那些办法要么是适用于特定的情形和设计模式之下，要么就没有上述方法简洁，本文就不赘述了。如果有兴趣，可以参看本文末尾的 References 链接。如果你发现有更好的解决办法，欢迎在评论区留言。</p>
+<p>要想彻底弄明白 Node.js 模块加载的相关问题，一定得去读读 Node.js 相关部分的源码。其次，推荐阅读<a href="https://book.douban.com/subject/25768396/" target="_blank" rel="noopener">《深入浅出 Node.js》</a>第二章与<a href="http://www.ruanyifeng.com/blog/2015/05/require.html" target="_blank" rel="noopener">阮一峰的这篇日志</a>。</p>
+<p>有趣的是，ES6 特性中已经有了更优秀的 <code>import/export</code> 模块加载机制，就不会存在这样的问题（原因参考 References 第5条），然而 Node.js 还并不支持。Github 上有人提出过这个问题，Node.js 基金会成员 <a href="https://github.com/bnoordhuis" target="_blank" rel="noopener">@bnoordhuis</a> 对此的回复是：</p>
+<blockquote>
+<p>In a nutshell, <code>require()</code> is not going anywhere - removing it would break too much for too little gain - but we’ll almost certainly end up supporting ES6 import/export somehow, details TBD.</p>
+<p>Support for ES6 modules first needs to land in V8.</p>
+</blockquote>
+<p>详细的讨论可以到<a href="https://github.com/nodejs/help/issues/53" target="_blank" rel="noopener">这里</a>查看。</p>
+<p>虽然因为 V8 的原因 Node.js 官方还不能支持 <code>import/export</code>，不过我们依然可以借助 Babel 来提前在 Node.js 使用这个特性，感兴趣的同学可以参考<a href="http://taobaofed.org/blog/2016/01/07/find-back-the-lost-es6-features-in-nodejs/" target="_blank" rel="noopener">这里</a>。</p>
+<h3 id="References"><a href="#References" class="headerlink" title="References"></a>References</h3><ol>
+<li><a href="https://nodejs.org/api/modules.html#modules_cycles" target="_blank" rel="noopener">Modules | Node.js Documentation</a></li>
+<li><a href="https://coderwall.com/p/myzvmg/circular-dependencies-in-node-js" target="_blank" rel="noopener">Circular dependencies in node.js</a></li>
+<li><a href="https://cnodejs.org/topic/4f16442ccae1f4aa27001045" target="_blank" rel="noopener">node.js的循环依赖 - cnode</a></li>
+<li><a href="https://segmentfault.com/a/1190000004151411" target="_blank" rel="noopener">Node.js 中的循环依赖 - sf</a></li>
+<li><a href="http://www.ruanyifeng.com/blog/2015/11/circular-dependency.html" target="_blank" rel="noopener">JavaScript 模块的循环加载 - 阮一峰</a></li>
+<li><a href="https://github.com/Gaubee/blog/issues/65" target="_blank" rel="noopener">nodejs中模块循环依赖的解决方案 #65</a></li>
+</ol>
+<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="http://maples7.com/2016/08/17/cyclic-dependencies-in-node-and-its-solution/" target="_blank" rel="noopener">http://maples7.com/2016/08/17/cyclic-dependencies-in-node-and-its-solution/</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2016-09-07T06:45:23.000Z"><a href="/2016/09/07/Node.js_模块/require()源码解读/">2016-09-07</a></time>
       
       
@@ -768,137 +849,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2016-09-04T06:45:23.000Z"><a href="/2016/09/04/计算机网络/HTTP 协议入门/">2016-09-04</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2016/09/04/计算机网络/HTTP 协议入门/">HTTP 协议入门</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h1 id="HTTP-协议入门"><a href="#HTTP-协议入门" class="headerlink" title="HTTP 协议入门"></a>HTTP 协议入门</h1><p>HTTP 协议是互联网的基础协议，也是网页开发的必备知识，最新版本 HTTP/2 更是让它成为技术热点。<br>本文介绍 HTTP 协议的历史演变和设计思路。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/http01.jpg" alt=""></p>
-<h2 id="一、HTTP-0-9"><a href="#一、HTTP-0-9" class="headerlink" title="一、HTTP/0.9"></a>一、HTTP/0.9</h2><p>HTTP 是基于 TCP/IP 协议的<a href="http://www.ruanyifeng.com/blog/2012/05/internet_protocol_suite_part_i.html" target="_blank" rel="noopener"><strong>应用层协议</strong></a>。它不涉及数据包（packet）传输，主要规定了客户端和服务器之间的通信格式，默认使用80端口。</p>
-<p>最早版本是1991年发布的0.9版。该版本极其简单，只有一个命令<code>GET</code>。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GET /index.html</span><br></pre></td></tr></table></figure>
-<p>上面命令表示，TCP 连接（connection）建立后，客户端向服务器请求（request）网页<code>index.html</code>。</p>
-<p>协议规定，服务器只能回应HTML格式的字符串，不能回应别的格式。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;html&gt;</span><br><span class="line">  &lt;body&gt;Hello World&lt;/body&gt;</span><br><span class="line">&lt;/html&gt;</span><br></pre></td></tr></table></figure></p>
-<p>服务器发送完毕，就关闭TCP连接。</p>
-<h2 id="二、HTTP-1-0"><a href="#二、HTTP-1-0" class="headerlink" title="二、HTTP/1.0"></a>二、HTTP/1.0</h2><h3 id="2-1-简介"><a href="#2-1-简介" class="headerlink" title="2.1 简介"></a>2.1 简介</h3><p>1996年5月，HTTP/1.0 版本发布，内容大大增加。</p>
-<p>首先，任何格式的内容都可以发送。这使得互联网不仅可以传输文字，还能传输图像、视频、二进制文件。这为互联网的大发展奠定了基础。</p>
-<p>其次，除了<code>GET</code>命令，还引入了<code>POST</code>命令和<code>HEAD</code>命令，丰富了浏览器与服务器的互动手段。</p>
-<p>再次，HTTP请求和回应的格式也变了。除了数据部分，每次通信都必须包括头信息（HTTP header），用来描述一些元数据。</p>
-<p>其他的新增功能还包括状态码（status code）、多字符集支持、多部分发送（multi-part type）、权限（authorization）、缓存（cache）、内容编码（content encoding）等。</p>
-<h3 id="2-2-请求格式"><a href="#2-2-请求格式" class="headerlink" title="2.2 请求格式"></a>2.2 请求格式</h3><p>下面是一个1.0版的HTTP请求的例子。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">GET / HTTP/1.0</span><br><span class="line">User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5)</span><br><span class="line">Accept: */*</span><br></pre></td></tr></table></figure>
-<p>可以看到，这个格式与0.9版有很大变化。</p>
-<p>第一行是请求命令，必须在尾部添加协议版本（<code>HTTP/1.0</code>）。后面就是多行头信息，描述客户端的情况。</p>
-<h3 id="2-3-回应格式"><a href="#2-3-回应格式" class="headerlink" title="2.3 回应格式"></a>2.3 回应格式</h3><p>服务器的回应如下。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">HTTP/1.0 200 OK </span><br><span class="line">Content-Type: text/plain</span><br><span class="line">Content-Length: 137582</span><br><span class="line">Expires: Thu, 05 Dec 1997 16:00:00 GMT</span><br><span class="line">Last-Modified: Wed, 5 August 1996 15:55:28 GMT</span><br><span class="line">Server: Apache 0.84</span><br><span class="line"></span><br><span class="line">&lt;html&gt;</span><br><span class="line">  &lt;body&gt;Hello World&lt;/body&gt;</span><br><span class="line">&lt;/html&gt;</span><br></pre></td></tr></table></figure>
-<p>回应的格式是”头信息 + 一个空行（<code>\r\n</code>） + 数据”。其中，第一行是”协议版本 + 状态码（status code） + 状态描述”。</p>
-<h3 id="2-4-Content-Type-字段"><a href="#2-4-Content-Type-字段" class="headerlink" title="2.4 Content-Type 字段"></a>2.4 Content-Type 字段</h3><p>关于字符的编码，1.0版规定，头信息必须是 ASCII 码，后面的数据可以是任何格式。因此，服务器回应的时候，必须告诉客户端，数据是什么格式，这就是<code>Content-Type</code>字段的作用。</p>
-<p>下面是一些常见的<code>Content-Type</code>字段的值。</p>
-<ul>
-<li>text/plain</li>
-<li>text/html</li>
-<li>text/css</li>
-<li>image/jpeg</li>
-<li>image/png</li>
-<li>image/svg+xml</li>
-<li>audio/mp4</li>
-<li>video/mp4</li>
-<li>application/javascript</li>
-<li>application/pdf</li>
-<li>application/zip</li>
-<li>application/atom+xml</li>
-</ul>
-<p>这些数据类型总称为<code>MIME type</code>，每个值包括一级类型和二级类型，之间用斜杠分隔。</p>
-<p>除了预定义的类型，厂商也可以自定义类型。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">application/vnd.debian.binary-package</span><br></pre></td></tr></table></figure>
-<p>上面的类型表明，发送的是Debian系统的二进制数据包。</p>
-<p><code>MIME type</code>还可以在尾部使用分号，添加参数。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Type: text/html; charset=utf-8</span><br></pre></td></tr></table></figure>
-<p>上面的类型表明，发送的是网页，而且编码是UTF-8。</p>
-<p>客户端请求的时候，可以使用<code>Accept</code>字段声明自己可以接受哪些数据格式。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Accept: */*</span><br></pre></td></tr></table></figure>
-<p>上面代码中，客户端声明自己可以接受任何格式的数据。</p>
-<p><code>MIME type</code>不仅用在HTTP协议，还可以用在其他地方，比如HTML网页。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=UTF-8&quot; /&gt;</span><br><span class="line">  &lt;!-- 等同于 --&gt;</span><br><span class="line">&lt;meta charset=&quot;utf-8&quot; /&gt;</span><br></pre></td></tr></table></figure>
-<h3 id="2-5-Content-Encoding-字段"><a href="#2-5-Content-Encoding-字段" class="headerlink" title="2.5 Content-Encoding 字段"></a>2.5 Content-Encoding 字段</h3><p>由于发送的数据可以是任何格式，因此可以把数据压缩后再发送。<code>Content-Encoding</code>字段说明数据的压缩方法。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Content-Encoding: gzip</span><br><span class="line">Content-Encoding: compress</span><br><span class="line">Content-Encoding: deflate</span><br></pre></td></tr></table></figure>
-<p>客户端在请求时，用<code>Accept-Encoding</code>字段说明自己可以接受哪些压缩方法。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Accept-Encoding: gzip, deflate</span><br></pre></td></tr></table></figure>
-<h3 id="2-6-缺点"><a href="#2-6-缺点" class="headerlink" title="2.6 缺点"></a>2.6 缺点</h3><p>HTTP/1.0 版的主要缺点是，每个TCP连接只能发送一个请求。发送数据完毕，连接就关闭，如果还要请求其他资源，就必须再新建一个连接。</p>
-<p>TCP连接的新建成本很高，因为需要客户端和服务器三次握手，并且开始时发送速率较慢（slow start）。所以，HTTP 1.0版本的性能比较差。随着网页加载的外部资源越来越多，这个问题就愈发突出了。</p>
-<p>为了解决这个问题，有些浏览器在请求时，用了一个非标准的<code>Connection</code>字段。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Connection: keep-alive</span><br></pre></td></tr></table></figure>
-<p>这个字段要求服务器不要关闭TCP连接，以便其他请求复用。服务器同样回应这个字段。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Connection: keep-alive</span><br></pre></td></tr></table></figure>
-<p>一个可以复用的TCP连接就建立了，直到客户端或服务器主动关闭连接。但是，这不是标准字段，不同实现的行为可能不一致，因此不是根本的解决办法。</p>
-<h2 id="三、HTTP-1-1"><a href="#三、HTTP-1-1" class="headerlink" title="三、HTTP/1.1"></a>三、HTTP/1.1</h2><p>1997年1月，HTTP/1.1 版本发布，只比 1.0 版本晚了半年。它进一步完善了 HTTP 协议，一直用到了20年后的今天，直到现在还是最流行的版本。</p>
-<h3 id="3-1-持久连接"><a href="#3-1-持久连接" class="headerlink" title="3.1 持久连接"></a>3.1 持久连接</h3><p>1.1 版的最大变化，就是引入了持久连接（persistent connection），即TCP连接默认不关闭，可以被多个请求复用，不用声明<code>Connection: keep-alive</code>。</p>
-<p>客户端和服务器发现对方一段时间没有活动，就可以主动关闭连接。不过，规范的做法是，客户端在最后一个请求时，发送<code>Connection: close</code>，明确要求服务器关闭TCP连接。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Connection: close</span><br></pre></td></tr></table></figure>
-<p>目前，对于同一个域名，大多数浏览器允许同时建立6个持久连接。</p>
-<h3 id="3-2-管道机制"><a href="#3-2-管道机制" class="headerlink" title="3.2 管道机制"></a>3.2 管道机制</h3><p>1.1 版还引入了管道机制（pipelining），即在同一个TCP连接里面，客户端可以同时发送多个请求。这样就进一步改进了HTTP协议的效率。</p>
-<p>举例来说，客户端需要请求两个资源。以前的做法是，在同一个TCP连接里面，先发送A请求，然后等待服务器做出回应，收到后再发出B请求。管道机制则是允许浏览器同时发出A请求和B请求，但是服务器还是按照顺序，先回应A请求，完成后再回应B请求。</p>
-<h3 id="3-3-Content-Length-字段"><a href="#3-3-Content-Length-字段" class="headerlink" title="3.3 Content-Length 字段"></a>3.3 Content-Length 字段</h3><p>一个TCP连接现在可以传送多个回应，势必就要有一种机制，区分数据包是属于哪一个回应的。这就是<code>Content-length</code>字段的作用，声明本次回应的数据长度。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Length: 3495</span><br></pre></td></tr></table></figure>
-<p>上面代码告诉浏览器，本次回应的长度是3495个字节，后面的字节就属于下一个回应了。</p>
-<p>在1.0版中，<code>Content-Length</code>字段不是必需的，因为浏览器发现服务器关闭了TCP连接，就表明收到的数据包已经全了。</p>
-<h3 id="3-4-分块传输编码"><a href="#3-4-分块传输编码" class="headerlink" title="3.4 分块传输编码"></a>3.4 分块传输编码</h3><p>使用<code>Content-Length</code>字段的前提条件是，服务器发送回应之前，必须知道回应的数据长度。</p>
-<p>对于一些很耗时的动态操作来说，这意味着，服务器要等到所有操作完成，才能发送数据，显然这样的效率不高。更好的处理方法是，产生一块数据，就发送一块，采用”流模式”（stream）取代”缓存模式”（buffer）。</p>
-<p>因此，1.1版规定可以不使用<code>Content-Length</code>字段，而使用<a href="https://zh.wikipedia.org/wiki/%E5%88%86%E5%9D%97%E4%BC%A0%E8%BE%93%E7%BC%96%E7%A0%81" target="_blank" rel="noopener">“分块传输编码”</a>（chunked transfer encoding）。只要请求或回应的头信息有<code>Transfer-Encoding</code>字段，就表明回应将由数量未定的数据块组成。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Transfer-Encoding: chunked</span><br></pre></td></tr></table></figure>
-<p>每个非空的数据块之前，会有一个16进制的数值，表示这个块的长度。最后是一个大小为0的块，就表示本次回应的数据发送完了。下面是一个例子。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">HTTP/1.1 200 OK</span><br><span class="line">Content-Type: text/plain</span><br><span class="line">Transfer-Encoding: chunked</span><br><span class="line"></span><br><span class="line">25</span><br><span class="line">This is the data in the first chunk</span><br><span class="line"> </span><br><span class="line">1C</span><br><span class="line">and this is the second one</span><br><span class="line"></span><br><span class="line">3</span><br><span class="line">con</span><br><span class="line"></span><br><span class="line">8</span><br><span class="line">sequence</span><br><span class="line"></span><br><span class="line">0</span><br></pre></td></tr></table></figure>
-<h3 id="3-5-其他功能"><a href="#3-5-其他功能" class="headerlink" title="3.5 其他功能"></a>3.5 其他功能</h3><p>1.1版还新增了许多动词方法：<code>PUT</code>、<code>PATCH</code>、<code>HEAD</code>、 <code>OPTIONS</code>、<code>DELETE</code>。</p>
-<p>另外，客户端请求的头信息新增了<code>Host</code>字段，用来指定服务器的域名。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Host: www.example.com</span><br></pre></td></tr></table></figure>
-<p>有了<code>Host</code>字段，就可以将请求发往同一台服务器上的不同网站，为虚拟主机的兴起打下了基础。</p>
-<h3 id="3-6-缺点"><a href="#3-6-缺点" class="headerlink" title="3.6 缺点"></a>3.6 缺点</h3><p>虽然1.1版允许复用TCP连接，但是同一个TCP连接里面，所有的数据通信是按次序进行的。服务器只有处理完一个回应，才会进行下一个回应。要是前面的回应特别慢，后面就会有许多请求排队等着。这称为<a href="https://zh.wikipedia.org/wiki/%E9%98%9F%E5%A4%B4%E9%98%BB%E5%A1%9E" target="_blank" rel="noopener">“队头堵塞”</a>（Head-of-line blocking）。</p>
-<p>为了避免这个问题，只有两种方法：一是减少请求数，二是同时多开持久连接。这导致了很多的网页优化技巧，比如合并脚本和样式表、将图片嵌入CSS代码、域名分片（domain sharding）等等。如果HTTP协议设计得更好一些，这些额外的工作是可以避免的。</p>
-<h2 id="四、SPDY-协议"><a href="#四、SPDY-协议" class="headerlink" title="四、SPDY 协议"></a>四、SPDY 协议</h2><p>2009年，谷歌公开了自行研发的 SPDY 协议，主要解决 HTTP/1.1 效率不高的问题。</p>
-<p>这个协议在Chrome浏览器上证明可行以后，就被当作 HTTP/2 的基础，主要特性都在 HTTP/2 之中得到继承。</p>
-<h2 id="五、HTTP-2"><a href="#五、HTTP-2" class="headerlink" title="五、HTTP/2"></a>五、HTTP/2</h2><p>2015年，HTTP/2 发布。它不叫 HTTP/2.0，是因为标准委员会不打算再发布子版本了，下一个新版本将是 HTTP/3。</p>
-<h3 id="5-1-二进制协议"><a href="#5-1-二进制协议" class="headerlink" title="5.1 二进制协议"></a>5.1 二进制协议</h3><p>HTTP/1.1 版的头信息肯定是文本（ASCII编码），数据体可以是文本，也可以是二进制。HTTP/2 则是一个彻底的二进制协议，头信息和数据体都是二进制，并且统称为”帧”（frame）：头信息帧和数据帧。</p>
-<p>二进制协议的一个好处是，可以定义额外的帧。HTTP/2 定义了近十种帧，为将来的高级应用打好了基础。如果使用文本实现这种功能，解析数据将会变得非常麻烦，二进制解析则方便得多。</p>
-<h3 id="5-2-多工"><a href="#5-2-多工" class="headerlink" title="5.2 多工"></a>5.2 多工</h3><p>HTTP/2 复用TCP连接，在一个连接里，客户端和浏览器都可以同时发送多个请求或回应，而且不用按照顺序一一对应，这样就避免了”队头堵塞”。</p>
-<p>举例来说，在一个TCP连接里面，服务器同时收到了A请求和B请求，于是先回应A请求，结果发现处理过程非常耗时，于是就发送A请求已经处理好的部分， 接着回应B请求，完成后，再发送A请求剩下的部分。</p>
-<p>这样双向的、实时的通信，就叫做多工（Multiplexing）。</p>
-<h3 id="5-3-数据流"><a href="#5-3-数据流" class="headerlink" title="5.3 数据流"></a>5.3 数据流</h3><p>因为 HTTP/2 的数据包是不按顺序发送的，同一个连接里面连续的数据包，可能属于不同的回应。因此，必须要对数据包做标记，指出它属于哪个回应。</p>
-<p>HTTP/2 将每个请求或回应的所有数据包，称为一个数据流（stream）。每个数据流都有一个独一无二的编号。数据包发送的时候，都必须标记数据流ID，用来区分它属于哪个数据流。另外还规定，客户端发出的数据流，ID一律为奇数，服务器发出的，ID为偶数。</p>
-<p>数据流发送到一半的时候，客户端和服务器都可以发送信号（<code>RST_STREAM</code>帧），取消这个数据流。1.1版取消数据流的唯一方法，就是关闭TCP连接。这就是说，HTTP/2 可以取消某一次请求，同时保证TCP连接还打开着，可以被其他请求使用。</p>
-<p>客户端还可以指定数据流的优先级。优先级越高，服务器就会越早回应。</p>
-<h3 id="5-4-头信息压缩"><a href="#5-4-头信息压缩" class="headerlink" title="5.4 头信息压缩"></a>5.4 头信息压缩</h3><p>HTTP 协议不带有状态，每次请求都必须附上所有信息。所以，请求的很多字段都是重复的，比如<code>Cookie</code>和<code>User Agent</code>，一模一样的内容，每次请求都必须附带，这会浪费很多带宽，也影响速度。</p>
-<p>HTTP/2 对这一点做了优化，引入了头信息压缩机制（header compression）。一方面，头信息使用<code>gzip</code>或<code>compress</code>压缩后再发送；另一方面，客户端和服务器同时维护一张头信息表，所有字段都会存入这个表，生成一个索引号，以后就不发送同样字段了，只发送索引号，这样就提高速度了。</p>
-<h3 id="5-5-服务器推送"><a href="#5-5-服务器推送" class="headerlink" title="5.5 服务器推送"></a>5.5 服务器推送</h3><p>HTTP/2 允许服务器未经请求，主动向客户端发送资源，这叫做服务器推送（server push）。</p>
-<p>常见场景是客户端请求一个网页，这个网页里面包含很多静态资源。正常情况下，客户端必须收到网页后，解析HTML源码，发现有静态资源，再发出静态资源请求。其实，服务器可以预期到客户端请求网页后，很可能会再请求静态资源，所以就主动把这些静态资源随着网页一起发给客户端了。</p>
-<h3 id="六、参考链接"><a href="#六、参考链接" class="headerlink" title="六、参考链接"></a>六、参考链接</h3><p><a href="http://kamranahmed.info/blog/2016/08/13/http-in-depth/" target="_blank" rel="noopener">Journey to HTTP/2</a>, by Kamran Ahmed<br><a href="https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol" target="_blank" rel="noopener">HTTP</a>, by Wikipedia<br><a href="https://tools.ietf.org/html/rfc1945" target="_blank" rel="noopener">HTTP/1.0 Specification</a><br><a href="https://http2.github.io/http2-spec/" target="_blank" rel="noopener">HTTP/2 Specification</a></p>
-<h3 id="七、原文"><a href="#七、原文" class="headerlink" title="七、原文"></a>七、原文</h3><p><a href="http://www.ruanyifeng.com/blog/2016/08/http.html" target="_blank" rel="noopener">http://www.ruanyifeng.com/blog/2016/08/http.html</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -946,7 +896,7 @@
   
     <li><a href="/tags/Node-js-异步编程/">Node.js_异步编程</a><small>3</small></li>
   
-    <li><a href="/tags/Node-js-模块/">Node.js_模块</a><small>2</small></li>
+    <li><a href="/tags/Node-js-模块/">Node.js_模块</a><small>4</small></li>
   
     <li><a href="/tags/Node-js-测试/">Node.js_测试</a><small>5</small></li>
   
