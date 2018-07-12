@@ -393,6 +393,195 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2017-06-05T06:45:23.000Z"><a href="/2017/06/05/Node.js_模块/你需要了解的Node.js模块/">2017-06-05</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2017/06/05/Node.js_模块/你需要了解的Node.js模块/">你需要了解的Node.js 模块</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>Node 使用两个核心模块来管理模块依赖：</p>
+<ul>
+<li>require 模块，在全局范围可用——无需 require(‘require’)。</li>
+<li>module 模块，在全局范围可用——无需 require(‘module’)。</li>
+</ul>
+<p>你可以将 require 模块视为命令，将 module 模块视为所有必需模块的组织者。<br>在 Node 中获取一个模块并不复杂。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> config = <span class="built_in">require</span>(<span class="string">'/path/to/file'</span>);</span><br></pre></td></tr></table></figure>
+<p>由 require 模块导出的主要对象是一个函数（如上例所用）。 当 Node 使用本地文件路径作为函数的唯一参数调用该 require() 函数时，Node 将执行以下步骤：</p>
+<ul>
+<li><strong>解析</strong>：找到文件的绝对路径。</li>
+<li><strong>加载</strong>：确定文件内容的类型.</li>
+<li><strong>封装</strong>：给文件其私有作用域。 这使得 require 和 module 对象两者都可以下载我们需要的每个文件。</li>
+<li><strong>评估</strong>：这是 VM 对加载的代码最后需要做的。</li>
+<li><strong>缓存</strong>：当我们再次需要这个文件时，不再重复所有的步骤。</li>
+</ul>
+<p>在本文中，我将尝试用示例解释这些不同的阶段，以及它们是如何影响我们在 Node 中编写模块的方式的。</p>
+<p>先在终端创建一个目录来保存所有示例：<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mkdir ~/learn-node &amp;&amp; cd ~/learn-node</span><br></pre></td></tr></table></figure></p>
+<p>本文之后所有命令都在 ~/learn-node 下运行。</p>
+<h4 id="解析本地路径"><a href="#解析本地路径" class="headerlink" title="解析本地路径"></a>解析本地路径</h4><p>我现在向你介绍 module 对象。你可以在一个的 REPL(译者注：Read-Eval-Print-Loop，就是一般控制台干的事情)会话中很容易地看到它：<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ node</span><br><span class="line"><span class="meta">&gt;</span> module</span><br><span class="line">Module &#123;</span><br><span class="line">  id: '&lt;repl&gt;',</span><br><span class="line">  exports: &#123;&#125;,</span><br><span class="line">  parent: undefined,</span><br><span class="line">  filename: null,</span><br><span class="line">  loaded: false,</span><br><span class="line">  children: [],</span><br><span class="line">  paths: [ ... ] &#125;</span><br></pre></td></tr></table></figure></p>
+<p>每个模块对象都有一个 id 属性作为标识。这个 id 通常是文件的完整路径，不过在 REPL 会话中，它只是 <repl>。</repl></p>
+<p>Node 模块与文件系统有着一对一的关系。请求模块就是把文件内容加载到内存中。</p>
+<p>不过，因为 Node 中有很多方法用于请求文件(比如，使用相对路径，或预定义的路径)，在我们把文件内容加载到内存之前，我们需要找到文件的绝对位置。<br>现在请求 ‘find-me’ 模块，但不指定路径：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">require</span>(<span class="string">'find-me'</span>);</span><br></pre></td></tr></table></figure></p>
+<p>Node 会按顺序在 module.paths 指定的路径中去寻找 find-me.js。<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ node</span><br><span class="line"><span class="meta">&gt;</span> module.paths</span><br><span class="line">[ '/Users/samer/learn-node/repl/node_modules',</span><br><span class="line">  '/Users/samer/learn-node/node_modules',</span><br><span class="line">  '/Users/samer/node_modules',</span><br><span class="line">  '/Users/node_modules',</span><br><span class="line">  '/node_modules',</span><br><span class="line">  '/Users/samer/.node_modules',</span><br><span class="line">  '/Users/samer/.node_libraries',</span><br><span class="line">  '/usr/local/Cellar/node/7.7.1/lib/node' ]</span><br></pre></td></tr></table></figure></p>
+<p>路径列表基本上会是从当前目录到根目录下的每一个 node_modules 目录。它也会包含一些不推荐使用的遗留目录。</p>
+<p>如果 Node 在这些目录下仍然找不到 find-me.js，它会抛出 “cannot find module error.(不能找到模块)” 这个错误消息。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ node</span><br><span class="line"><span class="meta">&gt;</span> require('find-me')</span><br><span class="line">Error: Cannot find module 'find-me'</span><br><span class="line">    at Function.Module._resolveFilename (module.js:470:15)</span><br><span class="line">    at Function.Module._load (module.js:418:25)</span><br><span class="line">    at Module.require (module.js:498:17)</span><br><span class="line">    at require (internal/module.js:20:19)</span><br><span class="line">    at repl:1:1</span><br><span class="line">    at ContextifyScript.Script.runInThisContext (vm.js:23:33)</span><br><span class="line">    at REPLServer.defaultEval (repl.js:336:29)</span><br><span class="line">    at bound (domain.js:280:14)</span><br><span class="line">    at REPLServer.runBound [as eval] (domain.js:293:12)</span><br><span class="line">    at REPLServer.onLine (repl.js:533:10)</span><br></pre></td></tr></table></figure>
+<p>现在创建一个局部的 node_modules 目录，放入一个 find-me.js，require(‘find-me’) 就能找到它。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ mkdir node_modules </span><br><span class="line">~/learn-node $ echo "console.log('I am not lost');" &gt; node_modules/find-me.js</span><br><span class="line">~/learn-node $ node</span><br><span class="line"><span class="meta">&gt;</span> require('find-me');</span><br><span class="line">I am not lost</span><br><span class="line">&#123;&#125;</span><br><span class="line"><span class="meta">&gt;</span></span><br></pre></td></tr></table></figure>
+<p>如果别的路径下存在另一个 find-me.js 文件，例如在 home 目录下存在 node_modules 目录，其中有一个不同的 find-me.js：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> mkdir ~/node_modules</span><br><span class="line"><span class="meta">$</span> echo "console.log('I am the root of all problems');" &gt; ~/node_modules/find-me.js</span><br></pre></td></tr></table></figure>
+<p>现在 learn-node 目录也包含 node_modules/find-me.js —— 在这个目录下 require(‘find-me’)，那么 home 目录下的 find-me.js 根本不会被加载：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ node</span><br><span class="line"><span class="meta">&gt;</span> require('find-me')</span><br><span class="line">I am not lost</span><br><span class="line">&#123;&#125;</span><br><span class="line"><span class="meta">&gt;</span></span><br></pre></td></tr></table></figure>
+<p>如果删除了~/learn-node 目录下的的 node_modules 目录，再次尝试请求 find-me.js，就会使用 home 目录下 node_modules 目录中的 find-me.js 了：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ rm -r node_modules/</span><br><span class="line">~/learn-node $ node</span><br><span class="line"><span class="meta">&gt;</span> require('find-me')</span><br><span class="line">I am the root of all problems</span><br><span class="line">&#123;&#125;</span><br><span class="line"><span class="meta">&gt;</span></span><br></pre></td></tr></table></figure>
+<h4 id="请求一个目录"><a href="#请求一个目录" class="headerlink" title="请求一个目录"></a>请求一个目录</h4><p>模块不一定是文件。我们也可以在 node_modules 目录下创建一个 find-me 目录，并在其中放一个 index.js 文件。同样的 require(‘find-me’) 会使用这个目录下的 index.js 文件：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ mkdir -p node_modules/find-me</span><br><span class="line">~/learn-node $ echo "console.log('Found again.');" &gt; node_modules/find-me/index.js</span><br><span class="line">~/learn-node $ node</span><br><span class="line"><span class="meta">&gt;</span> require('find-me');</span><br><span class="line">Found again.</span><br><span class="line">&#123;&#125;</span><br><span class="line"><span class="meta">&gt;</span></span><br></pre></td></tr></table></figure>
+<p>注意如果存在局部模块，home 下 node_modules 路径中的相应模块仍然会被忽略。</p>
+<p>在请求一个目录的时候，默认会使用 index.js，不过我们可以通过 package.json 中的 main 选项来改变起始文件。比如，希望 require(‘find-me’) 在 find-me 目录下去使用另一个文件，只需要在那个目录下添加  package.json 文件来完成这个事情：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ echo "console.log('I rule');" &gt; node_modules/find-me/start.js</span><br><span class="line">~/learn-node $ echo '&#123; "name": "find-me-folder", "main": "start.js" &#125;' &gt; node_modules/find-me/package.json</span><br><span class="line">~/learn-node $ node</span><br><span class="line"><span class="meta">&gt;</span> require('find-me');</span><br><span class="line">I rule</span><br><span class="line">&#123;&#125;</span><br><span class="line"><span class="meta">&gt;</span></span><br></pre></td></tr></table></figure>
+<h4 id="require-resolve"><a href="#require-resolve" class="headerlink" title="require.resolve"></a>require.resolve</h4><p>如果你只是想找到模块，并不想执行它，你可以使用 require.resolve 函数。除了不加载文件，它的行为与主函数 require 完全相同。如果文件不存在它会抛出错误，如果找到了指定的文件，它会返回完整路径。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;</span> require.resolve('find-me');</span><br><span class="line">'/Users/samer/learn-node/node_modules/find-me/start.js'</span><br><span class="line"><span class="meta">&gt;</span> require.resolve('not-there');</span><br><span class="line">Error: Cannot find module 'not-there'</span><br><span class="line">    at Function.Module._resolveFilename (module.js:470:15)</span><br><span class="line">    at Function.resolve (internal/module.js:27:19)</span><br><span class="line">    at repl:1:9</span><br><span class="line">    at ContextifyScript.Script.runInThisContext (vm.js:23:33)</span><br><span class="line">    at REPLServer.defaultEval (repl.js:336:29)</span><br><span class="line">    at bound (domain.js:280:14)</span><br><span class="line">    at REPLServer.runBound [as eval] (domain.js:293:12)</span><br><span class="line">    at REPLServer.onLine (repl.js:533:10)</span><br><span class="line">    at emitOne (events.js:101:20)</span><br><span class="line">    at REPLServer.emit (events.js:191:7)</span><br><span class="line"><span class="meta">&gt;</span></span><br></pre></td></tr></table></figure>
+<p>这很有用，比如，检查一个可选的包是否安装并在它已安装的情况下使用它。</p>
+<h4 id="相对路径和绝对路径"><a href="#相对路径和绝对路径" class="headerlink" title="相对路径和绝对路径"></a>相对路径和绝对路径</h4><p>除了在 node_modules 目录中查找模块之外，我们也可以把模块放置于任何位置，然后通过相对路径(./ 和 ../)请求，也可以通过以 / 开始的绝对路径请求。</p>
+<p>比如，如果 find-me.js 是放在 lib 目录而不是 node_modules 目录下，可以这样请求：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">require</span>(<span class="string">'./lib/find-me'</span>);</span><br></pre></td></tr></table></figure>
+<h4 id="文件中的父子关系"><a href="#文件中的父子关系" class="headerlink" title="文件中的父子关系"></a>文件中的父子关系</h4><p>创建 lib/util.js 文件并添加一行 console.log 代码来识别它。console.log 会输出模块自身的 module 对象：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ mkdir lib</span><br><span class="line">~/learn-node $ echo "console.log('In util', module);" &gt; lib/util.js</span><br></pre></td></tr></table></figure>
+<p>在 index.js 文件中干同样的事情，稍后我们会通过 node 命令执行这个文件。让 index.js 文件请求 lib/util.js： </p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ echo "console.log('In index', module); require('./lib/util');" &gt; index.js</span><br></pre></td></tr></table></figure>
+<p>现在用 node 执行 index.js：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ node index.js</span><br><span class="line">In index Module &#123;</span><br><span class="line">  id: '.',</span><br><span class="line">  exports: &#123;&#125;,</span><br><span class="line">  parent: null,</span><br><span class="line">  filename: '/Users/samer/learn-node/index.js',</span><br><span class="line">  loaded: false,</span><br><span class="line">  children: [],</span><br><span class="line">  paths: [ ... ] &#125;</span><br><span class="line">In util Module &#123;</span><br><span class="line">  id: '/Users/samer/learn-node/lib/util.js',</span><br><span class="line">  exports: &#123;&#125;,</span><br><span class="line">  parent:</span><br><span class="line">   Module &#123;</span><br><span class="line">     id: '.',</span><br><span class="line">     exports: &#123;&#125;,</span><br><span class="line">     parent: null,</span><br><span class="line">     filename: '/Users/samer/learn-node/index.js',</span><br><span class="line">     loaded: false,</span><br><span class="line">     children: [ [Circular] ],</span><br><span class="line">     paths: [...] &#125;,</span><br><span class="line">  filename: '/Users/samer/learn-node/lib/util.js',</span><br><span class="line">  loaded: false,</span><br><span class="line">  children: [],</span><br><span class="line">  paths: [...] &#125;</span><br></pre></td></tr></table></figure>
+<p>注意到现在的列表中主模块 index (id: ‘.’) 是 lib/util 模块的父模块。不过 lib/util 模块并未作为 index 的子模块列出来。不过那里有个 [Circular] 值因为那里存在循环引用。如果 Node 打印 lib/util 模块对象，它就会陷入一个无限循环。因此这里用 [Circular] 代替了 lib/util 引用。</p>
+<p>现在更重要的问题是，如果 lib/util 模块又请求了 index 模块，会发生什么事情？这就是我们需要了解的循环依赖，Node 允许这种情况存在。</p>
+<p>在理解它之前，我们先来搞明白 module 对象中的另外一些概念。</p>
+<h4 id="exports、module-exports-以及同步加载模块"><a href="#exports、module-exports-以及同步加载模块" class="headerlink" title="exports、module.exports 以及同步加载模块"></a>exports、module.exports 以及同步加载模块</h4><p>exports 是每个模块都有的一个特殊对象。如果你观察仔细，会发现上面示例中每次打印的模块对象中都存在一个 exports 属性，到目前为止它只是个空对象。我们可以给这个特殊的 exports 对象任意添加属性。例如，我们为 index.js 和 lib/util.js 导出 id 属性：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Add the following line at the top of lib/util.js</span></span><br><span class="line">exports.id = <span class="string">'lib/util'</span>;</span><br><span class="line"><span class="comment">// Add the following line at the top of index.js</span></span><br><span class="line">exports.id = <span class="string">'index'</span>;</span><br></pre></td></tr></table></figure>
+<p>现在执行 index.js，我们会看到这些属性受到 module 对象管理：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ node index.js</span><br><span class="line">In index Module &#123;</span><br><span class="line">  id: '.',</span><br><span class="line">  exports: &#123; id: 'index' &#125;,</span><br><span class="line">  loaded: false,</span><br><span class="line">  ... &#125;</span><br><span class="line">In util Module &#123;</span><br><span class="line">  id: '/Users/samer/learn-node/lib/util.js',</span><br><span class="line">  exports: &#123; id: 'lib/util' &#125;,</span><br><span class="line">  parent:</span><br><span class="line">   Module &#123;</span><br><span class="line">     id: '.',</span><br><span class="line">     exports: &#123; id: 'index' &#125;,</span><br><span class="line">     loaded: false,</span><br><span class="line">     ... &#125;,</span><br><span class="line">  loaded: false,</span><br><span class="line">  ... &#125;</span><br></pre></td></tr></table></figure>
+<p>上面的输出中我去掉了一些属性，这样看起来比较简洁，不过请注意 exports 对象已经包含了我们在每个模块中定义的属性。你可以在 exports 对象中任意添加属性，也可以直接把 exports 整个替换成另一个对象。比如，可以把 exports 对象变成一个函数，我们会这样做：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Add the following line in index.js before the console.log </span></span><br><span class="line"><span class="built_in">module</span>.exports = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;&#125;;</span><br></pre></td></tr></table></figure>
+<p>现在运行 index.js，你会看到 exports 对象是一个函数：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ node index.js</span><br><span class="line">In index Module &#123;</span><br><span class="line">  id: '.',</span><br><span class="line">  exports: [Function],</span><br><span class="line">  loaded: false,</span><br><span class="line">  ... &#125;</span><br></pre></td></tr></table></figure>
+<p>注意，我没有通过 exports = function() {} 来将 exports 对象改变为函数。这样做是不行的，因为模块中的 exports 变量只是 module.exports 的引用，它用于管理导出属性。如果我们重新给 exports 变量赋值，就会丢失对 module.exports 的引用，实际会产生一个新的变量，而不是改变了 module.exports。</p>
+<p>每个模块中的 module.exports 对象就是通过 require 函数请求那个模块返回的。比如，把 index.js 中的 require(‘./lib/util’) 改为：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> UTIL = <span class="built_in">require</span>(<span class="string">'./lib/util'</span>);</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'UTIL:'</span>, UTIL);</span><br></pre></td></tr></table></figure>
+<p>这段代码会输出 lib/util 导出到 UTIL 常量中的属性。现在运行 index.js，输出如下：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UTIL: &#123; <span class="attr">id</span>: <span class="string">'lib/util'</span> &#125;</span><br></pre></td></tr></table></figure>
+<p>再来谈谈每个模块的 loaded 属性。到目前为止，每次我们打印一个模块对象的时候，都会看到这个对象的 loaded 属性值为 false。</p>
+<p>module 模块使用 loaded 属性来跟踪哪些模块是加载过的(true值)，以及哪些模块还在加载中(false 值)。比如我们可以通过调用 setImmediate 来打印 modules 对象，在下一事件循环中看看完成加载的 index.js 模块：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// In index.js</span></span><br><span class="line">setImmediate(<span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'The index.js module object is now loaded!'</span>, <span class="built_in">module</span>)</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>输出是这样的：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">The index.js <span class="built_in">module</span> object is now loaded! Module &#123;</span><br><span class="line">  id: <span class="string">'.'</span>,</span><br><span class="line">  exports: [<span class="built_in">Function</span>],</span><br><span class="line">  parent: <span class="literal">null</span>,</span><br><span class="line">  filename: <span class="string">'/Users/samer/learn-node/index.js'</span>,</span><br><span class="line">  loaded: <span class="literal">true</span>,</span><br><span class="line">  children:</span><br><span class="line">   [ Module &#123;</span><br><span class="line">       id: <span class="string">'/Users/samer/learn-node/lib/util.js'</span>,</span><br><span class="line">       exports: [<span class="built_in">Object</span>],</span><br><span class="line">       parent: [Circular],</span><br><span class="line">       filename: <span class="string">'/Users/samer/learn-node/lib/util.js'</span>,</span><br><span class="line">       loaded: <span class="literal">true</span>,</span><br><span class="line">       children: [],</span><br><span class="line">       paths: [<span class="built_in">Object</span>] &#125; ],</span><br><span class="line">  paths:</span><br><span class="line">   [ <span class="string">'/Users/samer/learn-node/node_modules'</span>,</span><br><span class="line">     <span class="string">'/Users/samer/node_modules'</span>,</span><br><span class="line">     <span class="string">'/Users/node_modules'</span>,</span><br><span class="line">     <span class="string">'/node_modules'</span> ] &#125;</span><br></pre></td></tr></table></figure>
+<p>注意理解它是如何推迟 console.log，使其在 lib/util.js 和 index.js 加载完成之后再产生输出的。</p>
+<p>Node 完成加载模块(并标记)之后 exports 对象就完成了。整个请求/加载某个模块的过程是<em>同步</em>的。因此我们可以在一个事件循环周期过后看到模块已经完成加载。</p>
+<p>这也就是说，我们不能异步改变 exports 对象。比如在某个模块中干这样的事情：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">fs.readFile(&apos;/etc/passwd&apos;, (err, data) =&gt; &#123;</span><br><span class="line">  if (err) throw err;</span><br><span class="line">  exports.data = data; // Will not work.</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<h4 id="循环依赖模块"><a href="#循环依赖模块" class="headerlink" title="循环依赖模块"></a>循环依赖模块</h4><p>现在来回答关于 Node 循环依赖模块这个重要的问题：如果模块1需要模块2，模块2也需要模块1，会发生什么事情？</p>
+<p>为了观察结果，我们在 lib/ 下创建两个文件，module1.js 和 module2.js，它们相互请求对象：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// lib/module1.js</span></span><br><span class="line">exports.a = <span class="number">1</span>;</span><br><span class="line"><span class="built_in">require</span>(<span class="string">'./module2'</span>);</span><br><span class="line">exports.b = <span class="number">2</span>;</span><br><span class="line">exports.c = <span class="number">3</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// lib/module2.js</span></span><br><span class="line"><span class="keyword">const</span> Module1 = <span class="built_in">require</span>(<span class="string">'./module1'</span>);</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'Module1 is partially loaded here'</span>, Module1);</span><br></pre></td></tr></table></figure>
+<p>运行 module1.js 可以看到：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ node lib/module1.js</span><br><span class="line">Module1 is partially loaded here &#123; a: 1 &#125;</span><br></pre></td></tr></table></figure>
+<p>我们在 module1 完全加载前请求了 module2，而 module2 在未完全加载时又请求了 module1，那么，在那一时刻，能得到的是在循环依赖之前导出的属性。只有 a 属性打印出来了，因为 b 和 c 是在请求了module2 并打印了 module1 之后才导出的。</p>
+<p>Node 让这件事变得简单。在加载某个模块的时候，它会创建 exports 对象。你可以在一个模块加载完成之前请求它，但只会得到部分导出的对象，它只包含到目前为止已经定义的项。</p>
+<h4 id="JSON-和-C-C-addon"><a href="#JSON-和-C-C-addon" class="headerlink" title="JSON 和 C/C++ addon"></a>JSON 和 C/C++ addon</h4><p>我们可以利用 require 函数在本地引入 JSON 文件和 C++ addon 文件。这么做不需要指定文件扩展名。</p>
+<p>如果没有指定文件扩展名，Node 首先要处理 .js 文件。如果找不到 .js 文件，就会尝试寻找 .json 文件，如果发现为 JSON 文本文件，便将其解析为 .json 文件。 之后，它将尝试找到一个二进制 .node 文件。为了消除歧义，当需要使用 .js 文件以外的其他格式后缀时，你需要制定一个文件扩展名。</p>
+<p>引入 JSON 文件在某些情况下是很有用的，例如，当你在该文件中需要管理的所有内容都是些静态配置值时，或者你需要定期从某个外部源读入值时。假设我们有以下 config.json 文件：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="string">"host"</span>: <span class="string">"localhost"</span>,</span><br><span class="line">  <span class="string">"port"</span>: <span class="number">8080</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们可以像这样直接请求：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> &#123; host, port &#125; = <span class="built_in">require</span>(<span class="string">'./config'</span>);</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">`Server will run at http://<span class="subst">$&#123;host&#125;</span>:<span class="subst">$&#123;port&#125;</span>`</span>);</span><br></pre></td></tr></table></figure></p>
+<p>运行上面的代码，输出如下：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Server will run at http:<span class="comment">//localhost:8080</span></span><br></pre></td></tr></table></figure></p>
+<p>如果 Node 不能找到 .js 或 .json 文件，它会寻找 .node 文件，它会被认为是编译好的插件模块。</p>
+<p>Node 文档中有一个<a href="https://nodejs.org/api/addons.html#addons_hello_world" target="_blank" rel="noopener">插件文件示例</a>，它是用 C++ 写的。它只是一个导出了 hello() 函数的简单模块，这个 hello 函数输出 “world”。</p>
+<p>你可以使用 node-gyp 包来编译和构建 .cc 文件，生成 .addon 文件。只需要配置一个 <a href="https://nodejs.org/api/addons.html#addons_building" target="_blank" rel="noopener">binding.gyp</a> 文件来告诉 node-gyp 做什么。</p>
+<p>得到 addon.node (或其它在 binding.gyp 中指定的名称)文件后，你可以像请求其它模块一样请求它：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> addon = <span class="built_in">require</span>(<span class="string">'./addon'</span>);</span><br><span class="line"><span class="built_in">console</span>.log(addon.hello());</span><br></pre></td></tr></table></figure>
+<p>我们可以在 require.extensions 中看到实际支持的三个扩展名：</p>
+<p><img src="https://static.oschina.net/uploads/space/2017/0321/141359_083Q_2903254.png" alt="img"></p>
+<p>看看每个扩展名对应的函数，你就清楚 Node 在怎么使用它们。它使用 module._compile 处理 .js 文件，使用 JSON.parse 处理 .json 文件，以及使用 process.dlopen 处理 .node 文件。</p>
+<h4 id="在-Node-编写的所有代码将封装到函数中"><a href="#在-Node-编写的所有代码将封装到函数中" class="headerlink" title="在 Node 编写的所有代码将封装到函数中"></a>在 Node 编写的所有代码将封装到函数中</h4><p>有人经常误解 Node 的封装模块的用途。让我们通过 exports/module.exports 之间的关系来了解它。</p>
+<p>我们可以使用 exports 对象导出属性，但是我们不能直接替换 exports 对象，因为它仅是对 module.exports 的引用</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">exports.id = <span class="number">42</span>; <span class="comment">// This is ok.</span></span><br><span class="line">exports = &#123; <span class="attr">id</span>: <span class="number">42</span> &#125;; <span class="comment">// This will not work.</span></span><br><span class="line"><span class="built_in">module</span>.exports = &#123; <span class="attr">id</span>: <span class="number">42</span> &#125;; <span class="comment">// This is ok.</span></span><br></pre></td></tr></table></figure>
+<p>对于每个模块而言这个 exports 对象看似是全局的，这和将其定义为 module 对象的引用，那到底什么是 exports 对象呢？</p>
+<p>在解释 Node 的封装过程之前，让我再问一个问题。</p>
+<p>在浏览器中，当我们在脚本中如下所示地声明一个变量：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> answer = <span class="number">42</span>;</span><br></pre></td></tr></table></figure>
+<p>在定义 answer 变量的脚本之后，该变量将在所有脚本中全局可见。</p>
+<p>这在 Node 中根本不是问题。我们在某个模块中定义的变量，其它模块是访问不到的。那么为什么 Node 中变量的作用域这么神奇？</p>
+<p>答案很简单。在编译模块之前，Node 会把模块代码封装在一个函数中，我们可以通过 module 模块的 wrapper 属性看出来。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">~ $ node</span><br><span class="line">&gt; <span class="built_in">require</span>(<span class="string">'module'</span>).wrapper</span><br><span class="line">[ <span class="string">'(function (exports, require, module, __filename, __dirname) &#123; '</span>,</span><br><span class="line">  <span class="string">'\n&#125;);'</span> ]</span><br><span class="line">&gt;</span><br></pre></td></tr></table></figure>
+<p>Node 不会直接执行你写在文件中的代码。它执行这个包装函数，你写的代码只是它的函数体。因此所有定义在模块中的顶层变量都受限于模块的作用域。</p>
+<p>这个包装函数有5个参数：exports, require, module, <strong>filename 和 </strong>dirname。它们看起来像是全局的，但实际它们在每个模块内部。</p>
+<p>所有这些参数都会在 Node 执行包装函数的时候获得值。exports 是 module.exports 的引用。require 和 module 都有特定的功能。<strong>filename/</strong>dirname 变量包含了模块文件名及其所有目录的绝对路径。</p>
+<p>如果你的脚本在第一行出现错误，你就会看到它是如何包装的：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ echo "euaohseu" &gt; bad.js</span><br><span class="line">~/learn-node $ node bad.js</span><br><span class="line">~/bad.js:1</span><br><span class="line">(function (exports, require, module, __filename, __dirname) &#123; </span><br><span class="line">euaohseu</span><br><span class="line">                                                              ^</span><br><span class="line">ReferenceError: euaohseu is not defined</span><br></pre></td></tr></table></figure>
+<p>注意上例中的第一行并非是真的错误引用，而是为了在错误报告中输出包装函数。</p>
+<p>此外，既然每个模块都封装在函数中，我们可以通过 arguments 关键字来使用函数的参数：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ echo "console.log(arguments)" &gt; index.js</span><br><span class="line">~/learn-node $ node index.js</span><br><span class="line">&#123; '0': &#123;&#125;,</span><br><span class="line">  '1':</span><br><span class="line">   &#123; [Function: require]</span><br><span class="line">     resolve: [Function: resolve],</span><br><span class="line">     main:</span><br><span class="line">      Module &#123;</span><br><span class="line">        id: '.',</span><br><span class="line">        exports: &#123;&#125;,</span><br><span class="line">        parent: null,</span><br><span class="line">        filename: '/Users/samer/index.js',</span><br><span class="line">        loaded: false,</span><br><span class="line">        children: [],</span><br><span class="line">        paths: [Object] &#125;,</span><br><span class="line">     extensions: &#123; ... &#125;,</span><br><span class="line">     cache: &#123; '/Users/samer/index.js': [Object] &#125; &#125;,</span><br><span class="line">  '2':</span><br><span class="line">   Module &#123;</span><br><span class="line">     id: '.',</span><br><span class="line">     exports: &#123;&#125;,</span><br><span class="line">     parent: null,</span><br><span class="line">     filename: '/Users/samer/index.js',</span><br><span class="line">     loaded: false,</span><br><span class="line">     children: [],</span><br><span class="line">     paths: [ ... ] &#125;,</span><br><span class="line">  '3': '/Users/samer/index.js',</span><br><span class="line">  '4': '/Users/samer' &#125;</span><br></pre></td></tr></table></figure>
+<p>第一个参数是 exports 对象，它一开始是空的。然后是 require/module 对象，它们与在执行的 index.js 文件的实例关联，并非全局变量。最后 2 个参数是文件的路径及其所在目录的路径。</p>
+<p>包装函数的返回值是 module.exports。在包装函数的内部我们可以通过改变 module.exports 属性来改变 exports 对象，但不能直接对 exports 赋值，因为它只是一个引用。</p>
+<p>这个事情大致像这样：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> (<span class="params">require, module, __filename, __dirname</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">let</span> exports = <span class="built_in">module</span>.exports;  <span class="comment">// Your Code...</span></span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">module</span>.exports;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果我们直接改变 exports 对象，它就不再是 module.exports 的引用。JavaScript 在任何地方都是这样引用对象，并非只是在这个环境中。</p>
+<h4 id="require-对象"><a href="#require-对象" class="headerlink" title="require 对象"></a>require 对象</h4><p>require 没什么特别，它主要是作为一个函数来使用，接受模块名称或路径作为参数，返回 module.exports 对象。如果我们想改变 require 对象的逻辑，也很容易。</p>
+<p>比如，为了进行测试，我们想让每个 require 调用都被模拟为返回一个假对象来代替模块导出的对象。这个简单的调整就像这样：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">require</span> = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> &#123; <span class="attr">mocked</span>: <span class="literal">true</span> &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在上面重新对 require 赋值之后，调用 require(‘something’) 就会返回模拟的对象。</p>
+<p>require 对象也有自己的属性。我们已经看到了 resolve 属性，它也是一个函数，是 require 处理过程中解析路径的步骤。上面我们还看到了 require.extensions。</p>
+<p>还有一个 require.main 可用于检查代码是通过请求来运行的还是直接运行的。</p>
+<p>再来看个例子，定义在 print-in-frame.js 中的 printInFrame 函数：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// In print-in-frame.js</span></span><br><span class="line"><span class="keyword">const</span> printInFrame = <span class="function">(<span class="params">size, header</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'*'</span>.repeat(size));</span><br><span class="line">  <span class="built_in">console</span>.log(header);</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'*'</span>.repeat(size));</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>这个函数需要一个数值型的参数 size 和一个字符串型的参数 header，它会在打印一个由指定数量的星号生成的框架，并在其中打印 header。</p>
+<p>我们希望通过两种方式来使用这个文件：</p>
+<ol>
+<li>从命令行直接运行：</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ node print-in-frame 8 Hello</span><br></pre></td></tr></table></figure>
+<p>在命令行传入 8 和 Hello 作为参数，它会打印出由 8 个星号组成的框架中的 “Hello”。</p>
+<ol start="2">
+<li>通过 require 来使用。假设所需要的模块会导出 printInFrame 函数，然后就可以这样做：</li>
+</ol>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> print = <span class="built_in">require</span>(<span class="string">'./print-in-frame'</span>);</span><br><span class="line">print(<span class="number">5</span>, <span class="string">'Hey'</span>);</span><br></pre></td></tr></table></figure>
+<p>它在由 5 个星号组成的框架中打印 “Hey”。</p>
+<p>这是两种不同的使用方式。我们得想办法检测文件是独立运行的还是由其它脚本请求的。</p>
+<p>这里用一个简单的 if 语句来解决：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="built_in">require</span>.main === <span class="built_in">module</span>) &#123;</span><br><span class="line">  <span class="comment">// The file is being executed directly (not with require)</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们可以使用这个条件，以不同的方式调用 printInFrame 来满足需求：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// In print-in-frame.js</span></span><br><span class="line"><span class="keyword">const</span> printInFrame = <span class="function">(<span class="params">size, header</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'*'</span>.repeat(size));</span><br><span class="line">  <span class="built_in">console</span>.log(header);</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'*'</span>.repeat(size));</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (<span class="built_in">require</span>.main === <span class="built_in">module</span>) &#123;</span><br><span class="line">  printInFrame(process.argv[<span class="number">2</span>], process.argv[<span class="number">3</span>]);</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">  <span class="built_in">module</span>.exports = printInFrame;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果文件不是被请求的，我们使用 process.argv 来调用 printInFrame。否则，我们将 module.exports 修改为 printInFrame 引用。</p>
+<h4 id="所有模块都会被缓存"><a href="#所有模块都会被缓存" class="headerlink" title="所有模块都会被缓存"></a>所有模块都会被缓存</h4><p>理解缓存很重要。我们用一个简单的示例来说明缓存。</p>
+<p>假设有一个 ascii-art.js，可以打印炫酷的标头：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/module01_180712.png" alt=""></p>
+<p>我们想每次<em>请**求</em>这个文件的时候都能看到这些标头，那么如果我们请求这个文件两次，期望会看到两次标头输出。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">require</span>(<span class="string">'./ascii-art'</span>) <span class="comment">// 会显示标头。</span></span><br><span class="line"><span class="built_in">require</span>(<span class="string">'./ascii-art'</span>) <span class="comment">// 不会显示标头。</span></span><br></pre></td></tr></table></figure>
+<p>因为模块缓存，第二次请求不会显示标头。Node 会在第一次调用的时候缓存文件，所以第二次调用的时候就不会重新加载了。</p>
+<p>我们可以在第一次请求之后通过打印 require.cache 来看缓存的内容。缓存注册表只是一个简单的对象，它的每个属性对应着每次请求的模块。那些属性值是每个模块中的 module 对象。只需要从 require.cache 里删除某个属性就可以使对应的缓存失效。如果这样做，Node 会再次加载模块并再加将它加入缓存。</p>
+<p>不过在现在这个情况下，这样做并不是一个高效的解决办法。简单的办法是在 ascii-art.js 中把输出语句包装为一个函数，然后导出它。用这个办法，我们请求 ascii-art.js 文件的时候会得到一个函数，然后每次执行这个函数都可以看到输出：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">require</span>(<span class="string">'./ascii-art'</span>)() <span class="comment">// 会显示标头。</span></span><br><span class="line"><span class="built_in">require</span>(<span class="string">'./ascii-art'</span>)() <span class="comment">// 也会显示标头。</span></span><br></pre></td></tr></table></figure>
+<p>以上，就是我这次要说的内容！</p>
+<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="https://www.oschina.net/translate/requiring-modules-in-node-js-everything-you-need-to-know" target="_blank" rel="noopener">https://www.oschina.net/translate/requiring-modules-in-node-js-everything-you-need-to-know</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2017-06-05T06:45:23.000Z"><a href="/2017/06/05/Node.js_测试/Node.js单元测试、集成测试、基准测试以及代码覆盖率测试/">2017-06-05</a></time>
       
       
@@ -870,140 +1059,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2017-02-12T06:45:23.000Z"><a href="/2017/02/12/安全/Node.js中crypto模块/">2017-02-12</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/02/12/安全/Node.js中crypto模块/">Node.js中的crypto模块</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>原文：<a href="https://www.cnblogs.com/chyingp/p/nodejs-learning-crypto-theory.html" target="_blank" rel="noopener">https://www.cnblogs.com/chyingp/p/nodejs-learning-crypto-theory.html</a></p>
-<h2 id="一、-概述"><a href="#一、-概述" class="headerlink" title="一、 概述"></a>一、 概述</h2><p>互联网时代，网络上的数据量每天都在以惊人的速度增长。同时，各类网络安全问题层出不穷。在信息安全重要性日益凸显的今天，作为一名开发者，需要加强对安全的认识，并通过技术手段增强服务的安全性。</p>
-<p><code>crypto</code>模块是nodejs的核心模块之一，它提供了安全相关的功能，如摘要运算、加密、电子签名等。很多初学者对着长长的API列表，不知如何上手，因此它背后涉及了大量安全领域的知识。</p>
-<p>本文重点讲解API背后的理论知识，主要包括如下内容：</p>
-<ol>
-<li>摘要（hash）、基于摘要的消息验证码（HMAC）</li>
-<li>对称加密、非对称加密、电子签名</li>
-<li>分组加密模式</li>
-</ol>
-<h2 id="二、摘要（hash）"><a href="#二、摘要（hash）" class="headerlink" title="二、摘要（hash）"></a>二、摘要（hash）</h2><p>摘要（digest）：将长度不固定的消息作为输入，通过运行hash函数，生成固定长度的输出，这段输出就叫做摘要。通常用来验证消息完整、未被篡改。</p>
-<p>摘要运算是不可逆的。也就是说，输入固定的情况下，产生固定的输出。但知道输出的情况下，无法反推出输入。</p>
-<p>伪代码如下。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">digest = Hash(message)</span><br></pre></td></tr></table></figure></p>
-<p>常见的摘要算法 与 对应的输出位数如下：</p>
-<ul>
-<li>MD5：128位</li>
-<li>SHA-1：160位</li>
-<li>SHA256 ：256位</li>
-<li>SHA512：512位</li>
-</ul>
-<p>nodejs中的例子：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> crypto = <span class="built_in">require</span>(<span class="string">'crypto'</span>);</span><br><span class="line"><span class="keyword">var</span> md5 = crypto.createHash(<span class="string">'md5'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> message = <span class="string">'hello'</span>;</span><br><span class="line"><span class="keyword">var</span> digest = md5.update(message, <span class="string">'utf8'</span>).digest(<span class="string">'hex'</span>); </span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(digest);</span><br><span class="line"><span class="comment">// 输出如下：注意这里是16进制</span></span><br><span class="line"><span class="comment">// 5d41402abc4b2a76b9719d911017c592</span></span><br></pre></td></tr></table></figure>
-<p>备注：在各类文章或文献中，摘要、hash、散列 这几个词经常会混用，导致不少初学者看了一脸懵逼，其实大部分时候指的都是一回事，记住上面对摘要的定义就好了。</p>
-<h2 id="三、MAC、HMAC"><a href="#三、MAC、HMAC" class="headerlink" title="三、MAC、HMAC"></a>三、MAC、HMAC</h2><p>MAC（Message Authentication Code）：消息认证码，用以保证数据的完整性。运算结果取决于消息本身、秘钥。</p>
-<p>MAC可以有多种不同的实现方式，比如HMAC。</p>
-<p>HMAC（Hash-based Message Authentication Code）：可以粗略地理解为带秘钥的hash函数。</p>
-<p>nodejs例子如下：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> crypto = <span class="built_in">require</span>(<span class="string">'crypto'</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 参数一：摘要函数</span></span><br><span class="line"><span class="comment">// 参数二：秘钥</span></span><br><span class="line"><span class="keyword">let</span> hmac = crypto.createHmac(<span class="string">'md5'</span>, <span class="string">'123456'</span>);</span><br><span class="line"><span class="keyword">let</span> ret = hmac.update(<span class="string">'hello'</span>).digest(<span class="string">'hex'</span>);</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(ret);</span><br><span class="line"><span class="comment">// 9c699d7af73a49247a239cb0dd2f8139</span></span><br></pre></td></tr></table></figure>
-<h2 id="四、对称加密、非对称加密"><a href="#四、对称加密、非对称加密" class="headerlink" title="四、对称加密、非对称加密"></a>四、对称加密、非对称加密</h2><p><strong>加密/解密</strong>：给定明文，通过一定的算法，产生加密后的密文，这个过程叫加密。反过来就是解密。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">encryptedText = encrypt( plainText )</span><br><span class="line">plainText = decrypt( encryptedText )</span><br></pre></td></tr></table></figure></p>
-<p><strong>秘钥</strong>：为了进一步增强加/解密算法的安全性，在加/解密的过程中引入了秘钥。秘钥可以视为加/解密算法的参数，在已知密文的情况下，如果不知道解密所用的秘钥，则无法将密文解开。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">encryptedText = encrypt(plainText, encryptKey)</span><br><span class="line">plainText = decrypt(encryptedText, decryptKey)</span><br></pre></td></tr></table></figure></p>
-<p>根据加密、解密所用的秘钥是否相同，可以将加密算法分为<strong>对称加密</strong>、<strong>非对称加密</strong>。</p>
-<h3 id="1、对称加密"><a href="#1、对称加密" class="headerlink" title="1、对称加密"></a>1、对称加密</h3><p>加密、解密所用的秘钥是相同的，即<code>encryptKey === decryptKey</code>。</p>
-<p>常见的对称加密算法：DES、3DES、AES、Blowfish、RC5、IDEA。</p>
-<p>加、解密伪代码：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">encryptedText = encrypt(plainText, key); <span class="comment">// 加密</span></span><br><span class="line">plainText = decrypt(encryptedText, key); <span class="comment">// 解密</span></span><br></pre></td></tr></table></figure></p>
-<h3 id="2、非对称加密"><a href="#2、非对称加密" class="headerlink" title="2、非对称加密"></a>2、非对称加密</h3><p>又称公开秘钥加密。加密、解密所用的秘钥是不同的，即<code>encryptKey !== decryptKey</code>。</p>
-<p>加密秘钥公开，称为公钥。解密秘钥保密，称为秘钥。</p>
-<p>常见的非对称加密算法：RSA、DSA、ElGamal。</p>
-<p>加、解密伪代码：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">encryptedText = encrypt(plainText, publicKey);  <span class="comment">// 加密</span></span><br><span class="line">plainText = decrypt(encryptedText, priviteKey); <span class="comment">// 解密</span></span><br></pre></td></tr></table></figure></p>
-<h3 id="3、对比与应用"><a href="#3、对比与应用" class="headerlink" title="3、对比与应用"></a>3、对比与应用</h3><p>除了秘钥的差异，还有运算速度上的差异。通常来说：</p>
-<ol>
-<li>对称加密速度要快于非对称加密。</li>
-<li>非对称加密通常用于加密短文本，对称加密通常用于加密长文本。</li>
-</ol>
-<p>两者可以结合起来使用，比如HTTPS协议，可以在握手阶段，通过RSA来交换生成对称秘钥。在之后的通讯阶段，可以使用对称加密算法对数据进行加密，秘钥则是握手阶段生成的。 </p>
-<p>备注：对称秘钥交换不一定通过RSA，还可以通过类似DH来完成，这里不展开。</p>
-<h2 id="五、数字签名"><a href="#五、数字签名" class="headerlink" title="五、数字签名"></a>五、数字签名</h2><p>从<strong>签名</strong>大致可以猜到<strong>数字签名</strong>的用途。主要作用如下：</p>
-<ol>
-<li>确认信息来源于特定的主体。</li>
-<li>确认信息完整、未被篡改。</li>
-</ol>
-<p>为了达到上述目的，需要有两个过程：</p>
-<ol>
-<li>发送方：生成签名。</li>
-<li>接收方：验证签名。</li>
-</ol>
-<h3 id="1、发送方生成签名"><a href="#1、发送方生成签名" class="headerlink" title="1、发送方生成签名"></a>1、发送方生成签名</h3><ol>
-<li>计算原始信息的摘要。</li>
-<li>通过私钥对摘要进行签名，得到电子签名。</li>
-<li>将原始信息、电子签名，发送给接收方。</li>
-</ol>
-<p>附：签名伪代码<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">digest = hash(message); <span class="comment">// 计算摘要</span></span><br><span class="line">digitalSignature = sign(digest,  priviteKey); <span class="comment">// 计算数字签名</span></span><br></pre></td></tr></table></figure></p>
-<h3 id="2、接收方验证签名"><a href="#2、接收方验证签名" class="headerlink" title="2、接收方验证签名"></a>2、接收方验证签名</h3><ol>
-<li>通过公钥解开电子签名，得到摘要D1。（如果解不开，信息来源主体校验失败）</li>
-<li>计算原始信息的摘要D2。</li>
-<li>对比D1、D2，如果D1等于D2，说明原始信息完整、未被篡改。</li>
-</ol>
-<p>附：签名验证伪代码<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">digest1 = verify(digitalSignature, publicKey); <span class="comment">// 获取摘要</span></span><br><span class="line">digest2 = hash(message); <span class="comment">// 计算原始信息的摘要</span></span><br><span class="line">digest1 === digest2      <span class="comment">// 验证是否相等</span></span><br></pre></td></tr></table></figure></p>
-<h3 id="3、对比非对称加密"><a href="#3、对比非对称加密" class="headerlink" title="3、对比非对称加密"></a>3、对比非对称加密</h3><p>由于RSA算法的特殊性，加密/解密、签名/验证 看上去特别像，很多同学都很容易混淆。先记住下面结论，后面有时间再详细介绍。</p>
-<ol>
-<li>加密/解密：公钥加密，私钥解密。</li>
-<li>签名/验证：私钥签名，公钥验证。</li>
-</ol>
-<h2 id="六、分组加密模式、填充、初始化向量"><a href="#六、分组加密模式、填充、初始化向量" class="headerlink" title="六、分组加密模式、填充、初始化向量"></a>六、分组加密模式、填充、初始化向量</h2><p>常见的对称加密算法，如AES、DES都采用了分组加密模式。这其中，有三个关键的概念需要掌握：模式、填充、初始化向量。</p>
-<p>搞清楚这三点，才会知道crypto模块对称加密API的参数代表什么含义，出了错知道如何去排查。</p>
-<h3 id="1、分组加密模式"><a href="#1、分组加密模式" class="headerlink" title="1、分组加密模式"></a>1、分组加密模式</h3><p>所谓的分组加密，就是将（较长的）明文拆分成固定长度的块，然后对拆分的块按照特定的模式进行加密。</p>
-<p>常见的分组加密模式有：ECB（不安全）、CBC（最常用）、CFB、OFB、CTR等。</p>
-<p>以最简单的ECB为例，先将消息拆分成等分的模块，然后利用秘钥进行加密。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-ECB_encryption.svg.png" alt=""><br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-ECB_decryption.svg.png" alt=""><br>更多关于分组加密模式的介绍可以参考 <a href="https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Common_modes" target="_blank" rel="noopener">wiki</a>。</p>
-<p>后面假设每个块的长度为128位</p>
-<h3 id="2、初始化向量：IV"><a href="#2、初始化向量：IV" class="headerlink" title="2、初始化向量：IV"></a>2、初始化向量：IV</h3><p>为了增强算法的安全性，部分分组加密模式（CFB、OFB、CTR）中引入了初始化向量（IV），使得加密的结果随机化。也就是说，对于同一段明文，IV不同，加密的结果不同。</p>
-<p>以CBC为例，每一个数据块，都与前一个加密块进行亦或运算后，再进行加密。对于第一个数据块，则是与IV进行亦或。</p>
-<p>IV的大小跟数据块的大小有关（128位），跟秘钥的长度无关。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-CBC_encryption.svg.png" alt=""><br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-CBC_decryption.svg.png" alt=""></p>
-<h3 id="3、填充：padding"><a href="#3、填充：padding" class="headerlink" title="3、填充：padding"></a>3、填充：padding</h3><p>分组加密模式需要对长度固定的块进行加密。分组拆分完后，最后一个数据块长度可能小于128位，此时需要进行填充以满足长度要求。</p>
-<p>填充方式有多重。常见的填充方式有<a href="https://tools.ietf.org/html/rfc5652#section-6.3" target="_blank" rel="noopener">PKCS7</a>。</p>
-<p>假设分组长度为k字节，最后一个分组长度为k-last，可以看到：</p>
-<ol>
-<li>不管明文长度是多少，加密之前都会会对明文进行填充 （不然解密函数无法区分最后一个分组是否被填充了，因为存在最后一个分组长度刚好等于k的情况）</li>
-<li>如果最后一个分组长度等于k-last === k，那么填充内容为一个完整的分组 k k k … k （k个字节）</li>
-<li>如果最后一个分组长度小于k-last &lt; k，那么填充内容为 k-last mod k </li>
-</ol>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">         01 -- if lth mod k = k-1</span><br><span class="line">      02 02 -- if lth mod k = k-2</span><br><span class="line">          .</span><br><span class="line">          .</span><br><span class="line">          .</span><br><span class="line">k k ... k k -- if lth mod k = 0</span><br></pre></td></tr></table></figure>
-<h3 id="概括来说"><a href="#概括来说" class="headerlink" title="概括来说"></a>概括来说</h3><ol>
-<li>分组加密：先将明文切分成固定长度的块（128位），再进行加密。</li>
-<li>分组加密的几种模式：ECB（不安全）、CBC（最常用）、CFB、OFB、CTR。</li>
-<li>填充(padding)：部分加密模式，当最后一个块的长度小于128位时，需要通过特定的方式进行填充。（ECB、CBC需要填充，CFB、OFB、CTR不需要填充）</li>
-<li>初始化向量（IV）：部分加密模式（CFB、OFB、CTR）会将 明文块 与 前一个密文块进行亦或操作。对于第一个明文块，不存在前一个密文块，因此需要提供初始化向量IV（把IV当做第一个明文块 之前的 密文块）。此外，IV也可以让加密结果随机化。</li>
-</ol>
-<h2 id="七、相关链接"><a href="#七、相关链接" class="headerlink" title="七、相关链接"></a>七、相关链接</h2><p><a href="https://github.com/chyingp/nodejs-learning-guide" target="_blank" rel="noopener">Nodejs学习笔记</a></p>
-<p><a href="https://en.wikipedia.org/wiki/Cryptographic_hash_function" target="_blank" rel="noopener">Cryptographic hash function</a></p>
-<p><a href="https://en.wikipedia.org/wiki/Hash-based_message_authentication_code" target="_blank" rel="noopener">Hash-based message authentication code</a></p>
-<p><a href="https://crypto.stackexchange.com/questions/2936/hmac-vs-mac-functions" target="_blank" rel="noopener">HMAC vs MAC functions</a></p>
-<p><a href="https://crypto.stackexchange.com/questions/6523/what-is-the-difference-between-mac-and-hmac" target="_blank" rel="noopener">What is the difference between MAC and HMAC?</a></p>
-<p><a href="https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation" target="_blank" rel="noopener">Block cipher mode of operation</a></p>
-<p><a href="https://www.zhihu.com/question/25912483/answer/31653639" target="_blank" rel="noopener">RSA的公钥和私钥到底哪个才是用来加密和哪个用来解密？ - 刘巍然-学酥的回答 - 知乎</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -1033,8 +1088,6 @@
   
     <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
   
-    <li><a href="/tags/HTTP/">HTTP</a><small>1</small></li>
-  
     <li><a href="/tags/Javascript/">Javascript</a><small>2</small></li>
   
     <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
@@ -1043,13 +1096,15 @@
   
     <li><a href="/tags/Node-js/">Node.js</a><small>1</small></li>
   
-    <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>2</small></li>
+    <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>3</small></li>
   
     <li><a href="/tags/Node-js-事件/">Node.js_事件</a><small>4</small></li>
   
     <li><a href="/tags/Node-js-入门/">Node.js_入门</a><small>9</small></li>
   
     <li><a href="/tags/Node-js-异步编程/">Node.js_异步编程</a><small>3</small></li>
+  
+    <li><a href="/tags/Node-js-模块/">Node.js_模块</a><small>1</small></li>
   
     <li><a href="/tags/Node-js-测试/">Node.js_测试</a><small>5</small></li>
   
@@ -1068,6 +1123,8 @@
     <li><a href="/tags/存储/">存储</a><small>3</small></li>
   
     <li><a href="/tags/安全/">安全</a><small>8</small></li>
+  
+    <li><a href="/tags/计算机网络/">计算机网络</a><small>1</small></li>
   
   </ul>
 </div>
