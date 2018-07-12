@@ -53,88 +53,47 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2017-02-12T06:45:23.000Z"><a href="/2017/02/12/安全/数字证书的基础知识/">2017-02-12</a></time>
+        <time datetime="2017-02-16T06:45:23.000Z"><a href="/2017/02/16/安全/CSRF攻击及预防/">2017-02-16</a></time>
       
       
   
-    <h1 class="title"><a href="/2017/02/12/安全/数字证书的基础知识/">数字证书的基础知识</a></h1>
+    <h1 class="title"><a href="/2017/02/16/安全/CSRF攻击及预防/">CSRF攻击及预防</a></h1>
   
 
     </header>
     <div class="entry">
       
-        <p>在讲数字证书之前必须要讲<strong>非对称加密算法</strong>和<strong>摘要算法</strong>，因为数字证书的基础就是各种加解密算法（非对称加密、摘要算法），而其中的核心就是非对称加密算法了。目前而言加密方法可以分为两大类。一类是<strong>单钥加密</strong>（private key cryptography）也可以称为对称加密，还有一类叫做<strong>双钥加密</strong>（public key cryptography）也可称为非对称加密。前者的加密和解密过程都用同一套密码，后者的加密和解密过程用的是不同的密码。下面来看看对称加密、非对称加密以及摘要算法，他们是怎样应用在数字证书中的。</p>
-<h3 id="对称加密"><a href="#对称加密" class="headerlink" title="对称加密"></a>对称加密</h3><p>对称加密(也叫私钥加密)指加密和解密使用相同密钥的加密算法。有时又叫传统密码算法，就是加密密钥能够从解密密钥中推算出来，同时解密密钥也可以从加密密钥中推算出来。而在大多数的对称算法中，加密密钥和解密密钥是相同的，所以也称这种加密算法为秘密密钥算法或单密钥算法。</p>
-<p>在应用该算法时，它要求发送方和接收方在安全通信之前，商定一个密钥。对称算法的安全性依赖于密钥，泄漏密钥就意味着任何人都可以对他们发送或接收的消息解密，所以密钥的保密性对通信性至关重要。对称加密算法的特点是算法公开、计算量小、加密速度快、加密效率高。对称加密有很多种算法，由于它效率很高，所以被广泛使用在很多加密协议的核心当中。不足之处是，交易双方都使用同样钥匙，安全性得不到保证。</p>
-<h4 id="常见的对称加密算法"><a href="#常见的对称加密算法" class="headerlink" title="常见的对称加密算法"></a>常见的对称加密算法</h4><ul>
-<li><strong>DES</strong>：数据加密标准（DES，Data Encryption Standard）是一种使用密钥加密的块密码，它基于使用<strong>56位密钥</strong>的对称算法，这个算法因为包含一些机密设计元素，相对短的密钥长度以及被怀疑内含美国国家安全局（NSA）的后门而在开始时是有争议的，DES现在已经不被视为一种安全的加密算法，主要因为它使用的56位密钥过短，导致容易被破解。为了提供实用所需的安全性，可以使用DES的派生算法3DES来进行加密，虽然3DES也存在理论上的攻击方法。</li>
-<li><strong>AES</strong>：高级加密标准（英语：Advanced Encryption Standard，缩写：AES），这个标准用来替代原先的DES，已经被多方分析且广为全世界所使用，2006年，高级加密标准已然成为对称密钥加密中最流行的算法之一。AES的区块长度固定为128比特，<strong>密钥长度则可以是128，192或256比特</strong>。</li>
-<li><strong>RC4</strong>：RC4加密算法是大名鼎鼎的RSA三人组中的头号人物Ronald Rivest在1987年设计的密钥长度可变的流加密算法簇。该算法的速度可以达到DES加密的10倍左右，且具有很高级别的非线性。RC4起初是用于保护商业机密的。但是在1994年9月，它的算法被发布在互联网上，也就不再有什么商业机密了。</li>
-<li><strong>IDEA</strong>：是旅居瑞士中国青年学者来学嘉和著名密码专家J.Massey于1990年提出的。它在1990年正式公布并在以后得到增强。这种算法是在DES算法的基础上发展出来的，类似于三重DES，和DES一样IDEA也是属于对称密钥算法。发展IDEA也是因为感到DES具有密钥太短等缺点，已经过时。<strong>IDEA的密钥为128位</strong>，这么长的密钥在今后若干年内应该是安全的。</li>
-</ul>
-<h3 id="非对称加密"><a href="#非对称加密" class="headerlink" title="非对称加密"></a>非对称加密</h3><p>与对称加密算法不同，非对称加密算法需要两个密钥：公开密钥（publickey）和私有密钥（privatekey）；并且加密密钥和解密密钥是成对出现的。非对称加密算法在加密和解密过程使用了不同的密钥，非对称加密也称为公钥加密，在密钥对中，其中一个密钥是对外公开的，所有人都可以获取到，称为公钥，其中一个密钥是不公开的称为私钥。</p>
-<h4 id="非对称加密的特性"><a href="#非对称加密的特性" class="headerlink" title="非对称加密的特性"></a>非对称加密的特性</h4><ul>
-<li>对于一个公钥，有且只有一个对应的私钥。</li>
-<li>公钥是公开的，并且不能通过公钥反推出私钥。</li>
-<li>通过私钥加密的密文只能通过公钥能解密，通过公钥加密的密文也只能通过私钥能解密。</li>
-</ul>
-<p>通过公钥是极难推算出私钥的，只能通过穷举，所以只要密钥足够长，要想从公钥推算出私钥几乎不可能的。</p>
-<h4 id="非对称加密的主要用途"><a href="#非对称加密的主要用途" class="headerlink" title="非对称加密的主要用途"></a>非对称加密的主要用途</h4><ul>
-<li><strong>对信息保密，防止中间人攻击</strong>：将明文使用公钥加密，传输给接收者，这样确保信息只能被有私钥的拥有者解密，其他人无法获得明文信息，因为没有私钥无法进行解密。该方法一般用于交换<strong>对称密钥</strong>。</li>
-<li><strong>身份验证和防止信息篡改</strong>：私钥拥有者使用私钥加密一段授权明文，并将授权明文和加密后的密文，以及公钥一并发送出来，接收方只需要通过公钥将密文解密后与授权明文对比是否一致，就可以判断明文在中途是否被篡改过。此方法用于<strong>数字签名</strong>。</li>
-</ul>
-<h4 id="常见的非对称加密算法"><a href="#常见的非对称加密算法" class="headerlink" title="常见的非对称加密算法"></a>常见的非对称加密算法</h4><ul>
-<li><strong>RSA</strong>：1977年，三位数学家Rivest、Shamir 和 Adleman 设计了一种算法，可以实现非对称加密。这种算法用他们三个人的名字命名，叫做RSA算法。从那时直到现在，RSA算法一直是最广为使用的”非对称加密算法”。毫不夸张地说，只要有计算机网络的地方，就有RSA算法。这种算法非常可靠，密钥越长，它就越难破解。根据已经披露的文献，目前被破解的最长RSA密钥是768个二进制位。也就是说，长度超过768位的密钥，还无法破解（至少没人公开宣布）。因此可以认为，<strong>1024位的RSA密钥基本安全，2048位的密钥极其安全</strong>。适用于数字签名和密钥交换。 该算法是目前应用最广泛的公钥加密算法，特别适用于通过 Internet 传送的数据。</li>
-<li><strong>DSA</strong>：数字签名算法 (Digital Signature Algorithm, DSA) 由美国国家安全署 (United States National Security Agency, NSA) 发明，已作为数字签名的标准。在DSA数字签名和认证中，发送者使用自己的私钥对文件或消息进行签名，接受者收到消息后使用发送者的公钥来验证签名的真实性。DSA只是一种算法，和RSA不同之处在于它不能用作加密和解密，也不能进行密钥交换，只用于签名，它比RSA要快很多。DSA 算法的安全性取决于自计算离散算法的困难。这种算法，不适用于数据加密，仅适用于数字签名。</li>
-<li><strong>Diffie-Hellman</strong>：一种确保共享KEY安全穿越不安全网络的方法。Whitefield与Martin Hellman在1976年提出了一个奇妙的密钥交换协议，称为Diffie-Hellman密钥交换协议/算法(Diffie-Hellman Key Exchange/Agreement Algorithm)。这个机制的巧妙在于需要安全通信的双方可以用这个方法确定对称密钥。然后可以用这个密钥进行加密和解密。但是注意，这个密钥交换协议/算法只能用于密钥的交换，而不能进行消息的加密和解密。双方确定要用的密钥后，要使用其他对称密钥操作加密算法实际加密和解密消息。该算法仅适用于密钥交换。</li>
-<li><strong>ECC</strong>：椭圆加密算法（ECC）是一种公钥加密体制，最初由Koblitz和Miller两人于1985年提出，与经典的RSA，DSA等公钥密码体制相比，椭圆密码体制有以下优点：160位的椭圆密钥与1024位的RSA密钥安全性相同；在私钥的加密解密速度上，ECC算法比RSA、DSA速度更快；存储空间占用小；带宽要求低；ECC算法的数学理论非常深奥和复杂，在工程应用中比较难于实现，但它的单位安全强度相对较高。</li>
-</ul>
-<p>非对称加密算法可能是世界上最重要的算法，它是当今电子商务等领域的基石。非对称加密算法如此强大可靠，却有一个弊端，就是加解密比较耗时。因此，在实际使用中，往往与对称加密和摘要算法结合使用。列如在实体之间交换对称密钥时，或者在签署一封邮件的散列时（数字签名）。</p>
-<p>散列是通过应用一种单向数学函数获得的一个定长结果，对于数据而言，叫做散列算法。</p>
-<h3 id="摘要算法"><a href="#摘要算法" class="headerlink" title="摘要算法"></a>摘要算法</h3><p>摘要算法是一个神奇的算法，也称为散列或者散列值。是一种与基于密钥（对称密钥或公钥）的加密不同的数据转换类型。散列就是通过把一个叫做散列算法的单向数学函数应用于数据，将任意长度的一块数据转换为一个定长的、不可逆转的数字，其长度通常在128～256位之间。所产生的散列值的长度应足够长，因此使找到两块具有相同散列值的数据的机会很少。</p>
-<h4 id="摘要算法具有以下特性："><a href="#摘要算法具有以下特性：" class="headerlink" title="摘要算法具有以下特性："></a>摘要算法具有以下特性：</h4><ul>
-<li>只要源文本不同，计算得到的结果，必然不同（或者说机会很少）。</li>
-<li>无法从结果反推出源数据（那是当然的，不然就能量不守恒了）。</li>
-</ul>
-<h4 id="常见的摘要算法："><a href="#常见的摘要算法：" class="headerlink" title="常见的摘要算法："></a>常见的摘要算法：</h4><ul>
-<li><strong>MD5</strong>：是RSA数据安全公司开发的一种单向散列算法，MD5被广泛使用，可以用来把不同长度的数据块进行暗码运算成一个固定位位的数值（通常是128位）。</li>
-<li><strong>SHA-1</strong>：与 DSA 公钥算法相似，安全散列算法1（SHA-1）也是由 NSA 设计的，并由 NIST 将其收录到 FIPS 中，作为散列数据的标准。它可产生一个 160 位的散列值。SHA-1 是流行的用于创建数字签名的单向散列算法。</li>
-<li><strong>MAC（Message Authentication Code）</strong>：消息认证代码，是一种使用密钥的单向函数，可以用它们在系统上或用户之间认证文件或消息，常见的是HMAC（用于消息认证的密钥散列算法）。</li>
-<li><strong>CRC（Cyclic Redundancy Check）</strong>：循环冗余校验码，CRC校验由于实现简单，检错能力强，被广泛使用在各种数据校验应用中。占用系统资源少，用软硬件均能实现，是进行数据传输差错检测地一种很好的手段（CRC 并不是严格意义上的散列算法，但它的作用与散列算法大致相同，所以归于此类）。</li>
-</ul>
-<p>摘要算法用于对比信息源是否一致，因为只要源数据发生变化，得到的摘要必然不同。因为通常结果比源数据要短很多，所以称为“摘要”。</p>
-<p>应用场景，如发件人生成邮件的散列值并加密它，然后将它与邮件本身一起发送。而收件人同时解密邮件和散列值，并由接收到的邮件产生另外一个散列值，然后将两个散列值进行比较。如果两者相同，邮件极有可能在传输期间没有发生任何改变。</p>
-<h3 id="数字签名"><a href="#数字签名" class="headerlink" title="数字签名"></a>数字签名</h3><p>数字签名就是对非对称加密和摘要算法的一种应用，能够确保信息在发布后不会被篡改（摘要算法特性），保证数据的完整性和可信性；同时也可以防止数据被他人伪造（非对称加密算法特性）；列如，我们有一段授权文本需要发布时，为了防止中途篡改发布的内容，保证发布文本的完整性，以及文本是由指定的发布者发布的。那么，可以通过摘要算法得到发布内容的摘要，得到摘要之后，发布者使用私钥加密得到密文（签名），这时候将源文本、密文（签名）以及公钥一起发布出去即可。</p>
-<p>验证过程为：首先验证公钥是否是发布者的公钥，然后用公钥对密文进行解密，得到摘要，使用发布者对文本同样的摘要算法得到摘要文本，比对摘要是否一致即可确认信息是否被篡改或者是指定发布者发布的。</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/ditialSig.jpg" alt=""></p>
-<p>数字签名可以快速验证文本的完整性和合法性，已广泛应用于各个领域。</p>
-<p>公钥的验证在后续数字证书的授权链中提到验证方法。</p>
-<h3 id="数字证书"><a href="#数字证书" class="headerlink" title="数字证书"></a>数字证书</h3><h4 id="现实生活中的证书"><a href="#现实生活中的证书" class="headerlink" title="现实生活中的证书"></a>现实生活中的证书</h4><p>在现实生活中，证书顾名思义，就是权限机构颁发的证明。比如英语6级证书，就是教育部门颁发给通过了6级考核的个人的证明，证明这个人的英语能力。我们来看一下这个证书的组成：</p>
+        <h2 id="什么是CSRF？"><a href="#什么是CSRF？" class="headerlink" title="什么是CSRF？"></a>什么是CSRF？</h2><p>CSRF（Cross-Site Request Forgery，跨站点伪造请求，也被称为：one click attack/session riding，缩写为：CSRF/XSRF）是一种网络攻击方式，该攻击可以在受害者毫不知情的情况下以受害者名义伪造请求发送给受攻击站点，从而在未授权的情况下执行在权限保护之下的操作，具有很大的危害性。具体来讲，可以这样理解CSRF攻击：攻击者盗用了你的身份，以你的名义发送恶意请求，对服务器来说这个请求是完全合法的，但是却完成了攻击者所期望的一个操作，比如以你的名义发送邮件、发消息，盗取你的账号，添加系统管理员，甚至于购买商品、虚拟货币转账等。</p>
+<h2 id="CSRF原理"><a href="#CSRF原理" class="headerlink" title="CSRF原理"></a>CSRF原理</h2><p>下图简单阐述了CSRF的原理:</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/csrf.jpg" alt=""></p>
+<p>从上图可以看出，要完成一次CSRF攻击，受害者必须依次完成以下两个步骤：</p>
 <ul>
-<li>被证明人：老王</li>
-<li>内容：通过了英语六级</li>
-<li>盖章：教育部门的公章或钢印</li>
+<li>登录受信任网站A，并在本地生成Cookie。</li>
+<li>在不登出A的情况下，访问危险网站B。</li>
 </ul>
-<p>当老王用这张证书找工作时，用人单位会通过查看证书的各项内容（尤其是公章），来验证证书的合法性和老王的能力。在现实生活中经常有假的6级证书，这些假证书最重要的就是有一个假公章。现实生活中使用法律法规来约束私刻假公章的行为，但是用人单位可能不能十分准确的判断公章是真是假。而数字签字可以来解决该类问题。</p>
-<h4 id="数字证书-1"><a href="#数字证书-1" class="headerlink" title="数字证书"></a>数字证书</h4><p>数字证书就是通过数字签名实现的数字化的证书，在现实生活中公章可以被伪造，但是在计算数字世界中，数字签名是没办法被伪造的，比如上述证书中，在一个证书文件中写明了证书内容，颁发证书时，教育部门用他们的私钥对文件的摘要信息进行签名，将签名和证书文件一起发布，这样就能确保该证书无法被伪造。验证证书是否合法时，首先用教育部门的公钥（公钥是公开的谁都可以获取到）对签名进行解密得到一个摘要信息，使用教育部门同样的摘要算法得到证书的另一个摘要信息，对比两个摘要信息是否一致就能确定该证书是否合法。在一般的证书组成中部分中，还加入了一些其他信息，比如证书的有效期。</p>
-<p>数字证书也有很多的签发机构，不同的签发机构签发的证书，用途也是不一样的，比如iOS开发中，使用到的ipa文件签名证书，需要到苹果申请。而在Web访问中为了防止Web内容在网络中安全传输，需要用到的SSL证书则需要向几家公认的机构签发。这些签发机构统称为CA（Certificate Authority）。</p>
-<p>Web访问相关的证书可以向国际公认的几个机构：</p>
-<ol>
-<li><a href="http://www.webtrust.net/" target="_blank" rel="noopener"><strong>WebTrust</strong></a></li>
-<li><a href="http://cn.globalsign.com/" target="_blank" rel="noopener"><strong>GlobalSign</strong></a></li>
-<li><a href="http://certificate.fyicenter.com/335_Root_CA_GTE_CyberTrust_Global_Root_GTE_CyberTrust_Solutions.html" target="_blank" rel="noopener"><strong>GTE</strong></a></li>
-<li><a href="http://www.nortel.com/" target="_blank" rel="noopener"><strong>Nortel</strong></a></li>
-<li><a href="http://www.verisign.com/" target="_blank" rel="noopener"><strong>Verisign</strong></a></li>
-</ol>
-<h4 id="数字证书的验证"><a href="#数字证书的验证" class="headerlink" title="数字证书的验证"></a>数字证书的验证</h4><p>申请证书是为了验证，比如Web应用相关的SSL证书验证方是浏览器，iOS各种证书的验证方是iOS设备。因为数字证书是基于数字签名的，所有数字证书的合法性验证就是验证数字证书的签名是否正确，对于签名的验证在是需要签发机构的公钥才能验证；</p>
-<p>对于iOS开发证书来说，申请完签名证书后，还需要安装苹果的公钥证书（XCode安装后会自动安装），这样才能确保我们申请的证书是可以被验证通过的（合法的），可用来进行ipa文件签名的。对于Web相关的证书签名的验证，则是由浏览器来验证，对于国际公认的几个证书签发机构浏览器会内置其公钥证书，用来验证数字证书的可信性。</p>
-<p>当数字证书通过验证后，便可以用数字证书做对应的事情，iOS开发证书可以用来对APP进行签名，SSL证书可以用来做Web内容加密处理相关的事情。所以有了这些证书之后，能保证在数据的传输过程中，数据是不会被篡改的，并且信息来源也是不能不修改的，从而确保信息安全。</p>
-<p>对于iOS，iOS系统已经将这个验证过程固化在系统中了，除非越狱，否则无法绕过</p>
-<h4 id="数字证书的授权链"><a href="#数字证书的授权链" class="headerlink" title="数字证书的授权链"></a>数字证书的授权链</h4><p>数字证书还包含一个授权链信息，举个例子：如果你要申请休假1周，需要你的上司审批，你的上司需要他的上司同意，最终需要大老板同意，那么这一层层的授权，形成了一个授权链，大老板是授权链的根(root)，中间这些环节分别是被更接近root的人授权的。</p>
-<p>比如苹果开发者的APP签名证书，该证书可以用来对APP进行签名，该证书实际上是由苹果的Worldwide Developer Relations Certificate Authority（WDRCA）授权签名的，而它是由Apple Certificate Authority授权签名的。在这个关系链中苹果的CA是根。 苹果CA根证书默认是内置在苹果系统中的，所以WDRCA的可信性可以由苹果内置的CA根证书来验证其可信性。</p>
-<p>Web相关的SSL证书顶部CA根，则就是上述提到的几家公认的签发机构，当我们需要Web做SSL的证书时，便可以向上述机构申请，通常向根机构申请费用都会比较高，也可以向一些二级授权机构进行申请，选择根机构证书签发的好处就是目前大多数的浏览器都会预装内置了这些权威CA的公钥证书，这样，在使用这些权威CA签发过的证书的时候，浏览器一般不会报风险提示。</p>
-<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>数字证书签名的基础是非对称加密算法，利用了非对称加密的身份验证和防止信息篡改的特性来实现的，在一些其他方面比如HTTPS中密钥交换用的就是非对称加密的保密特性来实现的，在非对称加密算法中RSA应用最广。非对称加密虽好，但却有一个弊端，就是加解密比较耗时，所以一般都是配合对称加密一起使用。</p>
-<p>原文：<a href="http://www.enkichen.com/2016/02/26/digital-certificate-based/" target="_blank" rel="noopener">http://www.enkichen.com/2016/02/26/digital-certificate-based/</a></p>
+<p>看到这里，你也许会问：“如果我不满足以上两个条件中的一个，我就不会受到CSRF攻击”。是滴，确实如此，但是你不能保证以下情况不会发生：</p>
+<ul>
+<li>你不能保证你登录了一个网站之后，不再打开一个tab页面并访问其它的网站。</li>
+<li>你不能保证你关闭浏览器之后，你本地的Cookie立刻过期，你上次的会话已经结束。</li>
+<li>上述中所谓的攻击网站，可能就是一个钓鱼网站。</li>
+</ul>
+<h2 id="CSRF攻击实例"><a href="#CSRF攻击实例" class="headerlink" title="CSRF攻击实例"></a>CSRF攻击实例</h2><p>CSRF 攻击可以在受害者毫不知情的情况下以受害者名义伪造请求发送给受攻击站点，从而在并未授权的情况下执行在权限保护之下的操作。比如说，受害者 Bob 在银行有一笔存款，通过对银行的网站发送请求 <a href="http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=bob2" target="_blank" rel="noopener">http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=bob2</a> 可以使 Bob 把 1000000 的存款转到 bob2 的账号下。通常情况下，该请求发送到网站后，服务器会先验证该请求是否来自一个合法的 session，并且该 session 的用户 Bob 已经成功登陆。黑客 Mallory 自己在该银行也有账户，他知道上文中的 URL 可以把钱进行转帐操作。Mallory 可以自己发送一个请求给银行：<a href="http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory。但是这个请求来自" target="_blank" rel="noopener">http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory。但是这个请求来自</a> Mallory 而非 Bob，他不能通过安全认证，因此该请求不会起作用。这时，Mallory 想到使用 CSRF 的攻击方式，他先自己做一个网站，在网站中放入如下代码： src=”<a href="http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory" target="_blank" rel="noopener">http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory</a> ”，并且通过广告等诱使 Bob 来访问他的网站。当 Bob 访问该网站时，上述 url 就会从 Bob 的浏览器发向银行，而这个请求会附带 Bob 浏览器中的 cookie 一起发向银行服务器。大多数情况下，该请求会失败，因为他要求 Bob 的认证信息。但是，如果 Bob 当时恰巧刚访问他的银行后不久，他的浏览器与银行网站之间的 session 尚未过期，浏览器的 cookie 之中含有 Bob 的认证信息。这时，悲剧发生了，这个 url 请求就会得到响应，钱将从 Bob 的账号转移到 Mallory 的账号，而 Bob 当时毫不知情。等以后 Bob 发现账户钱少了，即使他去银行查询日志，他也只能发现确实有一个来自于他本人的合法请求转移了资金，没有任何被攻击的痕迹。而 Mallory 则可以拿到钱后逍遥法外。</p>
+<h2 id="CSRF如何防御"><a href="#CSRF如何防御" class="headerlink" title="CSRF如何防御"></a>CSRF如何防御</h2><h3 id="验证-HTTP-Referer-字段"><a href="#验证-HTTP-Referer-字段" class="headerlink" title="验证 HTTP Referer 字段"></a>验证 HTTP Referer 字段</h3><p>根据 HTTP 协议，在 HTTP 头中有一个字段叫 Referer，它记录了该 HTTP 请求的来源地址。在通常情况下，访问一个安全受限页面的请求来自于同一个网站，比如需要访问 <a href="http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory，用户必须先登陆" target="_blank" rel="noopener">http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory，用户必须先登陆</a> bank.example，然后通过点击页面上的按钮来触发转账事件。这时，该转帐请求的 Referer 值就会是转账按钮所在的页面的 URL，通常是以 bank.example 域名开头的地址。而如果黑客要对银行网站实施 CSRF 攻击，他只能在他自己的网站构造请求，当用户通过黑客的网站发送请求到银行时，该请求的 Referer 是指向黑客自己的网站。因此，要防御 CSRF 攻击，银行网站只需要对于每一个转账请求验证其 Referer 值，如果是以 bank.example 开头的域名，则说明该请求是来自银行网站自己的请求，是合法的。如果 Referer 是其他网站的话，则有可能是黑客的 CSRF 攻击，拒绝该请求。</p>
+<p>这种方法的显而易见的好处就是简单易行，网站的普通开发人员不需要操心 CSRF 的漏洞，只需要在最后给所有安全敏感的请求统一增加一个拦截器来检查 Referer 的值就可以。特别是对于当前现有的系统，不需要改变当前系统的任何已有代码和逻辑，没有风险，非常便捷。</p>
+<p>然而，这种方法并非万无一失。Referer 的值是由浏览器提供的，虽然 HTTP 协议上有明确的要求，但是每个浏览器对于 Referer 的具体实现可能有差别，并不能保证浏览器自身没有安全漏洞。使用验证 Referer 值的方法，就是把安全性都依赖于第三方（即浏览器）来保障，从理论上来讲，这样并不安全。事实上，对于某些浏览器，比如 IE6 或 FF2，目前已经有一些方法可以篡改 Referer 值。如果 bank.example 网站支持 IE6 浏览器，黑客完全可以把用户浏览器的 Referer 值设为以 bank.example 域名开头的地址，这样就可以通过验证，从而进行 CSRF 攻击。</p>
+<p>即便是使用最新的浏览器，黑客无法篡改 Referer 值，这种方法仍然有问题。因为 Referer 值会记录下用户的访问来源，有些用户认为这样会侵犯到他们自己的隐私权，特别是有些组织担心 Referer 值会把组织内网中的某些信息泄露到外网中。因此，用户自己可以设置浏览器使其在发送请求时不再提供 Referer。当他们正常访问银行网站时，网站会因为请求没有 Referer 值而认为是 CSRF 攻击，拒绝合法用户的访问。</p>
+<h3 id="添加token验证"><a href="#添加token验证" class="headerlink" title="添加token验证"></a>添加token验证</h3><p>CSRF攻击之所以能够成功，是因为攻击者可以完全伪造用户的请求，该请求中所有的用户验证信息都存在cookie中，因此攻击者可以在不知道这些验证信息的情况下直接利用用户自己的cookie来通过安全验证。要防止CSRF，关键在于在请求中放入黑客所不能伪造的信息，并且该信息不存在于cookie之中。可以在HTTP请求中以参数的形式加入一个随机产生的token，并在服务器建立一个拦截器来验证这个token，如果请求中没有token或者token不正确，则认为可能是CSRF攻击而拒绝该请求。<br> 现在业界一致的做法就是使用Anti CSRF Token来防御CSRF。</p>
+<ul>
+<li>用户访问某个表单页面。</li>
+<li>服务端生成一个Token，放在用户的Session中，或者浏览器的Cookie中。</li>
+<li>在页面表单附带上Token参数。</li>
+<li>用户提交请求后，服务端验证表单中的Token是否与用户Session（或Cookies）中的Token一致，一致为合法请求，不是则非法请求。</li>
+</ul>
+<p>这个Token值必须是随机的，不可预测的。由于Token的存在，攻击者无法再构造一个带有合法Token的请求实施CSRF攻击。另外使用Token应注意Token的保密性，尽量把敏感操作由GET改成POST，以form或者AJAX形式提交，避免Token泄露。</p>
+<h3 id="验证码"><a href="#验证码" class="headerlink" title="验证码"></a>验证码</h3><p>验证码，强制用户必须与应用进行交互，才能完成最终请求。通常情况下，验证码能够很好的遏制CSRF攻击。但是出于用户体验考虑，网站不能给所有的操作都加上验证码。因此验证码只能作为一种辅助手段。</p>
+<h3 id="尽量使用POST，限制GET"><a href="#尽量使用POST，限制GET" class="headerlink" title="尽量使用POST，限制GET"></a>尽量使用POST，限制GET</h3><p>GET接口能够直接将请求地址暴露给攻击者，所以要防止CSRF一定最好不要用GET。当然POST并不是万无一失，攻击者只需要构造一个form表单就可以，但需要在第三方页面做，这样就增加了暴露的可能性。</p>
+<h3 id="在HTTP头部添加自定义属性"><a href="#在HTTP头部添加自定义属性" class="headerlink" title="在HTTP头部添加自定义属性"></a>在HTTP头部添加自定义属性</h3><p>这种方法也是使用token并验证，但是它是把token放在HTTP请求头部中。通过使用AJAX我们可以在我们的请求头部中添加我们的自定义属性，但是这种方法要求我们将整个站的请求全部改成AJAX，如果是新站还好，老站的话无疑是需要重写整个站点的，这是很不可取的。</p>
+<h2 id="参考："><a href="#参考：" class="headerlink" title="参考："></a>参考：</h2><p><a href="https://www.cnblogs.com/cxying93/p/6035031.html" target="_blank" rel="noopener">https://www.cnblogs.com/cxying93/p/6035031.html</a><br><a href="https://www.ibm.com/developerworks/cn/web/1102_niugang_csrf/index.html" target="_blank" rel="noopener">https://www.ibm.com/developerworks/cn/web/1102_niugang_csrf/index.html</a><br><a href="https://www.imooc.com/article/18069" target="_blank" rel="noopener">https://www.imooc.com/article/18069</a></p>
 
       
     </div>
@@ -269,6 +228,110 @@
 <p><a href="https://crypto.stackexchange.com/questions/6523/what-is-the-difference-between-mac-and-hmac" target="_blank" rel="noopener">What is the difference between MAC and HMAC?</a></p>
 <p><a href="https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation" target="_blank" rel="noopener">Block cipher mode of operation</a></p>
 <p><a href="https://www.zhihu.com/question/25912483/answer/31653639" target="_blank" rel="noopener">RSA的公钥和私钥到底哪个才是用来加密和哪个用来解密？ - 刘巍然-学酥的回答 - 知乎</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2017-02-12T06:45:23.000Z"><a href="/2017/02/12/安全/数字证书的基础知识/">2017-02-12</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2017/02/12/安全/数字证书的基础知识/">数字证书的基础知识</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>在讲数字证书之前必须要讲<strong>非对称加密算法</strong>和<strong>摘要算法</strong>，因为数字证书的基础就是各种加解密算法（非对称加密、摘要算法），而其中的核心就是非对称加密算法了。目前而言加密方法可以分为两大类。一类是<strong>单钥加密</strong>（private key cryptography）也可以称为对称加密，还有一类叫做<strong>双钥加密</strong>（public key cryptography）也可称为非对称加密。前者的加密和解密过程都用同一套密码，后者的加密和解密过程用的是不同的密码。下面来看看对称加密、非对称加密以及摘要算法，他们是怎样应用在数字证书中的。</p>
+<h3 id="对称加密"><a href="#对称加密" class="headerlink" title="对称加密"></a>对称加密</h3><p>对称加密(也叫私钥加密)指加密和解密使用相同密钥的加密算法。有时又叫传统密码算法，就是加密密钥能够从解密密钥中推算出来，同时解密密钥也可以从加密密钥中推算出来。而在大多数的对称算法中，加密密钥和解密密钥是相同的，所以也称这种加密算法为秘密密钥算法或单密钥算法。</p>
+<p>在应用该算法时，它要求发送方和接收方在安全通信之前，商定一个密钥。对称算法的安全性依赖于密钥，泄漏密钥就意味着任何人都可以对他们发送或接收的消息解密，所以密钥的保密性对通信性至关重要。对称加密算法的特点是算法公开、计算量小、加密速度快、加密效率高。对称加密有很多种算法，由于它效率很高，所以被广泛使用在很多加密协议的核心当中。不足之处是，交易双方都使用同样钥匙，安全性得不到保证。</p>
+<h4 id="常见的对称加密算法"><a href="#常见的对称加密算法" class="headerlink" title="常见的对称加密算法"></a>常见的对称加密算法</h4><ul>
+<li><strong>DES</strong>：数据加密标准（DES，Data Encryption Standard）是一种使用密钥加密的块密码，它基于使用<strong>56位密钥</strong>的对称算法，这个算法因为包含一些机密设计元素，相对短的密钥长度以及被怀疑内含美国国家安全局（NSA）的后门而在开始时是有争议的，DES现在已经不被视为一种安全的加密算法，主要因为它使用的56位密钥过短，导致容易被破解。为了提供实用所需的安全性，可以使用DES的派生算法3DES来进行加密，虽然3DES也存在理论上的攻击方法。</li>
+<li><strong>AES</strong>：高级加密标准（英语：Advanced Encryption Standard，缩写：AES），这个标准用来替代原先的DES，已经被多方分析且广为全世界所使用，2006年，高级加密标准已然成为对称密钥加密中最流行的算法之一。AES的区块长度固定为128比特，<strong>密钥长度则可以是128，192或256比特</strong>。</li>
+<li><strong>RC4</strong>：RC4加密算法是大名鼎鼎的RSA三人组中的头号人物Ronald Rivest在1987年设计的密钥长度可变的流加密算法簇。该算法的速度可以达到DES加密的10倍左右，且具有很高级别的非线性。RC4起初是用于保护商业机密的。但是在1994年9月，它的算法被发布在互联网上，也就不再有什么商业机密了。</li>
+<li><strong>IDEA</strong>：是旅居瑞士中国青年学者来学嘉和著名密码专家J.Massey于1990年提出的。它在1990年正式公布并在以后得到增强。这种算法是在DES算法的基础上发展出来的，类似于三重DES，和DES一样IDEA也是属于对称密钥算法。发展IDEA也是因为感到DES具有密钥太短等缺点，已经过时。<strong>IDEA的密钥为128位</strong>，这么长的密钥在今后若干年内应该是安全的。</li>
+</ul>
+<h3 id="非对称加密"><a href="#非对称加密" class="headerlink" title="非对称加密"></a>非对称加密</h3><p>与对称加密算法不同，非对称加密算法需要两个密钥：公开密钥（publickey）和私有密钥（privatekey）；并且加密密钥和解密密钥是成对出现的。非对称加密算法在加密和解密过程使用了不同的密钥，非对称加密也称为公钥加密，在密钥对中，其中一个密钥是对外公开的，所有人都可以获取到，称为公钥，其中一个密钥是不公开的称为私钥。</p>
+<h4 id="非对称加密的特性"><a href="#非对称加密的特性" class="headerlink" title="非对称加密的特性"></a>非对称加密的特性</h4><ul>
+<li>对于一个公钥，有且只有一个对应的私钥。</li>
+<li>公钥是公开的，并且不能通过公钥反推出私钥。</li>
+<li>通过私钥加密的密文只能通过公钥能解密，通过公钥加密的密文也只能通过私钥能解密。</li>
+</ul>
+<p>通过公钥是极难推算出私钥的，只能通过穷举，所以只要密钥足够长，要想从公钥推算出私钥几乎不可能的。</p>
+<h4 id="非对称加密的主要用途"><a href="#非对称加密的主要用途" class="headerlink" title="非对称加密的主要用途"></a>非对称加密的主要用途</h4><ul>
+<li><strong>对信息保密，防止中间人攻击</strong>：将明文使用公钥加密，传输给接收者，这样确保信息只能被有私钥的拥有者解密，其他人无法获得明文信息，因为没有私钥无法进行解密。该方法一般用于交换<strong>对称密钥</strong>。</li>
+<li><strong>身份验证和防止信息篡改</strong>：私钥拥有者使用私钥加密一段授权明文，并将授权明文和加密后的密文，以及公钥一并发送出来，接收方只需要通过公钥将密文解密后与授权明文对比是否一致，就可以判断明文在中途是否被篡改过。此方法用于<strong>数字签名</strong>。</li>
+</ul>
+<h4 id="常见的非对称加密算法"><a href="#常见的非对称加密算法" class="headerlink" title="常见的非对称加密算法"></a>常见的非对称加密算法</h4><ul>
+<li><strong>RSA</strong>：1977年，三位数学家Rivest、Shamir 和 Adleman 设计了一种算法，可以实现非对称加密。这种算法用他们三个人的名字命名，叫做RSA算法。从那时直到现在，RSA算法一直是最广为使用的”非对称加密算法”。毫不夸张地说，只要有计算机网络的地方，就有RSA算法。这种算法非常可靠，密钥越长，它就越难破解。根据已经披露的文献，目前被破解的最长RSA密钥是768个二进制位。也就是说，长度超过768位的密钥，还无法破解（至少没人公开宣布）。因此可以认为，<strong>1024位的RSA密钥基本安全，2048位的密钥极其安全</strong>。适用于数字签名和密钥交换。 该算法是目前应用最广泛的公钥加密算法，特别适用于通过 Internet 传送的数据。</li>
+<li><strong>DSA</strong>：数字签名算法 (Digital Signature Algorithm, DSA) 由美国国家安全署 (United States National Security Agency, NSA) 发明，已作为数字签名的标准。在DSA数字签名和认证中，发送者使用自己的私钥对文件或消息进行签名，接受者收到消息后使用发送者的公钥来验证签名的真实性。DSA只是一种算法，和RSA不同之处在于它不能用作加密和解密，也不能进行密钥交换，只用于签名，它比RSA要快很多。DSA 算法的安全性取决于自计算离散算法的困难。这种算法，不适用于数据加密，仅适用于数字签名。</li>
+<li><strong>Diffie-Hellman</strong>：一种确保共享KEY安全穿越不安全网络的方法。Whitefield与Martin Hellman在1976年提出了一个奇妙的密钥交换协议，称为Diffie-Hellman密钥交换协议/算法(Diffie-Hellman Key Exchange/Agreement Algorithm)。这个机制的巧妙在于需要安全通信的双方可以用这个方法确定对称密钥。然后可以用这个密钥进行加密和解密。但是注意，这个密钥交换协议/算法只能用于密钥的交换，而不能进行消息的加密和解密。双方确定要用的密钥后，要使用其他对称密钥操作加密算法实际加密和解密消息。该算法仅适用于密钥交换。</li>
+<li><strong>ECC</strong>：椭圆加密算法（ECC）是一种公钥加密体制，最初由Koblitz和Miller两人于1985年提出，与经典的RSA，DSA等公钥密码体制相比，椭圆密码体制有以下优点：160位的椭圆密钥与1024位的RSA密钥安全性相同；在私钥的加密解密速度上，ECC算法比RSA、DSA速度更快；存储空间占用小；带宽要求低；ECC算法的数学理论非常深奥和复杂，在工程应用中比较难于实现，但它的单位安全强度相对较高。</li>
+</ul>
+<p>非对称加密算法可能是世界上最重要的算法，它是当今电子商务等领域的基石。非对称加密算法如此强大可靠，却有一个弊端，就是加解密比较耗时。因此，在实际使用中，往往与对称加密和摘要算法结合使用。列如在实体之间交换对称密钥时，或者在签署一封邮件的散列时（数字签名）。</p>
+<p>散列是通过应用一种单向数学函数获得的一个定长结果，对于数据而言，叫做散列算法。</p>
+<h3 id="摘要算法"><a href="#摘要算法" class="headerlink" title="摘要算法"></a>摘要算法</h3><p>摘要算法是一个神奇的算法，也称为散列或者散列值。是一种与基于密钥（对称密钥或公钥）的加密不同的数据转换类型。散列就是通过把一个叫做散列算法的单向数学函数应用于数据，将任意长度的一块数据转换为一个定长的、不可逆转的数字，其长度通常在128～256位之间。所产生的散列值的长度应足够长，因此使找到两块具有相同散列值的数据的机会很少。</p>
+<h4 id="摘要算法具有以下特性："><a href="#摘要算法具有以下特性：" class="headerlink" title="摘要算法具有以下特性："></a>摘要算法具有以下特性：</h4><ul>
+<li>只要源文本不同，计算得到的结果，必然不同（或者说机会很少）。</li>
+<li>无法从结果反推出源数据（那是当然的，不然就能量不守恒了）。</li>
+</ul>
+<h4 id="常见的摘要算法："><a href="#常见的摘要算法：" class="headerlink" title="常见的摘要算法："></a>常见的摘要算法：</h4><ul>
+<li><strong>MD5</strong>：是RSA数据安全公司开发的一种单向散列算法，MD5被广泛使用，可以用来把不同长度的数据块进行暗码运算成一个固定位位的数值（通常是128位）。</li>
+<li><strong>SHA-1</strong>：与 DSA 公钥算法相似，安全散列算法1（SHA-1）也是由 NSA 设计的，并由 NIST 将其收录到 FIPS 中，作为散列数据的标准。它可产生一个 160 位的散列值。SHA-1 是流行的用于创建数字签名的单向散列算法。</li>
+<li><strong>MAC（Message Authentication Code）</strong>：消息认证代码，是一种使用密钥的单向函数，可以用它们在系统上或用户之间认证文件或消息，常见的是HMAC（用于消息认证的密钥散列算法）。</li>
+<li><strong>CRC（Cyclic Redundancy Check）</strong>：循环冗余校验码，CRC校验由于实现简单，检错能力强，被广泛使用在各种数据校验应用中。占用系统资源少，用软硬件均能实现，是进行数据传输差错检测地一种很好的手段（CRC 并不是严格意义上的散列算法，但它的作用与散列算法大致相同，所以归于此类）。</li>
+</ul>
+<p>摘要算法用于对比信息源是否一致，因为只要源数据发生变化，得到的摘要必然不同。因为通常结果比源数据要短很多，所以称为“摘要”。</p>
+<p>应用场景，如发件人生成邮件的散列值并加密它，然后将它与邮件本身一起发送。而收件人同时解密邮件和散列值，并由接收到的邮件产生另外一个散列值，然后将两个散列值进行比较。如果两者相同，邮件极有可能在传输期间没有发生任何改变。</p>
+<h3 id="数字签名"><a href="#数字签名" class="headerlink" title="数字签名"></a>数字签名</h3><p>数字签名就是对非对称加密和摘要算法的一种应用，能够确保信息在发布后不会被篡改（摘要算法特性），保证数据的完整性和可信性；同时也可以防止数据被他人伪造（非对称加密算法特性）；列如，我们有一段授权文本需要发布时，为了防止中途篡改发布的内容，保证发布文本的完整性，以及文本是由指定的发布者发布的。那么，可以通过摘要算法得到发布内容的摘要，得到摘要之后，发布者使用私钥加密得到密文（签名），这时候将源文本、密文（签名）以及公钥一起发布出去即可。</p>
+<p>验证过程为：首先验证公钥是否是发布者的公钥，然后用公钥对密文进行解密，得到摘要，使用发布者对文本同样的摘要算法得到摘要文本，比对摘要是否一致即可确认信息是否被篡改或者是指定发布者发布的。</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/ditialSig.jpg" alt=""></p>
+<p>数字签名可以快速验证文本的完整性和合法性，已广泛应用于各个领域。</p>
+<p>公钥的验证在后续数字证书的授权链中提到验证方法。</p>
+<h3 id="数字证书"><a href="#数字证书" class="headerlink" title="数字证书"></a>数字证书</h3><h4 id="现实生活中的证书"><a href="#现实生活中的证书" class="headerlink" title="现实生活中的证书"></a>现实生活中的证书</h4><p>在现实生活中，证书顾名思义，就是权限机构颁发的证明。比如英语6级证书，就是教育部门颁发给通过了6级考核的个人的证明，证明这个人的英语能力。我们来看一下这个证书的组成：</p>
+<ul>
+<li>被证明人：老王</li>
+<li>内容：通过了英语六级</li>
+<li>盖章：教育部门的公章或钢印</li>
+</ul>
+<p>当老王用这张证书找工作时，用人单位会通过查看证书的各项内容（尤其是公章），来验证证书的合法性和老王的能力。在现实生活中经常有假的6级证书，这些假证书最重要的就是有一个假公章。现实生活中使用法律法规来约束私刻假公章的行为，但是用人单位可能不能十分准确的判断公章是真是假。而数字签字可以来解决该类问题。</p>
+<h4 id="数字证书-1"><a href="#数字证书-1" class="headerlink" title="数字证书"></a>数字证书</h4><p>数字证书就是通过数字签名实现的数字化的证书，在现实生活中公章可以被伪造，但是在计算数字世界中，数字签名是没办法被伪造的，比如上述证书中，在一个证书文件中写明了证书内容，颁发证书时，教育部门用他们的私钥对文件的摘要信息进行签名，将签名和证书文件一起发布，这样就能确保该证书无法被伪造。验证证书是否合法时，首先用教育部门的公钥（公钥是公开的谁都可以获取到）对签名进行解密得到一个摘要信息，使用教育部门同样的摘要算法得到证书的另一个摘要信息，对比两个摘要信息是否一致就能确定该证书是否合法。在一般的证书组成中部分中，还加入了一些其他信息，比如证书的有效期。</p>
+<p>数字证书也有很多的签发机构，不同的签发机构签发的证书，用途也是不一样的，比如iOS开发中，使用到的ipa文件签名证书，需要到苹果申请。而在Web访问中为了防止Web内容在网络中安全传输，需要用到的SSL证书则需要向几家公认的机构签发。这些签发机构统称为CA（Certificate Authority）。</p>
+<p>Web访问相关的证书可以向国际公认的几个机构：</p>
+<ol>
+<li><a href="http://www.webtrust.net/" target="_blank" rel="noopener"><strong>WebTrust</strong></a></li>
+<li><a href="http://cn.globalsign.com/" target="_blank" rel="noopener"><strong>GlobalSign</strong></a></li>
+<li><a href="http://certificate.fyicenter.com/335_Root_CA_GTE_CyberTrust_Global_Root_GTE_CyberTrust_Solutions.html" target="_blank" rel="noopener"><strong>GTE</strong></a></li>
+<li><a href="http://www.nortel.com/" target="_blank" rel="noopener"><strong>Nortel</strong></a></li>
+<li><a href="http://www.verisign.com/" target="_blank" rel="noopener"><strong>Verisign</strong></a></li>
+</ol>
+<h4 id="数字证书的验证"><a href="#数字证书的验证" class="headerlink" title="数字证书的验证"></a>数字证书的验证</h4><p>申请证书是为了验证，比如Web应用相关的SSL证书验证方是浏览器，iOS各种证书的验证方是iOS设备。因为数字证书是基于数字签名的，所有数字证书的合法性验证就是验证数字证书的签名是否正确，对于签名的验证在是需要签发机构的公钥才能验证；</p>
+<p>对于iOS开发证书来说，申请完签名证书后，还需要安装苹果的公钥证书（XCode安装后会自动安装），这样才能确保我们申请的证书是可以被验证通过的（合法的），可用来进行ipa文件签名的。对于Web相关的证书签名的验证，则是由浏览器来验证，对于国际公认的几个证书签发机构浏览器会内置其公钥证书，用来验证数字证书的可信性。</p>
+<p>当数字证书通过验证后，便可以用数字证书做对应的事情，iOS开发证书可以用来对APP进行签名，SSL证书可以用来做Web内容加密处理相关的事情。所以有了这些证书之后，能保证在数据的传输过程中，数据是不会被篡改的，并且信息来源也是不能不修改的，从而确保信息安全。</p>
+<p>对于iOS，iOS系统已经将这个验证过程固化在系统中了，除非越狱，否则无法绕过</p>
+<h4 id="数字证书的授权链"><a href="#数字证书的授权链" class="headerlink" title="数字证书的授权链"></a>数字证书的授权链</h4><p>数字证书还包含一个授权链信息，举个例子：如果你要申请休假1周，需要你的上司审批，你的上司需要他的上司同意，最终需要大老板同意，那么这一层层的授权，形成了一个授权链，大老板是授权链的根(root)，中间这些环节分别是被更接近root的人授权的。</p>
+<p>比如苹果开发者的APP签名证书，该证书可以用来对APP进行签名，该证书实际上是由苹果的Worldwide Developer Relations Certificate Authority（WDRCA）授权签名的，而它是由Apple Certificate Authority授权签名的。在这个关系链中苹果的CA是根。 苹果CA根证书默认是内置在苹果系统中的，所以WDRCA的可信性可以由苹果内置的CA根证书来验证其可信性。</p>
+<p>Web相关的SSL证书顶部CA根，则就是上述提到的几家公认的签发机构，当我们需要Web做SSL的证书时，便可以向上述机构申请，通常向根机构申请费用都会比较高，也可以向一些二级授权机构进行申请，选择根机构证书签发的好处就是目前大多数的浏览器都会预装内置了这些权威CA的公钥证书，这样，在使用这些权威CA签发过的证书的时候，浏览器一般不会报风险提示。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>数字证书签名的基础是非对称加密算法，利用了非对称加密的身份验证和防止信息篡改的特性来实现的，在一些其他方面比如HTTPS中密钥交换用的就是非对称加密的保密特性来实现的，在非对称加密算法中RSA应用最广。非对称加密虽好，但却有一个弊端，就是加解密比较耗时，所以一般都是配合对称加密一起使用。</p>
+<p>原文：<a href="http://www.enkichen.com/2016/02/26/digital-certificate-based/" target="_blank" rel="noopener">http://www.enkichen.com/2016/02/26/digital-certificate-based/</a></p>
 
       
     </div>
@@ -594,6 +657,102 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2016-09-07T06:45:23.000Z"><a href="/2016/09/07/Node.js_模块/require()源码解读/">2016-09-07</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2016/09/07/Node.js_模块/require()源码解读/">require() 源码解读</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>2009年，<a href="http://nodejs.org/" target="_blank" rel="noopener">Node.js</a> 项目诞生，所有模块一律为 <a href="https://en.wikipedia.org/wiki/CommonJS" target="_blank" rel="noopener">CommonJS</a> 格式。</p>
+<p>时至今日，Node.js 的模块仓库 <a href="https://www.npmjs.com/" target="_blank" rel="noopener">npmjs.com</a> ，已经存放了几十万个模块，其中绝大部分都是 CommonJS 格式。</p>
+<p>这种格式的核心就是 require 语句，模块通过它加载。学习 Node.js ，必学如何使用 require 语句。本文通过源码分析，详细介绍 require 语句的内部运行机制，帮你理解 Node.js 的模块机制。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/require01_180712.png" alt=""></p>
+<h2 id="一、require-的基本用法"><a href="#一、require-的基本用法" class="headerlink" title="一、require() 的基本用法"></a>一、require() 的基本用法</h2><p>分析源码之前，先介绍 require 语句的内部逻辑。如果你只想了解 require 的用法，只看这一段就够了。</p>
+<p>下面的内容翻译自<a href="https://nodejs.org/api/modules.html#modules_all_together" target="_blank" rel="noopener">《Node使用手册》</a>。</p>
+<p>当 Node 遇到 require(X) 时，按下面的顺序处理。<br>（1）如果 X 是内置模块（比如 require(‘http’）)<br>　　a. 返回该模块。<br>　　b. 不再继续执行。<br>（2）如果 X 以 “./“ 或者 “/“ 或者 “../“ 开头<br>　　a. 根据 X 所在的父模块，确定 X 的绝对路径。<br>　　b.  将 X 当成文件，依次查找下面文件，只要其中有一个存在，就返回该文件，不再继续执行。<br>              X<br>              X.js<br>              X.json<br>              X.node<br>　    c.将 X 当成目录，依次查找下面文件，只要其中有一个存在，就返回该文件，不再继续执行。<br>              X/package.json（main字段）<br>              X/index.js<br>              X/index.json<br>              X/index.node</p>
+<p>（3）如果 X 不带路径<br> 　　a. 根据 X 所在的父模块，确定 X 可能的安装目录。<br> 　　b. 依次在每个目录中，将 X 当成文件名或目录名加载。</p>
+<p>（4） 抛出 “not found”</p>
+<p>请看一个例子。</p>
+<p>当前脚本文件 <code>/home/ry/projects/foo.js</code> 执行了 require(‘bar’) ，这属于上面的第三种情况。Node 内部运行过程如下。</p>
+<p>首先，确定 x 的绝对路径可能是下面这些位置，依次搜索每一个目录。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">/home/ry/projects/node_modules/bar</span><br><span class="line">/home/ry/node_modules/bar</span><br><span class="line">/home/node_modules/bar</span><br><span class="line">/node_modules/bar</span><br></pre></td></tr></table></figure>
+<p>搜索时，Node 先将 bar 当成文件名，依次尝试加载下面这些文件，只要有一个成功就返回。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">bar</span><br><span class="line">bar.js</span><br><span class="line">bar.json</span><br><span class="line">bar.node</span><br></pre></td></tr></table></figure>
+<p>如果都不成功，说明 bar 可能是目录名，于是依次尝试加载下面这些文件。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">bar/package.json（main字段）</span><br><span class="line">bar/index.js</span><br><span class="line">bar/index.json</span><br><span class="line">bar/index.node</span><br></pre></td></tr></table></figure>
+<p>如果在所有目录中，都无法找到 bar 对应的文件或目录，就抛出一个错误。</p>
+<h2 id="二、Module-构造函数"><a href="#二、Module-构造函数" class="headerlink" title="二、Module 构造函数"></a>二、Module 构造函数</h2><p>了解内部逻辑以后，下面就来看源码。</p>
+<p>require的源码在Node的<a href="https://github.com/joyent/node/blob/master/lib/module.js" target="_blank" rel="noopener">lib/module.js</a> 文件。为了便于理解，本文引用的源码是简化过的，并且删除了原作者的注释。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Module</span>(<span class="params">id, parent</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">this</span>.id = id;</span><br><span class="line">  <span class="keyword">this</span>.exports = &#123;&#125;;</span><br><span class="line">  <span class="keyword">this</span>.parent = parent;</span><br><span class="line">  <span class="keyword">this</span>.filename = <span class="literal">null</span>;</span><br><span class="line">  <span class="keyword">this</span>.loaded = <span class="literal">false</span>;</span><br><span class="line">  <span class="keyword">this</span>.children = [];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">module</span>.exports = Module;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> <span class="built_in">module</span> = <span class="keyword">new</span> Module(filename, parent);</span><br></pre></td></tr></table></figure>
+<p>上面代码中，Node 定义了一个构造函数 Module，所有的模块都是 Module 的实例。可以看到，当前模块（module.js）也是 Module 的一个实例。</p>
+<p>每个实例都有自己的属性。下面通过一个例子，看看这些属性的值是什么。新建一个脚本文件 a.js 。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// a.js</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'module.id: '</span>, <span class="built_in">module</span>.id);</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'module.exports: '</span>, <span class="built_in">module</span>.exports);</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'module.parent: '</span>, <span class="built_in">module</span>.parent);</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'module.filename: '</span>, <span class="built_in">module</span>.filename);</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'module.loaded: '</span>, <span class="built_in">module</span>.loaded);</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'module.children: '</span>, <span class="built_in">module</span>.children);</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'module.paths: '</span>, <span class="built_in">module</span>.paths);</span><br></pre></td></tr></table></figure>
+<p>运行这个脚本。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">$ node a.js</span><br><span class="line"></span><br><span class="line"><span class="built_in">module</span>.id:  .</span><br><span class="line"><span class="built_in">module</span>.exports:  &#123;&#125;</span><br><span class="line"><span class="built_in">module</span>.parent:  <span class="literal">null</span></span><br><span class="line"><span class="built_in">module</span>.filename:  <span class="regexp">/home/</span>ruanyf/tmp/a.js</span><br><span class="line"><span class="built_in">module</span>.loaded:  <span class="literal">false</span></span><br><span class="line"><span class="built_in">module</span>.children:  []</span><br><span class="line"><span class="built_in">module</span>.paths:  [ <span class="string">'/home/ruanyf/tmp/node_modules'</span>,</span><br><span class="line">  <span class="string">'/home/ruanyf/node_modules'</span>,</span><br><span class="line">  <span class="string">'/home/node_modules'</span>,</span><br><span class="line">  <span class="string">'/node_modules'</span> ]</span><br></pre></td></tr></table></figure>
+<p>可以看到，如果没有父模块，直接调用当前模块，parent 属性就是 null，id 属性就是一个点。filename 属性是模块的绝对路径，path 属性是一个数组，包含了模块可能的位置。另外，输出这些内容时，模块还没有全部加载，所以 loaded 属性为 false 。</p>
+<p>新建另一个脚本文件 b.js，让其调用 a.js 。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// b.js</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> a = <span class="built_in">require</span>(<span class="string">'./a.js'</span>);</span><br></pre></td></tr></table></figure>
+<p>运行 b.js 。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">$ node b.js</span><br><span class="line"></span><br><span class="line"><span class="built_in">module</span>.id:  <span class="regexp">/home/</span>ruanyf/tmp/a.js</span><br><span class="line"><span class="built_in">module</span>.exports:  &#123;&#125;</span><br><span class="line"><span class="built_in">module</span>.parent:  &#123; object &#125;</span><br><span class="line"><span class="built_in">module</span>.filename:  <span class="regexp">/home/</span>ruanyf/tmp/a.js</span><br><span class="line"><span class="built_in">module</span>.loaded:  <span class="literal">false</span></span><br><span class="line"><span class="built_in">module</span>.children:  []</span><br><span class="line"><span class="built_in">module</span>.paths:  [ <span class="string">'/home/ruanyf/tmp/node_modules'</span>,</span><br><span class="line">  <span class="string">'/home/ruanyf/node_modules'</span>,</span><br><span class="line">  <span class="string">'/home/node_modules'</span>,</span><br><span class="line">  <span class="string">'/node_modules'</span> ]</span><br></pre></td></tr></table></figure>
+<p>上面代码中，由于 a.js 被 b.js 调用，所以 parent 属性指向 b.js 模块，id 属性和 filename 属性一致，都是模块的绝对路径。</p>
+<h2 id="三、模块实例的-require-方法"><a href="#三、模块实例的-require-方法" class="headerlink" title="三、模块实例的 require 方法"></a>三、模块实例的 require 方法</h2><p>每个模块实例都有一个 require 方法。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Module.prototype.require = <span class="function"><span class="keyword">function</span>(<span class="params">path</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> Module._load(path, <span class="keyword">this</span>);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>由此可知，require 并不是全局性命令，而是每个模块提供的一个内部方法，也就是说，只有在模块内部才能使用 require 命令（唯一的例外是 REPL 环境）。另外，require 其实内部调用 Module._load 方法。</p>
+<p>下面来看 Module._load 的源码。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">Module._load = function(request, parent, isMain) &#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">//  计算绝对路径</span></span><br><span class="line">  var filename = Module._resolveFilename(request, parent);</span><br><span class="line"></span><br><span class="line">  <span class="comment">//  第一步：如果有缓存，取出缓存</span></span><br><span class="line">  var cachedModule = Module._cache[filename];</span><br><span class="line">  <span class="keyword">if</span> (cachedModule) &#123;</span><br><span class="line">    <span class="keyword">return</span> cachedModule.exports;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 第二步：是否为内置模块</span></span><br><span class="line">  <span class="keyword">if</span> (NativeModule.exists(filename)) &#123;</span><br><span class="line">    <span class="keyword">return</span> NativeModule.require(filename);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 第三步：生成模块实例，存入缓存</span></span><br><span class="line">  var <span class="keyword">module</span> = <span class="keyword">new</span> Module(filename, parent);</span><br><span class="line">  Module._cache[filename] = <span class="keyword">module</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 第四步：加载模块</span></span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">module</span>.load(filename);</span><br><span class="line">    hadException = <span class="literal">false</span>;</span><br><span class="line">  &#125; finally &#123;</span><br><span class="line">    <span class="keyword">if</span> (hadException) &#123;</span><br><span class="line">      <span class="keyword">delete</span> Module._cache[filename];</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 第五步：输出模块的exports属性</span></span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">module</span>.exports;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>上面代码中，首先解析出模块的绝对路径（filename），以它作为模块的识别符。然后，如果模块已经在缓存中，就从缓存取出；如果不在缓存中，就加载模块。</p>
+<p>因此，Module._load 的关键步骤是两个。</p>
+<ul>
+<li>Module._resolveFilename() ：确定模块的绝对路径</li>
+<li>module.load()：加载模块</li>
+</ul>
+<h2 id="四、模块的绝对路径"><a href="#四、模块的绝对路径" class="headerlink" title="四、模块的绝对路径"></a>四、模块的绝对路径</h2><p>下面是 Module._resolveFilename 方法的源码。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">Module._resolveFilename = <span class="function"><span class="keyword">function</span>(<span class="params">request, parent</span>) </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 第一步：如果是内置模块，不含路径返回</span></span><br><span class="line">  <span class="keyword">if</span> (NativeModule.exists(request)) &#123;</span><br><span class="line">    <span class="keyword">return</span> request;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 第二步：确定所有可能的路径</span></span><br><span class="line">  <span class="keyword">var</span> resolvedModule = Module._resolveLookupPaths(request, parent);</span><br><span class="line">  <span class="keyword">var</span> id = resolvedModule[<span class="number">0</span>];</span><br><span class="line">  <span class="keyword">var</span> paths = resolvedModule[<span class="number">1</span>];</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 第三步：确定哪一个路径为真</span></span><br><span class="line">  <span class="keyword">var</span> filename = Module._findPath(request, paths);</span><br><span class="line">  <span class="keyword">if</span> (!filename) &#123;</span><br><span class="line">    <span class="keyword">var</span> err = <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">"Cannot find module '"</span> + request + <span class="string">"'"</span>);</span><br><span class="line">    err.code = <span class="string">'MODULE_NOT_FOUND'</span>;</span><br><span class="line">    <span class="keyword">throw</span> err;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> filename;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>上面代码中，在 Module.<em>resolveFilename 方法内部，又调用了两个方法 Module.</em>resolveLookupPaths() 和 Module._findPath() ，前者用来列出可能的路径，后者用来确认哪一个路径为真。</p>
+<p>为了简洁起见，这里只给出 Module._resolveLookupPaths() 的运行结果。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[   <span class="string">'/home/ruanyf/tmp/node_modules'</span>,</span><br><span class="line">    <span class="string">'/home/ruanyf/node_modules'</span>,</span><br><span class="line">    <span class="string">'/home/node_modules'</span>,</span><br><span class="line">    <span class="string">'/node_modules'</span> </span><br><span class="line">    <span class="string">'/home/ruanyf/.node_modules'</span>,</span><br><span class="line">    <span class="string">'/home/ruanyf/.node_libraries'</span>，</span><br><span class="line">     <span class="string">'$Prefix/lib/node'</span> ]</span><br></pre></td></tr></table></figure>
+<p>上面的数组，就是模块所有可能的路径。基本上是，从当前路径开始一级级向上寻找 node_modules 子目录。最后那三个路径，主要是为了历史原因保持兼容，实际上已经很少用了。</p>
+<p>有了可能的路径以后，下面就是 Module._findPath() 的源码，用来确定到底哪一个是正确路径。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line">Module._findPath = <span class="function"><span class="keyword">function</span>(<span class="params">request, paths</span>) </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 列出所有可能的后缀名：.js，.json, .node</span></span><br><span class="line">  <span class="keyword">var</span> exts = <span class="built_in">Object</span>.keys(Module._extensions);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 如果是绝对路径，就不再搜索</span></span><br><span class="line">  <span class="keyword">if</span> (request.charAt(<span class="number">0</span>) === <span class="string">'/'</span>) &#123;</span><br><span class="line">    paths = [<span class="string">''</span>];</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 是否有后缀的目录斜杠</span></span><br><span class="line">  <span class="keyword">var</span> trailingSlash = (request.slice(<span class="number">-1</span>) === <span class="string">'/'</span>);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 第一步：如果当前路径已在缓存中，就直接返回缓存</span></span><br><span class="line">  <span class="keyword">var</span> cacheKey = <span class="built_in">JSON</span>.stringify(&#123;<span class="attr">request</span>: request, <span class="attr">paths</span>: paths&#125;);</span><br><span class="line">  <span class="keyword">if</span> (Module._pathCache[cacheKey]) &#123;</span><br><span class="line">    <span class="keyword">return</span> Module._pathCache[cacheKey];</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 第二步：依次遍历所有路径</span></span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">var</span> i = <span class="number">0</span>, PL = paths.length; i &lt; PL; i++) &#123;</span><br><span class="line">    <span class="keyword">var</span> basePath = path.resolve(paths[i], request);</span><br><span class="line">    <span class="keyword">var</span> filename;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!trailingSlash) &#123;</span><br><span class="line">      <span class="comment">// 第三步：是否存在该模块文件</span></span><br><span class="line">      filename = tryFile(basePath);</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> (!filename &amp;&amp; !trailingSlash) &#123;</span><br><span class="line">        <span class="comment">// 第四步：该模块文件加上后缀名，是否存在</span></span><br><span class="line">        filename = tryExtensions(basePath, exts);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 第五步：目录中是否存在 package.json </span></span><br><span class="line">    <span class="keyword">if</span> (!filename) &#123;</span><br><span class="line">      filename = tryPackage(basePath, exts);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!filename) &#123;</span><br><span class="line">      <span class="comment">// 第六步：是否存在目录名 + index + 后缀名 </span></span><br><span class="line">      filename = tryExtensions(path.resolve(basePath, <span class="string">'index'</span>), exts);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 第七步：将找到的文件路径存入返回缓存，然后返回</span></span><br><span class="line">    <span class="keyword">if</span> (filename) &#123;</span><br><span class="line">      Module._pathCache[cacheKey] = filename;</span><br><span class="line">      <span class="keyword">return</span> filename;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 第八步：没有找到文件，返回false </span></span><br><span class="line">  <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>经过上面代码，就可以找到模块的绝对路径了。</p>
+<p>有时在项目代码中，需要调用模块的绝对路径，那么除了 module.filename ，Node 还提供一个 require.resolve 方法，供外部调用，用于从模块名取到绝对路径。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">require</span>.resolve = <span class="function"><span class="keyword">function</span>(<span class="params">request</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> Module._resolveFilename(request, self);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 用法</span></span><br><span class="line"><span class="built_in">require</span>.resolve(<span class="string">'a.js'</span>)</span><br><span class="line"><span class="comment">// 返回 /home/ruanyf/tmp/a.js</span></span><br></pre></td></tr></table></figure>
+<h2 id="五、加载模块"><a href="#五、加载模块" class="headerlink" title="五、加载模块"></a>五、加载模块</h2><p>有了模块的绝对路径，就可以加载该模块了。下面是 module.load 方法的源码。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Module.prototype.load = <span class="function"><span class="keyword">function</span>(<span class="params">filename</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> extension = path.extname(filename) || <span class="string">'.js'</span>;</span><br><span class="line">  <span class="keyword">if</span> (!Module._extensions[extension]) extension = <span class="string">'.js'</span>;</span><br><span class="line">  Module._extensions[extension](<span class="keyword">this</span>, filename);</span><br><span class="line">  <span class="keyword">this</span>.loaded = <span class="literal">true</span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>上面代码中，首先确定模块的后缀名，不同的后缀名对应不同的加载方法。下面是 .js 和 .json 后缀名对应的处理方法。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">Module._extensions[<span class="string">'.js'</span>] = <span class="function"><span class="keyword">function</span>(<span class="params">module, filename</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> content = fs.readFileSync(filename, <span class="string">'utf8'</span>);</span><br><span class="line">  <span class="built_in">module</span>._compile(stripBOM(content), filename);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">Module._extensions[<span class="string">'.json'</span>] = <span class="function"><span class="keyword">function</span>(<span class="params">module, filename</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> content = fs.readFileSync(filename, <span class="string">'utf8'</span>);</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="built_in">module</span>.exports = <span class="built_in">JSON</span>.parse(stripBOM(content));</span><br><span class="line">  &#125; <span class="keyword">catch</span> (err) &#123;</span><br><span class="line">    err.message = filename + <span class="string">': '</span> + err.message;</span><br><span class="line">    <span class="keyword">throw</span> err;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>这里只讨论 js 文件的加载。首先，将模块文件读取成字符串，然后剥离 utf8 编码特有的BOM文件头，最后编译该模块。</p>
+<p>module._compile 方法用于模块的编译。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Module.prototype._compile = <span class="function"><span class="keyword">function</span>(<span class="params">content, filename</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> self = <span class="keyword">this</span>;</span><br><span class="line">  <span class="keyword">var</span> args = [self.exports, <span class="built_in">require</span>, self, filename, dirname];</span><br><span class="line">  <span class="keyword">return</span> compiledWrapper.apply(self.exports, args);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>上面的代码基本等同于下面的形式。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">(<span class="function"><span class="keyword">function</span> (<span class="params">exports, require, module, __filename, __dirname</span>) </span>&#123;</span><br><span class="line">  <span class="comment">// 模块源码</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>也就是说，模块的加载实质上就是，注入exports、require、module三个全局变量，然后执行模块的源码，然后将模块的 exports 变量的值输出。</p>
+<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="http://www.ruanyifeng.com/blog/2015/05/require.html" target="_blank" rel="noopener">http://www.ruanyifeng.com/blog/2015/05/require.html</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2016-09-04T06:45:23.000Z"><a href="/2016/09/04/计算机网络/HTTP 协议入门/">2016-09-04</a></time>
       
       
@@ -719,238 +878,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2016-08-05T14:16:53.000Z"><a href="/2016/08/05/Node.js_事件/The Node.js Event Loop, Timers, and process.nextTick()/">2016-08-05</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2016/08/05/Node.js_事件/The Node.js Event Loop, Timers, and process.nextTick()/">The Node.js Event Loop, Timers, and process.nextTick()</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h1 id="The-Node-js-Event-Loop-Timers-and-process-nextTick"><a href="#The-Node-js-Event-Loop-Timers-and-process-nextTick" class="headerlink" title="The Node.js Event Loop, Timers, and process.nextTick()"></a>The Node.js Event Loop, Timers, and <code>process.nextTick()</code></h1><h2 id="What-is-the-Event-Loop"><a href="#What-is-the-Event-Loop" class="headerlink" title="What is the Event Loop?"></a>What is the Event Loop?</h2><p>The event loop is what allows Node.js to perform non-blocking I/O operations — despite the fact that JavaScript is single-threaded — by offloading operations to the system kernel whenever possible.</p>
-<p>Since most modern kernels are <strong>multi-threaded</strong>, they can handle multiple operations executing in the background. When one of these operations completes, the kernel tells Node.js so that the appropriate callback may be added to the <strong>poll</strong> queue to eventually be executed. We’ll explain this in further detail later in this topic.</p>
-<h2 id="Event-Loop-Explained"><a href="#Event-Loop-Explained" class="headerlink" title="Event Loop Explained"></a>Event Loop Explained</h2><p>When Node.js starts, it initializes the event loop, processes the provided input script (or drops into the <a href="https://nodejs.org/api/repl.html#repl_repl" target="_blank" rel="noopener">REPL</a>, which is not covered in this document) which may make async API calls, schedule timers, or call <code>process.nextTick()</code>, then begins processing the event loop.</p>
-<p>The following diagram shows a simplified overview of the event loop’s order of operations.</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">   ┌───────────────────────────┐</span><br><span class="line">┌─&gt;│           timers          │</span><br><span class="line">│  └─────────────┬─────────────┘</span><br><span class="line">│  ┌─────────────┴─────────────┐</span><br><span class="line">│  │     pending callbacks     │</span><br><span class="line">│  └─────────────┬─────────────┘</span><br><span class="line">│  ┌─────────────┴─────────────┐</span><br><span class="line">│  │       idle, prepare       │</span><br><span class="line">│  └─────────────┬─────────────┘      ┌───────────────┐</span><br><span class="line">│  ┌─────────────┴─────────────┐      │   incoming:   │</span><br><span class="line">│  │           poll            │&lt;─────┤  connections, │</span><br><span class="line">│  └─────────────┬─────────────┘      │   data, etc.  │</span><br><span class="line">│  ┌─────────────┴─────────────┐      └───────────────┘</span><br><span class="line">│  │           check           │</span><br><span class="line">│  └─────────────┬─────────────┘</span><br><span class="line">│  ┌─────────────┴─────────────┐</span><br><span class="line">└──┤      close callbacks      │</span><br><span class="line">   └───────────────────────────┘</span><br></pre></td></tr></table></figure>
-<p><em>note: each box will be referred to as a “phase” of the event loop.</em></p>
-<p>Each phase has a FIFO queue of callbacks to execute. While each phase is special in its own way, generally, when the event loop enters a given phase, it will perform any operations specific to that phase, then execute callbacks in that phase’s queue until the queue has been <strong>exhausted</strong> or the <strong>maximu</strong>m number of callbacks has executed. When the queue has been exhausted or the callback limit is reached, the event loop will move to the next phase, and so on.</p>
-<p>Since <strong>any</strong> of these operations <strong>may</strong> schedule <em>more</em> operations and new events processed in the <strong>poll</strong> phase are queued by the kernel, poll events can be queued while polling events are being processed. As a result, long running callbacks can allow the poll phase to run much longer than a timer’s threshold. See the <a href="https://nodejs.org/en/docs/guides/event-loop-timers-and-nexttick/#timers" target="_blank" rel="noopener"><strong>timers</strong></a> and <a href="https://nodejs.org/en/docs/guides/event-loop-timers-and-nexttick/#poll" target="_blank" rel="noopener"><strong>poll</strong></a> sections for more details.</p>
-<p><strong>*NOTE:</strong> There is a slight discrepancy between the Windows and the Unix/Linux implementation, but that’s not important for this demonstration. The most important parts are here. There are actually seven or eight steps, but the ones we care about — ones that Node.js actually uses - are those above.*</p>
-<h2 id="Phases-Overview"><a href="#Phases-Overview" class="headerlink" title="Phases Overview"></a>Phases Overview</h2><ul>
-<li><strong>timers</strong>: this phase executes callbacks scheduled by <code>setTimeout()</code> and <code>setInterval()</code>.</li>
-<li><strong>pending callbacks</strong>: executes I/O callbacks deferred to the next loop iteration.</li>
-<li><strong>idle, prepare</strong>: only used internally.</li>
-<li><strong>poll</strong>: retrieve new I/O events; execute I/O related callbacks (almost all with the exception of close callbacks, the ones scheduled by timers, and <code>setImmediate()</code>); node will block here when appropriate.</li>
-<li><strong>check</strong>: <code>setImmediate()</code> callbacks are invoked here.</li>
-<li><strong>close callbacks</strong>: some close callbacks, e.g. <code>socket.on(&#39;close&#39;, ...)</code>.</li>
-</ul>
-<p>Between each run of the event loop, Node.js checks if it is waiting for any asynchronous I/O or timers and shuts down cleanly if there are not any.</p>
-<h2 id="Phases-in-Detail"><a href="#Phases-in-Detail" class="headerlink" title="Phases in Detail"></a>Phases in Detail</h2><h3 id="timers"><a href="#timers" class="headerlink" title="timers"></a>timers</h3><p>A timer specifies the <strong>threshold</strong> <em>after which</em> a provided callback <em>may be executed</em> rather than the <strong>exact</strong> time a person <em>wants it to be executed</em>. Timers callbacks will run as early as they can be scheduled after the specified amount of time has passed; however, Operating System scheduling or the running of other callbacks <strong>may delay</strong> them.</p>
-<p><strong>*Note</strong>: Technically, the <strong>poll</strong> phase controls when timers are executed.*</p>
-<p>For example, say you schedule a timeout to execute after a 100 ms threshold, then your script starts asynchronously reading a file which takes 95 ms:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">const fs = require(&apos;fs&apos;);</span><br><span class="line"></span><br><span class="line">function someAsyncOperation(callback) &#123;</span><br><span class="line">  // Assume this takes 95ms to complete</span><br><span class="line">  fs.readFile(&apos;/path/to/file&apos;, callback);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">const timeoutScheduled = Date.now();</span><br><span class="line"></span><br><span class="line">setTimeout(() =&gt; &#123;</span><br><span class="line">  const delay = Date.now() - timeoutScheduled;</span><br><span class="line"></span><br><span class="line">  console.log(`$&#123;delay&#125;ms have passed since I was scheduled`);</span><br><span class="line">&#125;, 100);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">// do someAsyncOperation which takes 95 ms to complete</span><br><span class="line">someAsyncOperation(() =&gt; &#123;</span><br><span class="line">  const startCallback = Date.now();</span><br><span class="line"></span><br><span class="line">  // do something that will take 10ms...</span><br><span class="line">  while (Date.now() - startCallback &lt; 10) &#123;</span><br><span class="line">    // do nothing</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>When the event loop enters the <strong>poll</strong> phase, it has an empty queue (<code>fs.readFile()</code> has not completed), so it will wait for the number of ms remaining until the soonest timer’s threshold is reached. While it is waiting 95 ms pass, <code>fs.readFile()</code> finishes reading the file and its callback which takes 10 ms to complete is added to the <strong>poll</strong> queue and executed. When the callback finishes, there are no more callbacks in the queue, so the event loop will see that the threshold of the soonest timer has been reached then wrap back to the <strong>timers</strong> phase to execute the timer’s callback. In this example, you will see that the total delay between the timer being scheduled and its callback being executed will be 105ms.</p>
-<p>Note: To prevent the <strong>poll</strong> phase from starving the event loop, <a href="http://libuv.org/" target="_blank" rel="noopener">libuv</a> (the C library that implements the Node.js event loop and all of the asynchronous behaviors of the platform) also has a hard maximum (system dependent) before it stops polling for more events.</p>
-<h3 id="pending-callbacks"><a href="#pending-callbacks" class="headerlink" title="pending callbacks"></a>pending callbacks</h3><p>This phase executes callbacks for some system operations such as types of TCP errors. For example if a TCP socket receives <code>ECONNREFUSED</code> when attempting to connect, some *nix systems want to wait to report the error. This will be queued to execute in the <strong>pending callbacks</strong> phase.</p>
-<h3 id="poll"><a href="#poll" class="headerlink" title="poll"></a>poll</h3><p>The <strong>poll</strong> phase has two main functions:</p>
-<ol>
-<li>Calculating how long it should block and poll for I/O, then</li>
-<li>Processing events in the <strong>poll</strong> queue.</li>
-</ol>
-<p>When the event loop enters the <strong>poll</strong> phase <em>and there are no timers scheduled</em>, one of two things will happen:</p>
-<ul>
-<li><em>If the **poll<strong> queue </strong>is not empty**</em>, the event loop will iterate through its queue of callbacks executing them synchronously until either the queue has been exhausted, or the system-dependent hard limit is reached.</li>
-<li><em>If the **poll<strong> queue </strong>is empty**</em>, one of two more things will happen:<ul>
-<li>If scripts have been scheduled by <code>setImmediate()</code>, the event loop will end the <strong>poll</strong> phase and continue to the <strong>check</strong> phase to execute those scheduled scripts.</li>
-<li>If scripts <strong>have not</strong> been scheduled by <code>setImmediate()</code>, the event loop will wait for callbacks to be added to the queue, then execute them immediately.</li>
-</ul>
-</li>
-</ul>
-<p>Once the <strong>poll</strong> queue is empty the event loop will check for timers <em>whose time thresholds have been reached</em>. If one or more timers are ready, the event loop will wrap back to the <strong>timers</strong> phase to execute those timers’ callbacks.</p>
-<h3 id="check"><a href="#check" class="headerlink" title="check"></a>check</h3><p>This phase allows a person to execute callbacks immediately after the <strong>poll</strong> phase has <strong>completed</strong>. If the <strong>poll</strong> phase becomes idle and scripts have been queued with <code>setImmediate()</code>, the event loop may continue to the <strong>check</strong> phase rather than waiting.</p>
-<p><code>setImmediate()</code> is actually a special timer that runs in a separate phase of the event loop. It uses a libuv API that schedules callbacks to execute after the <strong>poll</strong> phase has completed.</p>
-<p>Generally, as the code is executed, the event loop will eventually hit the <strong>poll</strong> phase where it will wait for an incoming connection, request, etc. However, if a callback has been scheduled with <code>setImmediate()</code> and the <strong>poll</strong> phase becomes idle, it will end and continue to the <strong>check</strong> phase rather than waiting for <strong>poll</strong> events.</p>
-<h3 id="close-callbacks"><a href="#close-callbacks" class="headerlink" title="close callbacks"></a>close callbacks</h3><p>If a socket or handle is closed abruptly (e.g. <code>socket.destroy()</code>), the <code>&#39;close&#39;</code> event will be emitted in this phase. Otherwise it will be emitted via <code>process.nextTick()</code>.</p>
-<h2 id="setImmediate-vs-setTimeout"><a href="#setImmediate-vs-setTimeout" class="headerlink" title="setImmediate() vs setTimeout()"></a><code>setImmediate()</code> vs <code>setTimeout()</code></h2><p><code>setImmediate</code> and <code>setTimeout()</code> are similar, but behave in different ways depending on when they are called.</p>
-<ul>
-<li><code>setImmediate()</code> is designed to execute a script once the current <strong>poll</strong> phase <strong>completes</strong>.</li>
-<li><code>setTimeout()</code> schedules a script to be run after a minimum threshold in ms has elapsed.</li>
-</ul>
-<p>The order in which the timers are executed will vary depending on the context in which they are called. If both are called from within the main module, then timing will be bound by the performance of the process (which can be impacted by other applications running on the machine).</p>
-<p>For example, if we run the following script which is not within an I/O cycle (i.e. the main module), the order in which the two timers are executed is <strong>non-deterministic</strong>, as it is bound by the performance of the process:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">// timeout_vs_immediate.js</span><br><span class="line">setTimeout(() =&gt; &#123;</span><br><span class="line">  console.log(&apos;timeout&apos;);</span><br><span class="line">&#125;, 0);</span><br><span class="line"></span><br><span class="line">setImmediate(() =&gt; &#123;</span><br><span class="line">  console.log(&apos;immediate&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ node timeout_vs_immediate.js</span><br><span class="line">timeout</span><br><span class="line">immediate</span><br><span class="line"></span><br><span class="line">$ node timeout_vs_immediate.js</span><br><span class="line">immediate</span><br><span class="line">timeout</span><br></pre></td></tr></table></figure>
-<p>However, if you move the two calls within an I/O cycle, the immediate callback is always executed <strong>first</strong>:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">// timeout_vs_immediate.js</span><br><span class="line">const fs = require(&apos;fs&apos;);</span><br><span class="line"></span><br><span class="line">fs.readFile(__filename, () =&gt; &#123;</span><br><span class="line">  setTimeout(() =&gt; &#123;</span><br><span class="line">    console.log(&apos;timeout&apos;);</span><br><span class="line">  &#125;, 0);</span><br><span class="line">  setImmediate(() =&gt; &#123;</span><br><span class="line">    console.log(&apos;immediate&apos;);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ node timeout_vs_immediate.js</span><br><span class="line">immediate</span><br><span class="line">timeout</span><br><span class="line"></span><br><span class="line">$ node timeout_vs_immediate.js</span><br><span class="line">immediate</span><br><span class="line">timeout</span><br></pre></td></tr></table></figure>
-<p>The main advantage to using <code>setImmediate()</code> over <code>setTimeout()</code> is <code>setImmediate()</code>will always be executed before any timers if scheduled within an I/O cycle, independently of how many timers are present.</p>
-<h2 id="process-nextTick"><a href="#process-nextTick" class="headerlink" title="process.nextTick()"></a><code>process.nextTick()</code></h2><h3 id="Understanding-process-nextTick"><a href="#Understanding-process-nextTick" class="headerlink" title="Understanding process.nextTick()"></a>Understanding <code>process.nextTick()</code></h3><p>You may have noticed that <code>process.nextTick()</code> was not displayed in the diagram, even though it’s a part of the asynchronous API. This is because <code>process.nextTick()</code> is not technically part of the event loop. Instead, the <code>nextTickQueue</code> will be processed after the current operation completes, regardless of the current phase of the event loop.</p>
-<p>Looking back at our diagram, any time you call <code>process.nextTick()</code> in a given phase, all callbacks passed to <code>process.nextTick()</code> will be resolved <strong>before</strong> the event loop continues. This can create some bad situations because <strong>it allows you to “starve” your I/O by making recursive process.nextTick() calls</strong>, which prevents the event loop from reaching the <strong>poll</strong> phase.</p>
-<h3 id="Why-would-that-be-allowed"><a href="#Why-would-that-be-allowed" class="headerlink" title="Why would that be allowed?"></a>Why would that be allowed?</h3><p>Why would something like this be included in Node.js? Part of it is a design philosophy where an API should always be asynchronous even where it doesn’t have to be. Take this code snippet for example:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">function apiCall(arg, callback) &#123;</span><br><span class="line">  if (typeof arg !== &apos;string&apos;)</span><br><span class="line">    return process.nextTick(callback,</span><br><span class="line">                            new TypeError(&apos;argument should be string&apos;));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>The snippet does an argument check and if it’s not correct, it will pass the error to the callback. The API updated fairly recently to allow passing arguments to <code>process.nextTick()</code> allowing it to take any arguments passed after the callback to be propagated as the arguments to the callback so you don’t have to nest functions.</p>
-<p>What we’re doing is passing an error back to the user but only <em>after</em> we have allowed the rest of the user’s code to execute. By using <code>process.nextTick()</code> we guarantee that <code>apiCall()</code> always runs its callback <em>after</em> the rest of the user’s code and <em>before</em> the event loop is allowed to proceed. To achieve this, the JS call stack is allowed to unwind then immediately execute the provided callback which allows a person to make recursive calls to <code>process.nextTick()</code> without reaching a <code>RangeError: Maximum call stack size exceeded from v8</code>.</p>
-<p>This philosophy can lead to some potentially problematic situations. Take this snippet for example:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">let bar;</span><br><span class="line"></span><br><span class="line">// this has an asynchronous signature, but calls callback synchronously</span><br><span class="line">function someAsyncApiCall(callback) &#123; callback(); &#125;</span><br><span class="line"></span><br><span class="line">// the callback is called before `someAsyncApiCall` completes.</span><br><span class="line">someAsyncApiCall(() =&gt; &#123;</span><br><span class="line">  // since someAsyncApiCall has completed, bar hasn&apos;t been assigned any value</span><br><span class="line">  console.log(&apos;bar&apos;, bar); // undefined</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">bar = 1;</span><br></pre></td></tr></table></figure>
-<p>The user defines <code>someAsyncApiCall()</code> to have an asynchronous signature, but it actually operates synchronously. When it is called, the callback provided to <code>someAsyncApiCall()</code>is called in the same phase of the event loop because <code>someAsyncApiCall()</code> doesn’t actually do anything asynchronously. As a result, the callback tries to reference <code>bar</code> even though it may not have that variable in scope yet, because the script has not been able to run to completion.</p>
-<p>By placing the callback in a <code>process.nextTick()</code>, the script still has the ability to run to completion, allowing all the variables, functions, etc., to be initialized prior to the callback being called. It also has the advantage of not allowing the event loop to continue. It may be useful for the user to be alerted to an error before the event loop is allowed to continue. Here is the previous example using <code>process.nextTick()</code>:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">let bar;</span><br><span class="line"></span><br><span class="line">function someAsyncApiCall(callback) &#123;</span><br><span class="line">  process.nextTick(callback);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">someAsyncApiCall(() =&gt; &#123;</span><br><span class="line">  console.log(&apos;bar&apos;, bar); // 1</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">bar = 1;</span><br></pre></td></tr></table></figure>
-<p>Here’s another real world example:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">const server = net.createServer(() =&gt; &#123;&#125;).listen(8080);</span><br><span class="line"></span><br><span class="line">server.on(&apos;listening&apos;, () =&gt; &#123;&#125;);</span><br></pre></td></tr></table></figure>
-<p>When only a port is passed, the port is bound immediately. So, the <code>&#39;listening&#39;</code> callback could be called immediately. The problem is that the <code>.on(&#39;listening&#39;)</code> callback will not have been set by that time.</p>
-<p>To get around this, the <code>&#39;listening&#39;</code> event is queued in a <code>nextTick()</code> to allow the script to run to completion. This allows the user to set any event handlers they want.</p>
-<h2 id="process-nextTick-vs-setImmediate"><a href="#process-nextTick-vs-setImmediate" class="headerlink" title="process.nextTick() vs setImmediate()"></a><code>process.nextTick()</code> vs <code>setImmediate()</code></h2><p>We have two calls that are similar as far as users are concerned, but their names are confusing.</p>
-<ul>
-<li><code>process.nextTick()</code> fires immediately on the same phase</li>
-<li><code>setImmediate()</code> fires on the following iteration or ‘tick’ of the event loop</li>
-</ul>
-<p>In essence, the names should be swapped. <code>process.nextTick()</code> fires more immediately than <code>setImmediate()</code>, but this is an artifact of the past which is unlikely to change. Making this switch would break a large percentage of the packages on npm. Every day more new modules are being added, which means every day we wait, more potential breakages occur. While they are confusing, the names themselves won’t change.</p>
-<p><em>We recommend developers use setImmediate() in all cases because it’s easier to reason about (and it leads to code that’s compatible with a wider variety of environments, like browser JS.)</em></p>
-<h2 id="Why-use-process-nextTick"><a href="#Why-use-process-nextTick" class="headerlink" title="Why use process.nextTick()?"></a>Why use <code>process.nextTick()</code>?</h2><p>There are two main reasons:</p>
-<ol>
-<li>Allow users to handle errors, cleanup any then unneeded resources, or perhaps try the request again before the event loop continues.</li>
-<li>At times it’s necessary to allow a callback to run after the call stack has unwound but before the event loop continues.</li>
-</ol>
-<p>One example is to match the user’s expectations. Simple example:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">const server = net.createServer();</span><br><span class="line">server.on(&apos;connection&apos;, (conn) =&gt; &#123; &#125;);</span><br><span class="line"></span><br><span class="line">server.listen(8080);</span><br><span class="line">server.on(&apos;listening&apos;, () =&gt; &#123; &#125;);</span><br></pre></td></tr></table></figure>
-<p>Say that <code>listen()</code> is run at the beginning of the event loop, but the listening callback is placed in a <code>setImmediate()</code>. Unless a hostname is passed, binding to the port will happen immediately. For the event loop to proceed, it must hit the <strong>poll</strong> phase, which means there is a non-zero chance that a connection could have been received allowing the connection event to be fired before the listening event.</p>
-<p>Another example is running a function constructor that was to, say, inherit from <code>EventEmitter</code> and it wanted to call an event within the constructor:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">const EventEmitter = require(&apos;events&apos;);</span><br><span class="line">const util = require(&apos;util&apos;);</span><br><span class="line"></span><br><span class="line">function MyEmitter() &#123;</span><br><span class="line">  EventEmitter.call(this);</span><br><span class="line">  this.emit(&apos;event&apos;);</span><br><span class="line">&#125;</span><br><span class="line">util.inherits(MyEmitter, EventEmitter);</span><br><span class="line"></span><br><span class="line">const myEmitter = new MyEmitter();</span><br><span class="line">myEmitter.on(&apos;event&apos;, () =&gt; &#123;</span><br><span class="line">  console.log(&apos;an event occurred!&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>You can’t emit an event from the constructor immediately because the script will not have processed to the point where the user assigns a callback to that event. So, within the constructor itself, you can use <code>process.nextTick()</code> to set a callback to emit the event after the constructor has finished, which provides the expected results:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">const EventEmitter = require(&apos;events&apos;);</span><br><span class="line">const util = require(&apos;util&apos;);</span><br><span class="line"></span><br><span class="line">function MyEmitter() &#123;</span><br><span class="line">  EventEmitter.call(this);</span><br><span class="line"></span><br><span class="line">  // use nextTick to emit the event once a handler is assigned</span><br><span class="line">  process.nextTick(() =&gt; &#123;</span><br><span class="line">    this.emit(&apos;event&apos;);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br><span class="line">util.inherits(MyEmitter, EventEmitter);</span><br><span class="line"></span><br><span class="line">const myEmitter = new MyEmitter();</span><br><span class="line">myEmitter.on(&apos;event&apos;, () =&gt; &#123;</span><br><span class="line">  console.log(&apos;an event occurred!&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="https://nodejs.org/en/docs/guides/event-loop-timers-and-nexttick/#the-node-js-event-loop-timers-and-process-nexttick" target="_blank" rel="noopener">https://nodejs.org/en/docs/guides/event-loop-timers-and-nexttick/#the-node-js-event-loop-timers-and-process-nexttick</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2016-07-31T07:45:21.000Z"><a href="/2016/07/31/Angular/AngularJS简介/">2016-07-31</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2016/07/31/Angular/AngularJS简介/">一.简介</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-AugularJS简介"><a href="#1-AugularJS简介" class="headerlink" title="1.AugularJS简介"></a>1.AugularJS简介</h3><hr>
-<p>AngularJS 是一个为动态WEB应用设计的结构框架，提供给大家一种新的开发应用方式，这种方式可以让你扩展HTML的语法，以弥补在构建动态WEB应用时静态文本的不足，从而在web应用程序中使用HTML声明动态内容。</p>
-<p>AngularJS有五个主要核心特性，如下介绍：</p>
-<ul>
-<li><p>双向数据绑定 —— 实现了把model与view完全绑定在一起，model变化，view也变化，反之亦然。</p>
-</li>
-<li><p>模板 —— 在AngularJS中，模板相当于HTML文件被浏览器解析到DOM中，AngularJS遍历这些DOM，也就是说AuguarJS把模板当做DOM来操作，去生成一些指令来完成对view的数据绑定。</p>
-</li>
-<li><p>MVVM —— 吸收了传统的MVC设计模式针但又并不执行传统意义上的MVC，更接近于MVVM(Moodel-View-ViewModel)。</p>
-</li>
-<li><p>依赖注入 —— AngularJS拥有内建的依赖注入子系统，可以帮助开发人员更容易的开发，理解和测试应用。</p>
-</li>
-<li><p>指令 —— 可以用来创建自定义的标签，也可以用来装饰元素或者操作DOM属性</p>
-</li>
-</ul>
-<h3 id="2-引入AngularJS脚本"><a href="#2-引入AngularJS脚本" class="headerlink" title="2.引入AngularJS脚本"></a>2.引入AngularJS脚本</h3><hr>
-<p>认识了AngularJS框架，我们开始创建第一个AngularJS应用。</p>
-<p>AngularJS是以一个JavaScript文件形式发布的，可通过script标签载入AngularJS脚本，如下所示：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;script src=&quot;http://code.angularjs.org/angular-1.0.1.min.js&quot;&gt;&lt;/script&gt;</span><br></pre></td></tr></table></figure>
-<p>完整的html代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&lt;!doctype html&gt;</span><br><span class="line">&lt;html ng-app&gt;</span><br><span class="line">    &lt;head&gt;</span><br><span class="line">        &lt;script src=&quot;http://code.angularjs.org/angular-1.0.1.min.js&quot;&gt;&lt;/script&gt;</span><br><span class="line">    &lt;/head&gt;</span><br><span class="line">    &lt;body&gt;</span><br><span class="line">        Hello &#123;&#123;&apos;World&apos;&#125;&#125;!</span><br><span class="line">    &lt;/body&gt;</span><br><span class="line">&lt;/html&gt;</span><br></pre></td></tr></table></figure></p>
-<p>请在您的浏览器中运行以上代码查看效果。 </p>
-<h3 id="3-AngularJS指令"><a href="#3-AngularJS指令" class="headerlink" title="3.AngularJS指令"></a>3.AngularJS指令</h3><hr>
-<p>AngularJS有一套完整的、可扩展的、用来帮助web应用开发的指令集，它使得HTML可以转变成“特定领域语言(DSL)”，是用来扩展浏览器能力的技术之一，在DOM编译期间，和HTML关联着的指令会被检测到，并且被执行，这使得指令可以为DOM指定行为，或者改变它。</p>
-<p>AngularJS通过称为指令的新属性来扩展的HTML，带有前缀ng-，我们也可以称之为“指令属性”，它就是绑定在DOM元素上的函数，可以调用方法、定义行为、绑定controller及$scope对象、操作DOM，等等。</p>
-<p>AngularJS指令指示的是“当关联的HTML结构进入编译阶段时应该执行的操作”，它本质上只是一个当编译器编译到相关DOM时需要执行的函数，可以写在元素的名称里，属性里，css类名里，注释里。</p>
-<p>当浏览器启动、开始解析HTML时，DOM元素上的指令属性就会跟其他属性一样被解析，也就是说当一个Angular.js应用启动，Angular编译器就会遍历DOM树来解析HTML，寻找这些指令属性函数，在一个DOM元素上找到一个或多个这样的指令属性函数，它们就会被收集起来、排序，然后按照优先级顺序被执行。</p>
-<p>Angular.js应用的动态性和响应能力，都要归功于指令属性，常见的有：ng-app、ng-init、ng-model、ng-bind、ng-repeat等等。</p>
-<h3 id="4-指令：ng-app"><a href="#4-指令：ng-app" class="headerlink" title="4.指令：ng-app"></a>4.指令：ng-app</h3><hr>
-<p>ng-app指令来标明一个AngularJS应用程序，并通过AngularJS完成自动初始化应用和标记应用根作用域，同时载入和指令内容相关的模块，并通过拥有ng-app指令的标签为根节点开始编译其中的DOM。</p>
-<p>引用方法很简单，如下所示：</p>
-<pre><code>&lt;div ng-app=&quot;&quot;&gt;
-&lt;/div&gt;  
-</code></pre><p>如上引用，一个AngularJS应用程序初始化就完成了并标记了作用域，也就是div元素就是AngularJS应用程序的所有者，在它里面的指令也就会被Angular编译器所编译、解析了。</p>
-<h3 id="5-指令：ng-init"><a href="#5-指令：ng-init" class="headerlink" title="5.指令：ng-init"></a>5.指令：ng-init</h3><hr>
-<p>g-init指令初始化应用程序数据，也就是为AngularJS应用程序定义初始值，通常情况下，我们会使用一个控制器或模块来代替它，后面我们会介绍有关控制器和模块的知识。</p>
-<p>如下所示，我们为应用程序变量name赋定初始值。</p>
-<pre><code>&lt;div ng-app=&quot;&quot; ng-init=&quot;name=&apos;Hello World&apos;&quot;&gt;
-&lt;/div&gt;
-</code></pre><p>我们不仅可以赋值字符串，也可以赋值为数字、数组、对象，而且可以为多个变量赋初始值，如下所示：</p>
-<pre><code>&lt;div ng-app=&quot;&quot; ng-init=&quot;quantity=1;price=5&quot;&gt;
-&lt;/div&gt;
-</code></pre><p>//或者</p>
-<pre><code>&lt;div ng-app=&quot;&quot; ng-init=&quot;names=[&apos;Tom&apos;,&apos;Jerry&apos;,&apos;Gaffey&apos;]&quot;&gt;
-&lt;/div&gt;
-</code></pre><h3 id="6-数据绑定：表达式"><a href="#6-数据绑定：表达式" class="headerlink" title="6.数据绑定：表达式"></a>6.数据绑定：表达式</h3><hr>
-<p>AngularJS框架的核心功能之一 —— 数据绑定，由两个花括号组成，可以把数据绑定到HTML，类似Javascript代码片段，可以包含文字、运算符和变量，通常在绑定数据中用到，表达式可以绑定数字、字符串、对象、数组，写在双大括号内。</p>
-<p>如前面的示例，我们就可以使用表达式这样调用初始化的变量值，如下。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;div ng-app=&quot;&quot; ng-init=&quot;name=&apos;Hello World&apos;&quot;&gt;</span><br><span class="line"> 		&#123;&#123; name &#125;&#125;</span><br><span class="line">&lt;/div&gt;</span><br></pre></td></tr></table></figure></p>
-<p>当然我们也可以使用表达式输出数字、数组等等，如下所示：<br>2.1. 输出数字，如下示例：</p>
-<pre><code>&lt;div ng-app=&quot;&quot; ng-init=&quot;quantity=12;price=5&quot;&gt;
-    总价： {{ quantity * price }}
-&lt;/div&gt;
-</code></pre><p>2.2. 输出对象，如下示例：</p>
-<pre><code>&lt;div ng-app=&quot;&quot; ng-init=&quot;names=[&apos;Tom&apos;,&apos;Jerry&apos;,&apos;Gaffey&apos;]&quot;&gt;
-    名字为： {{ names[0] }}
-&lt;/div&gt;
-</code></pre><h3 id="7-指令：ng-model"><a href="#7-指令：ng-model" class="headerlink" title="7.指令：ng-model"></a>7.指令：ng-model</h3><hr>
-<p>在AngularJS中，只需要使用ng-model指令就可以把应用程序数据绑定到HTML元素，实现model和view的双向绑定。</p>
-<p>如下示例，使用ng-model指令对数据进行绑定。</p>
-<pre><code>&lt;div ng-app=&quot;&quot;&gt;
-    请输入任意值：&lt;input type=&quot;text&quot; ng-model=&quot;name&quot; /&gt;
-    你输入的为： {{ name }}
-&lt;/div&gt;
-</code></pre><p>ng-model把相关处理事件绑定到指定标签上，这样我们就可以不用在手工处理相关事件(比如change等)的条件下完成对数据的展现需求。</p>
-<h3 id="8-数据绑定：ng-bind"><a href="#8-数据绑定：ng-bind" class="headerlink" title="8.数据绑定：ng-bind"></a>8.数据绑定：ng-bind</h3><hr>
-<p>指令ng-bind和AngularJS表达式有异曲同工之妙，但不同之处就在于ng-bind是在angular解析渲染完毕后才将数据显示出来的。</p>
-<p>如下使用ng-bind指令绑定把应用程序数据。</p>
-<pre><code>&lt;div ng-app=&quot;&quot;&gt;
-        请输入一个名字：&lt;input type=&quot;text&quot; ng-model=&quot;name&quot; /&gt;
-        Hello &lt;span ng-bind=&quot;name&quot;&gt;&lt;/span&gt;
-&lt;/div&gt;
-</code></pre><p>PS：使用花括号语法时，因为浏览器需要首先加载页面，渲染它，然后AngularJS才能把它解析成你期望看到的内容，所以对于首个页面中的数据绑定操作，建议采用ng-bind，以避免其未被渲染的模板被用户看到。</p>
-<h3 id="9-指令：ng-click"><a href="#9-指令：ng-click" class="headerlink" title="9.指令：ng-click"></a>9.指令：ng-click</h3><hr>
-<p>AngularJS也有自己的HTML事件指令,比如说通过ng-click定义一个AngularJS单击事件。</p>
-<p>对按钮、链接等，我们都可以用ng-click指令属性来实现绑定，如下简单示例：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&lt;div ng-app=&quot;&quot; ng-init=&quot;click=false&quot;&gt;</span><br><span class="line">    &lt;button ng-click=&quot;click= !click&quot;&gt;隐藏/显示&lt;/button&gt;</span><br><span class="line">    &lt;div ng-hide=&quot;click&quot;&gt;</span><br><span class="line">        请输入一个名字：&lt;input type=&quot;text&quot; ng-model=&quot;name&quot; /&gt;</span><br><span class="line">        Hello &lt;span ng-bind=&quot;name&quot;&gt;&lt;/span&gt; </span><br><span class="line">    &lt;/div&gt;</span><br><span class="line">&lt;/div&gt;</span><br></pre></td></tr></table></figure></p>
-<p>PS：ng-hide=”true”，设置HTML元素不可见。</p>
-<p>ng-click指令将DOM元素的鼠标点击事件(即mousedown)绑定到一个方法上，当浏览器在该DOM元素上鼠标触发点击事件时，Angular就会调用相应的方法，是不是很简单方便呢！</p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -988,7 +915,7 @@
   
     <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
   
-    <li><a href="/tags/Node-js/">Node.js</a><small>1</small></li>
+    <li><a href="/tags/Node-js/">Node.js</a><small>2</small></li>
   
     <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>3</small></li>
   
@@ -998,7 +925,7 @@
   
     <li><a href="/tags/Node-js-异步编程/">Node.js_异步编程</a><small>3</small></li>
   
-    <li><a href="/tags/Node-js-模块/">Node.js_模块</a><small>1</small></li>
+    <li><a href="/tags/Node-js-模块/">Node.js_模块</a><small>2</small></li>
   
     <li><a href="/tags/Node-js-测试/">Node.js_测试</a><small>5</small></li>
   
