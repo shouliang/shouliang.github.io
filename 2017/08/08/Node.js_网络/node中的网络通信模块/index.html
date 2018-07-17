@@ -1,0 +1,319 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>node中网络通信模块 | shouliang&#39;s blog</title>
+  <meta name="author" content="shouliang">
+  
+  <meta name="description" content="Node">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="node中网络通信模块"/>
+  <meta property="og:site_name" content="shouliang&#39;s blog"/>
+
+  
+    <meta property="og:image" content=""/>
+  
+
+  <link href="/favicon.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="shouliang&#39;s blog" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+
+</head>
+
+
+<body>
+  <header id="header" class="inner"><div class="alignleft">
+  <h1><a href="/">shouliang&#39;s blog</a></h1>
+  <h2><a href="/"></a></h2>
+</div>
+<nav id="main-nav" class="alignright">
+  <ul>
+    
+      <li><a href="/">首页</a></li>
+    
+      <li><a href="/archives">归档</a></li>
+    
+      <li><a href="/about">关于</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+<div class="clearfix"></div></header>
+  <div id="content" class="inner">
+    <div id="main-col" class="alignleft"><div id="wrapper"><article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2017-08-08T14:16:53.000Z"><a href="/2017/08/08/Node.js_网络/node中的网络通信模块/">2017-08-08</a></time>
+      
+      
+  
+    <h1 class="title">node中网络通信模块</h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>目前，我们处于互联网时代，互联网产品百花齐放。例如，当打开浏览器，可以看到各种信息，浏览器是如何跟服务器进行通信的？当打开微信跟朋友聊天时，你是如何跟朋友进行消息传递的？这些都得靠网络进程之间的通信，都得依赖于socket。那什么是socket？node中有哪些跟网络通信有关的模块？这些问题是本文研究的重点。</p>
+<h2 id="1-Socket"><a href="#1-Socket" class="headerlink" title="1. Socket"></a>1. Socket</h2><p>Socket源于Unix，而Unix的基本哲学是『一些皆文件』，都可以用『打开open ==&gt; 读/写(read/write) ==&gt; 关闭(close)』模式来操作，Socket也可以采用这种方法进行理解。关于Socket，可以总结如下几点:</p>
+<ul>
+<li>可以实现底层通信，几乎所有的应用层都是通过socket进行通信的，因此『一切且socket』</li>
+<li>对TCP/IP协议进行封装，便于应用层协议调用，属于二者之间的中间抽象层</li>
+<li>各个语言都与相关实现，例如C、C++、node</li>
+<li>TCP/IP协议族中，传输层存在两种通用协议: TCP、UDP，两种协议不同，因为不同参数的socket实现过程也不一样</li>
+</ul>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/ipc_180717.jpg" alt=""></p>
+<h2 id="2-node中网络通信的架构实现"><a href="#2-node中网络通信的架构实现" class="headerlink" title="2. node中网络通信的架构实现"></a>2. node中网络通信的架构实现</h2><p>node中的模块，从两种语言实现角度来说，存在javscript、c++两部分，通过<code>process.binding</code>来建立关系。具体分析如下:</p>
+<ul>
+<li>标准的node模块有net、udp、dns、http、tls、https等</li>
+<li>V8是chrome的内核，提供了javascript解释运行功能，里面包含tcp_wrap.h、udp_wrap.h、tls_wrap.h等</li>
+<li>OpenSSL是基本的密码库，包括了MD5、SHA1、RSA等加密算法，构成了node标准模块中的<code>crypto</code></li>
+<li>cares模块用于DNS的解析</li>
+<li>libuv实现了跨平台的异步编程</li>
+<li>http_parser用于http的解析</li>
+</ul>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/socket_180717.png" alt=""></p>
+<h2 id="3-net使用"><a href="#3-net使用" class="headerlink" title="3. net使用"></a>3. net使用</h2><p><a href="https://nodejs.org/api/net.html" target="_blank" rel="noopener">net模块</a>是基于TCP协议的socket网路编程模块，http模块就是建立在该模块的基础上实现的，先来看看基本使用方法:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 创建socket服务器 server.js</span></span><br><span class="line"><span class="keyword">const</span> net = <span class="built_in">require</span>(<span class="string">'net'</span>)</span><br><span class="line"><span class="keyword">const</span> server = net.createServer();</span><br><span class="line">server.on(<span class="string">'connection'</span>, (socket) =&gt; &#123;</span><br><span class="line">  socket.pipe(process.stdout);</span><br><span class="line">  socket.write(<span class="string">'data from server'</span>);</span><br><span class="line">&#125;);</span><br><span class="line">server.listen(<span class="number">3000</span>, () =&gt; &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">`server is on <span class="subst">$&#123;<span class="built_in">JSON</span>.stringify(server.address())&#125;</span>`</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 创建socket客户端 client.js</span></span><br><span class="line"><span class="keyword">const</span> net = <span class="built_in">require</span>(<span class="string">'net'</span>);</span><br><span class="line"><span class="keyword">const</span> client = net.connect(&#123;<span class="attr">port</span>: <span class="number">3000</span>&#125;);</span><br><span class="line">client.on(<span class="string">'connect'</span>, () =&gt; &#123;</span><br><span class="line">  client.write(<span class="string">'data from client'</span>);</span><br><span class="line">&#125;);</span><br><span class="line">client.on(<span class="string">'data'</span>, (chunk) =&gt; &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(chunk.toString());</span><br><span class="line">  client.end();</span><br><span class="line">&#125;);</span><br><span class="line"><span class="comment">// 打开两个终端，分别执行`node server.js`、`node client.js`，可以看到客户端与服务器进行了数据通信。</span></span><br></pre></td></tr></table></figure>
+<p>使用<code>const server = net.createServer();</code>创建了server对象，那server对象有哪些特点:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// net.js</span></span><br><span class="line">exports.createServer = function(options, connectionListener) &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> Server(options, connectionListener);</span><br><span class="line">&#125;;</span><br><span class="line"><span class="function">function <span class="title">Server</span><span class="params">(options, connectionListener)</span> </span>&#123;</span><br><span class="line">  EventEmitter.call(<span class="keyword">this</span>);</span><br><span class="line">  ...</span><br><span class="line">  if (typeof connectionListener === 'function') &#123;</span><br><span class="line">    this.on('connection', connectionListener);</span><br><span class="line">  &#125;</span><br><span class="line">  ...</span><br><span class="line">  <span class="keyword">this</span>._handle = null;</span><br><span class="line">&#125;</span><br><span class="line">util.inherits(Server, EventEmitter);</span><br></pre></td></tr></table></figure>
+<p>上述代码可以分为几个点:</p>
+<ul>
+<li><code>createServer</code>就是一个语法糖，帮助new生成server对象</li>
+<li>server对象继承了EventEmitter，具有事件的相关方法</li>
+<li>_handle是server处理的句柄，属性值最终由c++部分的<code>TCP</code>、<code>Pipe</code>类创建</li>
+<li>connectionListener也是语法糖，作为connection事件的回调函数</li>
+</ul>
+<p>再来看看connectionListener事件的回调函数，里面包含一个<code>socket</code>对象，该对象是一个连接套接字，是个五元组(server_host、server_ip、protocol、client_host、client_ip)，相关实现如下:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">onconnection</span>(<span class="params">err, clientHandle</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  <span class="keyword">var</span> socket = <span class="keyword">new</span> Socket(&#123;</span><br><span class="line">    ...</span><br><span class="line">  &#125;);</span><br><span class="line">  ...</span><br><span class="line">  self.emit(<span class="string">'connection'</span>, socket);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>因为Socket是继承了<code>stream.Duplex</code>，所以Socket也是一个可读可写流，可以使用流的方法进行数据的处理。</p>
+<p>接下来就是很关键的端口监听(port)，这是server与client的主要区别，代码:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">Server.prototype.listen = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  listen(self, ip, port, addressType, backlog, fd, exclusive);</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">listen</span>(<span class="params">self, address, port, addressType, backlog, fd, exclusive</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  <span class="keyword">if</span> (!cluster) cluster = <span class="built_in">require</span>(<span class="string">'cluster'</span>);</span><br><span class="line">  <span class="keyword">if</span> (cluster.isMaster || exclusive) &#123;</span><br><span class="line">    self._listen2(address, port, addressType, backlog, fd);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  cluster._getServer(self, &#123;</span><br><span class="line">    ...</span><br><span class="line">  &#125;, cb);</span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">cb</span>(<span class="params">err, handle</span>) </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    self._handle = handle;</span><br><span class="line">    self._listen2(address, port, addressType, backlog, fd);</span><br><span class="line">    ...</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">Server.prototype._listen2 = <span class="function"><span class="keyword">function</span>(<span class="params">address, port, addressType, backlog, fd</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">this</span>._handle) &#123;</span><br><span class="line">    ...</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    ...</span><br><span class="line">    rval = createServerHandle(address, port, addressType, fd);</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">this</span>._handle = rval;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">this</span>._handle.onconnection = onconnection;</span><br><span class="line">  <span class="keyword">var</span> err = _listen(<span class="keyword">this</span>._handle, backlog);</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">_listen</span>(<span class="params">handle, backlog</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> handle.listen(backlog || <span class="number">511</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上述代码有几个点需要注意:</p>
+<ul>
+<li>监听的对象可以是端口、路径、定义好的server句柄、文件描述符</li>
+<li>当通过cluster创建工作进程(worker)时，exclusive判断是否进行socket连接的共享</li>
+<li>事件监听最终还是通过TCP/Pipe的listen来实现</li>
+<li>backlog规定了socket连接的限制，默认最多为511</li>
+</ul>
+<p>接下来分析下listen中最重要的<code>_handle</code>了，_handle决定了server的功能:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">function createServerHandle(address, port, addressType, fd) &#123;</span><br><span class="line">  ...</span><br><span class="line">  if (typeof fd === &apos;number&apos; &amp;&amp; fd &gt;= 0) &#123;</span><br><span class="line">    ...</span><br><span class="line">    handle = createHandle(fd);</span><br><span class="line">    ...</span><br><span class="line">  &#125; else if(port === -1 &amp;&amp; addressType === -1)&#123;</span><br><span class="line">    handle = new Pipe();</span><br><span class="line">  &#125; else &#123;</span><br><span class="line">    handle = new TCP();</span><br><span class="line">  &#125;</span><br><span class="line">  ...</span><br><span class="line">  return handle;</span><br><span class="line">&#125;</span><br><span class="line">function createHandle(fd) &#123;</span><br><span class="line">  var type = TTYWrap.guessHandleType(fd);</span><br><span class="line">  if (type === &apos;PIPE&apos;) return new Pipe();</span><br><span class="line">  if (type === &apos;TCP&apos;) return new TCP();</span><br><span class="line">  throw new TypeError(&apos;Unsupported fd type: &apos; + type);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>_handle</code>由C++中的Pipe、TCP实现，因而要想完全搞清楚node中的网络通信，必须深入到V8的源码里面。</p>
+<h2 id="4-UDP-dgram使用"><a href="#4-UDP-dgram使用" class="headerlink" title="4. UDP/dgram使用"></a>4. UDP/dgram使用</h2><p>跟net模块相比，基于UDP通信的dgram模块就简单了很多，因为不需要通过三次握手建立连接，所以整个通信的过程就简单了很多，对于数据准确性要求不太高的业务场景，可以使用该模块完成数据的通信。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// server端实现</span></span><br><span class="line"><span class="keyword">const</span> dgram = <span class="built_in">require</span>(<span class="string">'dgram'</span>);</span><br><span class="line"><span class="keyword">const</span> server = dgram.createSocket(<span class="string">'udp4'</span>);</span><br><span class="line">server.on(<span class="string">'message'</span>, (msg, addressInfo) =&gt; &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(addressInfo);</span><br><span class="line">  <span class="built_in">console</span>.log(msg.toString());</span><br><span class="line">  <span class="keyword">const</span> data = Buffer.from(<span class="string">'from server'</span>);</span><br><span class="line">  server.send(data, addressInfo.port);</span><br><span class="line">&#125;);</span><br><span class="line">server.bind(<span class="number">3000</span>, () =&gt; &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'server is on '</span>, server.address());</span><br><span class="line">&#125;);</span><br><span class="line"><span class="comment">// client端实现</span></span><br><span class="line"><span class="keyword">const</span> dgram = <span class="built_in">require</span>(<span class="string">'dgram'</span>);</span><br><span class="line"><span class="keyword">const</span> client = dgram.createSocket(<span class="string">'udp4'</span>);</span><br><span class="line"><span class="keyword">const</span> data = Buffer.from(<span class="string">'from client'</span>);</span><br><span class="line">client.send(data, <span class="number">3000</span>);</span><br><span class="line">client.on(<span class="string">'message'</span>, (msg, addressInfo) =&gt; &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(addressInfo);</span><br><span class="line">  <span class="built_in">console</span>.log(msg.toString());</span><br><span class="line">  client.close();</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>从源码层面分析上述代码的原理实现:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line">exports.createSocket = function(type, listener) &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> Socket(type, listener);</span><br><span class="line">&#125;;</span><br><span class="line"><span class="function">function <span class="title">Socket</span><span class="params">(type, listener)</span> </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  var handle = newHandle(type);</span><br><span class="line">  <span class="keyword">this</span>._handle = handle;</span><br><span class="line">  ...</span><br><span class="line">  this.on('message', listener);</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line">util.inherits(Socket, EventEmitter);</span><br><span class="line">const UDP = process.binding('udp_wrap').UDP;</span><br><span class="line"><span class="function">function <span class="title">newHandle</span><span class="params">(type)</span> </span>&#123;</span><br><span class="line">  if (type == 'udp4') &#123;</span><br><span class="line">    <span class="keyword">const</span> handle = <span class="keyword">new</span> UDP();</span><br><span class="line">    handle.lookup = lookup4;</span><br><span class="line">    <span class="keyword">return</span> handle;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  if (type == 'udp6') &#123;</span><br><span class="line">    <span class="keyword">const</span> handle = <span class="keyword">new</span> UDP();</span><br><span class="line">    handle.lookup = lookup6;</span><br><span class="line">    handle.bind = handle.bind6;</span><br><span class="line">    handle.send = handle.send6;</span><br><span class="line">    <span class="keyword">return</span> handle;</span><br><span class="line">  &#125;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line">Socket.prototype.bind = function(port_ <span class="comment">/*, address, callback*/</span>) &#123;</span><br><span class="line">  ...</span><br><span class="line">  startListening(self);</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line"><span class="function">function <span class="title">startListening</span><span class="params">(socket)</span> </span>&#123;</span><br><span class="line">  socket._handle.onmessage = onMessage;</span><br><span class="line">  socket._handle.recvStart();</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line"><span class="function">function <span class="title">onMessage</span><span class="params">(nread, handle, buf, rinfo)</span> </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  self.emit('message', buf, rinfo);</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line">Socket.prototype.send = function(buffer, offset, length, port, address, callback) &#123;</span><br><span class="line">  ...</span><br><span class="line">  self._handle.lookup(address, function afterDns(ex, ip) &#123;</span><br><span class="line">    doSend(ex, self, ip, <span class="built_in">list</span>, address, port, callback);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br><span class="line">const SendWrap = process.binding('udp_wrap').SendWrap;</span><br><span class="line"><span class="function">function <span class="title">doSend</span><span class="params">(ex, self, ip, <span class="built_in">list</span>, address, port, callback)</span> </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  var req = <span class="keyword">new</span> SendWrap();</span><br><span class="line">  ...</span><br><span class="line">  var err = self._handle.send(req, <span class="built_in">list</span>, <span class="built_in">list</span>.length, port, ip, !!callback);</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上述代码存在几个点需要注意:</p>
+<ul>
+<li>UDP模块没有继承stream，仅仅继承了EventEmit，后续的所有操作都是基于事件的方式</li>
+<li>UDP在创建的时候需要注意ipv4和ipv6</li>
+<li>UDP的_handle是由UDP类创建的</li>
+<li>通信过程中可能需要进行DNS查询，解析出ip地址，然后再进行其他操作</li>
+</ul>
+<h2 id="5-DNS使用"><a href="#5-DNS使用" class="headerlink" title="5. DNS使用"></a>5. DNS使用</h2><p>DNS(Domain Name System)用于域名解析，也就是找到host对应的ip地址，在计算机网络中，这个工作是由网络层的ARP协议实现。在node中存在<code>net</code>模块来完成相应功能，其中dns里面的函数分为两类:</p>
+<ul>
+<li>依赖底层操作系统实现域名解析，也就是我们日常开发中，域名的解析规则，可以回使用浏览器缓存、本地缓存、路由器缓存、dns服务器，该类仅有<code>dns.lookup</code></li>
+<li>该类的dns解析，直接到nds服务器执行域名解析</li>
+</ul>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> dns = <span class="built_in">require</span>(<span class="string">'dns'</span>);</span><br><span class="line"><span class="keyword">const</span> host = <span class="string">'bj.meituan.com'</span>;</span><br><span class="line">dns.lookup(host, (err, address, family) =&gt; &#123;</span><br><span class="line">  <span class="keyword">if</span> (err) &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(err);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'by net.lookup, address is: %s, family is: %s'</span>, address, family);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">dns.resolve(host, (err, address) =&gt; &#123;</span><br><span class="line">  <span class="keyword">if</span> (err) &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(err);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'by net.resolve, address is: %s'</span>, address);</span><br><span class="line">&#125;)</span><br><span class="line"><span class="comment">// by net.resolve, address is: 103.37.152.41</span></span><br><span class="line"><span class="comment">// by net.lookup, address is: 103.37.152.41, family is: 4</span></span><br></pre></td></tr></table></figure>
+<p>在这种情况下，二者解析的结果是一样的，但是假如我们修改本地的/etc/hosts文件呢</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在/etc/host文件中，增加:</span></span><br><span class="line"><span class="number">10.10</span><span class="number">.10</span><span class="number">.0</span> bj.meituan.com</span><br><span class="line"></span><br><span class="line"><span class="comment">// 然后再执行上述文件，结果是:</span></span><br><span class="line">by net.resolve, address is: <span class="number">103.37</span><span class="number">.152</span><span class="number">.41</span></span><br><span class="line">by net.lookup, address is: <span class="number">10.10</span><span class="number">.10</span><span class="number">.0</span>, family is: <span class="number">4</span></span><br></pre></td></tr></table></figure>
+<p>接下来分析下dns的内部实现:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">const cares = process.binding('cares_wrap');</span><br><span class="line"><span class="keyword">const</span> GetAddrInfoReqWrap = cares.GetAddrInfoReqWrap;</span><br><span class="line">exports.lookup = function lookup(hostname, options, callback) &#123;</span><br><span class="line">  ...</span><br><span class="line">  callback = makeAsync(callback);</span><br><span class="line">  ...</span><br><span class="line">  var req = <span class="keyword">new</span> GetAddrInfoReqWrap();</span><br><span class="line">  req.callback = callback;</span><br><span class="line">  var err = cares.getaddrinfo(req, hostname, family, hints);</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">function <span class="title">resolver</span><span class="params">(bindingName)</span> </span>&#123;</span><br><span class="line">  var binding = cares[bindingName];</span><br><span class="line">  <span class="keyword">return</span> function query(name, callback) &#123;</span><br><span class="line">    ...</span><br><span class="line">    callback = makeAsync(callback);</span><br><span class="line">    var req = <span class="keyword">new</span> QueryReqWrap();</span><br><span class="line">    req.callback = callback;</span><br><span class="line">    var err = binding(req, name);</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">return</span> req;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">var resolveMap = Object.create(null);</span><br><span class="line">exports.resolve4 = resolveMap.A = resolver('queryA');</span><br><span class="line">exports.resolve6 = resolveMap.AAAA = resolver('queryAaaa');</span><br><span class="line">...</span><br><span class="line">exports.resolve = function(hostname, type_, callback_) &#123;</span><br><span class="line">  ...</span><br><span class="line">  resolver = resolveMap[type_];</span><br><span class="line">  <span class="keyword">return</span> resolver(hostname, callback);</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面的源码有几个点需要关注:</p>
+<ul>
+<li>lookup与resolve存在差异，使用的时候需要注意</li>
+<li>不管是lookup还是resolve，均依赖于cares库</li>
+<li>域名解析的type很多: resolve4、resolve6、resolveCname、resolveMx、resolveNs、resolveTxt、resolveSrv、resolvePtr、resolveNaptr、resolveSoa、reverse</li>
+</ul>
+<h2 id="6-HTTP使用"><a href="#6-HTTP使用" class="headerlink" title="6. HTTP使用"></a>6. HTTP使用</h2><p>在WEB开发中，HTTP作为最流行、最重要的应用层，是每个开发人员应该熟知的基础知识，我面试的时候必问的一块内容。同时，大多数同学接触node时，首先使用的恐怕就是http模块。先来一个简单的demo看看:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> http = <span class="built_in">require</span>(<span class="string">'http'</span>);</span><br><span class="line"><span class="keyword">const</span> server = http.createServer();</span><br><span class="line">server.on(<span class="string">'request'</span>, (req, res) =&gt; &#123;</span><br><span class="line">  res.setHeader(<span class="string">'foo'</span>, <span class="string">'test'</span>);</span><br><span class="line">  res.writeHead(<span class="number">200</span>, &#123;</span><br><span class="line">    <span class="string">'Content-Type'</span>: <span class="string">'text/html'</span>,</span><br><span class="line">  &#125;);</span><br><span class="line">  res.write(<span class="string">'&lt;!doctype&gt;'</span>);</span><br><span class="line">  res.end(<span class="string">`&lt;html&gt;&lt;/html&gt;`</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">server.listen(<span class="number">3000</span>, () =&gt; &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'server is on '</span>, server.address());</span><br><span class="line">  <span class="keyword">var</span> req = http.request(&#123; <span class="attr">host</span>: <span class="string">'127.0.0.1'</span>, <span class="attr">port</span>: <span class="number">3000</span>&#125;);</span><br><span class="line">  req.on(<span class="string">'response'</span>, (res) =&gt; &#123;</span><br><span class="line">    res.on(<span class="string">'data'</span>, (chunk) =&gt; <span class="built_in">console</span>.log(<span class="string">'data from server '</span>, chunk.toString()) );</span><br><span class="line">    res.on(<span class="string">'end'</span>, () =&gt; server.close() );</span><br><span class="line">  &#125;);</span><br><span class="line">  req.end();</span><br><span class="line">&#125;);</span><br><span class="line"><span class="comment">// 输出结果如下:</span></span><br><span class="line"><span class="comment">// server is on  &#123; address: '::', family: 'IPv6', port: 3000 &#125;</span></span><br><span class="line"><span class="comment">// data from server  &lt;!doctype&gt;</span></span><br><span class="line"><span class="comment">// data from server  &lt;html&gt;&lt;/html&gt;</span></span><br></pre></td></tr></table></figure>
+<p>针对上述demo，有很多值得深究的地方，一不注意服务就挂掉了，下面根据node的<a href="https://nodejs.org/api/http.html" target="_blank" rel="noopener">官方文档</a>，逐个进行研究。</p>
+<h3 id="6-1-http-Agent"><a href="#6-1-http-Agent" class="headerlink" title="6.1 http.Agent"></a>6.1 http.Agent</h3><p>因为HTTP协议是无状态协议，每个请求均需通过三次握手建立连接进行通信，众所周知三次握手、慢启动算法、四次挥手等过程很消耗时间，因此HTTP1.1协议引入了keep-alive来避免频繁的连接。那么对于tcp连接该如何管理呢？http.Agent就是做这个工作的。先看看源码中的关键部分:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Agent</span>(<span class="params">options</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  EventEmitter.call(<span class="keyword">this</span>);</span><br><span class="line">  ...</span><br><span class="line">  self.maxSockets = self.options.maxSockets || Agent.defaultMaxSockets;</span><br><span class="line">  self.maxFreeSockets = self.options.maxFreeSockets || <span class="number">256</span>;</span><br><span class="line">  ...</span><br><span class="line">  self.requests = &#123;&#125;; <span class="comment">// 请求队列</span></span><br><span class="line">  self.sockets = &#123;&#125;; <span class="comment">// 正在使用的tcp连接池</span></span><br><span class="line">  self.freeSockets = &#123;&#125;; <span class="comment">// 空闲的连接池</span></span><br><span class="line">  self.on(<span class="string">'free'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">socket, options</span>) </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// requests、sockets、freeSockets的读写操作</span></span><br><span class="line">    self.requests[name].shift().onSocket(socket);</span><br><span class="line">    freeSockets.push(socket);</span><br><span class="line">    ...</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">Agent.defaultMaxSockets = <span class="literal">Infinity</span>;</span><br><span class="line">util.inherits(Agent, EventEmitter);</span><br><span class="line"><span class="comment">// 关于socket的相关增删改查操作</span></span><br><span class="line">Agent.prototype.addRequest = <span class="function"><span class="keyword">function</span>(<span class="params">req, options</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  <span class="keyword">if</span> (freeLen) &#123;</span><br><span class="line">    <span class="keyword">var</span> socket = <span class="keyword">this</span>.freeSockets[name].shift();</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">this</span>.sockets[name].push(socket);</span><br><span class="line">    ...</span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span> (sockLen &lt; <span class="keyword">this</span>.maxSockets) &#123;</span><br><span class="line">    ...</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="keyword">this</span>.requests[name].push(req);</span><br><span class="line">  &#125;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line">Agent.prototype.createSocket = <span class="function"><span class="keyword">function</span>(<span class="params">req, options, cb</span>) </span>&#123; ... &#125;</span><br><span class="line">Agent.prototype.removeSocket = <span class="function"><span class="keyword">function</span>(<span class="params">s, options</span>) </span>&#123; ... &#125;</span><br><span class="line">exports.globalAgent = <span class="keyword">new</span> Agent();</span><br></pre></td></tr></table></figure>
+<p>上述代码有几个点需要注意:</p>
+<ul>
+<li>maxSockets默认情况下，没有tcp连接数量的上限(Infinity)</li>
+<li>连接池管理的核心是对<code>sockets</code>、<code>freeSockets</code>的增删查</li>
+<li>globalAgent会作为http.ClientRequest的默认agent</li>
+</ul>
+<p>下面可以测试下agent对请求本身的限制:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// req.js</span></span><br><span class="line"><span class="keyword">const</span> http = <span class="built_in">require</span>(<span class="string">'http'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> server = http.createServer();</span><br><span class="line">server.on(<span class="string">'request'</span>, (req, res) =&gt; &#123;</span><br><span class="line">  <span class="keyword">var</span> i=<span class="number">1</span>;</span><br><span class="line">  setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">    res.end(<span class="string">'ok '</span>, i++);</span><br><span class="line">  &#125;, <span class="number">1000</span>)</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">server.listen(<span class="number">3000</span>, () =&gt; &#123;</span><br><span class="line">  <span class="keyword">var</span> max = <span class="number">20</span>;</span><br><span class="line">  <span class="keyword">for</span>(<span class="keyword">var</span> i=<span class="number">0</span>; i&lt;max; i++) &#123;</span><br><span class="line">    <span class="keyword">var</span> req = http.request(&#123; <span class="attr">host</span>: <span class="string">'127.0.0.1'</span>, <span class="attr">port</span>: <span class="number">3000</span>&#125;);</span><br><span class="line">    req.on(<span class="string">'response'</span>, (res) =&gt; &#123;</span><br><span class="line">      res.on(<span class="string">'data'</span>, (chunk) =&gt; <span class="built_in">console</span>.log(<span class="string">'data from server '</span>, chunk.toString()) );</span><br><span class="line">      res.on(<span class="string">'end'</span>, () =&gt; server.close() );</span><br><span class="line">    &#125;);</span><br><span class="line">    req.end();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br><span class="line"><span class="comment">// 在终端中执行time node ./req.js，结果为:</span></span><br><span class="line"><span class="comment">// real  0m1.123s</span></span><br><span class="line"><span class="comment">// user  0m0.102s</span></span><br><span class="line"><span class="comment">// sys 0m0.024s</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 在req.js中添加下面代码</span></span><br><span class="line">http.globalAgent.maxSockets = <span class="number">5</span>;</span><br><span class="line"><span class="comment">// 然后同样time node ./req.js，结果为:</span></span><br><span class="line">real  <span class="number">0</span>m4<span class="number">.141</span>s</span><br><span class="line">user  <span class="number">0</span>m0<span class="number">.103</span>s</span><br><span class="line">sys <span class="number">0</span>m0<span class="number">.024</span>s</span><br></pre></td></tr></table></figure>
+<p>当设置maxSockets为某个值时，tcp的连接就会被限制在某个值，剩余的请求就会进入<code>requests</code>队列里面，等有空余的socket连接后，从request队列中出栈，发送请求。</p>
+<h3 id="6-2-http-ClientRequest"><a href="#6-2-http-ClientRequest" class="headerlink" title="6.2 http.ClientRequest"></a>6.2 http.ClientRequest</h3><p>当执行http.request时，会生成ClientRequest对象，该对象虽然没有直接继承Stream.Writable，但是继承了http.OutgoingMessage，而http.OutgoingMessage实现了write、end方法，因为可以当跟stream.Writable一样的使用。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> req = http.request(&#123; <span class="attr">host</span>: <span class="string">'127.0.0.1'</span>, <span class="attr">port</span>: <span class="number">3000</span>, <span class="attr">method</span>: <span class="string">'post'</span>&#125;);</span><br><span class="line">req.on(<span class="string">'response'</span>, (res) =&gt; &#123;</span><br><span class="line">  res.on(<span class="string">'data'</span>, (chunk) =&gt; <span class="built_in">console</span>.log(<span class="string">'data from server '</span>, chunk.toString()) );</span><br><span class="line">  res.on(<span class="string">'end'</span>, () =&gt; server.close() );</span><br><span class="line">&#125;);</span><br><span class="line"><span class="comment">// 直接使用pipe，在request请求中添加数据</span></span><br><span class="line">fs.createReadStream(<span class="string">'./data.json'</span>).pipe(req);</span><br></pre></td></tr></table></figure>
+<p>接下来，看看http.ClientRequest的实现, ClientRequest继承了OutgoingMessage:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> OutgoingMessage = <span class="built_in">require</span>(<span class="string">'_http_outgoing'</span>).OutgoingMessage;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">ClientRequest</span>(<span class="params">options, cb</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  OutgoingMessage.call(self);</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line">util.inherits(ClientRequest, OutgoingMessage);</span><br></pre></td></tr></table></figure>
+<h3 id="6-3-http-Server"><a href="#6-3-http-Server" class="headerlink" title="6.3 http.Server"></a>6.3 http.Server</h3><p>http.createServer其实就是创建了一个http.Server对象，关键源码如下:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">exports.createServer = <span class="function"><span class="keyword">function</span>(<span class="params">requestListener</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> Server(requestListener);</span><br><span class="line">&#125;;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Server</span>(<span class="params">requestListener</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  net.Server.call(<span class="keyword">this</span>, &#123; <span class="attr">allowHalfOpen</span>: <span class="literal">true</span> &#125;);</span><br><span class="line">  <span class="keyword">if</span> (requestListener) &#123;</span><br><span class="line">    <span class="keyword">this</span>.addListener(<span class="string">'request'</span>, requestListener);</span><br><span class="line">  &#125;</span><br><span class="line">  ...</span><br><span class="line">  <span class="keyword">this</span>.addListener(<span class="string">'connection'</span>, connectionListener);</span><br><span class="line">  <span class="keyword">this</span>.timeout = <span class="number">2</span> * <span class="number">60</span> * <span class="number">1000</span>;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line">util.inherits(Server, net.Server);</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">connectionListener</span>(<span class="params">socket</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  socket.on(<span class="string">'end'</span>, socketOnEnd);</span><br><span class="line">  socket.on(<span class="string">'data'</span>, socketOnData)</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>有几个需要要关注的点:</p>
+<ul>
+<li>服务的创建依赖于net.server，通过net.server在底层实现服务的创建</li>
+<li>默认情况下，服务的超时时间为2分钟</li>
+<li>connectionListener处理tcp连接后的行为，跟net保持一致</li>
+</ul>
+<h3 id="6-4-http-ServerResponse"><a href="#6-4-http-ServerResponse" class="headerlink" title="6.4 http.ServerResponse"></a>6.4 http.ServerResponse</h3><p>看node.org官方是如何介绍server端的response对象的:</p>
+<p>This object is created internally by an HTTP server–not by the user. It is passed as the second parameter to the ‘request’ event.</p>
+<p>The response implements, but does not inherit from, the Writable Stream interface.</p>
+<p>跟http.ClientRequest很像，继承了OutgoingMessage，没有继承Stream.Writable，但是实现了Stream的功能，可以跟Stream.Writable一样灵活使用:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">ServerResponse</span>(<span class="params">req</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  OutgoingMessage.call(<span class="keyword">this</span>);</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line">util.inherits(ServerResponse, OutgoingMessage);</span><br></pre></td></tr></table></figure>
+<h3 id="6-5-http-IncomingMessage"><a href="#6-5-http-IncomingMessage" class="headerlink" title="6.5 http.IncomingMessage"></a>6.5 http.IncomingMessage</h3><p>An IncomingMessage object is created by http.Server or http.ClientRequest and passed as the first argument to the ‘request’ and ‘response’ event respectively. It may be used to access response status, headers and data.</p>
+<p>http.IncomingMessage有两个地方时被内部创建，一个是作为server端的request，另外一个是作为client请求中的response，同时该类显示地继承了Stream.Readable。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">IncomingMessage</span>(<span class="params">socket</span>) </span>&#123;</span><br><span class="line">  Stream.Readable.call(<span class="keyword">this</span>);</span><br><span class="line">  <span class="keyword">this</span>.socket = socket;</span><br><span class="line">  <span class="keyword">this</span>.connection = socket;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line">util.inherits(IncomingMessage, Stream.Readable);</span><br></pre></td></tr></table></figure>
+<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="http://zhenhua-lee.github.io/node/socket.html" target="_blank" rel="noopener">http://zhenhua-lee.github.io/node/socket.html</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+  
+  <div class="tags">
+    <a href="/tags/Node-js-网络/">Node.js_网络</a>
+  </div>
+
+        
+  <div class="addthis addthis_toolbox addthis_default_style">
+    
+      <a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+    
+    
+      <a class="addthis_button_tweet"></a>
+    
+    
+      <a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+    
+    
+      <a class="addthis_button_pinterest_pinit" pi:pinit:layout="horizontal"></a>
+    
+    <a class="addthis_counter addthis_pill_style"></a>
+  </div>
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js"></script>
+
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">留言</h1>
+
+  
+      <div id="fb-root"></div>
+<script>
+  (function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=shouliang0816";
+    fjs.parentNode.insertBefore(js, fjs);
+  }(document, 'script', 'facebook-jssdk'));
+</script>
+
+<div class="fb-comments" data-href="https://shouliang.github.io/2017/08/08/Node.js_网络/node中的网络通信模块/index.html" data-num-posts="5" data-width="840" data-colorscheme="light"></div>
+      
+  
+</section>
+
+</div></div>
+    <aside id="sidebar" class="alignright">
+  <div class="search">
+  <form action="//google.com/search" method="get" accept-charset="utf-8">
+    <input type="search" name="q" results="0" placeholder="搜索">
+    <input type="hidden" name="q" value="site:shouliang.github.io">
+  </form>
+</div>
+
+  
+
+  
+<div class="widget tag">
+  <h3 class="title">标签</h3>
+  <ul class="entry">
+  
+    <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
+  
+    <li><a href="/tags/Git/">Git</a><small>7</small></li>
+  
+    <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
+  
+    <li><a href="/tags/Javascript/">Javascript</a><small>2</small></li>
+  
+    <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
+  
+    <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
+  
+    <li><a href="/tags/Node-js/">Node.js</a><small>2</small></li>
+  
+    <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>3</small></li>
+  
+    <li><a href="/tags/Node-js-事件/">Node.js_事件</a><small>4</small></li>
+  
+    <li><a href="/tags/Node-js-入门/">Node.js_入门</a><small>9</small></li>
+  
+    <li><a href="/tags/Node-js-异步编程/">Node.js_异步编程</a><small>3</small></li>
+  
+    <li><a href="/tags/Node-js-模块/">Node.js_模块</a><small>5</small></li>
+  
+    <li><a href="/tags/Node-js-测试/">Node.js_测试</a><small>5</small></li>
+  
+    <li><a href="/tags/Node-js-网络/">Node.js_网络</a><small>1</small></li>
+  
+    <li><a href="/tags/Node-js-进程/">Node.js_进程</a><small>2</small></li>
+  
+    <li><a href="/tags/Node-js-错误处理和调试/">Node.js_错误处理和调试</a><small>5</small></li>
+  
+    <li><a href="/tags/Unix/">Unix</a><small>3</small></li>
+  
+    <li><a href="/tags/express/">express</a><small>2</small></li>
+  
+    <li><a href="/tags/redis/">redis</a><small>2</small></li>
+  
+    <li><a href="/tags/shell/">shell</a><small>1</small></li>
+  
+    <li><a href="/tags/存储/">存储</a><small>3</small></li>
+  
+    <li><a href="/tags/安全/">安全</a><small>8</small></li>
+  
+    <li><a href="/tags/计算机网络/">计算机网络</a><small>1</small></li>
+  
+  </ul>
+</div>
+
+</aside>
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div class="alignleft">
+  
+  &copy; 2018 shouliang
+  
+</div>
+<div class="clearfix"></div></footer>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+</body>
+</html>
