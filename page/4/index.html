@@ -53,6 +53,152 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2016-04-15T14:16:53.000Z"><a href="/2016/04/15/Node.js_IO/Buffer那些事儿/">2016-04-15</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2016/04/15/Node.js_IO/Buffer那些事儿/">Buffer那些事儿</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>作为前端的JSer，是一件非常幸福的事情，因为在字符串上从来没有出现过任何纠结的问题。我们来看看PHP对字符串长度的判断结果：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;? php </span><br><span class="line">echo strlen(&quot;0123456789&quot;);     </span><br><span class="line">echo strlen(&quot;零一二三四五六七八九&quot;);     </span><br><span class="line">echo mb_strlen(&quot;零一二三四五六七八九&quot;, &quot;utf-8&quot;);      </span><br><span class="line">echo &quot;\n&quot;;</span><br></pre></td></tr></table></figure>
+<p>以上三行判断分别返回10、30、10。对于中国人而言，strlen这个方法对于Unicode的判断结果是非常让人疑惑。而看看JavaScript中对字符串长度的判断，就知道这个length属性对调用者而言是多么友好。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">console</span>.log(<span class="string">"0123456789"</span>.length); <span class="comment">// 10</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">"零一二三四五六七八九"</span>.length); <span class="regexp">/10</span></span><br><span class="line"><span class="regexp">console.log("\u00bd".length); /</span><span class="regexp">/ 1</span></span><br></pre></td></tr></table></figure>
+<p>尽管在计算机内部，一个中文字和一个英文字占用的字节位数是不同的，但对于用户而言，它们拥有相同的长度。我认为这是JavaScript中 String处理得精彩的一个点。正是由于这个原因，所有的数据从后端传输到前端被调用时，都是这般友好的字符串。所以对于前端工程师而言，他们是没有字 符串Buffer的概念的。如果你是一名前端工程师，那么从此在与Node.js打交道的过程中，一定要小心Buffer啦，因为它比传统的String 要调皮一点。</p>
+<h2 id="你该小心Buffer啦"><a href="#你该小心Buffer啦" class="headerlink" title="你该小心Buffer啦"></a>你该小心Buffer啦</h2><p>像许多计算机的技术一样，都是从国外传播过来的。那些以英文作为母语的传道者们应该没有考虑过英文以外的使用者，所以你有可能看到如下这样一段代码在向你描述如何在data事件中连接字符串。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> fs = <span class="built_in">require</span>(<span class="string">'fs'</span>);</span><br><span class="line"><span class="keyword">var</span> rs = fs.createReadStream(<span class="string">'testdata.md'</span>);</span><br><span class="line"><span class="keyword">var</span> data = <span class="string">''</span>;</span><br><span class="line">rs.on(<span class="string">"data"</span>, <span class="function"><span class="keyword">function</span> (<span class="params">trunk</span>)</span>&#123;</span><br><span class="line">    data += trunk;</span><br><span class="line">&#125;);</span><br><span class="line">rs.on(<span class="string">"end"</span>, <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(data);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>如果这个文件读取流读取的是一个纯英文的文件，这段代码是能够正常输出的。但是如果我们再改变一下条件，将每次读取的buffer大小变成一个奇数，以模拟一个字符被分配在两个trunk中的场景。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> rs = fs.createReadStream(<span class="string">'testdata.md'</span>, &#123;<span class="attr">bufferSize</span>: <span class="number">11</span>&#125;);</span><br></pre></td></tr></table></figure>
+<p>我们将会得到以下这样的乱码输出：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">事件循���和请求���象构成了Node.js���异步I/O模型的���个基本���素，这也是典���的消费���生产者场景。</span><br></pre></td></tr></table></figure>
+<p>造成这个问题的根源在于data += trunk语句里隐藏的错误，在默认的情况下，trunk是一个Buffer对象。这句话的实质是隐藏了toString的变换的：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">data = data.toString() + trunk.toString();</span><br></pre></td></tr></table></figure>
+<p>由于汉字不是用一个字节来存储的，导致有被截破的汉字的存在，于是出现乱码。解决这个问题有一个简单的方案，是设置编码集：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> rs = fs.createReadStream(<span class="string">'testdata.md'</span>, &#123;<span class="attr">encoding</span>: <span class="string">'utf-8'</span>, <span class="attr">bufferSize</span>: <span class="number">11</span>&#125;);</span><br></pre></td></tr></table></figure>
+<p>这将得到一个正常的字符串响应：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">事件循环和请求对象构成了Node.js的异步I/O模型的两个基本元素，这也是典型的消费者生产者场景。</span><br></pre></td></tr></table></figure>
+<p>遗憾的是目前Node.js仅支持hex、utf8、ascii、binary、base64、ucs2几种编码的转换。对于那些因为历史遗留问题依旧还生存着的GBK，GB2312等编码，该方法是无能为力的。</p>
+<h2 id="有趣的string-decoder"><a href="#有趣的string-decoder" class="headerlink" title="有趣的string_decoder"></a>有趣的string_decoder</h2><p>在这个例子中，如果仔细观察，会发现一件有趣的事情发生在设置编码集之后。我们提到data += trunk等价于data = data.toString() + trunk.toString()。通过以下的代码可以测试到一个汉字占用三个字节，而我们按11个字节来截取trunk的话，依旧会存在一个汉字被分割在两个trunk中的情景。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">console</span>.log(<span class="string">"事件循环和请求对象"</span>.length);</span><br><span class="line"><span class="built_in">console</span>.log(<span class="keyword">new</span> Buffer(<span class="string">"事件循环和请求对象"</span>).length);</span><br></pre></td></tr></table></figure>
+<p>按照猜想的toString()方式，应该返回的是事件循xxx和请求xxx象才对，其中“环”字应该变成乱码才对，但是在设置了encoding（默认的utf8）之后，结果却正常显示了，这个结果十分有趣。</p>
+<p>在好奇心的驱使下可以探查到<a href="https://github.com/joyent/node/blob/master/lib/fs.js#L1237" target="_blank" rel="noopener">data事件</a>调用了string_decoder来进行编码补足的行为。通过string_decoder对象输出第一个截取Buffer(事件循xx)时，只返回事件循这个字符串，保留xx。第二次通过string_decoder对象输出时检测到上次保留的xx，将上次剩余内容和本次的Buffer进行重新拼接输出。于是达到正常输出的目的。</p>
+<p>string_decoder，目前在文件流读取和网络流读取中都有应用到，一定程度上避免了粗鲁拼接trunk导致的乱码错误。但是，遗憾在于string_decoder目前只支持utf8编码。它的思路其实还可以扩展到其他编码上，只是最终是否会支持目前尚不可得知。</p>
+<h2 id="连接Buffer对象的正确方法"><a href="#连接Buffer对象的正确方法" class="headerlink" title="连接Buffer对象的正确方法"></a>连接Buffer对象的正确方法</h2><p>那么万能的适应各种编码而且正确的拼接Buffer对象的方法是什么呢？我们从Node.js在github上的源码中找出这样一段<a href="https://github.com/joyent/node/blob/master/lib/fs.js#L107" target="_blank" rel="noopener">正确读取文件，并连接buffer对象的方法</a>：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> buffers = [];</span><br><span class="line"><span class="keyword">var</span> nread = <span class="number">0</span>;</span><br><span class="line">readStream.on(<span class="string">'data'</span>, <span class="function"><span class="keyword">function</span> (<span class="params">chunk</span>) </span>&#123;</span><br><span class="line">    buffers.push(chunk);</span><br><span class="line">    nread += chunk.length;</span><br><span class="line">&#125;);</span><br><span class="line">readStream.on(<span class="string">'end'</span>, <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> buffer = <span class="literal">null</span>;</span><br><span class="line">    <span class="keyword">switch</span>(buffers.length) &#123;</span><br><span class="line">        <span class="keyword">case</span> <span class="number">0</span>: buffer = <span class="keyword">new</span> Buffer(<span class="number">0</span>);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> <span class="number">1</span>: buffer = buffers[<span class="number">0</span>];</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">            buffer = <span class="keyword">new</span> Buffer(nread);</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">var</span> i = <span class="number">0</span>, pos = <span class="number">0</span>, l = buffers.length; i &lt; l; i++) &#123;</span><br><span class="line">                <span class="keyword">var</span> chunk = buffers[i];</span><br><span class="line">                chunk.copy(buffer, pos);</span><br><span class="line">                pos += chunk.length;</span><br><span class="line">            &#125;</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>在end事件中通过细腻的连接方式，最后拿到理想的Buffer对象。这时候无论是在支持的编码之间转换，还是在不支持的编码之间转换（利用iconv模块转换），都不会导致乱码。</p>
+<h2 id="简化连接Buffer对象的过程"><a href="#简化连接Buffer对象的过程" class="headerlink" title="简化连接Buffer对象的过程"></a>简化连接Buffer对象的过程</h2><p>上述一大段代码仅只完成了一件事情，就是连接多个Buffer对象，而这种场景需求将会在多个地方发生，所以，采用一种更优雅的方式来完成该过程是必要的。笔者基于以上的代码封装出一个bufferhelper模块，用于更简洁地处理Buffer对象。可以通过NPM进行安装：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install bufferhelper</span><br></pre></td></tr></table></figure>
+<p>下面的例子演示了如何调用这个模块。与传统data += trunk之间只是bufferHelper.concat(chunk)的差别，既避免了错误的出现，又使得代码可以得到简化而有效地编写。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> http = <span class="built_in">require</span>(<span class="string">'http'</span>);  </span><br><span class="line"><span class="keyword">var</span> BufferHelper = <span class="built_in">require</span>(<span class="string">'bufferhelper'</span>);</span><br><span class="line">http.createServer(<span class="function"><span class="keyword">function</span> (<span class="params">request, response</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> bufferHelper = <span class="keyword">new</span> BufferHelper();</span><br><span class="line">    request.on(<span class="string">"data"</span>, <span class="function"><span class="keyword">function</span> (<span class="params">chunk</span>) </span>&#123;</span><br><span class="line">    bufferHelper.concat(chunk);</span><br><span class="line">    &#125;);</span><br><span class="line">    request.on(<span class="string">'end'</span>, <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> html = bufferHelper.toBuffer().toString();</span><br><span class="line">    response.writeHead(<span class="number">200</span>);</span><br><span class="line">    response.end(html);</span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">&#125;).listen(<span class="number">8001</span>);</span><br></pre></td></tr></table></figure>
+<p>所以关于Buffer对象的操作的最佳实践是：</p>
+<ul>
+<li>保持编码不变，以利于后续编码转换</li>
+<li>使用封装方法达到简洁代码的目的</li>
+</ul>
+<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="http://www.infoq.com/cn/articles/nodejs-about-buffer" target="_blank" rel="noopener">http://www.infoq.com/cn/articles/nodejs-about-buffer</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2016-04-12T14:16:53.000Z"><a href="/2016/04/12/Node.js_错误处理和调试/动态修改NodeJS程序中的变量值/">2016-04-12</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2016/04/12/Node.js_错误处理和调试/动态修改NodeJS程序中的变量值/">动态修改Node程序中的变量值</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h2 id="启动一个-HTTP-Server"><a href="#启动一个-HTTP-Server" class="headerlink" title="启动一个 HTTP Server"></a>启动一个 HTTP Server</h2><p>用简单的 Hello World 做例子吧，不过略作修改。在 <code>global</code> 下放一个变量 <code>message</code>， 然后打印出来：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// message content will be modified !</span></span><br><span class="line">global.message = <span class="string">"hello world!"</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> server = <span class="built_in">require</span>(<span class="string">'http'</span>).createServer(<span class="function"><span class="keyword">function</span> (<span class="params">req, res</span>) </span>&#123;</span><br><span class="line">  res.end(global.message);</span><br><span class="line">&#125;).listen(<span class="number">8001</span>);</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'pid = %d'</span>, process.pid);</span><br></pre></td></tr></table></figure>
+<p>用命令启动 Server，此时，通过用浏览器访问 <code>http://localhost:8001</code> 可以看到网页内容是 <code>hello world!</code>。 接下来我们将尝试在不改变代码，不重启进程的情况下把 <code>message</code> 换成 “hello bugs!”。</p>
+<h2 id="使-Server-进程进入-Debug-模式"><a href="#使-Server-进程进入-Debug-模式" class="headerlink" title="使 Server 进程进入 Debug 模式"></a>使 Server 进程进入 Debug 模式</h2><p>V8 引擎在实现的时候留了 Debugger 接口。 通过命令 <code>node --debug-brk=5858 [filename]</code> 可以启动一个脚本，并且立即进入 Debug 模式。</p>
+<p>那么如果是已经运行着的 NodeJS 程序，可以进入 Debug 模式吗？也是可以的，在操作系统下给 NodeJS 的进程发一个 <code>SIGUSR1</code> 信号，可以让进程进入 Debug 模式。 进入 Debug 模式的进程会在本地启动一个 TCP Server 并且默认监听 <code>5858</code> 端口。</p>
+<p>此时在另一个命令行窗口执行命令 <code>node debug localhost:5858</code> 就可以连接到 Debugger 调试端口， 并且可以使用很多常用的 Debug 命令，比如 <code>c</code>继续执行，<code>s</code> 步入， <code>o</code>步出等。</p>
+<h2 id="Debugger-协议"><a href="#Debugger-协议" class="headerlink" title="Debugger 协议"></a>Debugger 协议</h2><p>使用 <code>node debug hostname:port</code> 命令连接到进程进行 Debug 的方式比较简单，但是要完成一些高级的功能就会处处受限，因为它只封装了 Debugger 协议中 command 的一部分。 下面介绍一下这个简单的协议。</p>
+<p>Client 和 Server 的通讯是通过 TCP 进行的。 DebugClient 第一次连接到 DebugServer 的时候会拿到一些 Header，比如 Node 版本， V8 版本等。后面紧跟着一个空的消息1</p>
+<p><strong>消息1</strong></p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Type: connect\r\n</span><br><span class="line">V8-Version: <span class="number">3.28</span><span class="number">.71</span><span class="number">.19</span>\r\n</span><br><span class="line">Protocol-Version: <span class="number">1</span>\r\n</span><br><span class="line">Embedding-Host: node v0<span class="number">.12</span><span class="number">.4</span>\r\n</span><br><span class="line">Content-Length: <span class="number">0</span>\r\n</span><br><span class="line">\r\n</span><br></pre></td></tr></table></figure>
+<p>消息实体由 Header 和 Body 组成，消息1的 Body 为空，所以 Header 中对应的 Content-Length 为 0。而在下面这个例子里，Body 为一个单行的 JSON 字符串，这是由协议所规定的。</p>
+<p><strong>消息2</strong></p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Content-Length: <span class="number">46</span>\r\n</span><br><span class="line">\r\n</span><br><span class="line">&#123;<span class="string">"command"</span>:<span class="string">"version"</span>,<span class="string">"type"</span>:<span class="string">"request"</span>,<span class="string">"seq"</span>:<span class="number">1</span>&#125;</span><br></pre></td></tr></table></figure>
+<p>消息2的类型( type )是 <code>request</code>，代表这是 Client 发给 Server 的命令，其他的可能值是 <code>response</code> 和 <code>event</code> 分别代表 Server 对 Client 的相应，和 Server 端发生的事件。</p>
+<p><strong>消息3</strong></p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Content-Length: <span class="number">137</span>\r\n</span><br><span class="line">\r\n</span><br><span class="line">&#123;<span class="string">"seq"</span>:<span class="number">1</span>,<span class="string">"request_seq"</span>:<span class="number">1</span>,<span class="string">"type"</span>:<span class="string">"response"</span>,<span class="string">"command"</span>:<span class="string">"version"</span>,<span class="string">"success"</span>:<span class="literal">true</span>,<span class="string">"body"</span>:&#123;<span class="string">"V8Version"</span>:<span class="string">"3.28.71.19"</span>&#125;,<span class="string">"refs"</span>:[],<span class="string">"running"</span>:<span class="literal">true</span>&#125;</span><br></pre></td></tr></table></figure>
+<p>消息2是 Client 发送给 Server的，消息3是 Server 对 Client 的相应，那么如何判断消息3是不是消息2的结果呢？可以看到消息2中的 seq 值是1，而 消息3中的 request_seq 值是1。 Debugger 协议正是通过这两个值把异步返回的结果和请求一一对应起来的。</p>
+<p>Debugger 协议就是这么的简单。</p>
+<h3 id="实例化一个-Debugger-Client"><a href="#实例化一个-Debugger-Client" class="headerlink" title="实例化一个 Debugger Client"></a>实例化一个 Debugger Client</h3><p>了解了 Debugger 协议后，相信好奇心强的程序员已经跃跃欲试自己实现一个了。本着不重复发明轮子的原则开始在网上找实现，找了好久找到这个库 <a href="https://www.npmjs.com/package/pDebug" target="_blank" rel="noopener">pDebug</a>， 可惜这个库已经好久不更新了。后来通过阅读 <code>node-inspector</code> 的源码才发现，其实 NodeJS 自带了一个 Debugger 模块, 相关代码在 <code>_debugger</code> 模块里(<a href="https://github.com/joyent/node/blob/master/lib/_debugger.js" target="_blank" rel="noopener">源码</a>)，由于模块名是以 <code>_</code>开头的，所以网上找不到它的 API，好在代码注释写的非常详细，很快就能上手。</p>
+<p>我们需要的正是这个模块下的 Client， 而 Client 其实是继承于 Socket 的.</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> Client = <span class="built_in">require</span>(<span class="string">'_debugger'</span>).Client;</span><br><span class="line"><span class="keyword">var</span> client = <span class="keyword">new</span> Client();</span><br><span class="line"></span><br><span class="line">client.connect(<span class="number">5858</span>);</span><br><span class="line">client.on(<span class="string">'ready'</span>, <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="comment">// 连接成功</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<h3 id="通过-Debugger-接口执行命令"><a href="#通过-Debugger-接口执行命令" class="headerlink" title="通过 Debugger 接口执行命令"></a>通过 Debugger 接口执行命令</h3><p>接下来我们来看看如何修改这个 global 的变量，代码如下</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">modifyTheMessage</span>(<span class="params">newMessage</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> msg = &#123;</span><br><span class="line">        <span class="string">'command'</span>: <span class="string">'evaluate'</span>,</span><br><span class="line">        <span class="string">'arguments'</span>: &#123;</span><br><span class="line">            <span class="string">'expression'</span>: <span class="string">'global.message="'</span> + newMessage + <span class="string">'"'</span>,</span><br><span class="line">            <span class="string">'global'</span>: <span class="literal">true</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">    client.req(msg, <span class="function"><span class="keyword">function</span> (<span class="params">err, body, res</span>) </span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'modified to %s'</span>, newMessage);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>client.req</code> 方法封装了 <code>type=request</code> 消息类型 和 <code>seq</code> 自增的逻辑，因此在构造 <code>msg</code> JSON对象的时候不需要指明这两个属性。 我们要修改 message 其实就是在 JavaScript 调用的顶层执行 <code>global.message=newMessage</code></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>此时，再访问 <code>http://localhost:8001</code> 可以看到网页上显示的内容已经由 <code>&#39;hello world!&#39;</code> 变成了 <code>&#39;hello bugs!&#39;</code>，是不是很神奇。</p>
+<p>这种方式也带来了很多可能性：</p>
+<ul>
+<li>动态修改配置</li>
+</ul>
+<p>线上的服务器不用重启就可以应用新的配置</p>
+<ul>
+<li>模块注入</li>
+</ul>
+<p>通过其他任意语言编写的应用程序为已经运行的 NodeJS 进程注入新的模块</p>
+<ul>
+<li>性能监控</li>
+</ul>
+<p>可以剥离用户线上代码对第三方性能监控模块的直接依赖</p>
+<ul>
+<li>错误监控</li>
+</ul>
+<p>发生异常时，通过 Debugger 可以抓到发生错误的函数和行号，并且抓取各个调用栈中的每一个变量，即使是在闭包里</p>
+<ul>
+<li>Chrome 调试</li>
+</ul>
+<p>由于 Chrome 也是基于 V8 的，上述方法也可以用于 Chrome 相关的功能集成</p>
+<p>原文：<a href="http://code.oneapm.com/nodejs/2015/06/27/intereference/" target="_blank" rel="noopener">http://code.oneapm.com/nodejs/2015/06/27/intereference/</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2016-04-10T14:16:53.000Z"><a href="/2016/04/10/Node.js_错误处理和调试/CPU profiling/">2016-04-10</a></time>
       
       
@@ -900,118 +1046,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2015-05-09T06:45:23.000Z"><a href="/2015/05/09/redis/Node.js与Redis/">2015-05-09</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2015/05/09/redis/Node.js与Redis/">Node.js与Redis</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-简介"><a href="#1-简介" class="headerlink" title="1.简介"></a>1.简介</h3><hr>
-<p>Redis官方推荐的Node.js的Redis客户端可以选择的有node_redis[7] 和ioredis[8] ，相比而言前者发布时间较早，而后者的功能则更加丰富一些。从接口来看两者的使用方法大同小异。</p>
-<h3 id="2-安装"><a href="#2-安装" class="headerlink" title="2.安装"></a>2.安装</h3><hr>
-<p>使用npm install ioredis命令安装最新版本的ioredis。</p>
-<h3 id="3-使用方法"><a href="#3-使用方法" class="headerlink" title="3.使用方法"></a>3.使用方法</h3><hr>
-<p>首先加载ioredis模块：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var Redis = require(&apos;ioredis&apos;);</span><br></pre></td></tr></table></figure></p>
-<p>下面的代码将创建一个默认连接到地址127.0.0.1，端口6379的Redis连接：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var redis = new Redis();</span><br></pre></td></tr></table></figure></p>
-<p>也可以显式地指定需要连接的地址：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var redis = new Redis(6379, &apos;127.0.0.1&apos;);</span><br></pre></td></tr></table></figure></p>
-<p>由于Node.js的异步特性，在处理返回值的时候与其他客户端差别较大。还是以GET/SET命令为例：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">redis.set(&apos;foo&apos;, &apos;bar&apos;, function () &#123;</span><br><span class="line">    //此时 SET 命令执行完并返回结果，</span><br><span class="line">    //因为这里并不关心 SET命令的结果，所以我们省略了回调函数的形参。</span><br><span class="line">    redis.get(&apos;foo&apos;, function (error, fooValue) &#123;</span><br><span class="line">        //error 参数存储了命令执行时返回的错误信息，如果没有错误则返回 null。</span><br><span class="line">        //回调函数的第二个参数存储的是命令执行的结果</span><br><span class="line">        console.log(fooValue); // &apos;bar&apos;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>  使用ioredis执行命令时需要传入回调函数（callback function）来获得返回值，当命令执行完返回结果后ioredis会调用该函数，并将命令的错误信息作为第一个参数、返回值作为第二个参数传递给该函数。同时ioredis还支持Promise形式的异步处理方式，如果省略最后一个回调函数，命令语句会返回一个Promise值，如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">redis.get(&apos;foo&apos;).then(function (fooValue) &#123;</span><br><span class="line">    //fooValue 即为键值</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>  Node.js的异步模型使得通过ioredis调用Redis命令的表现与Redis的底层管道协议十分相似：调用命令函数时（如redis.set()）并不会等待Redis返回命令执行结果，而是直接继续执行下一条语句，所以在Node.js中通过异步模型就能实现与管道类似的效果。上面的例子中我们并不需要SET命令的返回值，只要保证SET命令在GET命令前发出即可，所以完全不用等待SET命令返回结果后再执行GET命令。因此上面的代码可以改写成：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">//不需要返回值时可以省略回调函数</span><br><span class="line">redis.set(&apos;foo&apos;, &apos;bar&apos;);</span><br><span class="line">redis.get(&apos;foo&apos;, function (error, fooValue) &#123;</span><br><span class="line">    console.log(fooValue); // &apos;bar&apos;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>  不过由于SET和GET并未真正使用Redis的管道协议发送，所以当有多个客户端同时向 Redis 发送命令时，上例中的两个命令之间可能会被插入其他命令，换句话说，GET命令得到的值未必是“bar”。<br>  虽然Node.js的异步特性给我们带来了相对更高的性能，然而另一方面使用Redis实现某个功能时我们经常需要读写若干个键，而且很多情况下都会依赖之前命令的返回结果。这时就会出现嵌套多重回调函数的情况，影响代码可读性。就像这样：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">redis.get(&apos;people:2:home&apos;, function (error, home) &#123;</span><br><span class="line">    redis.hget(&apos;locations&apos;, home, function (error, address) &#123;</span><br><span class="line">        redis.exists(&apos;address:&apos; + address, function (error, addressExists) &#123;</span><br><span class="line">            if (addressExists) &#123;</span><br><span class="line">                console.log(&apos;地址存在。&apos;);</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                redis.exists(&apos;backup.address:&apos; + address, function (error, backupAddressExists) &#123;</span><br><span class="line">                    if (backupAddressExists) &#123;</span><br><span class="line">                        console.log(&apos;备用地址存在。&apos;);</span><br><span class="line">                    &#125; else &#123;</span><br><span class="line">                        console.log(&apos;地址不存在。&apos;);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>上面的代码并不是极端的情况，相反在实际开发中经常会遇到这种多层嵌套。为了减少嵌套，可以考虑使用 Async 、Step等第三方模块。如上面的代码可以稍微修改后使用Async重写为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">async.waterfall([</span><br><span class="line">    function (callback) &#123;</span><br><span class="line">        redis.get(&apos;people:2:home&apos;, callback);</span><br><span class="line">    &#125;,</span><br><span class="line">    function (home, callback) &#123;</span><br><span class="line">        redis.hget(&apos;locations&apos;, home, callback);</span><br><span class="line">    &#125;,</span><br><span class="line">    function (address, callback) &#123;</span><br><span class="line">        async.parallel([</span><br><span class="line">            function (callback) &#123;</span><br><span class="line">                redis.exists(&apos;address:&apos; + address, callback);</span><br><span class="line">            &#125;,</span><br><span class="line">            function (callback) &#123;</span><br><span class="line">               redis.exists(&apos;backup.address:&apos; + address, callback);</span><br><span class="line">            &#125;], function (err, results) &#123;</span><br><span class="line">            if (results[0]) &#123;</span><br><span class="line">                console.log(&apos;地址存在。&apos;);</span><br><span class="line">            &#125; else if (results[1]) &#123;</span><br><span class="line">                console.log(&apos;备用地址存在。&apos;);</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                console.log(&apos;地址不存在。&apos;);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line">]);</span><br></pre></td></tr></table></figure></p>
-<p>另外，可以使用co模块借助ES6的Generator特性来将ioredis的返回结果“串行化”：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var co = require(&apos;co&apos;);</span><br><span class="line">co(function* () &#123;</span><br><span class="line">    var result = yield redis.get(&apos;foo&apos;);</span><br><span class="line">    return result;</span><br><span class="line">&#125;).then(function (fooValue) &#123;</span><br><span class="line">    console.log(fooValue);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<h3 id="4-简便用法"><a href="#4-简便用法" class="headerlink" title="4.简便用法"></a>4.简便用法</h3><hr>
-<p>1．HMSET/HGETALL<br>  ioredis同样支持在HMSET命令中使用对象作参数（对象的属性值只能是字符串），相应的HGETALL命令会返回一个对象。<br>2．事务<br>  事务的用法如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var multi = redis.multi();</span><br><span class="line">multi.set(&apos;foo&apos;, &apos;bar&apos;);</span><br><span class="line">multi.sadd(&apos;set&apos;, &apos;a&apos;);</span><br><span class="line">mulit.exec(function (err, replies) &#123;</span><br><span class="line">    //replies 是一个数组，依次存放事务队列中命令的结果</span><br><span class="line">    console.log(replies);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>或者使用链式调用：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">redis.multi()</span><br><span class="line">    .set(&apos;foo&apos;, &apos;bar&apos;)</span><br><span class="line">    .sadd(&apos;set&apos;, &apos;a&apos;)</span><br><span class="line">    .exec(function (err, replies) &#123;</span><br><span class="line">        console.log(replies);</span><br><span class="line">    &#125;);</span><br></pre></td></tr></table></figure></p>
-<p>3．“发布/订阅”模式<br>  Node.js 使用事件的方式实现“发布/订阅”模式。现在创建两个连接分别充当发布者和订阅者：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">var pub = new Redis();</span><br><span class="line">var sub = new Redis();</span><br></pre></td></tr></table></figure></p>
-<p>然后让sub订阅chat频道并在订阅成功后发送一条消息：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sub.subscribe(&apos;chat&apos;, function () &#123;</span><br><span class="line">    pub.publish(&apos;chat&apos;, &apos;hi!&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>定义当接收到消息时要执行的回调函数：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sub.on(&apos;message&apos;, function (channel, message) &#123;</span><br><span class="line">    console.log(&apos;收到&apos; + channel + &apos;频道的消息：&apos; + message);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>运行后可以看到打印的结果：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ node testpubsub.js</span><br></pre></td></tr></table></figure></p>
-<p>收到chat频道的消息：’hi!’<br>补充知识 在 ioredis 中建立连接的过程也是异步的，执行 redis = new Redis()后连接并没有立即建立完成。在连接建立完成前执行的命令会被加入到离线任务队列中，当连接建立成功后ioredis会按照加入的顺序依次执行离线任务队列中的命令。</p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2015-05-07T06:45:23.000Z"><a href="/2015/05/07/redis/什么是redis/">2015-05-07</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2015/05/07/redis/什么是redis/">一.什么是redis</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-什么是redis"><a href="#1-什么是redis" class="headerlink" title="1.什么是redis"></a>1.什么是redis</h3><hr>
-<p>随着互联网的普及，用户数量的快速增长，产生的数据也越来越多，这也对我们的产品提出了新的考验，如何才能构建出高性能，而且扩展性高的应用程序呢？听说Redis是一个不错的选择，那么问题来了，什么是Redis呢？</p>
-<p>Redis—— Remote Dictionary Server，它是一个开源的使用ANSI C语言编写、支持网络、可基于内存亦可持久化的日志型、Key-Value数据库，并提供多种语言的API，我们可使用它构建高性能，可扩展的Web应用程序。</p>
-<p>Redis是目前最流行的键值对存储数据库，从2010年3月15日起，Redis的开发工作由VMware主持。从2013年5月开始，Redis的开发由Pivotal赞助。</p>
-<p>如果你想了解Redis最新的资讯，可以访问 [官方网站]:<a href="http://redis.io/" target="_blank" rel="noopener">http://redis.io/</a></p>
-<h3 id="2-什么时候使用redis"><a href="#2-什么时候使用redis" class="headerlink" title="2.什么时候使用redis"></a>2.什么时候使用redis</h3><hr>
-<p>在实际生产环境中，很多公司都曾经使用过这样的架构，使用MySQL进行海量数据存储的，通过Memcached将热点数据加载到cache，加速访问，但随着业务数据量的不断增加，和访问量的持续增长，我们遇到了很多问题：
-　　</p>
-<ul>
-<li>MySQL需要不断进行拆库拆表，Memcached也需不断跟着扩容，扩容和维护工作占据大量开发时间。</li>
-<li>Memcached与MySQL数据库数据一致性问题。</li>
-<li>Memcached数据命中率低或down机，大量访问直接穿透到DB，MySQL无法支撑。</li>
-<li>跨机房cache同步问题。</li>
-</ul>
-<p>以上问题都是非常的棘手，不过现在不用担心了，因为我们可以使用redis来完美解决，下面我们来了解下redis的特点，看看redis是如何解决以上问题的。</p>
-<h3 id="3-Redis特点"><a href="#3-Redis特点" class="headerlink" title="3.Redis特点"></a>3.Redis特点</h3><hr>
-<p>有那么多相同类型的数据库，为什么要选择redis？</p>
-<p>相对于其他的同类型数据库而言，Redis支持更多的数据类型，除了和string外，还支持lists（列表）、sets（集合）和zsets（有序集合）几种数据类型。</p>
-<p>这些数据类型都支持push/pop、add/remove及取交集、并集和差集及更丰富的操作，而且这些操作都是原子性的。Redis具备以下特点：</p>
-<ul>
-<li>异常快速: Redis数据库完全在内存中，因此处理速度非常快，每秒能执行约11万集合，每秒约81000+条记录。</li>
-<li>数据持久化： redis支持数据持久化，可以将内存中的数据存储到磁盘上，方便在宕机等突发情况下快速恢复。</li>
-<li>支持丰富的数据类型: 相比许多其他的键值对存储数据库，Redis拥有一套较为丰富的数据类型。</li>
-<li>数据一致性： 所有Redis操作是原子的，这保证了如果两个客户端同时访问的Redis服务器将获得更新后的值。</li>
-<li>多功能实用工具： Redis是一个多实用的工具，可以在多个用例如缓存，消息，队列使用(Redis原生支持发布/订阅)，任何短暂的数据，应用程序，如 Web应用程序会话，网页命中计数等。</li>
-</ul>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -1053,6 +1087,8 @@
   
     <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>3</small></li>
   
+    <li><a href="/tags/Node-js-JS基础/">Node.js_JS基础</a><small>1</small></li>
+  
     <li><a href="/tags/Node-js-事件/">Node.js_事件</a><small>4</small></li>
   
     <li><a href="/tags/Node-js-入门/">Node.js_入门</a><small>9</small></li>
@@ -1076,6 +1112,8 @@
     <li><a href="/tags/redis/">redis</a><small>2</small></li>
   
     <li><a href="/tags/shell/">shell</a><small>1</small></li>
+  
+    <li><a href="/tags/区块链/">区块链</a><small>1</small></li>
   
     <li><a href="/tags/存储/">存储</a><small>3</small></li>
   
