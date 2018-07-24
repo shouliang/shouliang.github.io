@@ -67,9 +67,7 @@
 <h3 id="定义问题"><a href="#定义问题" class="headerlink" title="定义问题"></a>定义问题</h3><p>实际上，Node.js 官网上就有<a href="https://nodejs.org/api/modules.html#modules_cycles" target="_blank" rel="noopener">关于模块循环 <code>require()</code> 的说明</a>。</p>
 <p>在官网给出的例子中，有 3 个模块：<code>main.js</code>、<code>a.js</code>、<code>b.js</code>。其中 <code>main.js</code> 有对 <code>a.js</code> 和 <code>b.js</code> 的引用，而 <code>a.js</code> 和 <code>b.js</code> 又是相互引用的关系（详细情况请参阅上段末的超链接）。</p>
 <p>官网上点出了这种模块循环的情况，并且解释清楚了原因（但并没有给出具体可行的解决方案）：</p>
-<blockquote>
 <p>When <code>main.js</code> loads <code>a.js</code>, then <code>a.js</code> in turn loads <code>b.js</code>. At that point, <code>b.js</code> tries to load <code>a.js</code>. In order to prevent an infinite loop, an <strong>unfinished copy</strong> of the <code>a.js</code>exports object is returned to the <code>b.js</code> module. <code>b.js</code> then finishes loading, and its exports object is provided to the <code>a.js</code> module.</p>
-</blockquote>
 <p>简单说就是，为了防止模块载入的死循环，Node.js 在模块第一次载入后会把它的结果进行缓存，下一次再对它进行载入的时候会直接从缓存中取出结果。所以在这种循环依赖情形下，不会有死循环，但是却会因为缓存造成模块没有按照我们预想的那样被导出（export，详细的案例分析见下文）。</p>
 <p>官网给出了三个模块还不是循环依赖最简单的情形。实际上，两个模块就可以很清楚的表达出这种情况。根据递归的思想，解决了最简单的情形，这一类任意大小规模的问题也就解决了一半（另一半还需要探明随着问题规模增长，问题的解将会如何变化）。</p>
 <p>下面是一个两个模块循环依赖的问题最简情形：</p>
@@ -96,10 +94,8 @@
 <h3 id="其他相关问题"><a href="#其他相关问题" class="headerlink" title="其他相关问题"></a>其他相关问题</h3><p>实际上，我还自己实验并查阅了一些资料来探索是否有其他的解决办法，但那些办法要么是适用于特定的情形和设计模式之下，要么就没有上述方法简洁，本文就不赘述了。如果有兴趣，可以参看本文末尾的 References 链接。如果你发现有更好的解决办法，欢迎在评论区留言。</p>
 <p>要想彻底弄明白 Node.js 模块加载的相关问题，一定得去读读 Node.js 相关部分的源码。其次，推荐阅读<a href="https://book.douban.com/subject/25768396/" target="_blank" rel="noopener">《深入浅出 Node.js》</a>第二章与<a href="http://www.ruanyifeng.com/blog/2015/05/require.html" target="_blank" rel="noopener">阮一峰的这篇日志</a>。</p>
 <p>有趣的是，ES6 特性中已经有了更优秀的 <code>import/export</code> 模块加载机制，就不会存在这样的问题（原因参考 References 第5条），然而 Node.js 还并不支持。Github 上有人提出过这个问题，Node.js 基金会成员 <a href="https://github.com/bnoordhuis" target="_blank" rel="noopener">@bnoordhuis</a> 对此的回复是：</p>
-<blockquote>
 <p>In a nutshell, <code>require()</code> is not going anywhere - removing it would break too much for too little gain - but we’ll almost certainly end up supporting ES6 import/export somehow, details TBD.</p>
 <p>Support for ES6 modules first needs to land in V8.</p>
-</blockquote>
 <p>详细的讨论可以到<a href="https://github.com/nodejs/help/issues/53" target="_blank" rel="noopener">这里</a>查看。</p>
 <p>虽然因为 V8 的原因 Node.js 官方还不能支持 <code>import/export</code>，不过我们依然可以借助 Babel 来提前在 Node.js 使用这个特性，感兴趣的同学可以参考<a href="http://taobaofed.org/blog/2016/01/07/find-back-the-lost-es6-features-in-nodejs/" target="_blank" rel="noopener">这里</a>。</p>
 <h3 id="References"><a href="#References" class="headerlink" title="References"></a>References</h3><ol>

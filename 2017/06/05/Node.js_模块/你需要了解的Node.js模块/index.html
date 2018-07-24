@@ -157,7 +157,7 @@
 <p>得到 addon.node (或其它在 binding.gyp 中指定的名称)文件后，你可以像请求其它模块一样请求它：</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> addon = <span class="built_in">require</span>(<span class="string">'./addon'</span>);</span><br><span class="line"><span class="built_in">console</span>.log(addon.hello());</span><br></pre></td></tr></table></figure>
 <p>我们可以在 require.extensions 中看到实际支持的三个扩展名：</p>
-<p><img src="https://static.oschina.net/uploads/space/2017/0321/141359_083Q_2903254.png" alt="img"></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/require_180724.png" alt="img"></p>
 <p>看看每个扩展名对应的函数，你就清楚 Node 在怎么使用它们。它使用 module._compile 处理 .js 文件，使用 JSON.parse 处理 .json 文件，以及使用 process.dlopen 处理 .node 文件。</p>
 <h4 id="在-Node-编写的所有代码将封装到函数中"><a href="#在-Node-编写的所有代码将封装到函数中" class="headerlink" title="在 Node 编写的所有代码将封装到函数中"></a>在 Node 编写的所有代码将封装到函数中</h4><p>有人经常误解 Node 的封装模块的用途。让我们通过 exports/module.exports 之间的关系来了解它。</p>
 <p>我们可以使用 exports 对象导出属性，但是我们不能直接替换 exports 对象，因为它仅是对 module.exports 的引用</p>

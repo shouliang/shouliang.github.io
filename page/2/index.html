@@ -159,8 +159,7 @@
 <p>（3）必须特别注意 JSONP 的回调函数。</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;script</span><br><span class="line">  src=<span class="string">"/path/jsonp?callback=alert(document.domain)//"</span>&gt;</span><br><span class="line">&lt;<span class="regexp">/script&gt;</span></span><br></pre></td></tr></table></figure>
 <p>上面的代码中，虽然加载的脚本来自当前域名，但是通过改写回调函数，攻击者依然可以执行恶意代码。</p>
-<p>原文：<a href="http://www.ruanyifeng.com/blog/2016/09/csp.html">http://www.ruanyifeng.com/blog/2016/09/csp.html</a></p>
-</script></p>
+<h3 id="原文：http-www-ruanyifeng-com-blog-2016-09-csp-html"><a href="#原文：http-www-ruanyifeng-com-blog-2016-09-csp-html" class="headerlink" title="原文：http://www.ruanyifeng.com/blog/2016/09/csp.html"></a>原文：<a href="http://www.ruanyifeng.com/blog/2016/09/csp.html">http://www.ruanyifeng.com/blog/2016/09/csp.html</a></h3></script></p>
       
     </div>
     <footer>
@@ -396,8 +395,7 @@
 <p>比如苹果开发者的APP签名证书，该证书可以用来对APP进行签名，该证书实际上是由苹果的Worldwide Developer Relations Certificate Authority（WDRCA）授权签名的，而它是由Apple Certificate Authority授权签名的。在这个关系链中苹果的CA是根。 苹果CA根证书默认是内置在苹果系统中的，所以WDRCA的可信性可以由苹果内置的CA根证书来验证其可信性。</p>
 <p>Web相关的SSL证书顶部CA根，则就是上述提到的几家公认的签发机构，当我们需要Web做SSL的证书时，便可以向上述机构申请，通常向根机构申请费用都会比较高，也可以向一些二级授权机构进行申请，选择根机构证书签发的好处就是目前大多数的浏览器都会预装内置了这些权威CA的公钥证书，这样，在使用这些权威CA签发过的证书的时候，浏览器一般不会报风险提示。</p>
 <h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>数字证书签名的基础是非对称加密算法，利用了非对称加密的身份验证和防止信息篡改的特性来实现的，在一些其他方面比如HTTPS中密钥交换用的就是非对称加密的保密特性来实现的，在非对称加密算法中RSA应用最广。非对称加密虽好，但却有一个弊端，就是加解密比较耗时，所以一般都是配合对称加密一起使用。</p>
-<p>原文：<a href="http://www.enkichen.com/2016/02/26/digital-certificate-based/" target="_blank" rel="noopener">http://www.enkichen.com/2016/02/26/digital-certificate-based/</a></p>
-
+<h4 id="原文：http-www-enkichen-com-2016-02-26-digital-certificate-based"><a href="#原文：http-www-enkichen-com-2016-02-26-digital-certificate-based" class="headerlink" title="原文：http://www.enkichen.com/2016/02/26/digital-certificate-based/"></a>原文：<a href="http://www.enkichen.com/2016/02/26/digital-certificate-based/" target="_blank" rel="noopener">http://www.enkichen.com/2016/02/26/digital-certificate-based/</a></h4>
       
     </div>
     <footer>
@@ -429,8 +427,7 @@
     </header>
     <div class="entry">
       
-        <p>原文：<a href="https://www.cnblogs.com/chyingp/p/nodejs-learning-crypto-theory.html" target="_blank" rel="noopener">https://www.cnblogs.com/chyingp/p/nodejs-learning-crypto-theory.html</a></p>
-<h2 id="一、-概述"><a href="#一、-概述" class="headerlink" title="一、 概述"></a>一、 概述</h2><p>互联网时代，网络上的数据量每天都在以惊人的速度增长。同时，各类网络安全问题层出不穷。在信息安全重要性日益凸显的今天，作为一名开发者，需要加强对安全的认识，并通过技术手段增强服务的安全性。</p>
+        <h2 id="一、-概述"><a href="#一、-概述" class="headerlink" title="一、 概述"></a>一、 概述</h2><p>互联网时代，网络上的数据量每天都在以惊人的速度增长。同时，各类网络安全问题层出不穷。在信息安全重要性日益凸显的今天，作为一名开发者，需要加强对安全的认识，并通过技术手段增强服务的安全性。</p>
 <p><code>crypto</code>模块是nodejs的核心模块之一，它提供了安全相关的功能，如摘要运算、加密、电子签名等。很多初学者对着长长的API列表，不知如何上手，因此它背后涉及了大量安全领域的知识。</p>
 <p>本文重点讲解API背后的理论知识，主要包括如下内容：</p>
 <ol>
@@ -531,7 +528,7 @@
 <p><a href="https://crypto.stackexchange.com/questions/6523/what-is-the-difference-between-mac-and-hmac" target="_blank" rel="noopener">What is the difference between MAC and HMAC?</a></p>
 <p><a href="https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation" target="_blank" rel="noopener">Block cipher mode of operation</a></p>
 <p><a href="https://www.zhihu.com/question/25912483/answer/31653639" target="_blank" rel="noopener">RSA的公钥和私钥到底哪个才是用来加密和哪个用来解密？ - 刘巍然-学酥的回答 - 知乎</a></p>
-
+<h4 id="原文：https-www-cnblogs-com-chyingp-p-nodejs-learning-crypto-theory-html"><a href="#原文：https-www-cnblogs-com-chyingp-p-nodejs-learning-crypto-theory-html" class="headerlink" title="原文：https://www.cnblogs.com/chyingp/p/nodejs-learning-crypto-theory.html"></a>原文：<a href="https://www.cnblogs.com/chyingp/p/nodejs-learning-crypto-theory.html" target="_blank" rel="noopener">https://www.cnblogs.com/chyingp/p/nodejs-learning-crypto-theory.html</a></h4>
       
     </div>
     <footer>
@@ -569,8 +566,7 @@
 <p>与传统访问方式不同，CDN网络则是在用户和服务器之间增加缓存层，将用户的访问请求引导到最优的缓存节点而不是服务器源站点，从而加速访问速度。</p>
 <p><strong>完整的CDN工作流程：</strong><br><img src="http://7xq1il.com1.z0.glb.clouddn.com/comCDN.png" alt=""></p>
 <p>总结一下CDN的工作原理：通过权威DNS服务器来实现最优节点的选择，通过缓存来减少源站的压力。<br><strong>CDN应用场景：</strong><br><strong>静态网页</strong>图片小文件、博客<br><strong>大文件下载</strong>软件下载、视频点播或图片存储网站<br><strong>动态加速</strong>直播网站<br><strong>应用加速</strong>手机APP</p>
-<p>原文：<a href="https://www.zhihu.com/question/37353035" target="_blank" rel="noopener">https://www.zhihu.com/question/37353035</a></p>
-
+<h4 id="原文：https-www-zhihu-com-question-37353035"><a href="#原文：https-www-zhihu-com-question-37353035" class="headerlink" title="原文：https://www.zhihu.com/question/37353035"></a>原文：<a href="https://www.zhihu.com/question/37353035" target="_blank" rel="noopener">https://www.zhihu.com/question/37353035</a></h4>
       
     </div>
     <footer>
@@ -731,8 +727,7 @@
 <li><p>因此，并不是应用的范式越高越好，要看实际情况而定。第三范式已经很大程度上减少了数据冗余，并且减少了造成插入异常，更新异常，和删除异常了。我个人观点认为，大多数情况应用到第三范式已经足够，在一定情况下第二范式也是可以的。</p>
 </li>
 </ol>
-<p>参考原文：<a href="http://www.cnblogs.com/CareySon/archive/2010/02/16/1668803.html" target="_blank" rel="noopener">http://www.cnblogs.com/CareySon/archive/2010/02/16/1668803.html</a></p>
-
+<h4 id="原文：http-www-cnblogs-com-CareySon-archive-2010-02-16-1668803-html"><a href="#原文：http-www-cnblogs-com-CareySon-archive-2010-02-16-1668803-html" class="headerlink" title="原文：http://www.cnblogs.com/CareySon/archive/2010/02/16/1668803.html"></a>原文：<a href="http://www.cnblogs.com/CareySon/archive/2010/02/16/1668803.html" target="_blank" rel="noopener">http://www.cnblogs.com/CareySon/archive/2010/02/16/1668803.html</a></h4>
       
     </div>
     <footer>
@@ -833,7 +828,7 @@
 <li>一个表中可以有多个唯一性索引，但只能有一个主键</li>
 <li>主键列不允许空值，而唯一性索引列允许空值</li>
 </ol>
-<p>原文：<a href="https://blog.mimvp.com/article/7462.html" target="_blank" rel="noopener">https://blog.mimvp.com/article/7462.html</a></p>
+<p><strong>原文</strong>：<a href="https://blog.mimvp.com/article/7462.html" target="_blank" rel="noopener">https://blog.mimvp.com/article/7462.html</a></p>
 
       
     </div>

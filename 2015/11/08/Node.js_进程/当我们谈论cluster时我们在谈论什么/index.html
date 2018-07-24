@@ -72,10 +72,8 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pm2 start app.js</span><br></pre></td></tr></table></figure>
 <p>pm2 确实非常强大，但本文并不讲解 pm2 的工作原理，而是从更底层的进程通信讲起，为大家揭秘使用 Node.js 开发 web 应用时，使用 cluster 模块实现多进程部署的原理。</p>
 <h2 id="fork"><a href="#fork" class="headerlink" title="fork"></a>fork</h2><p>说到多进程当然少不了 fork ,在 un*x 系统中，fork 函数为用户提供最底层的多进程实现。</p>
-<blockquote>
 <p>fork() creates a new process by duplicating the calling process. The new process is referred to as the child process. The calling process is referred to as the parent process.</p>
 <p>The child process and the parent process run in separate memory spaces. At the time of fork() both memory spaces have the same content. Memory writes, file mappings (mmap(2)), and unmappings (munmap(2)) performed by one of the processes do not affect the other.</p>
-</blockquote>
 <p>本文中要讲解的 fork 是 cluster 模块中非常重要的一个方法，当然了，底层也是依赖上面提到的 fork 函数实现。 多个子进程便是通过在master进程中不断的调用 cluster.fork 方法构造出来。下面的结构图大家应该非常熟悉了。</p>
 <p><img src="http://7xq1il.com1.z0.glb.clouddn.com/cluster01_180703.png" alt=""></p>
 <p>上面的图非常粗糙， 并没有告诉我们 master 与 worker 到底是如何分工协作的。Node.js 在这块做过比较大的改动，下面就细细的剖析开来。</p>
