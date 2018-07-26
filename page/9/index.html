@@ -53,6 +53,268 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2014-01-18T12:45:23.000Z"><a href="/2014/01/18/Node.js_入门/Node.js入门(4)url处理/">2014-01-18</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2014/01/18/Node.js_入门/Node.js入门(4)url处理/">四.url处理</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-简介"><a href="#1-简介" class="headerlink" title="1.简介"></a>1.简介</h3><hr>
+<h4 id="url模块的基本用法"><a href="#url模块的基本用法" class="headerlink" title="url模块的基本用法"></a>url模块的基本用法</h4><p>node.js为互联网而生，和url打交道是无法避免的了，url模块提供一些基础的url处理。</p>
+<h3 id="2-parse"><a href="#2-parse" class="headerlink" title="2.parse"></a>2.parse</h3><hr>
+<h4 id="parse函数的基础用法"><a href="#parse函数的基础用法" class="headerlink" title="parse函数的基础用法"></a>parse函数的基础用法</h4><p>parse函数的作用是解析url，返回一个json格式的数组，请看如下示例：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> url = <span class="built_in">require</span>(<span class="string">'url'</span>);</span><br><span class="line">url.parse(<span class="string">'http://www.baidu.com'</span>);</span><br></pre></td></tr></table></figure>
+<p>运行结果：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&#123; <span class="attr">protocol</span>: <span class="string">'http:'</span>,</span><br><span class="line">  slashes: <span class="literal">null</span>,</span><br><span class="line">  auth: <span class="literal">null</span>,</span><br><span class="line">  host: <span class="literal">null</span>,</span><br><span class="line">  port: <span class="literal">null</span>,</span><br><span class="line">  hostname: <span class="literal">null</span>,</span><br><span class="line">  hash: <span class="literal">null</span>,</span><br><span class="line">  search: <span class="literal">null</span>,</span><br><span class="line">  query: <span class="literal">null</span>,</span><br><span class="line">  pathname: <span class="string">'www.baidu.com'</span>,</span><br><span class="line">  path: <span class="string">'www.baidu.com'</span>,</span><br><span class="line">  href: <span class="string">'http://www.baidu.com'</span> </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="3-条件解析"><a href="#3-条件解析" class="headerlink" title="3.条件解析"></a>3.条件解析</h3><hr>
+<h4 id="parse函数-——-条件解析"><a href="#parse函数-——-条件解析" class="headerlink" title="parse函数 —— 条件解析"></a>parse函数 —— 条件解析</h4><p>parse函数的第二个参数是布尔类型，当参数为true时，会将查询条件也解析成json格式的对象。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> url = <span class="built_in">require</span>(<span class="string">'url'</span>);</span><br><span class="line">url.parse(<span class="string">'http://www.baidu.com?page=1'</span>,<span class="literal">true</span>);</span><br></pre></td></tr></table></figure>
+<p>运行结果：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&#123; <span class="attr">protocol</span>: <span class="string">'http:'</span>,</span><br><span class="line">  slashes: <span class="literal">true</span>,</span><br><span class="line">  auth: <span class="literal">null</span>,</span><br><span class="line">  host: <span class="string">'www.baidu.com'</span>,</span><br><span class="line">  port: <span class="literal">null</span>,</span><br><span class="line">  hostname: <span class="string">'www.baidu.com'</span>,</span><br><span class="line">  hash: <span class="literal">null</span>,</span><br><span class="line">  search: <span class="string">'?page=1'</span>,</span><br><span class="line">  query: &#123; <span class="attr">page</span>: <span class="string">'1'</span> &#125;,</span><br><span class="line">  pathname: <span class="string">'/'</span>,</span><br><span class="line">  path: <span class="string">'/?page=1'</span>,</span><br><span class="line">  href: <span class="string">'http://www.baidu.com/?page=1'</span> </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意query值的不同</p>
+<h3 id="4-解析主机"><a href="#4-解析主机" class="headerlink" title="4.解析主机"></a>4.解析主机</h3><hr>
+<h4 id="parse函数-——-解析主机"><a href="#parse函数-——-解析主机" class="headerlink" title="parse函数 —— 解析主机"></a>parse函数 —— 解析主机</h4><p>parse函数的第三个参数也是布尔类型的，当参数为true，解析时会将url的”//“和第一个”/“之间的部分解析为主机名，示例如下：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> url = <span class="built_in">require</span>(<span class="string">'url'</span>);</span><br><span class="line">url.parse(<span class="string">'http://www.baidu.com/news'</span>,<span class="literal">false</span>,<span class="literal">true</span>);</span><br></pre></td></tr></table></figure>
+<p>运行结果：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&#123; <span class="attr">protocol</span>: <span class="string">'http:'</span>,</span><br><span class="line">  slashes: <span class="literal">true</span>,</span><br><span class="line">  auth: <span class="literal">null</span>,</span><br><span class="line">  host: <span class="string">'www.baidu.com'</span>,</span><br><span class="line">  port: <span class="literal">null</span>,</span><br><span class="line">  hostname: <span class="string">'www.baidu.com'</span>,</span><br><span class="line">  hash: <span class="literal">null</span>,</span><br><span class="line">  search: <span class="literal">null</span>,</span><br><span class="line">  query: <span class="literal">null</span>,</span><br><span class="line">  pathname: <span class="string">'/news'</span>,</span><br><span class="line">  path: <span class="string">'/news'</span>,</span><br><span class="line">  href: <span class="string">'http://www.baidu.com/news'</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="5-格式化"><a href="#5-格式化" class="headerlink" title="5.格式化"></a>5.格式化</h3><hr>
+<h4 id="format函数的基础用法"><a href="#format函数的基础用法" class="headerlink" title="format函数的基础用法"></a>format函数的基础用法</h4><p>format函数的作用与parse相反，它的参数是一个JSON对象，返回一个组装好的url地址，请看如下示例：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> url = <span class="built_in">require</span>(<span class="string">'url'</span>);</span><br><span class="line">url.format(&#123;</span><br><span class="line">	protocol: <span class="string">'http:'</span>,</span><br><span class="line">	hostname:<span class="string">'www.baidu.com'</span>,</span><br><span class="line">	port:<span class="string">'80'</span>,</span><br><span class="line">	pathname :<span class="string">'/news'</span>,</span><br><span class="line">	query:&#123;<span class="attr">page</span>:<span class="number">1</span>&#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>运行结果：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http:<span class="comment">//www.baidu.com/news?page=1</span></span><br></pre></td></tr></table></figure></p>
+<h3 id="6-reslove"><a href="#6-reslove" class="headerlink" title="6.reslove"></a>6.reslove</h3><hr>
+<h4 id="resolve函数的基础用法"><a href="#resolve函数的基础用法" class="headerlink" title="resolve函数的基础用法"></a>resolve函数的基础用法</h4><p>resolve函数的参数是两个路径，第一个路径是开始的路径或者说当前路径，第二个则是想要去往的路径，返回值是一个组装好的url，示例如下：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> url = <span class="built_in">require</span>(<span class="string">'url'</span>);</span><br><span class="line">url.resolve(<span class="string">'http://example.com/'</span>, <span class="string">'/one'</span>)  <span class="comment">// 'http://example.com/one'</span></span><br><span class="line">url.resolve(<span class="string">'http://example.com/one'</span>, <span class="string">'/two'</span>) <span class="comment">// 'http://example.com/two'</span></span><br></pre></td></tr></table></figure></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2014-01-14T09:45:23.000Z"><a href="/2014/01/14/Node.js_入门/Node.js入门(3)文件I:O/">2014-01-14</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2014/01/14/Node.js_入门/Node.js入门(3)文件I:O/">三.文件I/O</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-简介"><a href="#1-简介" class="headerlink" title="1.简介"></a>1.简介</h3><hr>
+<h4 id="fs模块的基本用法"><a href="#fs模块的基本用法" class="headerlink" title="fs模块的基本用法"></a>fs模块的基本用法</h4><p>开发中我们经常会有文件I/O的需求，node.js中提供一个名为fs的模块来支持I/O操作，fs模块的文件I/O是对标准POSIX函数的简单封装。</p>
+<h3 id="2-写入文件"><a href="#2-写入文件" class="headerlink" title="2.写入文件"></a>2.写入文件</h3><hr>
+<h4 id="writeFile函数的基本用法"><a href="#writeFile函数的基本用法" class="headerlink" title="writeFile函数的基本用法"></a>writeFile函数的基本用法</h4><p>文件I/O，写入是必修课之一。fs模块提供writeFile函数，可以异步的将数据写入一个文件, 如果文件已经存在则会被替换。用法如下：</p>
+<p>例：fs.writeFile(filename, data, callback)<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> fs= <span class="built_in">require</span>(<span class="string">"fs"</span>);</span><br><span class="line">fs.writeFile(<span class="string">'test.txt'</span>, <span class="string">'Hello Node'</span>, <span class="function"><span class="keyword">function</span> (<span class="params">err</span>) </span>&#123;</span><br><span class="line">   <span class="keyword">if</span> (err) <span class="keyword">throw</span> err;</span><br><span class="line">   <span class="built_in">console</span>.log(<span class="string">'Saved successfully'</span>); <span class="comment">//文件被保存</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>数据参数可以是string或者是Buffer,编码格式参数可选，默认为”utf8”，回调函数只有一个参数err。</p>
+<h3 id="3-追加文件"><a href="#3-追加文件" class="headerlink" title="3.追加文件"></a>3.追加文件</h3><hr>
+<h4 id="appendFile函数的基本用法"><a href="#appendFile函数的基本用法" class="headerlink" title="appendFile函数的基本用法"></a>appendFile函数的基本用法</h4><p>writeFile函数虽然可以写入文件，但是如果文件已经存在，我们只是想添加一部分内容，它就不能满足我们的需求了，很幸运，fs模块中还有appendFile函数，它可以将新的内容追加到已有的文件中，如果文件不存在，则会创建一个新的文件。使用方法如下：</p>
+<p>例：fs.appendFile(文件名,数据,编码,回调函数(err));<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> fs= <span class="built_in">require</span>(<span class="string">"fs"</span>); </span><br><span class="line">fs.appendFile(<span class="string">'test.txt'</span>, <span class="string">'data to append'</span>, <span class="function"><span class="keyword">function</span> (<span class="params">err</span>) </span>&#123;</span><br><span class="line">   <span class="keyword">if</span> (err) <span class="keyword">throw</span> err; </span><br><span class="line">    <span class="comment">//数据被添加到文件的尾部</span></span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'The "data to append" was appended to file!'</span>); </span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>编码格式默认为”utf8”</p>
+<h3 id="4-是否存在"><a href="#4-是否存在" class="headerlink" title="4.是否存在"></a>4.是否存在</h3><hr>
+<h4 id="exists函数的基本用法"><a href="#exists函数的基本用法" class="headerlink" title="exists函数的基本用法"></a>exists函数的基本用法</h4><p>如何检查一个文件是否存在呢？我想exists函数可以帮助你，用法如下：</p>
+<p>例：fs.exists(文件，回调函数(exists));</p>
+<p>exists的回调函数只有一个参数，类型为布尔型，通过它来表示文件是否存在。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> fs= <span class="built_in">require</span>(<span class="string">"fs"</span>);</span><br><span class="line">fs.exists(<span class="string">'/etc/passwd'</span>, <span class="function"><span class="keyword">function</span> (<span class="params">exists</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(exists ? <span class="string">"存在"</span> : <span class="string">"不存在!"</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="5-修改名称"><a href="#5-修改名称" class="headerlink" title="5.修改名称"></a>5.修改名称</h3><hr>
+<h4 id="rename函数的基本用法"><a href="#rename函数的基本用法" class="headerlink" title="rename函数的基本用法"></a>rename函数的基本用法</h4><p>修改文件名称是我们经常会遇见的事情，rename函数提供修改名称服务：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> fs= <span class="built_in">require</span>(<span class="string">"fs"</span>);</span><br><span class="line">fs.rename(旧文件，新文件，回调函数(err)&#123;</span><br><span class="line">   <span class="keyword">if</span> (err) <span class="keyword">throw</span> err;</span><br><span class="line">   <span class="built_in">console</span>.log(<span class="string">'Successful modification,'</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="6-移动文件"><a href="#6-移动文件" class="headerlink" title="6.移动文件"></a>6.移动文件</h3><hr>
+<p>移动文件也是我们经常会遇见的，可是fs没有专门移动文件的函数，但是我们可以通过rename函数来达到移动文件的目的，示例如下。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> fs = <span class="built_in">require</span>(<span class="string">'fs'</span>);</span><br><span class="line">fs.rename(oldPath,newPath,<span class="function"><span class="keyword">function</span> (<span class="params">err</span>) </span>&#123;</span><br><span class="line">   <span class="keyword">if</span> (err) <span class="keyword">throw</span> err;</span><br><span class="line">   <span class="built_in">console</span>.log(<span class="string">'renamed complete'</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="7-读取文件"><a href="#7-读取文件" class="headerlink" title="7.读取文件"></a>7.读取文件</h3><hr>
+<h4 id="readFile函数的基本用法"><a href="#readFile函数的基本用法" class="headerlink" title="readFile函数的基本用法"></a>readFile函数的基本用法</h4><p>读取文件是最常用到的功能之一，使用fs模块读取文件语法如下：</p>
+<p>例：fs.readFile(文件,编码,回调函数);</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> fs = <span class="built_in">require</span>(<span class="string">'fs'</span>);</span><br><span class="line">fs.readFile(文件名, <span class="function"><span class="keyword">function</span> (<span class="params">err, data</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (err) <span class="keyword">throw</span> err;</span><br><span class="line">  <span class="built_in">console</span>.log(data);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>回调函数里面的data,就是读取的文件内容。</p>
+<h3 id="8-删除文件"><a href="#8-删除文件" class="headerlink" title="8.删除文件"></a>8.删除文件</h3><hr>
+<h4 id="unlink函数的基本用法"><a href="#unlink函数的基本用法" class="headerlink" title="unlink函数的基本用法"></a>unlink函数的基本用法</h4><p>面对一堆垃圾的文件总是有想删除的冲动，我有强迫症？你才有呢。<br>好在有unlink函数，终于得救了，示例如下：<br>例：fs.unlink(文件,回调函数(err));<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> fs = <span class="built_in">require</span>(<span class="string">'fs'</span>);</span><br><span class="line">fs.unlink(文件, <span class="function"><span class="keyword">function</span>(<span class="params">err</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (err) <span class="keyword">throw</span> err;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'successfully deleted'</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="9-创建目录"><a href="#9-创建目录" class="headerlink" title="9.创建目录"></a>9.创建目录</h3><hr>
+<h4 id="mkdir函数的基本用法"><a href="#mkdir函数的基本用法" class="headerlink" title="mkdir函数的基本用法"></a>mkdir函数的基本用法</h4><p>除了针对文件的操作，目录的创建、删除也经常遇到的，下面我们来看看node.js中如何创建目录：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fs.mkdir(路径，权限，回调函数(err));</span><br></pre></td></tr></table></figure></p>
+<p>参数</p>
+<p>1.路径：新创建的目录。<br>2.权限：可选参数，只在linux下有效，表示目录的权限，默认为0777，表示文件所有者、文件所有者所在的组的用户、所有用户，都有权限进行读、写、执行的操作。<br>3.回调函数：当发生错误时，错误信息会传递给回调函数的err参数。</p>
+<h3 id="10-删除目录"><a href="#10-删除目录" class="headerlink" title="10.删除目录"></a>10.删除目录</h3><hr>
+<h4 id="rmdir函数的基本用法"><a href="#rmdir函数的基本用法" class="headerlink" title="rmdir函数的基本用法"></a>rmdir函数的基本用法</h4><p>删除目录也是必不可少的功能，rmdir函数可以删除指定的目录：</p>
+<p>例：fs.rmdir(路径，回调函数(err));<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> fs = <span class="built_in">require</span>(<span class="string">'fs'</span>); </span><br><span class="line">fs.rmdir(path, <span class="function"><span class="keyword">function</span>(<span class="params">err</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (err) <span class="keyword">throw</span> err;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'ok'</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="11-读取目录"><a href="#11-读取目录" class="headerlink" title="11.读取目录"></a>11.读取目录</h3><hr>
+<h4 id="readdir函数的基本用法"><a href="#readdir函数的基本用法" class="headerlink" title="readdir函数的基本用法"></a>readdir函数的基本用法</h4><p>如果要读取目录下所有的文件应该怎么办呢？readdir函数可以读取到指定目录下所有的文件，示例如下：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> fs = <span class="built_in">require</span>(<span class="string">'fs'</span>);</span><br><span class="line">fs.readdir(目录,回调函数(err,files));</span><br></pre></td></tr></table></figure></p>
+<p>回调函数 (callback) 接受两个参数 (err, files) 其中 files 是一个存储目录中所包含的文件名称的数组，数组中不包括 ‘.’ 和 ‘..’。</p>
+<h3 id="12-小结"><a href="#12-小结" class="headerlink" title="12.小结"></a>12.小结</h3><hr>
+<p>文件I/O是最基本的操作，应该熟悉掌握。</p>
+<p>fs模块不但提供异步的文件操作，还提供相应的同步操作方法，需要指出的是，nodejs采用异步I/O正是为了避免I/O时的等待时间，提高CPU的利用率，所以在选择使用异步或同步方法的时候需要权衡取舍。</p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2014-01-12T06:45:23.000Z"><a href="/2014/01/12/Node.js_入门/Node.js入门(2)进程管理/">2014-01-12</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2014/01/12/Node.js_入门/Node.js入门(2)进程管理/">二.进程管理</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-简介"><a href="#1-简介" class="headerlink" title="1.简介"></a>1.简介</h3><hr>
+<p>process是一个全局内置对象，可以在代码中的任何位置访问此对象，这个对象代表我们的node.js代码宿主的操作系统进程对象。</p>
+<p>使用process对象可以截获进程的异常、退出等事件，也可以获取进程的当前目录、环境变量、内存占用等信息，还可以执行进程退出、工作目录切换等操作。</p>
+<p>process对象的一些常用方法。</p>
+<h3 id="2-cwd"><a href="#2-cwd" class="headerlink" title="2.cwd"></a>2.cwd</h3><hr>
+<p>当我们想要查看应用程序当前目录时，可以使用cwd函数，使用语法如下：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">process.cwd();</span><br></pre></td></tr></table></figure></p>
+<h3 id="3-chdir"><a href="#3-chdir" class="headerlink" title="3.chdir"></a>3.chdir</h3><hr>
+<p>如果需要改变应用程序目录，就要使用chdir函数了，它的用法如下：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">process.chdir(<span class="string">"目录"</span>);</span><br></pre></td></tr></table></figure></p>
+<h3 id="4-stdout"><a href="#4-stdout" class="headerlink" title="4.stdout"></a>4.stdout</h3><hr>
+<p>stdout是标准输出流，它是干什么的呢？请下看下面的示例：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">console</span>.log = <span class="function"><span class="keyword">function</span>(<span class="params">d</span>)</span>&#123;</span><br><span class="line">    process.stdout.write(d+<span class="string">'\n'</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>没错，它的作用就是将内容打印到输出设备上，console.log就是封装了它。</p>
+<h3 id="5-stderr"><a href="#5-stderr" class="headerlink" title="5.stderr"></a>5.stderr</h3><hr>
+<p>stderr是标准错误流，和stdout的作用差不多，不同的是它是用来打印错误信息的，我们可以通过它来捕获错误信息，基本使用方法如下：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">process.stderr.write(输入内容);</span><br></pre></td></tr></table></figure></p>
+<h3 id="6-stdin"><a href="#6-stdin" class="headerlink" title="6.stdin"></a>6.stdin</h3><hr>
+<p>stdin是进程的输入流,我们可以通过注册事件的方式来获取输入的内容，如下：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">process.stdin.on(<span class="string">'readable'</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> chunk = process.stdin.read();</span><br><span class="line">  <span class="keyword">if</span> (chunk !== <span class="literal">null</span>) &#123;</span><br><span class="line">    process.stdout.write(<span class="string">'data: '</span> + chunk);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>示例中的chunk就是输入流中的内容。</p>
+<h3 id="7-exit"><a href="#7-exit" class="headerlink" title="7.exit"></a>7.exit</h3><hr>
+<p>如果你需要在程序内杀死进程，退出程序，可以使用exit函数，示例如下：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">process.exit(code);</span><br></pre></td></tr></table></figure></p>
+<p>参数code为退出后返回的代码，如果省略则默认返回0；</p>
+<h3 id="8-注册事件"><a href="#8-注册事件" class="headerlink" title="8.注册事件"></a>8.注册事件</h3><hr>
+<p>前面讲到如何在输入流中打印信息，当我们需要获取stdout内容的时候应该怎么做呢？请看如下的示例：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">process.stdout.on(<span class="string">'data'</span>,<span class="function"><span class="keyword">function</span>(<span class="params">data</span>)</span>&#123;</span><br><span class="line">   <span class="built_in">console</span>.log(data);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>为stdout注册data事件，我们就可以拿到它输出的内容了。</p>
+<h3 id="9-设置编码"><a href="#9-设置编码" class="headerlink" title="9.设置编码"></a>9.设置编码</h3><hr>
+<p>在我们的输入输出的内容中有中文的时候，可能会乱码的问题，这是因为编码不同造成的，所以在这种情况下需要为流设置编码，如下示例：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">process.stdin.setEncoding(编码);</span><br><span class="line">process.stdout.setEncoding(编码);</span><br><span class="line">process.stderr.setEncoding(编码);</span><br></pre></td></tr></table></figure></p>
+<p>常用的编码格式有”utf8”等</p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2014-01-08T06:45:23.000Z"><a href="/2014/01/08/Node.js_入门/Node.js入门(1)快速入门/">2014-01-08</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2014/01/08/Node.js_入门/Node.js入门(1)快速入门/">一.快速入门</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-hello-world"><a href="#1-hello-world" class="headerlink" title="1.hello world"></a>1.hello world</h3><hr>
+<p>node使用javascript作为开发语言。没错，就是通常我们在前端页面里使用的javascript！如：<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">console</span>.log(<span class="string">'hello world'</span>);</span><br></pre></td></tr></table></figure></p>
+<h3 id="2-回调函数"><a href="#2-回调函数" class="headerlink" title="2.回调函数"></a>2.回调函数</h3><hr>
+<p>由于node是一个异步事件驱动的平台，所以在代码中我们经常需要使用回调函数。下面是回调函数应用的经典示例：<br>​<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">setTimeout(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'callback is called'</span>);</span><br><span class="line">&#125;,<span class="number">2000</span>);</span><br></pre></td></tr></table></figure></p>
+<h3 id="3-标准回调函数"><a href="#3-标准回调函数" class="headerlink" title="3.标准回调函数"></a>3.标准回调函数</h3><hr>
+<p>node.js中回调函数格式是约定俗成的，它有两个参数，第一个参数为err，第二个参数为data，顾名思义，err是错误信息，data则是返回的数据，示例如下:<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span>(<span class="params">err,data</span>)</span>&#123;</span><br><span class="line"> </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="4-获取模块"><a href="#4-获取模块" class="headerlink" title="4.获取模块"></a>4.获取模块</h3><hr>
+<p>为了支持快速开发，node平台上提供了大量的模块，封装了各自不同的功能，那么我们将如何调获取想要的模块呢， 在node中，我们可以使用require函数，具体语法如下：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">require</span>(<span class="string">"模块"</span>);</span><br></pre></td></tr></table></figure></p>
+<p>通过require函数我们就可以获取相应模块进而使用它的任意功能了。</p>
+<h3 id="5-使用模块"><a href="#5-使用模块" class="headerlink" title="5.使用模块"></a>5.使用模块</h3><hr>
+<p>os模块可提供操作系统的一些基本信息，它的一些常用方法如下：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> os = <span class="built_in">require</span>(<span class="string">"os"</span>);</span><br><span class="line"><span class="keyword">var</span> result = os.platform(); <span class="comment">//查看操作系统平台</span></span><br><span class="line">           <span class="comment">//os.release(); 查看操作系统版本</span></span><br><span class="line">           <span class="comment">//os.type();  查看操作系统名称</span></span><br><span class="line">           <span class="comment">//os.arch();  查看操作系统CPU架构</span></span><br><span class="line"><span class="built_in">console</span>.log(result);</span><br></pre></td></tr></table></figure></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2014-01-05T04:08:40.000Z"><a href="/2014/01/05/Node.js_入门/Node.js入门(0)安装Node.js开发环境/">2014-01-05</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2014/01/05/Node.js_入门/Node.js入门(0)安装Node.js开发环境/">零.安装Node.js开发环境</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h2 id="Mac下安装Node-js主要有以下几种方式"><a href="#Mac下安装Node-js主要有以下几种方式" class="headerlink" title="Mac下安装Node.js主要有以下几种方式"></a>Mac下安装Node.js主要有以下几种方式</h2><ul>
+<li>Get source &amp; make</li>
+<li>Official .pkg file</li>
+<li>Homebrew</li>
+<li>nvm</li>
+</ul>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2012-07-07T06:45:23.000Z"><a href="/2012/07/07/Unix/POSIX/">2012-07-07</a></time>
       
       
@@ -372,6 +634,8 @@
   
     <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
   
+    <li><a href="/tags/ES6/">ES6</a><small>3</small></li>
+  
     <li><a href="/tags/Git/">Git</a><small>7</small></li>
   
     <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
@@ -382,11 +646,11 @@
   
     <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
   
-    <li><a href="/tags/Node-js/">Node.js</a><small>2</small></li>
+    <li><a href="/tags/Node-js/">Node.js</a><small>1</small></li>
   
     <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>3</small></li>
   
-    <li><a href="/tags/Node-js-JS基础/">Node.js_JS基础</a><small>1</small></li>
+    <li><a href="/tags/Node-js-JS基础/">Node.js_JS基础</a><small>4</small></li>
   
     <li><a href="/tags/Node-js-事件/">Node.js_事件</a><small>4</small></li>
   
