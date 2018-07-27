@@ -53,6 +53,152 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2015-04-07T07:45:23.000Z"><a href="/2015/04/07/Gulp/Gulp(2)gulp api/">2015-04-07</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2015/04/07/Gulp/Gulp(2)gulp api/">二.gulp api</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-gulp的工作方式"><a href="#1-gulp的工作方式" class="headerlink" title="1.gulp的工作方式"></a>1.gulp的工作方式</h3><hr>
+<p>在介绍gulp API之前，我们首先来说一下gulp.js工作方式。在gulp中，使用的是Nodejs中的stream(流)，首先获取到需要的stream，然后可以通过stream的pipe()方法把流导入到你想要的地方，比如gulp的插件中，经过插件处理后的流又可以继续导入到其他插件中，当然也可以把流写入到文件中。所以gulp是以stream为媒介的，它不需要频繁的生成临时文件，这也是我们应用gulp的一个原因。</p>
+<p>　　gulp的使用流程一般是：首先通过gulp.src()方法获取到想要处理的文件流，然后把文件流通过pipe方法导入到gulp的插件中，最后把经过插件处理后的流再通过pipe方法导入到gulp.dest()中，gulp.dest()方法则把流中的内容写入到文件中。例如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;);</span><br><span class="line">gulp.src(&apos;script/jquery.js&apos;)         // 获取流的api</span><br><span class="line">    .pipe(gulp.dest(&apos;dist/foo.js&apos;)); // 写放文件的api</span><br></pre></td></tr></table></figure></p>
+<h3 id="2-globs的匹配规则"><a href="#2-globs的匹配规则" class="headerlink" title="2.globs的匹配规则"></a>2.globs的匹配规则</h3><hr>
+<p>gulp用到的globs的匹配规则以及一些文件匹配技巧。</p>
+<p>　　gulp内部使用了node-glob模块来实现其文件匹配功能。我们可以使用下面这些特殊的字符来匹配我们想要的文件：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkpattern.png" alt=""><br>下面以例子来加深理解</p>
+<p>* 能匹配 a.js,x.y,abc,abc/,但不能匹配a/b.js</p>
+<p>*.* 能匹配 a.js,style.css,a.b,x.y</p>
+<p>*/*/*.js 能匹配 a/b/c.js,x/y/z.js,不能匹配a/b.js,a/b/c/d.js</p>
+<p>** 能匹配 abc,a/b.js,a/b/c.js,x/y/z,x/y/z/a.b,能用来匹配所有的目录和文件</p>
+<p>**/*.js 能匹配 foo.js,a/foo.js,a/b/foo.js,a/b/c/foo.js</p>
+<p>a/**/z 能匹配 a/z,a/b/z,a/b/c/z,a/d/g/h/j/k/z</p>
+<p>a/**b/z 能匹配 a/b/z,a/sb/z,但不能匹配a/x/sb/z,因为只有单**单独出现才能匹配多级目录</p>
+<p>?.js 能匹配 a.js,b.js,c.js</p>
+<p>a?? 能匹配 a.b,abc,但不能匹配ab/,因为它不会匹配路径分隔符</p>
+<p>[xyz].js 只能匹配 x.js,y.js,z.js,不会匹配xy.js,xyz.js等,整个中括号只代表一个字符</p>
+<p>[^xyz].js 能匹配 a.js,b.js,c.js等,不能匹配x.js,y.js,z.js</p>
+<h3 id="3-获取流"><a href="#3-获取流" class="headerlink" title="3.获取流"></a>3.获取流</h3><hr>
+<h4 id="src"><a href="#src" class="headerlink" title="src"></a>src</h4><p>　gulp.src()方法正是用来获取流的，但要注意这个流里的内容不是原始的文件流，而是一个虚拟文件对象流(Vinyl files)，这个虚拟文件对象中存储着原始文件的路径、文件名、内容等信息。其语法为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gulp.src(globs[, options]);</span><br></pre></td></tr></table></figure></p>
+<p>globs参数是文件匹配模式(类似正则表达式)，用来匹配文件路径(包括文件名)，当然这里也可以直接指定某个具体的文件路径。当有多个匹配模式时，该参数可以为一个数组;类型为String或 Array。</p>
+<p>当有多种匹配模式时可以使用数组<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">//使用数组的方式来匹配多种文件</span><br><span class="line">gulp.src([&apos;js/\*.js&apos;,&apos;css/\*.css&apos;,&apos;*.html&apos;])</span><br></pre></td></tr></table></figure></p>
+<p>options为可选参数。以下为options的选项参数:</p>
+<p><strong>options.buffer</strong></p>
+<p>类型： Boolean 默认值： true</p>
+<p>　　如果该项被设置为 false，那么将会以 stream 方式返回 file.contents 而不是文件 buffer 的形式。这在处理一些大文件的时候将会很有用。注意：插件可能并不会实现对 stream 的支持。</p>
+<p><strong>options.read</strong></p>
+<p>类型： Boolean 默认值： true</p>
+<p>如果该项被设置为 false， 那么 file.contents 会返回空值（null），也就是并不会去读取文件。</p>
+<p><strong>options.base</strong></p>
+<p>类型： String ， 设置输出路径以某个路径的某个组成部分为基础向后拼接。</p>
+<p>如, 请想像一下在一个路径为 client/js/somedir 的目录中，有一个文件叫 somefile.js ：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 匹配 'client/js/somedir/somefile.js'现在 'base' 的值为 'client/js/'</span></span><br><span class="line">gulp.src(<span class="string">'client/js/\*\*/\*.js'</span>)  </span><br><span class="line">  .pipe(minify())</span><br><span class="line">  .pipe(gulp.dest(<span class="string">'build'</span>)); </span><br><span class="line">gulp.src(<span class="string">'client/js/\*\*/*.js'</span>, &#123; <span class="attr">base</span>: <span class="string">'client'</span> &#125;) </span><br><span class="line">  .pipe(minify())</span><br><span class="line">  .pipe(gulp.dest(<span class="string">'build'</span>));</span><br></pre></td></tr></table></figure></p>
+<h3 id="4-写文件"><a href="#4-写文件" class="headerlink" title="4.写文件"></a>4.写文件</h3><hr>
+<h4 id="dest"><a href="#dest" class="headerlink" title="dest"></a>dest</h4><p>gulp.dest()方法是用来写文件的，其语法为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gulp.dest(path[,options])</span><br></pre></td></tr></table></figure></p>
+<p>path为写入文件的路径；</p>
+<p>options为一个可选的参数对象，以下为选项参数：</p>
+<p>options.cwd</p>
+<p>类型： String 默认值： process.cwd()</p>
+<p>输出目录的 cwd 参数，只在所给的输出目录是相对路径时候有效。</p>
+<p>options.mode</p>
+<p>类型： String 默认值： 0777</p>
+<p>八进制权限字符，用以定义所有在输出目录中所创建的目录的权限。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;);</span><br><span class="line">gulp.src(&apos;script/jquery.js&apos;)　       // 获取流</span><br><span class="line">    .pipe(gulp.dest(&apos;dist/foo.js&apos;)); // 写放文件</span><br></pre></td></tr></table></figure></p>
+<p>下面再说说生成的文件路径与我们给<em>gulp.dest()</em>方法传入的路径参数之间的关系。 　　<em>gulp.dest(path)</em>生成的文件路径是我们传入的<em>path</em>参数后面再加上<em>gulp.src()</em>中有通配符开始出现的那部分路径。例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">var gulp = reruire(&apos;gulp&apos;); //有通配符开始出现的那部分路径为 **/*.js</span><br><span class="line">gulp.src(&apos;script/**/*.js&apos;)</span><br><span class="line">    .pipe(gulp.dest(&apos;dist&apos;)); //最后生成的文件路径为 dist/**/*.js</span><br><span class="line">//如果 **/*.js 匹配到的文件为 jquery/jquery.js ,则生成的文件路径为 dist/jquery/jquery.js</span><br></pre></td></tr></table></figure>
+<p>用gulp.dest()把文件流写入文件后，文件流仍然可以继续使用。</p>
+<h3 id="5-监视文件"><a href="#5-监视文件" class="headerlink" title="5.监视文件"></a>5.监视文件</h3><hr>
+<h4 id="watch"><a href="#watch" class="headerlink" title="watch"></a>watch</h4><p>gulp.watch()用来监视文件的变化，当文件发生变化后，我们可以利用它来执行相应的任务，例如文件压缩等。其语法为</p>
+<p>gulp.watch(glob[, opts], tasks); </p>
+<p>glob 为要监视的文件匹配模式，规则和用法与gulp.src()方法中的glob相同。 opts 为一个可选的配置对象，通常不需要用到。 tasks 为文件变化后要执行的任务，为一个数组。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;uglify&apos;,function()&#123;</span><br><span class="line">  //do something</span><br><span class="line">&#125;);</span><br><span class="line">gulp.task(&apos;reload&apos;,function()&#123;</span><br><span class="line">  //do something</span><br><span class="line">&#125;);</span><br><span class="line">gulp.watch(&apos;js/**/*.js&apos;, [&apos;uglify&apos;,&apos;reload&apos;]);</span><br><span class="line">　　gulp.watch()还有另外一种使用方式：　</span><br><span class="line">gulp.watch(glob[, opts, cb]);</span><br></pre></td></tr></table></figure></p>
+<p>glob和opts参数与第一种用法相同;</p>
+<p>cb参数为一个函数。每当监视的文件发生变化时，就会调用这个函数,并且会给它传入一个对象，该对象包含了文件变化的一些信息，type属性为变化的类型，可以是added,changed,deleted；path属性为发生变化的文件的路径。</p>
+<p>gulp.watch(‘js/**/*.js’, function(event){<br>    console.log(event.type); //变化类型 added为新增,deleted为删除，changed为改变<br>    console.log(event.path); //变化的文件的路径<br>}); </p>
+<h3 id="6-定义任务"><a href="#6-定义任务" class="headerlink" title="6.定义任务"></a>6.定义任务</h3><hr>
+<h4 id="task"><a href="#task" class="headerlink" title="task"></a>task</h4><p>gulp.task方法用来定义任务，内部使用的是Orchestrator(用于排序、执行任务和最大并发依赖关系的模块)，其语法为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(name[, deps], fn)</span><br></pre></td></tr></table></figure></p>
+<p>name 为任务名；</p>
+<p>deps 是当前定义的任务需要依赖的其他任务，为一个数组。当前定义的任务会在所有依赖的任务执行完毕后才开始执行。如果没有依赖，则可省略这个参数；</p>
+<p>fn 为任务函数，我们把任务要执行的代码都写在里面。该参数也是可选的。</p>
+<p>当你定义一个简单的任务时，需要传入任务名字和执行函数两个属性。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;greet&apos;, function () &#123;</span><br><span class="line">   console.log(&apos;Hello world!&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>执行gulp greet的结果就是在控制台上打印出“Hello world”。</p>
+<p>你也可以定义一个在gulp开始运行时候默认执行的任务，并将这个任务命名为“default”：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;default&apos;, function () &#123;</span><br><span class="line">   // Your default task</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>前面已经介绍了gulp.task的语法，但是当有多个任务时，需要知道怎么来控制任务的执行顺序。</p>
+<p>可以通过任务依赖来实现。例如我想要执行one,two,three这三个任务，那我们就可以定义一个空的任务，然后把那三个任务当做这个空的任务的依赖就行了：</p>
+<p>//只要执行default任务，就相当于把one,two,three这三个任务执行了<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;default&apos;,[&apos;one&apos;,&apos;two&apos;,&apos;three&apos;]);</span><br></pre></td></tr></table></figure></p>
+<p>　　如果任务相互之间没有依赖，任务就会按你书写的顺序来执行，如果有依赖的话则会先执行依赖的任务。但是如果某个任务所依赖的任务是异步的，就要注意了，gulp并不会等待那个所依赖的异步任务完成，而是会接着执行后续的任务。例如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;one&apos;,function()&#123;</span><br><span class="line">  //one是一个异步执行的任务</span><br><span class="line">  setTimeout(function()&#123;</span><br><span class="line">    console.log(&apos;one is done&apos;)</span><br><span class="line">  &#125;,5000);</span><br><span class="line">&#125;);</span><br><span class="line">//two任务虽然依赖于one任务,但并不会等到one任务中的异步操作完成后再执行</span><br><span class="line">gulp.task(&apos;two&apos;,[&apos;one&apos;],function()&#123;</span><br><span class="line">  console.log(&apos;two is done&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>上面的例子中我们执行two任务时，会先执行one任务，但不会去等待one任务中的异步操作完成后再执行two任务，而是紧接着执行two任务。所以two任务会在one任务中的异步操作完成之前就执行了。</p>
+<p>那如果我们想等待异步任务中的异步操作完成后再执行后续的任务，该怎么做呢？</p>
+<p>有三种方法可以实现：<br>第一：在异步操作完成后执行一个回调函数来通知gulp这个异步任务已经完成,这个回调函数就是任务函数的第一个参数。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;one&apos;,function(cb)&#123; //cb为任务函数提供的回调，用来通知任务已经完成</span><br><span class="line">  //one是一个异步执行的任务</span><br><span class="line">  exec(function()&#123;</span><br><span class="line">    console.log(&apos;one is finish&apos;);</span><br><span class="line">    cb();  //执行回调，表示这个异步任务已经完成</span><br><span class="line">  &#125;,5000);</span><br><span class="line">&#125;); </span><br><span class="line">//这时two任务会在one任务中的异步操作完成后再执行</span><br><span class="line">gulp.task(&apos;two&apos;,[&apos;one&apos;],function()&#123;</span><br><span class="line">  console.log(&apos;two is finish&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>第二：定义任务时返回一个流对象。适用于任务就是操作gulp.src获取到的流的情况。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;one&apos;,function(cb)&#123;</span><br><span class="line">  var stream = gulp.src(&apos;client/**/*.js&apos;)</span><br><span class="line">      .pipe(exec()) //exec()中有某些异步操作</span><br><span class="line">      .pipe(gulp.dest(&apos;build&apos;));</span><br><span class="line">    return stream;</span><br><span class="line">&#125;);</span><br><span class="line">gulp.task(&apos;two&apos;,[&apos;one&apos;],function()&#123;</span><br><span class="line">  console.log(&apos;two is done&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>第三：返回一个promise对象，例如<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">var Q = require(&apos;q&apos;);</span><br><span class="line">gulp.task(&apos;one&apos;, function() &#123;</span><br><span class="line">  var deferred = Q.defer();</span><br><span class="line">  setTimeout(function() &#123;    // 执行异步的操作</span><br><span class="line">    deferred.resolve();</span><br><span class="line">  &#125;, 1);</span><br><span class="line">  return deferred.promise;</span><br><span class="line">&#125;);</span><br><span class="line">gulp.task(&apos;two&apos;,[&apos;one&apos;],function()&#123;</span><br><span class="line">  console.log(&apos;two is done&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="7-执行文件"><a href="#7-执行文件" class="headerlink" title="7.执行文件"></a>7.执行文件</h3><hr>
+<h4 id="run"><a href="#run" class="headerlink" title="run"></a>run</h4><p>　gulp.run()表示要执行的任务。可能会使用单个参数的形式传递多个任务。如下代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;end&apos;,function()&#123;</span><br><span class="line">gulp.run(&apos;task1&apos;,&apos;task3&apos;,&apos;task2&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>注意：任务是尽可能多的并行执行的，并且可能不会按照指定的顺序运行。</p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2015-04-05T14:16:53.000Z"><a href="/2015/04/05/Node.js_JS基础/JavaScript函数参数传递到底是值传递还是引用传递/">2015-04-05</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2015/04/05/Node.js_JS基础/JavaScript函数参数传递到底是值传递还是引用传递/">JavaScript函数参数传递到底是值传递还是引用传递</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>在传统的观念里，都认为JavaScript函数传递的是引用传递(也称之为指针传递)，也有人认为是值传递和引用传递都具备。那么JS的参数传递到底是怎么回事呢？事实上以下的演示也完全可以用于Java</p>
+<p>首先来一个比较简单的，基本类型的传递:<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">add</span>(<span class="params">num</span>)</span>&#123;</span><br><span class="line">   num+=<span class="number">10</span>;</span><br><span class="line">   <span class="keyword">return</span> num;</span><br><span class="line">&#125;</span><br><span class="line">num=<span class="number">10</span>;</span><br><span class="line"><span class="built_in">console</span>.log(add(num));</span><br><span class="line"><span class="built_in">console</span>.log(num);</span><br><span class="line"><span class="comment">//输出20,10</span></span><br></pre></td></tr></table></figure></p>
+<p>  对于这里的输出20,10，按照JS的官方解释就是在基本类型参数传递的时候，做了一件复制栈帧的拷贝动作，这样外部声明的变量num和函数参数的num，拥有完全相同的值，但拥有完全不同的参数地址，两者谁都不认识谁，在函数调用返回的时候弹出函数参数num栈帧。所以改变函数参数num，对原有的外部变量没有一点影响。</p>
+<p>再来看一个较复杂的，对象引用类型的传递:<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">setName</span>(<span class="params">obj</span>)</span>&#123;</span><br><span class="line">    obj.name=<span class="string">"ted"</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">var</span> obj=<span class="keyword">new</span> <span class="built_in">Object</span>();</span><br><span class="line">setName(obj);</span><br><span class="line"><span class="built_in">console</span>.log(obj.name);</span><br><span class="line"><span class="comment">//输出ted</span></span><br></pre></td></tr></table></figure></p>
+<p>  以上代码的运行的实质是:创建了一个object对象，将其引用赋给obj(在C里面就直接是一个内存地址的赋值)，然后在传递函数参数的时候，做了一件与前一个方法相同的事情，复制了一个栈帧给函数参数的obj，两者拥有相同的值(不妨将其理解为object对象的地址)，然后在setName做改变的时候，事实上是改变了object对象自身的值(在JAVA里称之为可变类)，在改变完成之后同样也要弹出函数参数obj对应的栈帧。</p>
+<p>所以对应的输出是改变后object对象的值</p>
+<p>  那么可能有的朋友可能会问，这样也可以理解为一个引用传递(指针传递)呀？不，这里严格的说，在和JAVA类似的语言中，已经没有了指针，在JAVA里将上述过程称之为一个从符号引用到直接引用的解析过程。在C里面，指针就是一个具有固定长度的类型(在大多数的C编译器里是2个字节)，但在JAVA类似的语言里，引用也有自己的属性和方法，只是你不能直接去访问和控制它，所以它从某种意义上也是一种对象，这种机制也很大程度的避免了内存泄露，术语称之为内存结构化访问机制。</p>
+<p>为了证明上述观点，稍微改造下上述例子:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">setName</span>(<span class="params">obj</span>)</span>&#123;</span><br><span class="line">	obj.name=<span class="string">"zhangsan"</span>;</span><br><span class="line">	obj=<span class="keyword">new</span> <span class="built_in">Object</span>();</span><br><span class="line">	obj.name=<span class="string">"lisi"</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">var</span> obj=<span class="keyword">new</span> <span class="built_in">Object</span>();</span><br><span class="line">setName(obj);</span><br><span class="line"><span class="built_in">console</span>.log(obj.name);</span><br><span class="line"><span class="comment">//输出zhangsan</span></span><br></pre></td></tr></table></figure>
+<p>  这个例子与上一个例子的唯一不同是这里将一个新的对象赋给了函数参数obj，这样函数参数obj和原有的引用obj参数，有着完全不同的值和内存地址。</p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2015-04-04T06:45:23.000Z"><a href="/2015/04/04/Gulp/Gulp(1)简介/">2015-04-04</a></time>
       
       
@@ -727,127 +873,6 @@ warning: You appear to have cloned an empty repository.
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2014-06-15T06:45:23.000Z"><a href="/2014/06/15/Git/Git(1)简介/">2014-06-15</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2014/06/15/Git/Git(1)简介/">一.简介</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-Git的诞生"><a href="#1-Git的诞生" class="headerlink" title="1.Git的诞生"></a>1.Git的诞生</h3><hr>
-<p>同生活中的许多伟大事物一样，Git 诞生于一个极富纷争大举创新的年代。</p>
-<p>　　Linux 内核开源项目有着为数众广的参与者。 绝大多数的 Linux 内核维护工作都花在了提交补丁和保存归档的繁琐事务上（1991－2002年间）。 到 2002 年，整个项目组开始启用一个专有的分布式版本控制系统 BitKeeper 来管理和维护代码。</p>
-<p>　　到了 2005 年，开发 BitKeeper 的商业公司同 Linux 内核开源社区的合作关系结束，他们收回了 Linux 内核社区免费使用 BitKeeper 的权力。 这就迫使 Linux 开源社区（特别是 Linux 的缔造者 Linux Torvalds）基于使用 BitKcheper 时的经验教训，开发出自己的版本系统。 他们对新的系统制订了若干目标：</p>
-<p>速度<br>简单的设计<br>对非线性开发模式的强力支持（允许成千上万个并行开发的分支）<br>完全分布式<br>　　有能力高效管理类似 Linux 内核一样的超大规模项目（速度和数据量）</p>
-<p>　　自诞生于 2005 年以来，Git 日臻成熟完善，在高度易用的同时，仍然保留着初期设定的目标。 它的速度飞快，极其适合管理大项目，有着令人难以置信的非线性分支管理系统。</p>
-<p>　　Git迅速成为最流行的分布式版本控制系统，尤其是2008年，GitHub网站上线了，它为开源项目免费提供Git存储，无数开源项目开始迁移至GitHub，包括jQuery，PHP，Ruby等等。</p>
-<h3 id="2-Git介绍"><a href="#2-Git介绍" class="headerlink" title="2.Git介绍"></a>2.Git介绍</h3><hr>
-<p>Git是一款免费、开源的分布式版本控制系统，用于敏捷高效地处理任何或小或大的项目。</p>
-<p>　　Git是一个开源的分布式版本控制系统，用以有效、高速的处理从很小到非常大的项目版本管理。Git 是 Linus Torvalds 为了帮助管理 Linux 内核开发而开发的一个开放源码的版本控制软件。</p>
-<p>　　最原始的版本控制是纯手工的版本控制：修改文件，保存文件副本。有时候偷懒省事，保存副本时命名比较随意，时间长了就不知道哪个是新的，哪个是老的了，即使知道新旧，可能也不知道每个版本是什么内容，相对上一版作了什么修改了，当几个版本过去后，很可能就是下面的样子了：<br>　　<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkold_version.jpg" alt=""></p>
-<h3 id="3-Git特点"><a href="#3-Git特点" class="headerlink" title="3.Git特点"></a>3.Git特点</h3><hr>
-<p>分布式相比于集中式的最大区别在于开发者可以提交到本地，每个开发者通过克隆（git clone），在本地机器上拷贝一个完整的Git仓库。</p>
-<ul>
-<li>直接记录快照，而非差异比较 ： Git 更像是把变化的文件作快照后，记录在一个微型的文件系统中。</li>
-<li>近乎所有操作都是本地执行 ：在 Git 中的绝大多数操作都只需要访问本地文件和资源，不用连网。</li>
-<li>时刻保持数据完整性 ：在保存到 Git 之前，所有数据都要进行内容的校验和（checksum）计算，并将此结果作为数据的唯一标识和索引。</li>
-<li>多数操作仅添加数据 ：常用的 Git 操作大多仅仅是把数据添加到数据库。<br>开发流程示意图：</li>
-</ul>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkdevelop.jpg" alt=""></p>
-<h3 id="4-集中式"><a href="#4-集中式" class="headerlink" title="4.集中式"></a>4.集中式</h3><hr>
-<p>CVS及SVN都是集中式的版本控制系统，而Git是分布式版本控制系统。</p>
-<p>　　集中式版本控制系统，版本库是集中存放在中央服务器的，一起工作的人需要用自己的电脑从服务器上同步更新或上传自己的修改。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkfos.jpg" alt="">　　</p>
-<p>但是，所有的版本数据都存在服务器上，用户的本地设备就只有自己以前所同步的版本，如果不连网的话，用户就看不到历史版本，也无法切换版本验证问题，或在不同分支工作。。</p>
-<p>　　而且，所有数据都保存在单一的服务器上，有很大的风险这个服务器会损坏，这样就会丢失所有的数据，当然可以定期备份。　　</p>
-<h3 id="5-分布式"><a href="#5-分布式" class="headerlink" title="5.分布式"></a>5.分布式</h3><hr>
-<p>那分布式版本控制系统与集中式版本控制系统有何不同呢？</p>
-<p>　分布式版本控制系统根本没有“中央服务器”，每个人的电脑上都是一个完整的版本库，不需要联网就可以工作。既然每个人电脑上都有一个完整的版本库，那多个人如何协作呢？比方说你和同事在各自电脑修改相同文件，这时，你们俩之间只需把各自的修改推送给对方，就可以互相看到对方的修改了。</p>
-<p>　　分布式版本控制系统的安全性要高很多，因为每个人电脑里都有完整的版本库。大家之间可以相互复制。</p>
-<p>　　分布式版本控制系统通常也有一台充当“中央服务器”的电脑，但这个服务器的作用仅仅是用来方便“交换”大家的修改，没有它大家也一样干活，只是交换修改不方便而已。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkdis.jpg" alt=""></p>
-<h3 id="6-Git安装"><a href="#6-Git安装" class="headerlink" title="6.Git安装"></a>6.Git安装</h3><hr>
-<p>最早Git是在Linux上开发的，很长一段时间内，Git也只能在Linux和Unix系统上跑。不过，慢慢地有人把它移植到了Windows上。现在，Git可以在Linux、Unix、Mac和Windows这几大平台上正常运行了。</p>
-<p>　　在Linux上安装Git</p>
-<p>　　首先，你可以试着输入git，看看系统有没有安装Git：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git</span><br></pre></td></tr></table></figure></p>
-<p>　　像上面的命令，有很多Linux会友好地告诉你Git没有安装，还会告诉你如何安装Git。</p>
-<p>　　如果你碰巧用Debian或Ubuntu Linux，通过一条sudo apt-get install git就可以直接完成Git的安装，非常简单。如果想查看是否安装成功，通过git –version。</p>
-<p>　　如果是其他Linux版本，可以直接通过源码安装。先从Git官网下载源码，然后解压，依次输入：./config，make，sudo make install这几个命令安装就好了。</p>
-<p>安装完成后，还需要最后一步设置，在命令行输入：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git config --global user.name &quot;Your Name&quot;</span><br><span class="line">$ git config --global user.email &quot;email@example.com&quot;</span><br></pre></td></tr></table></figure></p>
-<p>因为Git是分布式版本控制系统，所以每个机器都必须自报家门：你的名字和Email地址。</p>
-<p>注意git config命令的–global参数，用了这个参数，表示你这台机器上所有的Git仓库都会使用这个配置，当然也可以对某个仓库指定不同的用户名和Email地址。</p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2014-06-13T11:45:23.000Z"><a href="/2014/06/13/Node.js_测试/Mocha(4)为项目开发一个BDD测试/">2014-06-13</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2014/06/13/Node.js_测试/Mocha(4)为项目开发一个BDD测试/">四.为项目开发一个BDD测试</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-辅助模块"><a href="#1-辅助模块" class="headerlink" title="1.辅助模块"></a>1.辅助模块</h3><hr>
-<p>我们进行单元测试，一般都需要组合几个工具来来使用的。下面我们开始介绍：</p>
-<p>chai断言库<br>chai 断言库支持BDD 的 expect/should 语法风格 和TDD的 assert 语法风格。</p>
-<p>superagent<br>在用Node做Web开发的时候，模拟HTTP请求时必不可少的。这也就引出了superagent这个模块，它是一个模拟http请求的库。它作用是简化发起请求的库。</p>
-<p>项目的package.json 代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;name&quot;: &quot;mocha-test&quot;,</span><br><span class="line">  &quot;version&quot;: &quot;0.0.1&quot;,</span><br><span class="line">  &quot;private&quot;: true,</span><br><span class="line">  &quot;scripts&quot;: &#123;</span><br><span class="line">    &quot;start&quot;: &quot;node app.js&quot;,</span><br><span class="line">    &quot;test&quot;: &quot;mocha test&quot;</span><br><span class="line">  &#125;,</span><br><span class="line">  &quot;devDependencies&quot;: &#123;</span><br><span class="line">    &quot;superagent&quot;: &quot;1.4.0&quot;,</span><br><span class="line">    &quot;chai&quot;: &quot;3.4.0&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<h3 id="2-项目描述"><a href="#2-项目描述" class="headerlink" title="2.项目描述"></a>2.项目描述</h3><hr>
-<p>首先我们创建一个app.js文件。内容如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">var http = require(&apos;http&apos;),</span><br><span class="line">    PORT = 3000; </span><br><span class="line">function onRequest(request, response) &#123;</span><br><span class="line">    console.log(&quot;Request received.&quot;);</span><br><span class="line">    response.writeHead(200, &#123;&quot;Content-Type&quot;: &quot;text/plain&quot;&#125;);</span><br><span class="line">    response.write(&quot;Hello World&quot;);</span><br><span class="line">    response.end();</span><br><span class="line">&#125;</span><br><span class="line">var server = http.createServer(onRequest);</span><br><span class="line">server.listen(PORT);</span><br></pre></td></tr></table></figure></p>
-<p>描述：为了让项目尽可能的简单，我们没有用到任何的框架。只是创建了一个http服务器监听了3000端口。</p>
-<h3 id="3-项目重构"><a href="#3-项目重构" class="headerlink" title="3.项目重构"></a>3.项目重构</h3><hr>
-<p>我们的app.js需要最外部暴露两个方法。所以要对我们右边的项目进行修改。</p>
-<p>需要修改的代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">var server = http.createServer(onRequest);</span><br><span class="line">server.listen(PORT);</span><br></pre></td></tr></table></figure></p>
-<p>重构为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">var server = http.createServer(onRequest);</span><br><span class="line">var boot = function () &#123;</span><br><span class="line">    server.listen(PORT, function () &#123;</span><br><span class="line">        console.info(&apos;Express server listening on port &apos; + PORT);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;;</span><br><span class="line">var shutdown = function () &#123;</span><br><span class="line">    server.close();</span><br><span class="line">&#125;;</span><br><span class="line">if (require.main === module) &#123;</span><br><span class="line">    boot();</span><br><span class="line">&#125; else &#123;</span><br><span class="line">    console.info(&apos;Running app as a module&apos;);</span><br><span class="line">    exports.boot = boot;</span><br><span class="line">    exports.shutdown = shutdown;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>重构描述：现在我们把启动服务和关闭服务分别进行了封装并且对外进行了暴露。</p>
-<h3 id="4-测试用例"><a href="#4-测试用例" class="headerlink" title="4.测试用例"></a>4.测试用例</h3><hr>
-<p>现在，我们创建一个名字为 tests 的测试文件夹，并创建一个index.js的文件。测试用例前需要启动服务器，结束后关闭服务。这个时候就用到了前面暴露的 boot() 和 shutdown() 方法。</p>
-<p>示例如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">var boot = require(&apos;../app&apos;).boot,</span><br><span class="line">    shutdown = require(&apos;../app&apos;).shutdown,</span><br><span class="line">    request = require(&apos;superagent&apos;),</span><br><span class="line">    expect = require(&apos;chai&apos;).expect;</span><br><span class="line"> </span><br><span class="line">describe(&apos;server&apos;, function () &#123;</span><br><span class="line">    before(function () &#123;</span><br><span class="line">        boot();</span><br><span class="line">    &#125;);</span><br><span class="line">    describe(&apos;index&apos;, function () &#123;</span><br><span class="line">        it(&apos;should respond to GET&apos;, function (done) &#123;</span><br><span class="line">            request</span><br><span class="line">                .get(&apos;http://localhost:3000&apos;)</span><br><span class="line">                .end(function (err, res) &#123;</span><br><span class="line">                    expect(res.status).to.equal(200);</span><br><span class="line">                    done();</span><br><span class="line">                &#125;);</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;);</span><br><span class="line">    after(function () &#123;</span><br><span class="line">        shutdown();</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>运行命令：mocha tests</p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -875,7 +900,9 @@ warning: You appear to have cloned an empty repository.
   
     <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
   
-    <li><a href="/tags/ES6/">ES6</a><small>3</small></li>
+    <li><a href="/tags/Docker/">Docker</a><small>1</small></li>
+  
+    <li><a href="/tags/ES6/">ES6</a><small>4</small></li>
   
     <li><a href="/tags/Git/">Git</a><small>7</small></li>
   

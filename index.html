@@ -545,6 +545,95 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2017-08-27T06:45:23.000Z"><a href="/2017/08/27/Docker/当Node.js遇见Docker/">2017-08-27</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2017/08/27/Docker/当Node.js遇见Docker/">当Node.js遇见Docker</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="什么是Docker"><a href="#什么是Docker" class="headerlink" title="什么是Docker?"></a>什么是Docker?</h3><p>Docker是最流行的的容器工具，<strong>没有之一</strong>。本文并不打算深入介绍Docker，不过可以从几个简单的角度来理解Docker。</p>
+<h5 id="从进程的角度理解Docker"><a href="#从进程的角度理解Docker" class="headerlink" title="从进程的角度理解Docker"></a>从进程的角度理解Docker</h5><p>在Linux中，所有的进程构成了一棵树。可以使用<a href="http://man7.org/linux/man-pages/man1/pstree.1.html" target="_blank" rel="noopener">pstree</a>命令进行查看:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">pstree</span><br><span class="line">init─┬─VBoxService───7*[&#123;VBoxService&#125;]</span><br><span class="line">     ├─acpid</span><br><span class="line">     ├─atd</span><br><span class="line">     ├─cron</span><br><span class="line">     ├─dbus-daemon</span><br><span class="line">     ├─dhclient</span><br><span class="line">     ├─dockerd─┬─docker-containe─┬─docker-containe─┬─redis-server───2*[&#123;redis-server&#125;]</span><br><span class="line">     │         │                 │                 └─8*[&#123;docker-containe&#125;]</span><br><span class="line">     │         │                 ├─docker-containe─┬─mongod───16*[&#123;mongod&#125;]</span><br><span class="line">     │         │                 │                 └─8*[&#123;docker-containe&#125;]</span><br><span class="line">     │         │                 └─11*[&#123;docker-containe&#125;]</span><br><span class="line">     │         └─13*[&#123;dockerd&#125;]</span><br><span class="line">     ├─6*[getty]</span><br><span class="line">     ├─influxd───9*[&#123;influxd&#125;]</span><br><span class="line">     ├─irqbalance</span><br><span class="line">     ├─puppet───&#123;puppet&#125;</span><br><span class="line">     ├─rpc.idmapd</span><br><span class="line">     ├─rpc.statd</span><br><span class="line">     ├─rpcbind</span><br><span class="line">     ├─rsyslogd───3*[&#123;rsyslogd&#125;]</span><br><span class="line">     ├─ruby───&#123;ruby&#125;</span><br><span class="line">     ├─sshd─┬─sshd───sshd───zsh───pstree</span><br><span class="line">     │      ├─sshd───sshd───zsh</span><br><span class="line">     │      └─sshd───sshd───zsh───mongo───2*[&#123;mongo&#125;]</span><br><span class="line">     ├─systemd-logind</span><br><span class="line">     ├─systemd-udevd</span><br><span class="line">     ├─upstart-file-br</span><br><span class="line">     ├─upstart-socket-</span><br><span class="line">     └─upstart-udev-br</span><br></pre></td></tr></table></figure>
+<p>可知，init进程为所有进程的根(root)，其PID为1。</p>
+<p>Docker将不同应用的进程隔离了起来，这些被隔离的进程就是一个个容器。隔离是基于两个Linux内核机制实现的，Namesapce和Cgroups。</p>
+<p>Namespace可以从UTD、IPC、PID、Mount，User和Network的角度隔离进程。比如，不同的进程将拥有不同PID空间，这样容器中的进程将看不到主机上的进程，也看不到其他容器中的进程。这与Node.js中模块化以隔离变量的命名空间的思想是异曲同工的。</p>
+<p>通过Cgroups，可以限制进程对CPU，内存等资源的使用。简单地说，我们可以通过Cgroups指定容器只能使用1G内存。</p>
+<p>从进程角度理解Docker，那<strong>每一个Docker容器就是被隔离的进程及其子进程</strong>。上文pstree的输出中可以分辨出2个容器: mongodb和redis。</p>
+<h5 id="从文件的角度理解Docker"><a href="#从文件的角度理解Docker" class="headerlink" title="从文件的角度理解Docker"></a>从文件的角度理解Docker</h5><p>基于Namespace与Cgroups的容器工具其实早已存在，例如<a href="http://linux-vserver.org/Welcome_to_Linux-VServer.org" target="_blank" rel="noopener">Linux-VServer</a>，<a href="https://openvz.org/Main_Page" target="_blank" rel="noopener">OpenVZ</a>，<a href="https://linuxcontainers.org/" target="_blank" rel="noopener">LXC</a>。然而，真正引爆容器技术的却是后来者Docker。为什么呢？个人觉得是因为<strong>Docker镜像</strong>以及<strong>Dockerfile</strong>。</p>
+<p>在Linux中，一切皆文件，进程的运行离不开各种各样的文件。跑一个简单的Node.js程序，传统的做法是手动安装各种依赖然后运行；而Docker则是将所有依赖（包括操作系统，Node，NPM模块，源代码）打包到一个<strong>Docker镜像</strong>中，然后基于这个镜像运行容器。</p>
+<p><strong>Docker镜像</strong>可以通过<strong>Docker仓库</strong>共享给其他人，这样他们只需要下载镜像即可运行程序。想象一下，当我们需要在另一台主机(比如生产服务器，新同事的机器)上运行一个Node.js应用，仅仅需要下载对应的Docker镜像就可以了，是不是很方便呢？</p>
+<p><strong>Docker镜像</strong>可以通过文本文件，即<strong>Dockerfile</strong>进行定义。不妨看一个简单的例子(由于不可抗力，这个Dockerfile构建大概会失败，仅作为参考):</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"># 基于Ubuntu</span><br><span class="line">FROM ubuntu</span><br><span class="line"></span><br><span class="line"># 安装Node.js与NPM</span><br><span class="line">RUN apt-get update &amp;&amp; apt-get -y install nodejs npm</span><br><span class="line"></span><br><span class="line"># 安装NPM模块:Express</span><br><span class="line">RUN npm install express</span><br><span class="line"></span><br><span class="line"># 添加源代码</span><br><span class="line">ADD app.js /</span><br></pre></td></tr></table></figure>
+<p>其中，<strong>FROM</strong>，<strong>RUN</strong>与<strong>ADD</strong>为Dockerfile命令。结合注释，该Dockerfile的含义非常直白。基于这个Dockerfile，使用<strong>docker build</strong>命令就可以构建对应的Docker镜像。基于这个Docker镜像，就可以运行Docker容器来执行app.js:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">var express = require(&quot;express&quot;);</span><br><span class="line">var app = express();</span><br><span class="line"></span><br><span class="line">app.get(&quot;/&quot;, function(req, res)</span><br><span class="line">&#123;</span><br><span class="line">    res.send(&quot;Hello Fundebug!\n&quot;);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">app.listen(3000);</span><br></pre></td></tr></table></figure>
+<p>Dockerfile实际上是将<strong>Docker镜像代码化</strong>了，另一方面也是将<strong>安装依赖的过程代码化</strong>了，于是我们就可以像管理源码一样使用git对Dockerfile进行版本管理。</p>
+<h3 id="为啥用Docker"><a href="#为啥用Docker" class="headerlink" title="为啥用Docker?"></a>为啥用Docker?</h3><p>当你的系统越来越复杂的时候，你会发现Docker的价值。</p>
+<h5 id="从应用架构角度理解Docker"><a href="#从应用架构角度理解Docker" class="headerlink" title="从应用架构角度理解Docker"></a>从应用架构角度理解Docker</h5><p>刚开始，你只需要写一个Node.js程序，挂载一个静态网站；然后，你做了一个用户账号系统，这时需要数据库了，比如说MySQL; 后来，为了提升性能，你引入了Memcached缓存；终于有一天，你决定把前后端分离，这样可以提高开发效率；当用户越来越多，你又不得不使用Nginx做反向代理; 对了，随着功能越来越多，你的应用依赖也会越来越多…总之，你的应用架构只会越来越复杂。不同的组件的安装，配置与运行步骤各不相同，于是你不得不写一个很长的文档给新同事，只为了让他搭建一个<strong>开发环境</strong>。</p>
+<p>使用Docker的话，你可以为不同的组件逐一编写Dockerfile，分别构建镜像，然后运行在各个容器中。这样做，将复杂的架构统一了，所有组件的安装和运行步骤统一为几个简单的命令:</p>
+<ul>
+<li>构建Docker镜像: docker build</li>
+<li>上传Docker镜像: docker push</li>
+<li>下载Docker镜像: docker pull</li>
+<li>运行Docker容器: docker run</li>
+</ul>
+<h5 id="从应用部署角度理解Docker"><a href="#从应用部署角度理解Docker" class="headerlink" title="从应用部署角度理解Docker"></a>从应用部署角度理解Docker</h5><p>通常，你会有<strong>开发</strong>，<strong>测试</strong>和<strong>生产</strong>服务器，对于某些应用，还会需要进行<strong>构建</strong>。不同步骤的依赖会有一些不同，并且在不同的服务器上执行。如果手动地在不同的服务器上安装依赖，是件很麻烦的事情。比如说，当你需要为Node.js应用添加一个新的npm模块，或者升级一下Node.js，是不是得重复操作很多次？友情提示一下，手动敲命令是极易出错的，有些失误会导致致命的后果（参考最近Gitlab误删数据库与AWS的S3故障）。</p>
+<p>如果使用Docker的话，<strong>开发</strong>、<strong>构建</strong>、<strong>测试</strong>、<strong>生产</strong>将全部在Docker容器中执行，你需要为不同步骤编写不同的Dockerfile。当依赖变化时，仅需要稍微修改Dockerfile即可。结合构建工具<a href="https://jenkins.io/" target="_blank" rel="noopener">Jenkins</a>，就可以将整个部署流程自动化。</p>
+<p>另一方面，Dockerfile将Docker镜像描述得非常精准，能够保证很强的一致性。比如，操作系统的版本，Node.js的版本，NPM模块的版本等。这就意味着，在本地开发环境运行成功的镜像，在<strong>构建</strong>、<strong>测试</strong>、<strong>生产</strong>环境中也没有问题。还有，不同的Docker容器是依赖于不同的Docker镜像，这样他们互不干扰。比如，两个Node.js应用可以分别使用不同版本的Node.js。</p>
+<h5 id="从集群管理角度理解Docker"><a href="#从集群管理角度理解Docker" class="headerlink" title="从集群管理角度理解Docker"></a>从集群管理角度理解Docker</h5><p>架构规模越来越大的时候，你有必要引入集群了。这就意味着，服务器由1台变成了多台，同一个应用需要运行多个备份来分担负载。当然，你可以手动对集群的功能进行划分: Nginx服务器，Node.js服务器，MySQL服务器，测试服务器，生产服务器…这样做的好处是简单粗暴；也可以说财大气粗，因为资源闲置会非常严重。还有一点，每次新增节点的时候，你就不得不花大量时间进行安装与配置，这其实是一种低效的重复劳动。</p>
+<p>下载Docker镜像之后，Docker容器可以运行在集群的任何一个节点。一方面，各个组件可以共享主机，且互不干扰；另一方面，也不需要在集群的节点上安装和配置任何组件。至于整个Docker集群的管理，业界有很多成熟的解决方案，例如<a href="http://mesos.apache.org/" target="_blank" rel="noopener">Mesos</a>，<a href="https://kubernetes.io/" target="_blank" rel="noopener">Kubernetes</a>与<a href="https://github.com/docker/swarm" target="_blank" rel="noopener">Docker Swarm</a>。这些集群系统提供了<strong>调度</strong>，<strong>服务发现</strong>，<strong>负载均衡</strong>等功能，让整个集群变成一个整体。</p>
+<h3 id="如何用Docker"><a href="#如何用Docker" class="headerlink" title="如何用Docker?"></a>如何用Docker?</h3><h5 id="编写Dockerfile"><a href="#编写Dockerfile" class="headerlink" title="编写Dockerfile"></a>编写Dockerfile</h5><p>正确的<a href="https://github.com/Fundebug/nodejs-docker/blob/master/Dockerfile" target="_blank" rel="noopener">Dockerfile</a>是这样的:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"># 使用DaoCloud的Ubuntu镜像</span><br><span class="line">FROM daocloud.io/library/ubuntu:14.04</span><br><span class="line"></span><br><span class="line"># 设置镜像作者</span><br><span class="line">MAINTAINER Fundebug &lt;help@fundebug.com&gt;</span><br><span class="line"></span><br><span class="line"># 设置时区</span><br><span class="line">RUN sudo sh -c &quot;echo &apos;Asia/Shanghai&apos; &gt; /etc/timezone&quot; &amp;&amp; \</span><br><span class="line">    sudo dpkg-reconfigure -f noninteractive tzdata</span><br><span class="line"></span><br><span class="line"># 使用阿里云的Ubuntu镜像</span><br><span class="line">RUN echo &apos;\n\</span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ trusty main restricted universe multiverse\n\</span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ trusty-security main restricted universe multiverse\n\</span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ trusty-updates main restricted universe multiverse\n\</span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ trusty-proposed main restricted universe multiverse\n\</span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ trusty-backports main restricted universe multiverse\n\</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ trusty main restricted universe multiverse\n\</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ trusty-security main restricted universe multiverse\n\</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ trusty-updates main restricted universe multiverse\n\</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ trusty-proposed main restricted universe multiverse\n\</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ trusty-backports main restricted universe multiverse\n&apos;\</span><br><span class="line">&gt; /etc/apt/sources.list</span><br><span class="line"></span><br><span class="line"># 安装node v6.10.1</span><br><span class="line">RUN sudo apt-get update &amp;&amp; sudo apt-get install -y wget</span><br><span class="line"></span><br><span class="line"># 使用淘宝镜像安装Node.js v6.10.1</span><br><span class="line">RUN wget https://npm.taobao.org/mirrors/node/v6.10.1/node-v6.10.1-linux-x64.tar.gz &amp;&amp; \</span><br><span class="line">    tar -C /usr/local --strip-components 1 -xzf node-v6.10.1-linux-x64.tar.gz &amp;&amp; \</span><br><span class="line">    rm node-v6.10.1-linux-x64.tar.gz </span><br><span class="line"></span><br><span class="line">WORKDIR /app</span><br><span class="line"></span><br><span class="line"># 安装npm模块</span><br><span class="line">ADD package.json /app/package.json</span><br><span class="line"></span><br><span class="line"># 使用淘宝的npm镜像</span><br><span class="line">RUN npm install --production -d --registry=https://registry.npm.taobao.org</span><br><span class="line"></span><br><span class="line"># 添加源代码</span><br><span class="line">ADD . /app</span><br><span class="line"></span><br><span class="line"># 运行app.js</span><br><span class="line">CMD [&quot;node&quot;, &quot;/app/app.js&quot;]</span><br></pre></td></tr></table></figure>
+<p>有几点值得注意的地方：</p>
+<ul>
+<li>使用国内<a href="https://www.daocloud.io/" target="_blank" rel="noopener">DaoCloud</a>的Docker仓库，阿里云的ubuntu镜像以及淘宝的npm镜像，否则会出事情的;</li>
+<li>将时区设为Asia/Shanghai，否则日志的时间会不大对劲;</li>
+<li>使用.dockerignore忽略不需要添加到Docker镜像的文件和目录，其语法与.gitigore一致;</li>
+</ul>
+<p>更重要的一点是，<strong>package.json需要单独添加</strong>。Docker在构建镜像的时候，是一层一层构建的，仅当这一层有变化时，重新构建对应的层。如果package.json和源代码一起添加到镜像，则每次修改源码都需要重新安装npm模块，这样木有必要。所以，正确的顺序是: 添加package.json；安装npm模块；添加源代码。</p>
+<h5 id="构建Docker镜像"><a href="#构建Docker镜像" class="headerlink" title="构建Docker镜像"></a>构建Docker镜像</h5><p>使用<strong>docker build</strong>命令构建Docker镜像</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo docker build -t fundebug/nodejs .</span><br></pre></td></tr></table></figure>
+<p>其中，-t选项用于指定镜像的名称。</p>
+<p>使用<strong>docker images</strong>命令查看Docker镜像</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">sudo docker images</span><br><span class="line">REPOSITORY                    TAG                 IMAGE ID            CREATED             SIZE</span><br><span class="line">fundebug/nodejs               latest              64530ce811a1        32 minutes ago      266.4 MB</span><br><span class="line">daocloud.io/library/ubuntu    14.04               b969ab9f929b        9 weeks ago         188 MB</span><br></pre></td></tr></table></figure>
+<p>可知，fundebug/nodejs镜像的大小为266.4MB，在ubuntu镜像的基础上增加了80MB左右。</p>
+<h5 id="运行Docker容器"><a href="#运行Docker容器" class="headerlink" title="运行Docker容器"></a>运行Docker容器</h5><p>使用<strong>docker run</strong>命令运行Docker容器</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo docker run -d --net=host --name=hello-fundebug fundebug/nodejs</span><br></pre></td></tr></table></figure>
+<p>其中，-d选项表示容器在后台运行；–net选项指定容器的网络模式，host表示与主机共享网络；–name指定了容器的名称。</p>
+<p>使用<strong>docker ps</strong>命令查看Docker容器</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo docker ps</span><br><span class="line">CONTAINER ID        IMAGE                             COMMAND                  CREATED             STATUS              PORTS               NAMES</span><br><span class="line">e8eb5473970c        fundebug/nodejs                   &quot;node /app/app.js&quot;       37 minutes ago      Up 37 minutes                           hello-</span><br></pre></td></tr></table></figure>
+<p>可知，COMMAND为”node /app/app.js”，表示容器中运行的命令。这是我们再Dockerfile中使用CMD指定的。不妨使用<strong>docker exec</strong>命令在容器内执行ps命令<strong>查看容器内的进程</strong>：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo docker exec hello-fundebug ps -f</span><br><span class="line">UID        PID  PPID  C STIME TTY          TIME CMD</span><br><span class="line">root         1     0  0 15:14 ?        00:00:00 node /app/app.js</span><br></pre></td></tr></table></figure>
+<p>可知，容器内的1号进程即为node进程<strong>node /app/app.js</strong>。在Linux中，PID为1进程按说是唯一的，即init进程。但是，容器使用了内核的Namespace机制，为容器创建了独立的PID空间，因此容器中也有1号进程。</p>
+<h5 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h5><p>使用curl命令访问:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">curl localhost:3000</span><br><span class="line">Hello Fundebug!</span><br></pre></td></tr></table></figure>
+<h3 id="是否用Docker？"><a href="#是否用Docker？" class="headerlink" title="是否用Docker？"></a>是否用Docker？</h3><p>一方面，使用Docker能够带来很大益处；另一方面，引入Docker必然会有很多挑战，需要熟悉Docker才能应对自如。<strong>想必这是一个艰难的决定</strong>。如果从长远的角度来看，Docker正在成为应用开发，部署，发布的标准技术，也许我们不得不用开放的心态对待它。</p>
+<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p> <a href="https://blog.fundebug.com/2017/03/27/nodejs-docker/" target="_blank" rel="noopener">https://blog.fundebug.com/2017/03/27/nodejs-docker/</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2017-08-08T14:16:53.000Z"><a href="/2017/08/08/Node.js_网络/node中的网络通信模块/">2017-08-08</a></time>
       
       
@@ -662,6 +751,156 @@
 <p>http.IncomingMessage有两个地方时被内部创建，一个是作为server端的request，另外一个是作为client请求中的response，同时该类显示地继承了Stream.Readable。</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">IncomingMessage</span>(<span class="params">socket</span>) </span>&#123;</span><br><span class="line">  Stream.Readable.call(<span class="keyword">this</span>);</span><br><span class="line">  <span class="keyword">this</span>.socket = socket;</span><br><span class="line">  <span class="keyword">this</span>.connection = socket;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line">util.inherits(IncomingMessage, Stream.Readable);</span><br></pre></td></tr></table></figure>
 <h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="http://zhenhua-lee.github.io/node/socket.html" target="_blank" rel="noopener">http://zhenhua-lee.github.io/node/socket.html</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2017-06-05T06:45:23.000Z"><a href="/2017/06/05/Node.js_测试/Node.js单元测试、集成测试、基准测试以及代码覆盖率测试/">2017-06-05</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2017/06/05/Node.js_测试/Node.js单元测试、集成测试、基准测试以及代码覆盖率测试/">Node.js单元测试、集成测试、基准测试以及代码覆盖率测试</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="黑盒测试"><a href="#黑盒测试" class="headerlink" title="黑盒测试"></a>黑盒测试</h3><p>黑盒测试 (Black-box Testing), 测试应用程序的功能, 而不是其内部结构或运作. 测试者不需了解代码、内部结构等, 只需知道什么是应用应该做的事, 即当键入特定的输入, 可得到一定的输出. 测试者通过选择<code>有效输入</code>和<code>无效输入</code>来验证是否正确的输出. 此测试方法可适合大部分的软件测试, 例如集成测试 (Integration Testing) 以及系统测试 (System Testing).</p>
+<h3 id="白盒测试"><a href="#白盒测试" class="headerlink" title="白盒测试"></a>白盒测试</h3><p>白盒测试 (White-box Testing) 测试应用程序的内部结构或运作, 而不是测试应用程序的功能 (即黑盒测试). 在白盒测试时, 以编程语言的角度来设计测试案例. 白盒测试可以应用于单元测试 (Unit Testing)、集成测试 (Integration Testing) 和系统的软件测试流程, 可测试在集成过程中每一单元之间的路径, 或者主系统跟子系统中的测试.</p>
+<h2 id="单元测试"><a href="#单元测试" class="headerlink" title="单元测试"></a>单元测试</h2><p>单元测试，又称模块测试，针对程序中的最小执行单元进行正确性测试。常见的开发模式包括 TDD 和 BDD 两类。</p>
+<p>TDD（Test-driven development，测试驱动开发），先编写测试用例，然后针对测试用例开发模块，当测试用例不足时，补充测试用例；当模块无法通过测试时，持续更新模块代码，直到完全通过测试用例。其开发核心围绕测试用例展开，即测试用例的完整性决定了开发模块的健壮性和正确性，这容易由边界条件引发单元测试覆盖度不够的问题。</p>
+<p>BDD（Behavior-driven development，行为驱动开发），用语义化的编程语言开发紧贴业务需求的测试用例，继而驱动相关模块的开发。</p>
+<p><a href="https://github.com/sindresorhus/ava" target="_blank" rel="noopener">AVA</a> 是 JavaScript 生态中最新潮的测试框架，其内置了 Babel，可以直接使用 ES6 语法，具有轻量高效、并发执行、强制隔离等优点，安装方法：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install --save-dev ava</span><br></pre></td></tr></table></figure>
+<p>设置 <code>package.json</code> 中的 <code>scripts</code> 字段：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="string">"scripts"</span>: &#123;</span><br><span class="line">        <span class="string">"test"</span>: <span class="string">"ava"</span>,</span><br><span class="line">        <span class="string">"test:watch"</span>: <span class="string">"ava --watch"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>运行：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">npm test</span><br><span class="line"></span><br><span class="line"># or</span><br><span class="line">npm test:watch</span><br></pre></td></tr></table></figure>
+<p>下面是一个基本的测试代码：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> test <span class="keyword">from</span> <span class="string">'ava'</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> fibonacci = <span class="function">(<span class="params">n</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (n === <span class="number">0</span> || n === <span class="number">1</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> n;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> fibonacci(n - <span class="number">1</span>) + fibonacci(n - <span class="number">2</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">test(<span class="string">'Test Fibonacci(0)'</span>, t =&gt; &#123;</span><br><span class="line">    t.is(fibonacci(<span class="number">0</span>), <span class="number">0</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">test(<span class="string">'Test Fibonacci(1)'</span>, t =&gt; &#123;</span><br><span class="line">    t.is(fibonacci(<span class="number">1</span>), <span class="number">1</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// HOOK CALLS</span></span><br><span class="line">test.before(<span class="string">'Before'</span>, t =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'before'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">test.after(<span class="string">'After'</span>, t =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'after'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">test.beforeEach(<span class="string">'BeforeEach'</span>, t =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'   beforeEach'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">test.afterEach(<span class="string">'AfterEach'</span>, t =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'   afterEach'</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>在上面的代码中，我们首先引入了 AVA 模块，然后创建了待测试的 <code>fibonacci</code> 函数，接下来是两个测试用例，最后是四个钩子方法：before() / after() / beforeEach() / afterEach()。</p>
+<p>AVA 提供了一下修饰方法来指定测试的执行方式：</p>
+<ul>
+<li><p><code>skip()</code>，跳过添加了 <code>skip()</code> 的测试用例</p>
+</li>
+<li><p><code>only()</code>，只执行添加了 <code>only()</code> 的测试用例</p>
+</li>
+<li><p><code>todo()</code>，占位标识符，表示将来需要添加的测试用例</p>
+</li>
+<li><p><code>serial()</code>，串行执行测试用例，默认情况下 AVA 会以并行的方式执行测试用例</p>
+</li>
+</ul>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">test(<span class="string">'Test Fibonacci(0)'</span>, t =&gt; &#123;</span><br><span class="line">    t.is(fibonacci(<span class="number">0</span>), <span class="number">0</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>在上面代码回调函数中的 <code>t</code>，称为断言执行对象，该对象包含以下方法：</p>
+<ul>
+<li><p><code>t.end()</code>，结束测试，只在 <code>test.cb()</code> 中有效</p>
+</li>
+<li><p><code>t.plan(count)</code>，指定执行次数</p>
+</li>
+<li><p><code>t.pass([message])</code>，测试通过</p>
+</li>
+<li><p><code>t.fail([message])</code>，测试失败</p>
+</li>
+<li><p><code>t.ok(value, [message])</code>，断言 <code>value</code> 的值为真值</p>
+</li>
+<li><p><code>t.notOK(value, [message])</code>，断言 <code>value</code> 的值为假值</p>
+</li>
+<li><p><code>t.true(value, [message])</code>，断言 <code>value</code> 的值为 <code>true</code></p>
+</li>
+<li><p><code>t.false(value, [message])</code>，断言 <code>value</code> 的值为 <code>false</code></p>
+</li>
+<li><p><code>t.is(value, expected, [message])</code>，断言 <code>value === expected</code></p>
+</li>
+<li><p><code>t.not(value, expected, [message])</code>，断言 <code>value !== expected</code></p>
+</li>
+<li><p><code>t.same(value, expected, [message])</code>，断言 <code>value</code> 和 <code>expected</code> 深度相等</p>
+</li>
+<li><p><code>t.notSame(value, expected, [message])</code>，断言 <code>value</code> 和 <code>expected</code> 深度不等</p>
+</li>
+<li><p><code>t.throws(function | promise, [error, [message]])</code>，断言 <code>function</code> 抛出异常或 <code>promise</code>reject 错误</p>
+</li>
+<li><p><code>t.notThrows(function | promise, [message])</code>，断言 <code>function</code> 不会异常或 <code>promise</code> resolve</p>
+</li>
+<li><p><code>t.regex(contents, regex, [message])</code>，断言 <code>contents</code> 匹配 <code>regex</code></p>
+</li>
+<li><p><code>t.ifError(error, [message])</code>，断言 <code>error</code> 是假值</p>
+</li>
+</ul>
+<h3 id="Mock"><a href="#Mock" class="headerlink" title="Mock"></a>Mock</h3><p>Mock 主要用于单元测试中. 当一个测试的对象可能依赖其他 (也许复杂/多个) 的对象. 为了确保其行为不受其他对象的影响, 你可以通过模拟其他对象的行为来隔离你要测试的对象.</p>
+<p>当你要测试的单元依赖了一些很难纳入单元测试的情况时 (例如要测试的单元依赖数据库/文件操作/第三方服务 等情况的返回时), 使用 mock 是非常有用的. 简而言之, Mock 是模拟其他依赖的 behaviour.</p>
+<h3 id="常见测试工具"><a href="#常见测试工具" class="headerlink" title="常见测试工具"></a>常见测试工具</h3><ul>
+<li><a href="https://github.com/mochajs/mocha" target="_blank" rel="noopener">Mocha</a></li>
+<li><a href="https://github.com/avajs/ava" target="_blank" rel="noopener">ava</a></li>
+<li><a href="https://github.com/facebook/jest" target="_blank" rel="noopener">Jest</a></li>
+</ul>
+<h2 id="集成测试"><a href="#集成测试" class="headerlink" title="集成测试"></a>集成测试</h2><p>相对于专注微观模块的单元测试，集成测试是从宏观整体的角度发现问题，所以也称为组装测试和联合测试。<a href="https://travis-ci.org/" target="_blank" rel="noopener">Travis CI</a> 是一款优秀的持续集成工具，可以监听 Github 项目的更新，便于开源软件的集成测试。使用 Travis CI 需要在项目的根目录下创建 <code>.travis.yml</code> 配置文件（以 Node.js 为例）：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">language: node_js</span><br><span class="line"></span><br><span class="line">node_js:</span><br><span class="line">    - <span class="string">"6"</span></span><br><span class="line">    - <span class="string">"5"</span></span><br><span class="line"></span><br><span class="line">before_script:</span><br><span class="line"></span><br><span class="line">script:</span><br><span class="line">    - npm test</span><br><span class="line">    - node benchmark/index.js</span><br><span class="line"></span><br><span class="line">after_script:</span><br></pre></td></tr></table></figure>
+<p>默认情况下，Travis CI 会自动安装依赖并执行 <code>npm test</code> 命令，通过 <code>script</code> 字段可以自定义需要执行的命令，其完整的生命周期包括：</p>
+<ol>
+<li>Install <code>apt addons</code></li>
+<li><code>before_install</code></li>
+<li><code>install</code></li>
+<li><code>before_script</code></li>
+<li><code>script</code></li>
+<li><code>after_success</code> or <code>after_failure</code></li>
+<li>OPTIONAL <code>before_deploy</code></li>
+<li>OPTIONAL <code>deploy</code></li>
+<li>OPTIONAL <code>after_deploy</code></li>
+<li><code>after_script</code></li>
+</ol>
+<h2 id="基准测试"><a href="#基准测试" class="headerlink" title="基准测试"></a>基准测试</h2><p>基准测试使用严谨的测试方法、测试工具或测试系统评估目标模块的性能，常用于观测软硬件环境发生变化后的性能表现，其结果具有可复现性。在 Node.js 环境中最常用的基准测试工具是 <a href="https://benchmarkjs.com/docs" target="_blank" rel="noopener">Benchmark.js</a>，安装方式：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install --save-dev benchmark</span><br></pre></td></tr></table></figure></p>
+<p>基本示例：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> Benchmark = <span class="built_in">require</span>(<span class="string">'benchmark'</span>);</span><br><span class="line"><span class="keyword">const</span> suite = <span class="keyword">new</span> Benchmark.Suite;</span><br><span class="line"></span><br><span class="line">suite.add(<span class="string">'RegExp#test'</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    /o/.test(<span class="string">'Hello World!'</span>);</span><br><span class="line">&#125;)</span><br><span class="line">.add(<span class="string">'String#indexOf'</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="string">'Hello World!'</span>.indexOf(<span class="string">'o'</span>) &gt; <span class="number">-1</span>;</span><br><span class="line">&#125;)</span><br><span class="line">.on(<span class="string">'cycle'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">event</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="built_in">String</span>(event.target));</span><br><span class="line">&#125;)</span><br><span class="line">.on(<span class="string">'complete'</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'Fastest is '</span> + <span class="keyword">this</span>.filter(<span class="string">'fastest'</span>).map(<span class="string">'name'</span>));</span><br><span class="line">&#125;)</span><br><span class="line"><span class="comment">// run async</span></span><br><span class="line">.run(&#123; <span class="string">'async'</span>: <span class="literal">true</span> &#125;);</span><br></pre></td></tr></table></figure></p>
+<p>你可以将同一个功能的不同实现基于同一个标准来比较不同实现的速度, 从而得到最优解.</p>
+<p>黑盒级别的基准测试, 则推荐 <a href="https://httpd.apache.org/docs/2.4/programs/ab.html" target="_blank" rel="noopener">Apache ab</a> 以及 <a href="https://github.com/wg/wrk" target="_blank" rel="noopener">wrk</a> 等。:</p>
+<h2 id="代码覆盖率"><a href="#代码覆盖率" class="headerlink" title="代码覆盖率"></a>代码覆盖率</h2><p>  测试覆盖率 (Test Coverage) 是指代码中各项逻辑被测试覆盖到的比率, 比如 90% 的覆盖率, 是指代码中 90% 的情况都被测试覆盖到了.</p>
+<p>  覆盖率通常由四个维度贡献:</p>
+<ul>
+<li><p>行覆盖率 (line coverage) 是否每一行都执行了？</p>
+</li>
+<li><p>函数覆盖率 (function coverage) 是否每个函数都调用了？</p>
+</li>
+<li><p>分支覆盖率 (branch coverage) 是否每个if代码块都执行了？</p>
+</li>
+<li><p>语句覆盖率 (statement coverage) 是否每个语句都执行了？</p>
+</li>
+</ul>
+<p>常用的测试覆盖率框架 <a href="https://github.com/gotwarlost/istanbul" target="_blank" rel="noopener">istanbul</a>.</p>
+<p>覆盖率工具根据测试用例覆盖的代码行数和分支数来判断模块的完整性。AVA 推荐使用 <code>nyc</code> 测试代码覆盖率，安装 nyc：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install nyc --save-dev</span><br></pre></td></tr></table></figure>
+<p>修改 <code>.gitignore</code> 忽略相关文件：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">node_modules</span><br><span class="line">coverage</span><br><span class="line">.nyc_output</span><br></pre></td></tr></table></figure></p>
+<p>修改 <code>package.json</code> 中的 <code>test</code> 字段：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="string">"scripts"</span>: &#123;</span><br><span class="line">        <span class="string">"test"</span>: <span class="string">"nyc ava"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>执行 <code>npm test</code>，得到：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">➜  test-in-action (master) ✔ npm test</span><br><span class="line"></span><br><span class="line">&gt; test-in-action@1.0.0 test /Users/sean/Desktop/test-in-action</span><br><span class="line">&gt; nyc ava</span><br><span class="line"></span><br><span class="line">   2 passed</span><br><span class="line">----------|----------|----------|----------|----------|----------------|</span><br><span class="line">File      |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovered Lines |</span><br><span class="line">----------|----------|----------|----------|----------|----------------|</span><br><span class="line">----------|----------|----------|----------|----------|----------------|</span><br><span class="line">All files |      100 |      100 |      100 |      100 |                |</span><br><span class="line">----------|----------|----------|----------|----------|----------------|</span><br></pre></td></tr></table></figure></p>
+<h2 id="压力测试"><a href="#压力测试" class="headerlink" title="压力测试"></a>压力测试</h2><p>压力测试 (Stress testing), 是保证系统稳定性的一种测试方法. 通过预估系统所需要承载的 QPS, TPS 等指标, 然后通过如 <a href="http://jmeter.apache.org/" target="_blank" rel="noopener">Jmeter</a> 等压测工具模拟相应的请求情况, 来验证当前应能能否达到目标.</p>
+<p>对于比较重要, 流量较高或者后期业务量会持续增长的系统, 进行压力测试是保证项目品质的重要环节. 常见的如负载是否均衡, 带宽是否合理, 以及磁盘 IO 网络 IO 等问题都可以通过比较极限的压力测试暴露出来.</p>
+<h2 id="Assert"><a href="#Assert" class="headerlink" title="Assert"></a>Assert</h2><p>断言 (Assert) 是快速判断并对不符合预期的情况进行报错的模块. 是将:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">if (condition) &#123;</span><br><span class="line">  throw new Error(&apos;Sth wrong&apos;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>写成:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">assert(!condition, &apos;Sth wrong&apos;);</span><br></pre></td></tr></table></figure>
+<p>等等情况的一种简化. 并且提供了丰富了 <code>equal</code> 判断, 对于对象类型也有深度/严格判断等情况支持.</p>
+<p>Node.js 中内置的 <code>assert</code> 模块也是属于断言模块的一种, 但是官方在文档中有注明, 该内置模块主要是用于内置代码编写时的基本断言需求, 并不是一个通用的断言库 (<strong>not intended to be used as a general purpose assertion library</strong>)</p>
+<h3 id="常见断言工具"><a href="#常见断言工具" class="headerlink" title="常见断言工具"></a>常见断言工具</h3><ul>
+<li><a href="https://github.com/chaijs/chai" target="_blank" rel="noopener">Chai</a></li>
+<li><a href="https://github.com/shouldjs/should.js" target="_blank" rel="noopener">should.js</a></li>
+</ul>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="http://ourjs.com/detail/5738493888feaf2d031d24fa" target="_blank" rel="noopener">http://ourjs.com/detail/5738493888feaf2d031d24fa</a><br><a href="https://elemefe.github.io/node-interview/#/sections/zh-cn/test?id=mock" target="_blank" rel="noopener">https://elemefe.github.io/node-interview/#/sections/zh-cn/test?id=mock</a></p>
 
       
     </div>
@@ -867,227 +1106,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2017-06-05T06:45:23.000Z"><a href="/2017/06/05/Node.js_测试/Node.js单元测试、集成测试、基准测试以及代码覆盖率测试/">2017-06-05</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/06/05/Node.js_测试/Node.js单元测试、集成测试、基准测试以及代码覆盖率测试/">Node.js单元测试、集成测试、基准测试以及代码覆盖率测试</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="黑盒测试"><a href="#黑盒测试" class="headerlink" title="黑盒测试"></a>黑盒测试</h3><p>黑盒测试 (Black-box Testing), 测试应用程序的功能, 而不是其内部结构或运作. 测试者不需了解代码、内部结构等, 只需知道什么是应用应该做的事, 即当键入特定的输入, 可得到一定的输出. 测试者通过选择<code>有效输入</code>和<code>无效输入</code>来验证是否正确的输出. 此测试方法可适合大部分的软件测试, 例如集成测试 (Integration Testing) 以及系统测试 (System Testing).</p>
-<h3 id="白盒测试"><a href="#白盒测试" class="headerlink" title="白盒测试"></a>白盒测试</h3><p>白盒测试 (White-box Testing) 测试应用程序的内部结构或运作, 而不是测试应用程序的功能 (即黑盒测试). 在白盒测试时, 以编程语言的角度来设计测试案例. 白盒测试可以应用于单元测试 (Unit Testing)、集成测试 (Integration Testing) 和系统的软件测试流程, 可测试在集成过程中每一单元之间的路径, 或者主系统跟子系统中的测试.</p>
-<h2 id="单元测试"><a href="#单元测试" class="headerlink" title="单元测试"></a>单元测试</h2><p>单元测试，又称模块测试，针对程序中的最小执行单元进行正确性测试。常见的开发模式包括 TDD 和 BDD 两类。</p>
-<p>TDD（Test-driven development，测试驱动开发），先编写测试用例，然后针对测试用例开发模块，当测试用例不足时，补充测试用例；当模块无法通过测试时，持续更新模块代码，直到完全通过测试用例。其开发核心围绕测试用例展开，即测试用例的完整性决定了开发模块的健壮性和正确性，这容易由边界条件引发单元测试覆盖度不够的问题。</p>
-<p>BDD（Behavior-driven development，行为驱动开发），用语义化的编程语言开发紧贴业务需求的测试用例，继而驱动相关模块的开发。</p>
-<p><a href="https://github.com/sindresorhus/ava" target="_blank" rel="noopener">AVA</a> 是 JavaScript 生态中最新潮的测试框架，其内置了 Babel，可以直接使用 ES6 语法，具有轻量高效、并发执行、强制隔离等优点，安装方法：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install --save-dev ava</span><br></pre></td></tr></table></figure>
-<p>设置 <code>package.json</code> 中的 <code>scripts</code> 字段：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="string">"scripts"</span>: &#123;</span><br><span class="line">        <span class="string">"test"</span>: <span class="string">"ava"</span>,</span><br><span class="line">        <span class="string">"test:watch"</span>: <span class="string">"ava --watch"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>运行：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">npm test</span><br><span class="line"></span><br><span class="line"># or</span><br><span class="line">npm test:watch</span><br></pre></td></tr></table></figure>
-<p>下面是一个基本的测试代码：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> test <span class="keyword">from</span> <span class="string">'ava'</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> fibonacci = <span class="function">(<span class="params">n</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (n === <span class="number">0</span> || n === <span class="number">1</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> n;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> fibonacci(n - <span class="number">1</span>) + fibonacci(n - <span class="number">2</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">test(<span class="string">'Test Fibonacci(0)'</span>, t =&gt; &#123;</span><br><span class="line">    t.is(fibonacci(<span class="number">0</span>), <span class="number">0</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">test(<span class="string">'Test Fibonacci(1)'</span>, t =&gt; &#123;</span><br><span class="line">    t.is(fibonacci(<span class="number">1</span>), <span class="number">1</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// HOOK CALLS</span></span><br><span class="line">test.before(<span class="string">'Before'</span>, t =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'before'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">test.after(<span class="string">'After'</span>, t =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'after'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">test.beforeEach(<span class="string">'BeforeEach'</span>, t =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'   beforeEach'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">test.afterEach(<span class="string">'AfterEach'</span>, t =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'   afterEach'</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>在上面的代码中，我们首先引入了 AVA 模块，然后创建了待测试的 <code>fibonacci</code> 函数，接下来是两个测试用例，最后是四个钩子方法：before() / after() / beforeEach() / afterEach()。</p>
-<p>AVA 提供了一下修饰方法来指定测试的执行方式：</p>
-<ul>
-<li><p><code>skip()</code>，跳过添加了 <code>skip()</code> 的测试用例</p>
-</li>
-<li><p><code>only()</code>，只执行添加了 <code>only()</code> 的测试用例</p>
-</li>
-<li><p><code>todo()</code>，占位标识符，表示将来需要添加的测试用例</p>
-</li>
-<li><p><code>serial()</code>，串行执行测试用例，默认情况下 AVA 会以并行的方式执行测试用例</p>
-</li>
-</ul>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">test(<span class="string">'Test Fibonacci(0)'</span>, t =&gt; &#123;</span><br><span class="line">    t.is(fibonacci(<span class="number">0</span>), <span class="number">0</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>在上面代码回调函数中的 <code>t</code>，称为断言执行对象，该对象包含以下方法：</p>
-<ul>
-<li><p><code>t.end()</code>，结束测试，只在 <code>test.cb()</code> 中有效</p>
-</li>
-<li><p><code>t.plan(count)</code>，指定执行次数</p>
-</li>
-<li><p><code>t.pass([message])</code>，测试通过</p>
-</li>
-<li><p><code>t.fail([message])</code>，测试失败</p>
-</li>
-<li><p><code>t.ok(value, [message])</code>，断言 <code>value</code> 的值为真值</p>
-</li>
-<li><p><code>t.notOK(value, [message])</code>，断言 <code>value</code> 的值为假值</p>
-</li>
-<li><p><code>t.true(value, [message])</code>，断言 <code>value</code> 的值为 <code>true</code></p>
-</li>
-<li><p><code>t.false(value, [message])</code>，断言 <code>value</code> 的值为 <code>false</code></p>
-</li>
-<li><p><code>t.is(value, expected, [message])</code>，断言 <code>value === expected</code></p>
-</li>
-<li><p><code>t.not(value, expected, [message])</code>，断言 <code>value !== expected</code></p>
-</li>
-<li><p><code>t.same(value, expected, [message])</code>，断言 <code>value</code> 和 <code>expected</code> 深度相等</p>
-</li>
-<li><p><code>t.notSame(value, expected, [message])</code>，断言 <code>value</code> 和 <code>expected</code> 深度不等</p>
-</li>
-<li><p><code>t.throws(function | promise, [error, [message]])</code>，断言 <code>function</code> 抛出异常或 <code>promise</code>reject 错误</p>
-</li>
-<li><p><code>t.notThrows(function | promise, [message])</code>，断言 <code>function</code> 不会异常或 <code>promise</code> resolve</p>
-</li>
-<li><p><code>t.regex(contents, regex, [message])</code>，断言 <code>contents</code> 匹配 <code>regex</code></p>
-</li>
-<li><p><code>t.ifError(error, [message])</code>，断言 <code>error</code> 是假值</p>
-</li>
-</ul>
-<h3 id="Mock"><a href="#Mock" class="headerlink" title="Mock"></a>Mock</h3><p>Mock 主要用于单元测试中. 当一个测试的对象可能依赖其他 (也许复杂/多个) 的对象. 为了确保其行为不受其他对象的影响, 你可以通过模拟其他对象的行为来隔离你要测试的对象.</p>
-<p>当你要测试的单元依赖了一些很难纳入单元测试的情况时 (例如要测试的单元依赖数据库/文件操作/第三方服务 等情况的返回时), 使用 mock 是非常有用的. 简而言之, Mock 是模拟其他依赖的 behaviour.</p>
-<h3 id="常见测试工具"><a href="#常见测试工具" class="headerlink" title="常见测试工具"></a>常见测试工具</h3><ul>
-<li><a href="https://github.com/mochajs/mocha" target="_blank" rel="noopener">Mocha</a></li>
-<li><a href="https://github.com/avajs/ava" target="_blank" rel="noopener">ava</a></li>
-<li><a href="https://github.com/facebook/jest" target="_blank" rel="noopener">Jest</a></li>
-</ul>
-<h2 id="集成测试"><a href="#集成测试" class="headerlink" title="集成测试"></a>集成测试</h2><p>相对于专注微观模块的单元测试，集成测试是从宏观整体的角度发现问题，所以也称为组装测试和联合测试。<a href="https://travis-ci.org/" target="_blank" rel="noopener">Travis CI</a> 是一款优秀的持续集成工具，可以监听 Github 项目的更新，便于开源软件的集成测试。使用 Travis CI 需要在项目的根目录下创建 <code>.travis.yml</code> 配置文件（以 Node.js 为例）：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">language: node_js</span><br><span class="line"></span><br><span class="line">node_js:</span><br><span class="line">    - <span class="string">"6"</span></span><br><span class="line">    - <span class="string">"5"</span></span><br><span class="line"></span><br><span class="line">before_script:</span><br><span class="line"></span><br><span class="line">script:</span><br><span class="line">    - npm test</span><br><span class="line">    - node benchmark/index.js</span><br><span class="line"></span><br><span class="line">after_script:</span><br></pre></td></tr></table></figure>
-<p>默认情况下，Travis CI 会自动安装依赖并执行 <code>npm test</code> 命令，通过 <code>script</code> 字段可以自定义需要执行的命令，其完整的生命周期包括：</p>
-<ol>
-<li>Install <code>apt addons</code></li>
-<li><code>before_install</code></li>
-<li><code>install</code></li>
-<li><code>before_script</code></li>
-<li><code>script</code></li>
-<li><code>after_success</code> or <code>after_failure</code></li>
-<li>OPTIONAL <code>before_deploy</code></li>
-<li>OPTIONAL <code>deploy</code></li>
-<li>OPTIONAL <code>after_deploy</code></li>
-<li><code>after_script</code></li>
-</ol>
-<h2 id="基准测试"><a href="#基准测试" class="headerlink" title="基准测试"></a>基准测试</h2><p>基准测试使用严谨的测试方法、测试工具或测试系统评估目标模块的性能，常用于观测软硬件环境发生变化后的性能表现，其结果具有可复现性。在 Node.js 环境中最常用的基准测试工具是 <a href="https://benchmarkjs.com/docs" target="_blank" rel="noopener">Benchmark.js</a>，安装方式：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install --save-dev benchmark</span><br></pre></td></tr></table></figure></p>
-<p>基本示例：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> Benchmark = <span class="built_in">require</span>(<span class="string">'benchmark'</span>);</span><br><span class="line"><span class="keyword">const</span> suite = <span class="keyword">new</span> Benchmark.Suite;</span><br><span class="line"></span><br><span class="line">suite.add(<span class="string">'RegExp#test'</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    /o/.test(<span class="string">'Hello World!'</span>);</span><br><span class="line">&#125;)</span><br><span class="line">.add(<span class="string">'String#indexOf'</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="string">'Hello World!'</span>.indexOf(<span class="string">'o'</span>) &gt; <span class="number">-1</span>;</span><br><span class="line">&#125;)</span><br><span class="line">.on(<span class="string">'cycle'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">event</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="built_in">String</span>(event.target));</span><br><span class="line">&#125;)</span><br><span class="line">.on(<span class="string">'complete'</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'Fastest is '</span> + <span class="keyword">this</span>.filter(<span class="string">'fastest'</span>).map(<span class="string">'name'</span>));</span><br><span class="line">&#125;)</span><br><span class="line"><span class="comment">// run async</span></span><br><span class="line">.run(&#123; <span class="string">'async'</span>: <span class="literal">true</span> &#125;);</span><br></pre></td></tr></table></figure></p>
-<p>你可以将同一个功能的不同实现基于同一个标准来比较不同实现的速度, 从而得到最优解.</p>
-<p>黑盒级别的基准测试, 则推荐 <a href="https://httpd.apache.org/docs/2.4/programs/ab.html" target="_blank" rel="noopener">Apache ab</a> 以及 <a href="https://github.com/wg/wrk" target="_blank" rel="noopener">wrk</a> 等。:</p>
-<h2 id="代码覆盖率"><a href="#代码覆盖率" class="headerlink" title="代码覆盖率"></a>代码覆盖率</h2><p>  测试覆盖率 (Test Coverage) 是指代码中各项逻辑被测试覆盖到的比率, 比如 90% 的覆盖率, 是指代码中 90% 的情况都被测试覆盖到了.</p>
-<p>  覆盖率通常由四个维度贡献:</p>
-<ul>
-<li><p>行覆盖率 (line coverage) 是否每一行都执行了？</p>
-</li>
-<li><p>函数覆盖率 (function coverage) 是否每个函数都调用了？</p>
-</li>
-<li><p>分支覆盖率 (branch coverage) 是否每个if代码块都执行了？</p>
-</li>
-<li><p>语句覆盖率 (statement coverage) 是否每个语句都执行了？</p>
-</li>
-</ul>
-<p>常用的测试覆盖率框架 <a href="https://github.com/gotwarlost/istanbul" target="_blank" rel="noopener">istanbul</a>.</p>
-<p>覆盖率工具根据测试用例覆盖的代码行数和分支数来判断模块的完整性。AVA 推荐使用 <code>nyc</code> 测试代码覆盖率，安装 nyc：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install nyc --save-dev</span><br></pre></td></tr></table></figure>
-<p>修改 <code>.gitignore</code> 忽略相关文件：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">node_modules</span><br><span class="line">coverage</span><br><span class="line">.nyc_output</span><br></pre></td></tr></table></figure></p>
-<p>修改 <code>package.json</code> 中的 <code>test</code> 字段：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="string">"scripts"</span>: &#123;</span><br><span class="line">        <span class="string">"test"</span>: <span class="string">"nyc ava"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>执行 <code>npm test</code>，得到：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">➜  test-in-action (master) ✔ npm test</span><br><span class="line"></span><br><span class="line">&gt; test-in-action@1.0.0 test /Users/sean/Desktop/test-in-action</span><br><span class="line">&gt; nyc ava</span><br><span class="line"></span><br><span class="line">   2 passed</span><br><span class="line">----------|----------|----------|----------|----------|----------------|</span><br><span class="line">File      |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovered Lines |</span><br><span class="line">----------|----------|----------|----------|----------|----------------|</span><br><span class="line">----------|----------|----------|----------|----------|----------------|</span><br><span class="line">All files |      100 |      100 |      100 |      100 |                |</span><br><span class="line">----------|----------|----------|----------|----------|----------------|</span><br></pre></td></tr></table></figure></p>
-<h2 id="压力测试"><a href="#压力测试" class="headerlink" title="压力测试"></a>压力测试</h2><p>压力测试 (Stress testing), 是保证系统稳定性的一种测试方法. 通过预估系统所需要承载的 QPS, TPS 等指标, 然后通过如 <a href="http://jmeter.apache.org/" target="_blank" rel="noopener">Jmeter</a> 等压测工具模拟相应的请求情况, 来验证当前应能能否达到目标.</p>
-<p>对于比较重要, 流量较高或者后期业务量会持续增长的系统, 进行压力测试是保证项目品质的重要环节. 常见的如负载是否均衡, 带宽是否合理, 以及磁盘 IO 网络 IO 等问题都可以通过比较极限的压力测试暴露出来.</p>
-<h2 id="Assert"><a href="#Assert" class="headerlink" title="Assert"></a>Assert</h2><p>断言 (Assert) 是快速判断并对不符合预期的情况进行报错的模块. 是将:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">if (condition) &#123;</span><br><span class="line">  throw new Error(&apos;Sth wrong&apos;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>写成:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">assert(!condition, &apos;Sth wrong&apos;);</span><br></pre></td></tr></table></figure>
-<p>等等情况的一种简化. 并且提供了丰富了 <code>equal</code> 判断, 对于对象类型也有深度/严格判断等情况支持.</p>
-<p>Node.js 中内置的 <code>assert</code> 模块也是属于断言模块的一种, 但是官方在文档中有注明, 该内置模块主要是用于内置代码编写时的基本断言需求, 并不是一个通用的断言库 (<strong>not intended to be used as a general purpose assertion library</strong>)</p>
-<h3 id="常见断言工具"><a href="#常见断言工具" class="headerlink" title="常见断言工具"></a>常见断言工具</h3><ul>
-<li><a href="https://github.com/chaijs/chai" target="_blank" rel="noopener">Chai</a></li>
-<li><a href="https://github.com/shouldjs/should.js" target="_blank" rel="noopener">should.js</a></li>
-</ul>
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="http://ourjs.com/detail/5738493888feaf2d031d24fa" target="_blank" rel="noopener">http://ourjs.com/detail/5738493888feaf2d031d24fa</a><br><a href="https://elemefe.github.io/node-interview/#/sections/zh-cn/test?id=mock" target="_blank" rel="noopener">https://elemefe.github.io/node-interview/#/sections/zh-cn/test?id=mock</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2017-02-23T06:45:23.000Z"><a href="/2017/02/23/安全/SQL注入/">2017-02-23</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/02/23/安全/SQL注入/">SQL注入</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="如何理解SQL注入（攻击）？"><a href="#如何理解SQL注入（攻击）？" class="headerlink" title="如何理解SQL注入（攻击）？"></a>如何理解SQL注入（攻击）？</h3><ol>
-<li>SQL注入是一种将SQL代码添加到输入参数中，传递到服务器解析并执行的一种攻击手法。</li>
-<li>SQL注入攻击是输入参数未经过滤，然后直接拼接到SQL语句当中解析，执行达到预想之外的一种行为，称之为SQL注入攻击。</li>
-</ol>
-<h3 id="SQL注入是怎么产生的？"><a href="#SQL注入是怎么产生的？" class="headerlink" title="SQL注入是怎么产生的？"></a>SQL注入是怎么产生的？</h3><ol>
-<li>WEB开发人员无法保证所有的输入都已经过滤</li>
-<li>攻击者利用发送给SQL服务器的输入参数构造可执行的SQL代码（可加入到get请求、post请求、http头信息、cookie中）</li>
-<li>数据库未做相应的安全配置</li>
-</ol>
-<h3 id="如何进行SQL注入攻击"><a href="#如何进行SQL注入攻击" class="headerlink" title="如何进行SQL注入攻击"></a>如何进行SQL注入攻击</h3><p>要想发动sql注入攻击，就要知道正在使用的系统数据库，不然就没法提取重要的数据。<br>首先从Web应用技术上就给我们提供了判断的线索：</p>
-<ul>
-<li>ASP和.NET：Microsoft SQL Server</li>
-<li>PHP：MySQL、PostgreSQL</li>
-<li>Java：Oracle、MySQL</li>
-</ul>
-<p>Web容器也给我们提供了线索，比如安装IIS作为服务器平台，后台数据及很有可能是Microsoft SQL Server，而允许Apache和PHP的Linux服务器就很有可能使用开源的数据库，比如MySQL和PostgreSQL。</p>
-<h5 id="基于错误识别数据库"><a href="#基于错误识别数据库" class="headerlink" title="基于错误识别数据库"></a>基于错误识别数据库</h5><p>大多数情况下，要了解后台是什么数据库，只需要看一条详细的错误信息即可。比如判断我们事例中使用的数据库，我们加个单引号。<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">error:You have an error in your SQL syntax; <span class="keyword">check</span> the <span class="keyword">manual</span> that corresponds <span class="keyword">to</span> your MySQL <span class="keyword">server</span> <span class="keyword">version</span> <span class="keyword">for</span> the <span class="keyword">right</span> syntax <span class="keyword">to</span> <span class="keyword">use</span> near <span class="string">''' at line 1</span></span><br></pre></td></tr></table></figure></p>
-<p>从错误信息中，我们就可以发现是MySQL。</p>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Microsoft OLE DB Provider for ODBC Drivers 错误 '80040e14'</span><br><span class="line"> [Microsoft][ODBC SQL Server Driver][SQL Server]Line 1:</span><br></pre></td></tr></table></figure>
-<p>上面错误信息可以发现是Microsoft SQL Server，如果错误信息开头是ORA，就可以判断数据库是Oracle，很简单，道理都是一样的，就不一一列举了。</p>
-<h6 id="UINON语句提取数据"><a href="#UINON语句提取数据" class="headerlink" title="UINON语句提取数据"></a>UINON语句提取数据</h6><p>UNION操作符可以合并两条或多条SELECT语句的查询结果，基本语法如下：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="keyword">column</span><span class="number">-1</span> <span class="keyword">column</span><span class="number">-2</span> <span class="keyword">from</span> <span class="keyword">table</span><span class="number">-1</span></span><br><span class="line"><span class="keyword">UNION</span></span><br><span class="line"><span class="keyword">select</span> <span class="keyword">column</span><span class="number">-1</span> <span class="keyword">column</span><span class="number">-2</span> <span class="keyword">from</span> <span class="keyword">table</span><span class="number">-2</span></span><br></pre></td></tr></table></figure></p>
-<h6 id="枚举数据库"><a href="#枚举数据库" class="headerlink" title="枚举数据库"></a>枚举数据库</h6><p>我们只以MySQL数据库为例了，枚举数据库并提取数据遵循一种层次化的方法，首先我们提取数据库名称，然后提取表，再到列，最后才是数据本身。要想获取远程数据库的表、列，就要访问专门保存描述各种数据库结构的表。通常将这些结构描述信息成为元数据。在MySQL中，这些表都保存在information_schema数据库中</p>
-<h6 id="第一步：提取数据库"><a href="#第一步：提取数据库" class="headerlink" title="第一步：提取数据库"></a>第一步：提取数据库</h6><p>在MySQL中，数据库名存放在information_schema数据库下schemata表schema_name字段中<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">id=1 union <span class="keyword">select</span> <span class="literal">null</span>,schema_name,<span class="literal">null</span> <span class="keyword">from</span> information_schema.schemata</span><br></pre></td></tr></table></figure></p>
-<h6 id="第二步：提取表名"><a href="#第二步：提取表名" class="headerlink" title="第二步：提取表名"></a>第二步：提取表名</h6><p>在MySQL中，表名存放在information_schema数据库下tables表table_name字段中<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?id=1 union <span class="keyword">select</span> <span class="literal">null</span>,table_name,<span class="literal">null</span> <span class="keyword">from</span> information_schema.tables <span class="keyword">where</span> table_schema=<span class="string">'ichunqiu'</span></span><br></pre></td></tr></table></figure></p>
-<h6 id="第三步：提取字段名"><a href="#第三步：提取字段名" class="headerlink" title="第三步：提取字段名"></a>第三步：提取字段名</h6><p>在MySQL中，字段名存放在information_schema数据库下columns表column_name字段中<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="literal">null</span>,column_name,<span class="literal">null</span> <span class="keyword">from</span> information_schema.columns <span class="keyword">where</span> table_name=<span class="string">'users'</span> <span class="keyword">and</span> table_schema=<span class="string">''</span></span><br></pre></td></tr></table></figure></p>
-<h6 id="第四步：提取数据"><a href="#第四步：提取数据" class="headerlink" title="第四步：提取数据"></a>第四步：提取数据</h6><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> username,<span class="keyword">password</span>,<span class="literal">null</span> <span class="keyword">from</span> <span class="keyword">users</span></span><br></pre></td></tr></table></figure>
-<h3 id="SQL盲注"><a href="#SQL盲注" class="headerlink" title="SQL盲注"></a>SQL盲注</h3><h4 id="布尔型注入"><a href="#布尔型注入" class="headerlink" title="布尔型注入"></a>布尔型注入</h4><p>例如：在参数后面加上or 1=1，可返回所有数据，因为 or 1=1永远为真</p>
-<h4 id="联合查询注入"><a href="#联合查询注入" class="headerlink" title="联合查询注入"></a>联合查询注入</h4><p>在参数后面加上：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UNION <span class="keyword">select</span> <span class="keyword">column</span><span class="number">-1</span> <span class="keyword">column</span><span class="number">-2</span> <span class="keyword">from</span> <span class="keyword">table</span><span class="number">-2</span></span><br></pre></td></tr></table></figure></p>
-<h4 id="多语句注入"><a href="#多语句注入" class="headerlink" title="多语句注入"></a>多语句注入</h4><p>在参数后面加上：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">;<span class="keyword">drop</span> <span class="keyword">table</span> a; <span class="keyword">select</span> * <span class="keyword">from</span> tableb;</span><br></pre></td></tr></table></figure></p>
-<h4 id="字符串注册"><a href="#字符串注册" class="headerlink" title="字符串注册"></a>字符串注册</h4><p>‘#’：’#’后所有的字符串都会被当成注释来处理用户名输入：user’#（单引号闭合user左边的单引号），密码随意输入，如：111，然后点击提交按钮。等价于SQL语句：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> <span class="keyword">user</span> <span class="keyword">WHERE</span> username = <span class="string">'user'</span>#<span class="string">'ADN password = '</span><span class="number">111</span><span class="string">'</span></span><br></pre></td></tr></table></figure></p>
-<h3 id="如何预防SQL注入"><a href="#如何预防SQL注入" class="headerlink" title="如何预防SQL注入"></a>如何预防SQL注入</h3><ol>
-<li>严格检查输入变量的类型和格式<br> 对于整数参数，加判断条件：不能为空、参数类型必须为数字<br> 对于字符串参数，可以使用正则表达式进行过滤：如：必须为[0-9a-zA-Z]范围内的字符串</li>
-<li>对URL进行编码</li>
-<li>对进入数据库的特殊字符（’”\尖括号&amp;*;等）进行转义处理，或编码转换</li>
-<li>所有的查询语句建议使用数据库提供的参数化查询接口，参数化的语句使用参数而不是将用户输入变量嵌入到SQL语句中，即不要直接拼接SQL语句</li>
-<li>避免网站打印出SQL错误信息，比如类型错误、字段不匹配等，把代码里的SQL语句暴露出来，以防止攻击者利用这些错误信息进行SQL注入。</li>
-<li>利用sql的预编译机制<br> 把sql语句的模板（变量采用占位符进行占位）发送给数据库服务器，数据库服务器对sql语句的模板进行编译，编译之后根据语句的优化分析对相应的索引进行优化，在最终绑定参数时把相应的参数传送给数据库服务器，直接进行执行，节省了sql查询时间，以及数据库服务器的资源，达到一次编译、多次执行的目的，除此之外，还可以防止SQL注入。具体是怎样防止SQL注入的呢？实际上当将绑定的参数传到数据库服务器，服务器对参数进行编译，即填充到相应的占位符的过程中，做了转义操作。</li>
-</ol>
-<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><p><a href="https://blog.csdn.net/github_36032947/article/details/78442189" target="_blank" rel="noopener">https://blog.csdn.net/github_36032947/article/details/78442189</a><br><a href="https://www.jianshu.com/p/ba35a7e1c67d" target="_blank" rel="noopener">https://www.jianshu.com/p/ba35a7e1c67d</a><br><a href="https://paper.seebug.org/15/" target="_blank" rel="noopener">https://paper.seebug.org/15/</a><br><a href="https://github.com/astaxie/build-web-application-with-golang/blob/master/zh/09.4.md" target="_blank" rel="noopener">https://github.com/astaxie/build-web-application-with-golang/blob/master/zh/09.4.md</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -1113,7 +1131,9 @@
   
     <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
   
-    <li><a href="/tags/ES6/">ES6</a><small>3</small></li>
+    <li><a href="/tags/Docker/">Docker</a><small>1</small></li>
+  
+    <li><a href="/tags/ES6/">ES6</a><small>4</small></li>
   
     <li><a href="/tags/Git/">Git</a><small>7</small></li>
   
