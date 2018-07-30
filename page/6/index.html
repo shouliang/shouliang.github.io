@@ -53,6 +53,62 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2015-04-09T07:45:23.000Z"><a href="/2015/04/09/Gulp/Gulp(3)gulp常用插件介绍/">2015-04-09</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2015/04/09/Gulp/Gulp(3)gulp常用插件介绍/">三.gulp 常用插件</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-插件安装"><a href="#1-插件安装" class="headerlink" title="1.插件安装"></a>1.插件安装</h3><hr>
+<p>在我们编写gulp代码时候，需要用到一些gulp的插件，可以通过npm install –save-dev 插件名称 来安装。如下代码来安装自动加载插件：</p>
+<p>npm install –save-dev gulp-load-plugins<br>　　要使用gulp的插件，首先得用require来把插件加载进来。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">var gulp=require(&apos;gulp&apos;),</span><br><span class="line">    plugins=require(&apos;gulp-load-plugins&apos;)(),</span><br><span class="line">    uglify = require(&apos;gulp-uglify&apos;),</span><br><span class="line">    minifyHtml = require(&apos;gulp-minify-html&apos;),</span><br><span class="line">    rename = require(&apos;gulp-rename&apos;);</span><br></pre></td></tr></table></figure></p>
+<p>　　gulp的插件有很多种，后面介绍几个插件的用法。如还想了解更多插件，请查阅相关资料。</p>
+<h3 id="2-自动加载"><a href="#2-自动加载" class="headerlink" title="2.自动加载"></a>2.自动加载</h3><hr>
+<p>ulp-load-plugins这个插件能自动帮你加载package.json文件里的gulp插件。例如假设你的package.json文件里的依赖是这样的:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;devDependencies&quot;: &#123;</span><br><span class="line">    &quot;gulp&quot;: &quot;~3.6.0&quot;,</span><br><span class="line">    &quot;gulp-rename&quot;: &quot;~1.2.0&quot;,</span><br><span class="line">    &quot;gulp-ruby-sass&quot;: &quot;~0.4.3&quot;,</span><br><span class="line">    &quot;gulp-load-plugins&quot;: &quot;~0.5.1&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>然后我们可以在gulpfile.js中使用gulp-load-plugins来帮我们加载插件：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;);</span><br><span class="line">//加载gulp-load-plugins插件，并马上运行它</span><br><span class="line">var plugins = require(&apos;gulp-load-plugins&apos;)();</span><br></pre></td></tr></table></figure></p>
+<p>　　然后我们要使用gulp-rename和gulp-ruby-sass这两个插件的时候，就可以使用plugins.rename和plugins.rubySass来代替了,也就是原始插件名去掉gulp-前缀，之后再转换为驼峰命名。</p>
+<h3 id="3-重命名"><a href="#3-重命名" class="headerlink" title="3.重命名"></a>3.重命名</h3><hr>
+<p>gulp-rename插件用来重命名文件流中的文件。用gulp.dest()方法写入文件时，文件名使用的是文件流中的文件名，如果要想改变文件名，那可以在之前用gulp-rename插件来改变文件流中的文件名。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    rename = require(&apos;gulp-rename&apos;),</span><br><span class="line">    uglify = require(&quot;gulp-uglify&quot;); </span><br><span class="line">gulp.task(&apos;rename&apos;, function () &#123;</span><br><span class="line">    gulp.src(&apos;src/1.js&apos;)</span><br><span class="line">    .pipe(uglify())           //压缩</span><br><span class="line">    .pipe(rename(&apos;1.min.js&apos;)) //会将1.js重命名为1.min.js</span><br><span class="line">    .pipe(gulp.dest(&apos;js&apos;));</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="4-js文件压缩"><a href="#4-js文件压缩" class="headerlink" title="4.js文件压缩"></a>4.js文件压缩</h3><hr>
+<p>gulp-uglify插件用来压缩js文件。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    uglify = require(&quot;gulp-uglify&quot;); </span><br><span class="line">gulp.task(&apos;minify-js&apos;, function () &#123;</span><br><span class="line">    gulp.src(&apos;src/*.js&apos;)          // 要压缩的js文件</span><br><span class="line">    .pipe(uglify())              //使用uglify进行压缩</span><br><span class="line">    .pipe(gulp.dest(&apos;dist/js&apos;)); //压缩后的路径</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="5-css文件压缩"><a href="#5-css文件压缩" class="headerlink" title="5.css文件压缩"></a>5.css文件压缩</h3><hr>
+<p>gulp-minify-css插件用来压缩css文件。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    minifyCss = require(&quot;gulp-minify-css&quot;);</span><br><span class="line">gulp.task(&apos;minify-css&apos;, function () &#123;</span><br><span class="line">    gulp.src(&apos;src/*.css&apos;) // 要压缩的css文件</span><br><span class="line">    .pipe(minifyCss())    //压缩css</span><br><span class="line">    .pipe(gulp.dest(&apos;dist/css&apos;));</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="6-html文件压缩"><a href="#6-html文件压缩" class="headerlink" title="6.html文件压缩"></a>6.html文件压缩</h3><hr>
+<p>gulp-minify-html插件用来压缩html文件。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    minifyHtml = require(&quot;gulp-minify-html&quot;); </span><br><span class="line">gulp.task(&apos;minify-html&apos;, function () &#123;</span><br><span class="line">    gulp.src(&apos;src/*.html&apos;) // 要压缩的html文件</span><br><span class="line">    .pipe(minifyHtml())    //压缩</span><br><span class="line">    .pipe(gulp.dest(&apos;dist/html&apos;));</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="7-js代码检查"><a href="#7-js代码检查" class="headerlink" title="7.js代码检查"></a>7.js代码检查</h3><hr>
+<p>使用gulp-jshint插件，用来检查js代码。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    jshint = require(&quot;gulp-jshint&quot;);</span><br><span class="line">gulp.task(&apos;jsLint&apos;, function () &#123;</span><br><span class="line">    gulp.src(&apos;src/*.js&apos;)</span><br><span class="line">    .pipe(jshint())</span><br><span class="line">    .pipe(jshint.reporter()); // 输出检查结果</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="8-文件合并"><a href="#8-文件合并" class="headerlink" title="8.文件合并"></a>8.文件合并</h3><hr>
+<p>使用gulp-concat插件，用来把多个文件合并为一个文件,我们可以用它来合并js或css文件等。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    concat = require(&quot;gulp-concat&quot;);</span><br><span class="line">gulp.task(&apos;concat&apos;, function () &#123;</span><br><span class="line">    gulp.src(&apos;src/*.js&apos;)     //要合并的文件</span><br><span class="line">    .pipe(concat(&apos;all.js&apos;))  // 合并匹配到的js文件并命名为 &quot;all.js&quot;</span><br><span class="line">    .pipe(gulp.dest(&apos;dist/js&apos;));</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="9-图片压缩"><a href="#9-图片压缩" class="headerlink" title="9.图片压缩"></a>9.图片压缩</h3><hr>
+<p>可以使用gulp-imagemin插件来压缩jpg、png、gif等图片。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;);</span><br><span class="line">var imagemin = require(&apos;gulp-imagemin&apos;);</span><br><span class="line">var pngquant = require(&apos;imagemin-pngquant&apos;); //png图片压缩插件</span><br><span class="line">gulp.task(&apos;default&apos;, function () &#123;</span><br><span class="line">    return gulp.src(&apos;src/images/*&apos;)</span><br><span class="line">        .pipe(imagemin(&#123;</span><br><span class="line">            progressive: true,</span><br><span class="line">            use: [pngquant()] //使用pngquant来压缩png图片</span><br><span class="line">        &#125;))</span><br><span class="line">        .pipe(gulp.dest(&apos;dist&apos;));</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="10-自动刷新"><a href="#10-自动刷新" class="headerlink" title="10.自动刷新"></a>10.自动刷新</h3><hr>
+<p>使用gulp-livereload插件，当代码变化时，它可以帮我们自动刷新页面。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    less = require(&apos;gulp-less&apos;),</span><br><span class="line">    livereload = require(&apos;gulp-livereload&apos;);</span><br><span class="line">gulp.task(&apos;less&apos;, function() &#123;</span><br><span class="line">  gulp.src(&apos;less/\*.less&apos;)</span><br><span class="line">    .pipe(less())</span><br><span class="line">    .pipe(gulp.dest(&apos;css&apos;))</span><br><span class="line">    .pipe(livereload());</span><br><span class="line">&#125;);</span><br><span class="line">gulp.task(&apos;watch&apos;, function() &#123;</span><br><span class="line">  livereload.listen(); //要在这里调用listen()方法</span><br><span class="line">  gulp.watch(&apos;less/*.less&apos;, [&apos;less&apos;]);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2015-04-07T07:45:23.000Z"><a href="/2015/04/07/Gulp/Gulp(2)gulp api/">2015-04-07</a></time>
       
       
@@ -815,64 +871,6 @@ warning: You appear to have cloned an empty repository.
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2014-06-18T07:45:23.000Z"><a href="/2014/06/18/Git/Git(2)创建版本库/">2014-06-18</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2014/06/18/Git/Git(2)创建版本库/">二.创建版本库</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-什么是版本库"><a href="#1-什么是版本库" class="headerlink" title="1.什么是版本库"></a>1.什么是版本库</h3><hr>
-<p>　版本库又名仓库，英文名repository，你可以简单理解成一个目录，这个目录里面的所有文件都可以被Git管理起来，每个文件的修改、删除，Git都能跟踪，以便任何时刻都可以追踪历史，或者在将来某个时刻可以“还原”。</p>
-<p>所以，创建一个版本库非常简单，首先，选择一个合适的地方，创建一个空目录：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ mkdir learngit</span><br><span class="line">$ cd learngit</span><br><span class="line">$ pwd</span><br><span class="line">/home/shouliang/learngit</span><br></pre></td></tr></table></figure></p>
-<p>pwd命令用于显示当前目录。在环境中这个仓库位于/home/shouliang/learngit。</p>
-<p>通过git init命令把这个目录变成Git可以管理的仓库：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git init</span><br><span class="line">Initialized empty Git repository in /home/shouliang/learngit/.git/</span><br></pre></td></tr></table></figure></p>
-<p>　　瞬间Git就把仓库建好了，而且告诉你是一个空的仓库（empty Git repository），细心的读者可以发现当前目录下多了一个.git的目录，这个目录是Git来跟踪管理版本库的，没事千万不要手动修改这个目录里面的文件，不然改乱了，就把Git仓库给破坏了。</p>
-<p>　　如果你没有看到.git目录，那是因为这个目录默认是隐藏的，用ls -ah命令就可以看见。</p>
-<h3 id="2-添加文件"><a href="#2-添加文件" class="headerlink" title="2.添加文件"></a>2.添加文件</h3><hr>
-<p>我们了解下版本控制系统，其实只能跟踪文本文件的改动，比如TXT文件，网页，所有的程序代码等等，Git也不例外。版本控制系统可以告诉你每次的改动，比如在第5行加了一个单词“Linux”，在第8行删了一个单词“Windows”。而图片、视频这些二进制文件，虽然也能由版本控制系统理，但没法跟踪文件的变化，只能把二进制文件每次改动串起来，也就是只知道图片从100KB改成了120KB，但到底改了啥，版本控制系统不知道，也没法知道。</p>
-<p>为了简明起见，我们创建一个readme.txt作为练习：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">echo &quot;Git is a version control system.&quot; &gt; readme.txt</span><br><span class="line">// 输入这句话保存到创建的readme.txt文件中</span><br><span class="line">echo &quot; Git is free software.&quot; &gt;&gt; readme.txt</span><br><span class="line">// 输入此内容追加到readme.txt中</span><br></pre></td></tr></table></figure></p>
-<p>一定要放到learngit目录下（子目录也行），因为这是一个Git仓库，放到其他地方Git再厉害也找不到这个文件。</p>
-<p>用命令git add告诉Git，把文件添加到仓库：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git add readme.txt</span><br></pre></td></tr></table></figure></p>
-<p>git add 实际上是个脚本命令，没有任何显示，说明添加成功。</p>
-<h3 id="3-提交文件"><a href="#3-提交文件" class="headerlink" title="3.提交文件"></a>3.提交文件</h3><hr>
-<p>用命令git commit告诉Git，把文件提交到仓库：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ git commit -m &quot;wrote a readme file&quot;</span><br><span class="line">[master (root-commit) cb926e7] wrote a readme file</span><br><span class="line"> 1 file changed, 2 insertions(+)</span><br><span class="line"> create mode 100644 readme.txt</span><br></pre></td></tr></table></figure></p>
-<p>　　简单解释一下git commit命令，-m后面输入的是本次提交的说明，可以输入任意内容，当然最好是有意义的，这样你就能从历史记录里方便地找到改动记录。</p>
-<p>　　git commit命令执行成功后会告诉你，1个文件被改动（我们新添加的readme.txt文件），插入了两行内容（readme.txt有两行内容）。</p>
-<p>　　为什么Git添加文件需要add，commit一共两步呢？因为commit可以一次提交很多文件，所以你可以多次add不同的文件，比如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git add file1.txt</span><br><span class="line">$ git add file2.txt file3.txt</span><br><span class="line">$ git commit -m &quot;add 3 files.&quot;</span><br></pre></td></tr></table></figure></p>
-<h3 id="4-小结"><a href="#4-小结" class="headerlink" title="4.小结"></a>4.小结</h3><hr>
-<p>此节知识点我们所学习的内容：</p>
-<p>初始化一个Git仓库，使用git init命令。</p>
-<p>添加文件到Git仓库，分两步：</p>
-<ul>
-<li>第一步，使用命令git add <file>，注意，可反复多次使用，添加多个文件；</file></li>
-<li>第二步，使用命令git commit，完成。　　</li>
-</ul>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -900,7 +898,7 @@ warning: You appear to have cloned an empty repository.
   
     <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
   
-    <li><a href="/tags/Docker/">Docker</a><small>1</small></li>
+    <li><a href="/tags/Docker/">Docker</a><small>2</small></li>
   
     <li><a href="/tags/ES6/">ES6</a><small>4</small></li>
   
@@ -914,9 +912,9 @@ warning: You appear to have cloned an empty repository.
   
     <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
   
-    <li><a href="/tags/Node-js/">Node.js</a><small>1</small></li>
+    <li><a href="/tags/Node-js/">Node.js</a><small>0</small></li>
   
-    <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>3</small></li>
+    <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>4</small></li>
   
     <li><a href="/tags/Node-js-JS基础/">Node.js_JS基础</a><small>4</small></li>
   

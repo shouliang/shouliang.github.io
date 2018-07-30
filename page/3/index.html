@@ -53,6 +53,52 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2017-01-05T06:45:23.000Z"><a href="/2017/01/05/存储/INNODB还是MYISAM/">2017-01-05</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2017/01/05/存储/INNODB还是MYISAM/">INNODB还是MYISAM</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>MyISAM 是MySQL中默认的存储引擎，一般来说不是有太多人关心这个东西。决定使用什么样的存储引擎是一个很tricky的事情，但是还是值我们去研究一下，这里的文章只考虑 MyISAM 和InnoDB这两个，因为这两个是最常见的。</p>
+<p>下面先让我们回答一些问题：</p>
+<ul>
+<li>你的数据库有外键吗？</li>
+<li>你需要事务支持吗？</li>
+<li>你需要全文索引吗？</li>
+<li>你经常使用什么样的查询模式？</li>
+<li>你的数据有多大？</li>
+</ul>
+<p>思考上面这些问题可以让你找到合适的方向，但那并不是绝对的。如果你需要事务处理或是外键，那么InnoDB 可能是比较好的方式。如果你需要全文索引，那么通常来说 MyISAM是好的选择，因为这是系统内建的，然而，我们其实并不会经常地去测试两百万行记录。所以，就算是慢一点，我们可以通过使用Sphinx从InnoDB中获得全文索引。</p>
+<p>数据的大小，是一个影响你选择什么样存储引擎的重要因素，大尺寸的数据集趋向于选择InnoDB方式，因为其支持事务处理和故障恢复。数据库的在小决定了故障恢复的时间长短，InnoDB可以利用事务日志进行数据恢复，这会比较快。而MyISAM可能会需要几个小时甚至几天来干这些事，InnoDB只需要几分钟。</p>
+<p>您操作数据库表的习惯可能也会是一个对性能影响很大的因素。比如： COUNT() 在 MyISAM 表中会非常快，而在InnoDB 表下可能会很痛苦。而主键查询则在InnoDB下会相当相当的快，但需要小心的是如果我们的主键太长了也会导致性能问题。大批的inserts 语句在MyISAM下会快一些，但是updates 在InnoDB 下会更快一些——尤其在并发量大的时候。</p>
+<p>所以，到底你检使用哪一个呢？根据经验来看，如果是一些小型的应用或项目，那么MyISAM 也许会更适合。当然，在大型的环境下使用MyISAM 也会有很大成功的时候，但却不总是这样的。如果你正在计划使用一个超大数据量的项目，而且需要事务处理或外键支持，那么你真的应该直接使用InnoDB方式。但需要记住InnoDB 的表需要更多的内存和存储，转换100GB 的MyISAM 表到InnoDB 表可能会让你有非常坏的体验。</p>
+<p>原文：<a href="https://coolshell.cn/articles/652.html" target="_blank" rel="noopener">https://coolshell.cn/articles/652.html</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2017-01-04T06:45:23.000Z"><a href="/2017/01/04/存储/主键与唯一索引的区别/">2017-01-04</a></time>
       
       
@@ -517,49 +563,6 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2016-08-05T14:16:53.000Z"><a href="/2016/08/05/Node.js_JS基础/如何编写一个 json对象的拷贝函数/">2016-08-05</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2016/08/05/Node.js_JS基础/如何编写一个 json对象的拷贝函数/">如何编写一个 json对象的拷贝函数</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>浅拷贝，比如浅拷贝对象A时，对象B将拷贝A的所有属性，如果属性是引用类型，B将拷贝地址，若果属性是基本类型，B将复制其值。浅拷贝的缺点是如果你修改了对象B中引用类型属性，你同时也会影响到对象A。</p>
-<p>深拷贝会完全拷贝所有数据，优点是拷贝双方不会相互依赖，比如修改了一方的引用类型属性，不会影响到另一方。缺点是拷贝的速度更慢，代价更大 （我的理解是耗费了更多内存空间）。</p>
-<h2 id="浅拷贝实现"><a href="#浅拷贝实现" class="headerlink" title="浅拷贝实现"></a>浅拷贝实现</h2><p>1、使用 ES6 的 Object.assign，其内部实现就是浅拷贝，并剔除了目标对象的原型方法</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> a = &#123;</span><br><span class="line">  p: [<span class="number">1</span>, <span class="number">2</span>]</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> b = <span class="built_in">Object</span>.assign(&#123;&#125;, a);</span><br><span class="line"><span class="built_in">console</span>.log(b.p == a.p);</span><br></pre></td></tr></table></figure>
-<p>2、遍历对象属性</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">shallowClone</span>(<span class="params">obj</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (!obj || <span class="keyword">typeof</span> obj !== <span class="string">'object'</span>) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'error arguments'</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">let</span> targetObj = obj.constructor === <span class="built_in">Array</span> ? [] : &#123;&#125;;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">let</span> key <span class="keyword">in</span> obj) &#123;</span><br><span class="line">    <span class="keyword">if</span> (obj.hasOwnProperty(key)) &#123;</span><br><span class="line">      targetObj[key] = obj[key];</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> targetObj;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="深拷贝实现"><a href="#深拷贝实现" class="headerlink" title="深拷贝实现"></a>深拷贝实现</h2><p>1、利用 JSON 序列化实现一个深拷贝，缺点是无法复制函数，并且丢失抛弃对象的 constructor 和原型链</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">deepClone</span>(<span class="params">obj</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">JSON</span>.parse(<span class="built_in">JSON</span>.stringify(obj));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> o1 = &#123;</span><br><span class="line">  arr: [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>],</span><br><span class="line">  obj: &#123; <span class="attr">key</span>: <span class="string">'value'</span> &#125;,</span><br><span class="line">  func()&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">let</span> o2 = deepClone(o1);</span><br><span class="line"><span class="built_in">console</span>.log(o2); <span class="comment">// =&gt; &#123;arr: [1,2,3], obj: &#123;key: 'value'&#125;&#125;</span></span><br></pre></td></tr></table></figure>
-<p>2、利用递归实现深拷贝，可以复制函数，同样会丢失抛弃对象的 constructor 和原型链，但是对于拷贝 json 对象的话足够了</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">deepCopy</span>(<span class="params">src</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span>(!src || <span class="keyword">typeof</span> src !== <span class="string">'object'</span>)&#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'error arguments'</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">let</span> target = src.constructor === <span class="built_in">Array</span> ? [] : &#123;&#125;;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">let</span> i <span class="keyword">in</span> src) &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">typeof</span> src[i] === <span class="string">'object'</span>) &#123;</span><br><span class="line">      target[i] = src[i].constructor === <span class="built_in">Array</span> ? [] : &#123;&#125;;</span><br><span class="line">      target[i] = deepCopy(src[i]);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      target[i] = src[i];</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> target;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="http://www.lujianan.com/2016/07/18/deep-shallow/" target="_blank" rel="noopener">http://www.lujianan.com/2016/07/18/deep-shallow/</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
         <time datetime="2016-08-05T14:16:53.000Z"><a href="/2016/08/05/Node.js_事件/The Node.js Event Loop, Timers, and process.nextTick()/">2016-08-05</a></time>
       
       
@@ -662,6 +665,49 @@
 <p>You can’t emit an event from the constructor immediately because the script will not have processed to the point where the user assigns a callback to that event. So, within the constructor itself, you can use <code>process.nextTick()</code> to set a callback to emit the event after the constructor has finished, which provides the expected results:</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">const EventEmitter = require(&apos;events&apos;);</span><br><span class="line">const util = require(&apos;util&apos;);</span><br><span class="line"></span><br><span class="line">function MyEmitter() &#123;</span><br><span class="line">  EventEmitter.call(this);</span><br><span class="line"></span><br><span class="line">  // use nextTick to emit the event once a handler is assigned</span><br><span class="line">  process.nextTick(() =&gt; &#123;</span><br><span class="line">    this.emit(&apos;event&apos;);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br><span class="line">util.inherits(MyEmitter, EventEmitter);</span><br><span class="line"></span><br><span class="line">const myEmitter = new MyEmitter();</span><br><span class="line">myEmitter.on(&apos;event&apos;, () =&gt; &#123;</span><br><span class="line">  console.log(&apos;an event occurred!&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
 <h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="https://nodejs.org/en/docs/guides/event-loop-timers-and-nexttick/#the-node-js-event-loop-timers-and-process-nexttick" target="_blank" rel="noopener">https://nodejs.org/en/docs/guides/event-loop-timers-and-nexttick/#the-node-js-event-loop-timers-and-process-nexttick</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2016-08-05T14:16:53.000Z"><a href="/2016/08/05/Node.js_JS基础/如何编写一个 json对象的拷贝函数/">2016-08-05</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2016/08/05/Node.js_JS基础/如何编写一个 json对象的拷贝函数/">如何编写一个 json对象的拷贝函数</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>浅拷贝，比如浅拷贝对象A时，对象B将拷贝A的所有属性，如果属性是引用类型，B将拷贝地址，若果属性是基本类型，B将复制其值。浅拷贝的缺点是如果你修改了对象B中引用类型属性，你同时也会影响到对象A。</p>
+<p>深拷贝会完全拷贝所有数据，优点是拷贝双方不会相互依赖，比如修改了一方的引用类型属性，不会影响到另一方。缺点是拷贝的速度更慢，代价更大 （我的理解是耗费了更多内存空间）。</p>
+<h2 id="浅拷贝实现"><a href="#浅拷贝实现" class="headerlink" title="浅拷贝实现"></a>浅拷贝实现</h2><p>1、使用 ES6 的 Object.assign，其内部实现就是浅拷贝，并剔除了目标对象的原型方法</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> a = &#123;</span><br><span class="line">  p: [<span class="number">1</span>, <span class="number">2</span>]</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> b = <span class="built_in">Object</span>.assign(&#123;&#125;, a);</span><br><span class="line"><span class="built_in">console</span>.log(b.p == a.p);</span><br></pre></td></tr></table></figure>
+<p>2、遍历对象属性</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">shallowClone</span>(<span class="params">obj</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (!obj || <span class="keyword">typeof</span> obj !== <span class="string">'object'</span>) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'error arguments'</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">let</span> targetObj = obj.constructor === <span class="built_in">Array</span> ? [] : &#123;&#125;;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">let</span> key <span class="keyword">in</span> obj) &#123;</span><br><span class="line">    <span class="keyword">if</span> (obj.hasOwnProperty(key)) &#123;</span><br><span class="line">      targetObj[key] = obj[key];</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> targetObj;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="深拷贝实现"><a href="#深拷贝实现" class="headerlink" title="深拷贝实现"></a>深拷贝实现</h2><p>1、利用 JSON 序列化实现一个深拷贝，缺点是无法复制函数，并且丢失抛弃对象的 constructor 和原型链</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">deepClone</span>(<span class="params">obj</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">JSON</span>.parse(<span class="built_in">JSON</span>.stringify(obj));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> o1 = &#123;</span><br><span class="line">  arr: [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>],</span><br><span class="line">  obj: &#123; <span class="attr">key</span>: <span class="string">'value'</span> &#125;,</span><br><span class="line">  func()&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">let</span> o2 = deepClone(o1);</span><br><span class="line"><span class="built_in">console</span>.log(o2); <span class="comment">// =&gt; &#123;arr: [1,2,3], obj: &#123;key: 'value'&#125;&#125;</span></span><br></pre></td></tr></table></figure>
+<p>2、利用递归实现深拷贝，可以复制函数，同样会丢失抛弃对象的 constructor 和原型链，但是对于拷贝 json 对象的话足够了</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">deepCopy</span>(<span class="params">src</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span>(!src || <span class="keyword">typeof</span> src !== <span class="string">'object'</span>)&#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'error arguments'</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">let</span> target = src.constructor === <span class="built_in">Array</span> ? [] : &#123;&#125;;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">let</span> i <span class="keyword">in</span> src) &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">typeof</span> src[i] === <span class="string">'object'</span>) &#123;</span><br><span class="line">      target[i] = src[i].constructor === <span class="built_in">Array</span> ? [] : &#123;&#125;;</span><br><span class="line">      target[i] = deepCopy(src[i]);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      target[i] = src[i];</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> target;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="http://www.lujianan.com/2016/07/18/deep-shallow/" target="_blank" rel="noopener">http://www.lujianan.com/2016/07/18/deep-shallow/</a></p>
 
       
     </div>
@@ -882,76 +928,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2016-07-23T14:16:53.000Z"><a href="/2016/07/23/Node.js_进程/Nodejs编写守护进程/">2016-07-23</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2016/07/23/Node.js_进程/Nodejs编写守护进程/">Nodejs编写守护进程</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>目前Nodejs编写一个守护进程非常简单，在6.3.1版本中已经存在非常方便的API，这些API可以帮助我们更方便的创建一个守护进程。本文仅在描述守护进程的创建方式，而不会对守护进程所要执行的任务做任何描述。</p>
-<h3 id="守护进程的启动方式"><a href="#守护进程的启动方式" class="headerlink" title="守护进程的启动方式"></a>守护进程的启动方式</h3><p>如果不在Nodejs环境中，我们如何创建守护进程？过程如下：</p>
-<ol>
-<li>创建一个进程A。</li>
-<li>在进程A中创建进程B，我们可以使用fork方式，或者其他方法。</li>
-<li>对进程B执行 <code>setsid</code> 方法。</li>
-<li>进程A退出，进程B由init进程接管。此时进程B为守护进程。</li>
-</ol>
-<h3 id="Setsid详解"><a href="#Setsid详解" class="headerlink" title="Setsid详解"></a>Setsid详解</h3><p><code>setsid</code> 主要完成三件事：</p>
-<ol>
-<li>该进程变成一个新会话的会话领导。</li>
-<li>该进程变成一个新进程组的组长。</li>
-<li>该进程没有控制终端。</li>
-</ol>
-<p>然而，Nodejs中并没有对 <code>setsid</code> 方法的直接封装，翻阅文档发现有一个地方是可以调用该方法的。</p>
-<h3 id="Nodejs中启动子进程方法"><a href="#Nodejs中启动子进程方法" class="headerlink" title="Nodejs中启动子进程方法"></a>Nodejs中启动子进程方法</h3><p>借助 <code>clild_process</code> 中的 <code>spawn</code> 即可创建子进程，方法如下：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> spawn = <span class="built_in">require</span>(<span class="string">'child_process'</span>).spawn;</span><br><span class="line"><span class="keyword">var</span> process = <span class="built_in">require</span>(<span class="string">'process'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> p = spawn(<span class="string">'node'</span>,[<span class="string">'b.js'</span>]);</span><br><span class="line"><span class="built_in">console</span>.log(process.pid, p.pid);</span><br></pre></td></tr></table></figure>
-<p>注意，这里只打印当前进程的PID和子进程的PID，同时为了观察效果，我并没有将父进程退出。</p>
-<p><code>b.js</code> 中代码很简单，打开一个资源，并不停的写入数据。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> fs = <span class="built_in">require</span>(<span class="string">'fs'</span>);</span><br><span class="line"><span class="keyword">var</span> process = <span class="built_in">require</span>(<span class="string">'process'</span>);</span><br><span class="line"></span><br><span class="line">fs.open(<span class="string">"/Users/mebius/Desktop/log.txt"</span>,<span class="string">'w'</span>,<span class="function"><span class="keyword">function</span>(<span class="params">err, fd</span>)</span>&#123;</span><br><span class="line">	<span class="built_in">console</span>.log(fd);</span><br><span class="line">	<span class="keyword">while</span>(<span class="literal">true</span>)</span><br><span class="line">	&#123;</span><br><span class="line">		fs.write(fd,process.pid+<span class="string">"\n"</span>,<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;&#125;);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>运行后的效果如图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/fork01_180703.png" alt=""></p>
-<p>我们来看以下 <code>top</code> 命令下的进程情况。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/fork02_180703.png" alt=""></p>
-<p>看一看到，此时父进程PID为17055，子进程的PPID为17055，PID为17056.</p>
-<h3 id="Nodejs中Setsid的调用"><a href="#Nodejs中Setsid的调用" class="headerlink" title="Nodejs中Setsid的调用"></a>Nodejs中Setsid的调用</h3><p>到此为止，守护进程已经完成一半，下面要调用setsid方法，并且退出父进程。</p>
-<p>代码修改如下：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> spawn = <span class="built_in">require</span>(<span class="string">'child_process'</span>).spawn;</span><br><span class="line"><span class="keyword">var</span> process = <span class="built_in">require</span>(<span class="string">'process'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> p = spawn(<span class="string">'node'</span>,[<span class="string">'b.js'</span>],&#123;</span><br><span class="line">        detached : <span class="literal">true</span></span><br><span class="line">    &#125;);</span><br><span class="line"><span class="built_in">console</span>.log(process.pid, p.pid);</span><br><span class="line">process.exit(<span class="number">0</span>);</span><br></pre></td></tr></table></figure>
-<p>在 <code>spawn</code> 的第三个参数中，可以设置 <code>detached</code> 属性，如果该属性为true，则会调用 <code>setsid</code> 方法。这样就满足我们对守护进程的要求。</p>
-<p>在此运行命令。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/fork03_180703.png" alt=""></p>
-<p>查看 <code>top</code> 命令</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/fork04_180703.png" alt=""></p>
-<p>可以看到，当前仅存在一个PID为17062的进程，这个进程就是我们要的守护进程。</p>
-<blockquote>
-<p>由于每次运行PID都不同，所以此次子进程的PID于第一次不同。</p>
-</blockquote>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>守护进程最重要的是稳定，如果守护进程挂掉，那么其管理的子进程都将变为孤儿进程，同时被init进程接管，这是我们不愿意看到的。于此同时，守护进程对于子进程的管理也是有非常多的发挥余地的，例如PM2中，将一个进程同时启动4次，达到CPU多核使用的目的（很有可能你的进程在同一核中运行），进程挂掉后自动重启等等，这些事情等着我们去造轮子。</p>
-<p>普通的进程, 在用户退出终端之后就会直接关闭. 通过 &amp; 启动到后台的进程, 之后会由于会（session组）被回收而终止进程. 守护进程是不依赖终端（tty）的进程, 不会因为用户退出终端而停止运行的进程.</p>
-<p>总体来说，Nodejs启动守护进程方式比较简单，默认所暴露的API也屏蔽了很多系统级别API，使得大家使用上更加方便，但没有接触过Linux的人在理解上有一些复杂。推荐大家学习Nodejs的同时，多学习Linux系统调用的和系统内核的一些东西。</p>
-<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="https://ashan.org/archives/917" target="_blank" rel="noopener">https://ashan.org/archives/917</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -979,7 +955,7 @@
   
     <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
   
-    <li><a href="/tags/Docker/">Docker</a><small>1</small></li>
+    <li><a href="/tags/Docker/">Docker</a><small>2</small></li>
   
     <li><a href="/tags/ES6/">ES6</a><small>4</small></li>
   
@@ -993,9 +969,9 @@
   
     <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
   
-    <li><a href="/tags/Node-js/">Node.js</a><small>1</small></li>
+    <li><a href="/tags/Node-js/">Node.js</a><small>0</small></li>
   
-    <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>3</small></li>
+    <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>4</small></li>
   
     <li><a href="/tags/Node-js-JS基础/">Node.js_JS基础</a><small>4</small></li>
   

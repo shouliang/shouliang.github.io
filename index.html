@@ -53,6 +53,188 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2018-04-27T06:45:23.000Z"><a href="/2018/04/27/Docker/Docker入门/">2018-04-27</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/04/27/Docker/Docker入门/">Docker入门</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>2013年发布至今， <a href="https://www.docker.com/" target="_blank" rel="noopener">Docker</a> 一直广受瞩目，被认为可能会改变软件行业。</p>
+<p>但是，许多人并不清楚 Docker 到底是什么，要解决什么问题，好处又在哪里？本文就来详细解释，帮助大家理解它，还带有简单易懂的实例，教你如何将它用于日常开发。</p>
+<h2 id="一、环境配置的难题"><a href="#一、环境配置的难题" class="headerlink" title="一、环境配置的难题"></a>一、环境配置的难题</h2><p>软件开发最大的麻烦事之一，就是环境配置。用户计算机的环境都不相同，你怎么知道自家的软件，能在那些机器跑起来？</p>
+<p>用户必须保证两件事：操作系统的设置，各种库和组件的安装。只有它们都正确，软件才能运行。举例来说，安装一个 Python 应用，计算机必须有 Python 引擎，还必须有各种依赖，可能还要配置环境变量。</p>
+<p>如果某些老旧的模块与当前环境不兼容，那就麻烦了。开发者常常会说：”它在我的机器可以跑了”（It works on my machine），言下之意就是，其他机器很可能跑不了。</p>
+<p>环境配置如此麻烦，换一台机器，就要重来一次，旷日费时。很多人想到，能不能从根本上解决问题，软件可以带环境安装？也就是说，安装的时候，把原始环境一模一样地复制过来。</p>
+<h2 id="二、虚拟机"><a href="#二、虚拟机" class="headerlink" title="二、虚拟机"></a>二、虚拟机</h2><p>虚拟机（virtual machine）就是带环境安装的一种解决方案。它可以在一种操作系统里面运行另一种操作系统，比如在 Windows 系统里面运行 Linux 系统。应用程序对此毫无感知，因为虚拟机看上去跟真实系统一模一样，而对于底层系统来说，虚拟机就是一个普通文件，不需要了就删掉，对其他部分毫无影响。</p>
+<p>虽然用户可以通过虚拟机还原软件的原始环境。但是，这个方案有几个缺点。</p>
+<p><strong>（1）资源占用多</strong></p>
+<p>虚拟机会独占一部分内存和硬盘空间。它运行的时候，其他程序就不能使用这些资源了。哪怕虚拟机里面的应用程序，真正使用的内存只有 1MB，虚拟机依然需要几百 MB 的内存才能运行。</p>
+<p><strong>（2）冗余步骤多</strong></p>
+<p>虚拟机是完整的操作系统，一些系统级别的操作步骤，往往无法跳过，比如用户登录。</p>
+<p><strong>（3）启动慢</strong></p>
+<p>启动操作系统需要多久，启动虚拟机就需要多久。可能要等几分钟，应用程序才能真正运行。</p>
+<h2 id="三、Linux-容器"><a href="#三、Linux-容器" class="headerlink" title="三、Linux 容器"></a>三、Linux 容器</h2><p>由于虚拟机存在这些缺点，Linux 发展出了另一种虚拟化技术：Linux 容器（Linux Containers，缩写为 LXC）。</p>
+<p><strong>Linux 容器不是模拟一个完整的操作系统，而是对进程进行隔离。</strong>或者说，在正常进程的外面套了一个<a href="https://opensource.com/article/18/1/history-low-level-container-runtimes" target="_blank" rel="noopener">保护层</a>。对于容器里面的进程来说，它接触到的各种资源都是虚拟的，从而实现与底层系统的隔离。</p>
+<p>由于容器是进程级别的，相比虚拟机有很多优势。</p>
+<p><strong>（1）启动快</strong></p>
+<p>容器里面的应用，直接就是底层系统的一个进程，而不是虚拟机内部的进程。所以，启动容器相当于启动本机的一个进程，而不是启动一个操作系统，速度就快很多。</p>
+<p><strong>（2）资源占用少</strong></p>
+<p>容器只占用需要的资源，不占用那些没有用到的资源；虚拟机由于是完整的操作系统，不可避免要占用所有资源。另外，多个容器可以共享资源，虚拟机都是独享资源。</p>
+<p><strong>（3）体积小</strong></p>
+<p>容器只要包含用到的组件即可，而虚拟机是整个操作系统的打包，所以容器文件比虚拟机文件要小很多。</p>
+<p>总之，容器有点像轻量级的虚拟机，能够提供虚拟化的环境，但是成本开销小得多。</p>
+<h2 id="四、Docker-是什么？"><a href="#四、Docker-是什么？" class="headerlink" title="四、Docker 是什么？"></a>四、Docker 是什么？</h2><p><strong>Docker 属于 Linux 容器的一种封装，提供简单易用的容器使用接口。</strong>它是目前最流行的 Linux 容器解决方案。</p>
+<p>Docker 将应用程序与该程序的依赖，打包在一个文件里面。运行这个文件，就会生成一个虚拟容器。程序在这个虚拟容器里运行，就好像在真实的物理机上运行一样。有了 Docker，就不用担心环境问题。</p>
+<p>总体来说，Docker 的接口相当简单，用户可以方便地创建和使用容器，把自己的应用放入容器。容器还可以进行版本管理、复制、分享、修改，就像管理普通的代码一样。</p>
+<h2 id="五、Docker-的用途"><a href="#五、Docker-的用途" class="headerlink" title="五、Docker 的用途"></a>五、Docker 的用途</h2><p>Docker 的主要用途，目前有三大类。</p>
+<p><strong>（1）提供一次性的环境。</strong>比如，本地测试他人的软件、持续集成的时候提供单元测试和构建的环境。</p>
+<p><strong>（2）提供弹性的云服务。</strong>因为 Docker 容器可以随开随关，很适合动态扩容和缩容。</p>
+<p><strong>（3）组建微服务架构。</strong>通过多个容器，一台机器可以跑多个服务，因此在本机就可以模拟出微服务架构。</p>
+<h2 id="六、Docker-的安装"><a href="#六、Docker-的安装" class="headerlink" title="六、Docker 的安装"></a>六、Docker 的安装</h2><p>Docker 是一个开源的商业产品，有两个版本：社区版（Community Edition，缩写为 CE）和企业版（Enterprise Edition，缩写为 EE）。企业版包含了一些收费服务，个人开发者一般用不到。下面的介绍都针对社区版。</p>
+<p>Docker CE 的安装请参考官方文档。</p>
+<p><a href="https://docs.docker.com/docker-for-mac/install/" target="_blank" rel="noopener">Mac</a><br><a href="https://docs.docker.com/docker-for-windows/install/" target="_blank" rel="noopener">Windows</a><br><a href="https://docs.docker.com/install/linux/docker-ce/ubuntu/" target="_blank" rel="noopener">Ubuntu</a><br><a href="https://docs.docker.com/install/linux/docker-ce/debian/" target="_blank" rel="noopener">Debian</a><br><a href="https://docs.docker.com/install/linux/docker-ce/centos/" target="_blank" rel="noopener">CentOS</a><br><a href="https://docs.docker.com/install/linux/docker-ce/fedora/" target="_blank" rel="noopener">Fedora</a><br><a href="https://docs.docker.com/install/linux/docker-ce/binaries/" target="_blank" rel="noopener">其他 Linux 发行版</a></p>
+<p>安装完成后，运行下面的命令，验证是否安装成功。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span>docker version</span><br><span class="line"><span class="meta"> #</span> 或者</span><br><span class="line"><span class="meta">$</span>docker info</span><br></pre></td></tr></table></figure>
+<p>Docker 需要用户具有 sudo 权限，为了避免每次命令都输入<code>sudo</code>，可以把用户加入 Docker 用户组（<a href="https://docs.docker.com/install/linux/linux-postinstall/#manage-docker-as-a-non-root-user" target="_blank" rel="noopener">官方文档</a>）。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span>sudo usermod -aG docker $USER</span><br></pre></td></tr></table></figure>
+<p>Docker 是服务器—-客户端架构。命令行运行<code>docker</code>命令的时候，需要本机有 Docker 服务。如果这项服务没有启动，可以用下面的命令启动（<a href="https://docs.docker.com/config/daemon/systemd/" target="_blank" rel="noopener">官方文档</a>）。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span> service 命令的用法</span><br><span class="line"><span class="meta">$</span>sudo service docker start</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span> systemctl 命令的用法</span><br><span class="line"><span class="meta">$</span>sudo systemctl start docker</span><br></pre></td></tr></table></figure>
+<h2 id="六、image-文件"><a href="#六、image-文件" class="headerlink" title="六、image 文件"></a>六、image 文件</h2><p><strong>Docker 把应用程序及其依赖，打包在 image 文件里面。</strong>只有通过这个文件，才能生成 Docker 容器。image 文件可以看作是容器的模板。Docker 根据 image 文件生成容器的实例。同一个 image 文件，可以生成多个同时运行的容器实例。</p>
+<p>image 是二进制文件。实际开发中，一个 image 文件往往通过继承另一个 image 文件，加上一些个性化设置而生成。举例来说，你可以在 Ubuntu 的 image 基础上，往里面加入 Apache 服务器，形成你的 image。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span> 列出本机的所有 image 文件。</span><br><span class="line"><span class="meta">$</span>docker image ls</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span> 删除 image 文件</span><br><span class="line"><span class="meta">$</span>docker image rm [imageName]</span><br></pre></td></tr></table></figure>
+<p>image 文件是通用的，一台机器的 image 文件拷贝到另一台机器，照样可以使用。一般来说，为了节省时间，我们应该尽量使用别人制作好的 image 文件，而不是自己制作。即使要定制，也应该基于别人的 image 文件进行加工，而不是从零开始制作。</p>
+<p>为了方便共享，image 文件制作完成后，可以上传到网上的仓库。Docker 的官方仓库 <a href="https://hub.docker.com/" target="_blank" rel="noopener">Docker Hub</a> 是最重要、最常用的 image 仓库。此外，出售自己制作的 image 文件也是可以的。</p>
+<h2 id="七、实例：hello-world"><a href="#七、实例：hello-world" class="headerlink" title="七、实例：hello world"></a>七、实例：hello world</h2><p>下面，我们通过最简单的 image 文件”<a href="https://hub.docker.com/r/library/hello-world/" target="_blank" rel="noopener">hello world”</a>，感受一下 Docker。</p>
+<p>首先，运行下面的命令，将 image 文件从仓库抓取到本地。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker image pull library/hello-world</span><br></pre></td></tr></table></figure>
+<p>上面代码中，<code>docker image pull</code>是抓取 image 文件的命令。<code>library/hello-world</code>是 image 文件在仓库里面的位置，其中<code>library</code>是 image 文件所在的组，<code>hello-world</code>是 image 文件的名字。</p>
+<p>由于 Docker 官方提供的 image 文件，都放在<a href="https://hub.docker.com/r/library/" target="_blank" rel="noopener"><code>library</code></a>组里面，所以它的是默认组，可以省略。因此，上面的命令可以写成下面这样。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker image pull hello-world</span><br></pre></td></tr></table></figure>
+<p>抓取成功以后，就可以在本机看到这个 image 文件了。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker image ls</span><br></pre></td></tr></table></figure>
+<p>现在，运行这个 image 文件。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container run hello-world</span><br></pre></td></tr></table></figure>
+<p><code>docker container run</code>命令会从 image 文件，生成一个正在运行的容器实例。</p>
+<p>注意，<code>docker container run</code>命令具有自动抓取 image 文件的功能。如果发现本地没有指定的 image 文件，就会从仓库自动抓取。因此，前面的<code>docker image pull</code>命令并不是必需的步骤。</p>
+<p>如果运行成功，你会在屏幕上读到下面的输出。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container run hello-world</span><br><span class="line"></span><br><span class="line">Hello from Docker!</span><br><span class="line">This message shows that your installation appears to be working correctly.</span><br><span class="line"></span><br><span class="line">... ...</span><br></pre></td></tr></table></figure>
+<p>输出这段提示以后，<code>hello world</code>就会停止运行，容器自动终止。</p>
+<p>有些容器不会自动终止，因为提供的是服务。比如，安装运行 Ubuntu 的 image，就可以在命令行体验 Ubuntu 系统。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container run -it ubuntu bash</span><br></pre></td></tr></table></figure>
+<p>对于那些不会自动终止的容器，必须使用<a href="https://docs.docker.com/engine/reference/commandline/container_kill/" target="_blank" rel="noopener"><code>docker container kill</code></a> 命令手动终止。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container kill [containID]</span><br></pre></td></tr></table></figure>
+<h2 id="八、容器文件"><a href="#八、容器文件" class="headerlink" title="八、容器文件"></a>八、容器文件</h2><p><strong>image 文件生成的容器实例，本身也是一个文件，称为容器文件。</strong>也就是说，一旦容器生成，就会同时存在两个文件： image 文件和容器文件。而且关闭容器并不会删除容器文件，只是容器停止运行而已。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span> 列出本机正在运行的容器</span><br><span class="line"><span class="meta">$</span> docker container ls</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span> 列出本机所有容器，包括终止运行的容器</span><br><span class="line"><span class="meta">$</span> docker container ls --all</span><br></pre></td></tr></table></figure>
+<p>上面命令的输出结果之中，包括容器的 ID。很多地方都需要提供这个 ID，比如上一节终止容器运行的<code>docker container kill</code>命令。</p>
+<p>终止运行的容器文件，依然会占据硬盘空间，可以使用<a href="https://docs.docker.com/engine/reference/commandline/container_rm/" target="_blank" rel="noopener"><code>docker container rm</code></a>命令删除。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container rm [containerID]</span><br></pre></td></tr></table></figure>
+<p>运行上面的命令之后，再使用<code>docker container ls --all</code>命令，就会发现被删除的容器文件已经消失了。</p>
+<h2 id="九、Dockerfile-文件"><a href="#九、Dockerfile-文件" class="headerlink" title="九、Dockerfile 文件"></a>九、Dockerfile 文件</h2><p>学会使用 image 文件以后，接下来的问题就是，如何可以生成 image 文件？如果你要推广自己的软件，势必要自己制作 image 文件。</p>
+<p>这就需要用到 Dockerfile 文件。它是一个文本文件，用来配置 image。Docker 根据 该文件生成二进制的 image 文件。</p>
+<p>下面通过一个实例，演示如何编写 Dockerfile 文件。</p>
+<h2 id="十、实例：制作自己的-Docker-容器"><a href="#十、实例：制作自己的-Docker-容器" class="headerlink" title="十、实例：制作自己的 Docker 容器"></a>十、实例：制作自己的 Docker 容器</h2><p>下面我以 <a href="http://www.ruanyifeng.com/blog/2017/08/koa.html" target="_blank" rel="noopener">koa-demos</a> 项目为例，介绍怎么写 Dockerfile 文件，实现让用户在 Docker 容器里面运行 Koa 框架。</p>
+<p>作为准备工作，请先<a href="https://github.com/ruanyf/koa-demos/archive/master.zip" target="_blank" rel="noopener">下载源码</a>。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> git clone https://github.com/ruanyf/koa-demos.git</span><br><span class="line"><span class="meta">$</span> cd koa-demos</span><br></pre></td></tr></table></figure>
+<h3 id="10-1-编写-Dockerfile-文件"><a href="#10-1-编写-Dockerfile-文件" class="headerlink" title="10.1 编写 Dockerfile 文件"></a>10.1 编写 Dockerfile 文件</h3><p>首先，在项目的根目录下，新建一个文本文件<code>.dockerignore</code>，写入下面的<a href="https://github.com/ruanyf/koa-demos/blob/master/.dockerignore" target="_blank" rel="noopener">内容</a>。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">.git</span><br><span class="line">node_modules</span><br><span class="line">npm-debug.log</span><br></pre></td></tr></table></figure>
+<p>上面代码表示，这三个路径要排除，不要打包进入 image 文件。如果你没有路径要排除，这个文件可以不新建。</p>
+<p>然后，在项目的根目录下，新建一个文本文件 Dockerfile，写入下面的<a href="https://github.com/ruanyf/koa-demos/blob/master/Dockerfile" target="_blank" rel="noopener">内容</a>。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">FROM node:8.4</span><br><span class="line">COPY . /app</span><br><span class="line">WORKDIR /app</span><br><span class="line">RUN npm install --registry=https://registry.npm.taobao.org</span><br><span class="line">EXPOSE 3000</span><br></pre></td></tr></table></figure>
+<p>上面代码一共五行，含义如下。</p>
+<ul>
+<li><code>FROM node:8.4</code>：该 image 文件继承官方的 node image，冒号表示标签，这里标签是<code>8.4</code>，即8.4版本的 node。</li>
+<li><code>COPY . /app</code>：将当前目录下的所有文件（除了<code>.dockerignore</code>排除的路径），都拷贝进入 image 文件的<code>/app</code>目录。</li>
+<li><code>WORKDIR /app</code>：指定接下来的工作路径为<code>/app</code>。</li>
+<li><code>RUN npm install</code>：在<code>/app</code>目录下，运行<code>npm install</code>命令安装依赖。注意，安装后所有的依赖，都将打包进入 image 文件。</li>
+<li><code>EXPOSE 3000</code>：将容器 3000 端口暴露出来， 允许外部连接这个端口。</li>
+</ul>
+<h3 id="10-2-创建-image-文件"><a href="#10-2-创建-image-文件" class="headerlink" title="10.2 创建 image 文件"></a>10.2 创建 image 文件</h3><p>有了 Dockerfile 文件以后，就可以使用<code>docker image build</code>命令创建 image 文件了。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker image build -t koa-demo .</span><br><span class="line"><span class="meta">#</span> 或者</span><br><span class="line"><span class="meta">$</span> docker image build -t koa-demo:0.0.1 .</span><br></pre></td></tr></table></figure>
+<p>上面代码中，<code>-t</code>参数用来指定 image 文件的名字，后面还可以用冒号指定标签。如果不指定，默认的标签就是<code>latest</code>。最后的那个点表示 Dockerfile 文件所在的路径，上例是当前路径，所以是一个点。</p>
+<p>如果运行成功，就可以看到新生成的 image 文件<code>koa-demo</code>了。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker image ls</span><br></pre></td></tr></table></figure>
+<h3 id="10-3-生成容器"><a href="#10-3-生成容器" class="headerlink" title="10.3 生成容器"></a>10.3 生成容器</h3><p><code>docker container run</code>命令会从 image 文件生成容器。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container run -p 8000:3000 -it koa-demo /bin/bash</span><br><span class="line"><span class="meta">#</span> 或者</span><br><span class="line"><span class="meta">$</span> docker container run -p 8000:3000 -it koa-demo:0.0.1 /bin/bash</span><br></pre></td></tr></table></figure>
+<p>上面命令的各个参数含义如下：</p>
+<ul>
+<li><code>-p</code>参数：容器的 3000 端口映射到本机的 8000 端口。</li>
+<li><code>-it</code>参数：容器的 Shell 映射到当前的 Shell，然后你在本机窗口输入的命令，就会传入容器。</li>
+<li><code>koa-demo:0.0.1</code>：image 文件的名字（如果有标签，还需要提供标签，默认是 latest 标签）。</li>
+<li><code>/bin/bash</code>：容器启动以后，内部第一个执行的命令。这里是启动 Bash，保证用户可以使用 Shell。</li>
+</ul>
+<p>如果一切正常，运行上面的命令以后，就会返回一个命令行提示符。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">root@66d80f4aaf1e:/app#</span><br></pre></td></tr></table></figure>
+<p>这表示你已经在容器里面了，返回的提示符就是容器内部的 Shell 提示符。执行下面的命令。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">root@66d80f4aaf1e:/app# node demos/01.js</span><br></pre></td></tr></table></figure>
+<p>这时，Koa 框架已经运行起来了。打开本机的浏览器，访问 <a href="http://127.0.0.1:8000，网页显示&quot;Not" target="_blank" rel="noopener">http://127.0.0.1:8000，网页显示&quot;Not</a> Found”，这是因为这个 <a href="https://github.com/ruanyf/koa-demos/blob/master/demos/01.js" target="_blank" rel="noopener">demo</a>没有写路由。</p>
+<p>这个例子中，Node 进程运行在 Docker 容器的虚拟环境里面，进程接触到的文件系统和网络接口都是虚拟的，与本机的文件系统和网络接口是隔离的，因此需要定义容器与物理机的端口映射（map）。</p>
+<p>现在，在容器的命令行，按下 Ctrl + c 停止 Node 进程，然后按下 Ctrl + d （或者输入 exit）退出容器。此外，也可以用<code>docker container kill</code>终止容器运行。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span> 在本机的另一个终端窗口，查出容器的 ID</span><br><span class="line"><span class="meta">$</span> docker container ls</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span> 停止指定的容器运行</span><br><span class="line"><span class="meta">$</span> docker container kill [containerID]</span><br></pre></td></tr></table></figure>
+<p>容器停止运行之后，并不会消失，用下面的命令删除容器文件。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span> 查出容器的 ID</span><br><span class="line"><span class="meta">$</span> docker container ls --all</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span> 删除指定的容器文件</span><br><span class="line"><span class="meta">$</span> docker container rm [containerID]</span><br></pre></td></tr></table></figure>
+<p>也可以使用<code>docker container run</code>命令的<code>--rm</code>参数，在容器终止运行后自动删除容器文件。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container run --rm -p 8000:3000 -it koa-demo /bin/bash</span><br></pre></td></tr></table></figure>
+<h3 id="10-4-CMD-命令"><a href="#10-4-CMD-命令" class="headerlink" title="10.4 CMD 命令"></a>10.4 CMD 命令</h3><p>上一节的例子里面，容器启动以后，需要手动输入命令<code>node demos/01.js</code>。我们可以把这个命令写在 Dockerfile 里面，这样容器启动以后，这个命令就已经执行了，不用再手动输入了。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">FROM node:8.4</span><br><span class="line">COPY . /app</span><br><span class="line">WORKDIR /app</span><br><span class="line">RUN npm install --registry=https://registry.npm.taobao.org</span><br><span class="line">EXPOSE 3000</span><br><span class="line">CMD node demos/01.js</span><br></pre></td></tr></table></figure>
+<p>上面的 Dockerfile 里面，多了最后一行<code>CMD node demos/01.js</code>，它表示容器启动后自动执行<code>node demos/01.js</code>。</p>
+<p>你可能会问，<code>RUN</code>命令与<code>CMD</code>命令的区别在哪里？简单说，<code>RUN</code>命令在 image 文件的构建阶段执行，执行结果都会打包进入 image 文件；<code>CMD</code>命令则是在容器启动后执行。另外，一个 Dockerfile 可以包含多个<code>RUN</code>命令，但是只能有一个<code>CMD</code>命令。</p>
+<p>注意，指定了<code>CMD</code>命令以后，<code>docker container run</code>命令就不能附加命令了（比如前面的<code>/bin/bash</code>），否则它会覆盖<code>CMD</code>命令。现在，启动容器可以使用下面的命令。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container run --rm -p 8000:3000 -it koa-demo:0.0.1</span><br></pre></td></tr></table></figure>
+<h3 id="10-5-发布-image-文件"><a href="#10-5-发布-image-文件" class="headerlink" title="10.5 发布 image 文件"></a>10.5 发布 image 文件</h3><p>容器运行成功后，就确认了 image 文件的有效性。这时，我们就可以考虑把 image 文件分享到网上，让其他人使用。</p>
+<p>首先，去 <a href="https://hub.docker.com/" target="_blank" rel="noopener">hub.docker.com</a> 或 <a href="https://cloud.docker.com/" target="_blank" rel="noopener">cloud.docker.com</a> 注册一个账户。然后，用下面的命令登录。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker login</span><br></pre></td></tr></table></figure>
+<p>接着，为本地的 image 标注用户名和版本。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker image tag [imageName] [username]/[repository]:[tag]</span><br><span class="line"><span class="meta">#</span> 实例</span><br><span class="line"><span class="meta">$</span> docker image tag koa-demos:0.0.1 ruanyf/koa-demos:0.0.1</span><br></pre></td></tr></table></figure>
+<p>也可以不标注用户名，重新构建一下 image 文件。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker image build -t [username]/[repository]:[tag] .</span><br></pre></td></tr></table></figure>
+<p>最后，发布 image 文件。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker image push [username]/[repository]:[tag]</span><br></pre></td></tr></table></figure>
+<p>发布成功以后，登录 hub.docker.com，就可以看到已经发布的 image 文件。</p>
+<h2 id="十一、其他有用的命令"><a href="#十一、其他有用的命令" class="headerlink" title="十一、其他有用的命令"></a>十一、其他有用的命令</h2><p>docker 的主要用法就是上面这些，此外还有几个命令，也非常有用。</p>
+<p><strong>（1）docker container start</strong></p>
+<p>前面的<code>docker container run</code>命令是新建容器，每运行一次，就会新建一个容器。同样的命令运行两次，就会生成两个一模一样的容器文件。如果希望重复使用容器，就要使用<code>docker container start</code>命令，它用来启动已经生成、已经停止运行的容器文件。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container start [containerID]</span><br></pre></td></tr></table></figure>
+<p><strong>（2）docker container stop</strong></p>
+<p>前面的<code>docker container kill</code>命令终止容器运行，相当于向容器里面的主进程发出 SIGKILL 信号。而<code>docker container stop</code>命令也是用来终止容器运行，相当于向容器里面的主进程发出 SIGTERM 信号，然后过一段时间再发出 SIGKILL 信号。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> bash container stop [containerID]</span><br></pre></td></tr></table></figure>
+<p>这两个信号的差别是，应用程序收到 SIGTERM 信号以后，可以自行进行收尾清理工作，但也可以不理会这个信号。如果收到 SIGKILL 信号，就会强行立即终止，那些正在进行中的操作会全部丢失。</p>
+<p><strong>（3）docker container logs</strong></p>
+<p><code>docker container logs</code>命令用来查看 docker 容器的输出，即容器里面 Shell 的标准输出。如果<code>docker run</code>命令运行容器的时候，没有使用<code>-it</code>参数，就要用这个命令查看输出。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container logs [containerID]</span><br></pre></td></tr></table></figure>
+<p><strong>（4）docker container exec</strong></p>
+<p><code>docker container exec</code>命令用于进入一个正在运行的 docker 容器。如果<code>docker run</code>命令运行容器的时候，没有使用<code>-it</code>参数，就要用这个命令进入容器。一旦进入了容器，就可以在容器的 Shell 执行命令了。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container exec -it [containerID] /bin/bash</span><br></pre></td></tr></table></figure>
+<p><strong>（5）docker container cp</strong></p>
+<p><code>docker container cp</code>命令用于从正在运行的 Docker 容器里面，将文件拷贝到本机。下面是拷贝到当前目录的写法。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container cp [containID]:[/path/to/file] .</span><br></pre></td></tr></table></figure>
+<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="http://www.ruanyifeng.com/blog/2018/02/docker-tutorial.html" target="_blank" rel="noopener">http://www.ruanyifeng.com/blog/2018/02/docker-tutorial.html</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2018-03-25T14:16:53.000Z"><a href="/2018/03/25/Node.js_IO/Node源码解析_buffer/">2018-03-25</a></time>
       
       
@@ -773,156 +955,6 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2017-06-05T06:45:23.000Z"><a href="/2017/06/05/Node.js_测试/Node.js单元测试、集成测试、基准测试以及代码覆盖率测试/">2017-06-05</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/06/05/Node.js_测试/Node.js单元测试、集成测试、基准测试以及代码覆盖率测试/">Node.js单元测试、集成测试、基准测试以及代码覆盖率测试</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="黑盒测试"><a href="#黑盒测试" class="headerlink" title="黑盒测试"></a>黑盒测试</h3><p>黑盒测试 (Black-box Testing), 测试应用程序的功能, 而不是其内部结构或运作. 测试者不需了解代码、内部结构等, 只需知道什么是应用应该做的事, 即当键入特定的输入, 可得到一定的输出. 测试者通过选择<code>有效输入</code>和<code>无效输入</code>来验证是否正确的输出. 此测试方法可适合大部分的软件测试, 例如集成测试 (Integration Testing) 以及系统测试 (System Testing).</p>
-<h3 id="白盒测试"><a href="#白盒测试" class="headerlink" title="白盒测试"></a>白盒测试</h3><p>白盒测试 (White-box Testing) 测试应用程序的内部结构或运作, 而不是测试应用程序的功能 (即黑盒测试). 在白盒测试时, 以编程语言的角度来设计测试案例. 白盒测试可以应用于单元测试 (Unit Testing)、集成测试 (Integration Testing) 和系统的软件测试流程, 可测试在集成过程中每一单元之间的路径, 或者主系统跟子系统中的测试.</p>
-<h2 id="单元测试"><a href="#单元测试" class="headerlink" title="单元测试"></a>单元测试</h2><p>单元测试，又称模块测试，针对程序中的最小执行单元进行正确性测试。常见的开发模式包括 TDD 和 BDD 两类。</p>
-<p>TDD（Test-driven development，测试驱动开发），先编写测试用例，然后针对测试用例开发模块，当测试用例不足时，补充测试用例；当模块无法通过测试时，持续更新模块代码，直到完全通过测试用例。其开发核心围绕测试用例展开，即测试用例的完整性决定了开发模块的健壮性和正确性，这容易由边界条件引发单元测试覆盖度不够的问题。</p>
-<p>BDD（Behavior-driven development，行为驱动开发），用语义化的编程语言开发紧贴业务需求的测试用例，继而驱动相关模块的开发。</p>
-<p><a href="https://github.com/sindresorhus/ava" target="_blank" rel="noopener">AVA</a> 是 JavaScript 生态中最新潮的测试框架，其内置了 Babel，可以直接使用 ES6 语法，具有轻量高效、并发执行、强制隔离等优点，安装方法：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install --save-dev ava</span><br></pre></td></tr></table></figure>
-<p>设置 <code>package.json</code> 中的 <code>scripts</code> 字段：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="string">"scripts"</span>: &#123;</span><br><span class="line">        <span class="string">"test"</span>: <span class="string">"ava"</span>,</span><br><span class="line">        <span class="string">"test:watch"</span>: <span class="string">"ava --watch"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>运行：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">npm test</span><br><span class="line"></span><br><span class="line"># or</span><br><span class="line">npm test:watch</span><br></pre></td></tr></table></figure>
-<p>下面是一个基本的测试代码：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> test <span class="keyword">from</span> <span class="string">'ava'</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> fibonacci = <span class="function">(<span class="params">n</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (n === <span class="number">0</span> || n === <span class="number">1</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> n;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> fibonacci(n - <span class="number">1</span>) + fibonacci(n - <span class="number">2</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">test(<span class="string">'Test Fibonacci(0)'</span>, t =&gt; &#123;</span><br><span class="line">    t.is(fibonacci(<span class="number">0</span>), <span class="number">0</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">test(<span class="string">'Test Fibonacci(1)'</span>, t =&gt; &#123;</span><br><span class="line">    t.is(fibonacci(<span class="number">1</span>), <span class="number">1</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// HOOK CALLS</span></span><br><span class="line">test.before(<span class="string">'Before'</span>, t =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'before'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">test.after(<span class="string">'After'</span>, t =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'after'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">test.beforeEach(<span class="string">'BeforeEach'</span>, t =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'   beforeEach'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">test.afterEach(<span class="string">'AfterEach'</span>, t =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'   afterEach'</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>在上面的代码中，我们首先引入了 AVA 模块，然后创建了待测试的 <code>fibonacci</code> 函数，接下来是两个测试用例，最后是四个钩子方法：before() / after() / beforeEach() / afterEach()。</p>
-<p>AVA 提供了一下修饰方法来指定测试的执行方式：</p>
-<ul>
-<li><p><code>skip()</code>，跳过添加了 <code>skip()</code> 的测试用例</p>
-</li>
-<li><p><code>only()</code>，只执行添加了 <code>only()</code> 的测试用例</p>
-</li>
-<li><p><code>todo()</code>，占位标识符，表示将来需要添加的测试用例</p>
-</li>
-<li><p><code>serial()</code>，串行执行测试用例，默认情况下 AVA 会以并行的方式执行测试用例</p>
-</li>
-</ul>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">test(<span class="string">'Test Fibonacci(0)'</span>, t =&gt; &#123;</span><br><span class="line">    t.is(fibonacci(<span class="number">0</span>), <span class="number">0</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>在上面代码回调函数中的 <code>t</code>，称为断言执行对象，该对象包含以下方法：</p>
-<ul>
-<li><p><code>t.end()</code>，结束测试，只在 <code>test.cb()</code> 中有效</p>
-</li>
-<li><p><code>t.plan(count)</code>，指定执行次数</p>
-</li>
-<li><p><code>t.pass([message])</code>，测试通过</p>
-</li>
-<li><p><code>t.fail([message])</code>，测试失败</p>
-</li>
-<li><p><code>t.ok(value, [message])</code>，断言 <code>value</code> 的值为真值</p>
-</li>
-<li><p><code>t.notOK(value, [message])</code>，断言 <code>value</code> 的值为假值</p>
-</li>
-<li><p><code>t.true(value, [message])</code>，断言 <code>value</code> 的值为 <code>true</code></p>
-</li>
-<li><p><code>t.false(value, [message])</code>，断言 <code>value</code> 的值为 <code>false</code></p>
-</li>
-<li><p><code>t.is(value, expected, [message])</code>，断言 <code>value === expected</code></p>
-</li>
-<li><p><code>t.not(value, expected, [message])</code>，断言 <code>value !== expected</code></p>
-</li>
-<li><p><code>t.same(value, expected, [message])</code>，断言 <code>value</code> 和 <code>expected</code> 深度相等</p>
-</li>
-<li><p><code>t.notSame(value, expected, [message])</code>，断言 <code>value</code> 和 <code>expected</code> 深度不等</p>
-</li>
-<li><p><code>t.throws(function | promise, [error, [message]])</code>，断言 <code>function</code> 抛出异常或 <code>promise</code>reject 错误</p>
-</li>
-<li><p><code>t.notThrows(function | promise, [message])</code>，断言 <code>function</code> 不会异常或 <code>promise</code> resolve</p>
-</li>
-<li><p><code>t.regex(contents, regex, [message])</code>，断言 <code>contents</code> 匹配 <code>regex</code></p>
-</li>
-<li><p><code>t.ifError(error, [message])</code>，断言 <code>error</code> 是假值</p>
-</li>
-</ul>
-<h3 id="Mock"><a href="#Mock" class="headerlink" title="Mock"></a>Mock</h3><p>Mock 主要用于单元测试中. 当一个测试的对象可能依赖其他 (也许复杂/多个) 的对象. 为了确保其行为不受其他对象的影响, 你可以通过模拟其他对象的行为来隔离你要测试的对象.</p>
-<p>当你要测试的单元依赖了一些很难纳入单元测试的情况时 (例如要测试的单元依赖数据库/文件操作/第三方服务 等情况的返回时), 使用 mock 是非常有用的. 简而言之, Mock 是模拟其他依赖的 behaviour.</p>
-<h3 id="常见测试工具"><a href="#常见测试工具" class="headerlink" title="常见测试工具"></a>常见测试工具</h3><ul>
-<li><a href="https://github.com/mochajs/mocha" target="_blank" rel="noopener">Mocha</a></li>
-<li><a href="https://github.com/avajs/ava" target="_blank" rel="noopener">ava</a></li>
-<li><a href="https://github.com/facebook/jest" target="_blank" rel="noopener">Jest</a></li>
-</ul>
-<h2 id="集成测试"><a href="#集成测试" class="headerlink" title="集成测试"></a>集成测试</h2><p>相对于专注微观模块的单元测试，集成测试是从宏观整体的角度发现问题，所以也称为组装测试和联合测试。<a href="https://travis-ci.org/" target="_blank" rel="noopener">Travis CI</a> 是一款优秀的持续集成工具，可以监听 Github 项目的更新，便于开源软件的集成测试。使用 Travis CI 需要在项目的根目录下创建 <code>.travis.yml</code> 配置文件（以 Node.js 为例）：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">language: node_js</span><br><span class="line"></span><br><span class="line">node_js:</span><br><span class="line">    - <span class="string">"6"</span></span><br><span class="line">    - <span class="string">"5"</span></span><br><span class="line"></span><br><span class="line">before_script:</span><br><span class="line"></span><br><span class="line">script:</span><br><span class="line">    - npm test</span><br><span class="line">    - node benchmark/index.js</span><br><span class="line"></span><br><span class="line">after_script:</span><br></pre></td></tr></table></figure>
-<p>默认情况下，Travis CI 会自动安装依赖并执行 <code>npm test</code> 命令，通过 <code>script</code> 字段可以自定义需要执行的命令，其完整的生命周期包括：</p>
-<ol>
-<li>Install <code>apt addons</code></li>
-<li><code>before_install</code></li>
-<li><code>install</code></li>
-<li><code>before_script</code></li>
-<li><code>script</code></li>
-<li><code>after_success</code> or <code>after_failure</code></li>
-<li>OPTIONAL <code>before_deploy</code></li>
-<li>OPTIONAL <code>deploy</code></li>
-<li>OPTIONAL <code>after_deploy</code></li>
-<li><code>after_script</code></li>
-</ol>
-<h2 id="基准测试"><a href="#基准测试" class="headerlink" title="基准测试"></a>基准测试</h2><p>基准测试使用严谨的测试方法、测试工具或测试系统评估目标模块的性能，常用于观测软硬件环境发生变化后的性能表现，其结果具有可复现性。在 Node.js 环境中最常用的基准测试工具是 <a href="https://benchmarkjs.com/docs" target="_blank" rel="noopener">Benchmark.js</a>，安装方式：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install --save-dev benchmark</span><br></pre></td></tr></table></figure></p>
-<p>基本示例：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> Benchmark = <span class="built_in">require</span>(<span class="string">'benchmark'</span>);</span><br><span class="line"><span class="keyword">const</span> suite = <span class="keyword">new</span> Benchmark.Suite;</span><br><span class="line"></span><br><span class="line">suite.add(<span class="string">'RegExp#test'</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    /o/.test(<span class="string">'Hello World!'</span>);</span><br><span class="line">&#125;)</span><br><span class="line">.add(<span class="string">'String#indexOf'</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="string">'Hello World!'</span>.indexOf(<span class="string">'o'</span>) &gt; <span class="number">-1</span>;</span><br><span class="line">&#125;)</span><br><span class="line">.on(<span class="string">'cycle'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">event</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="built_in">String</span>(event.target));</span><br><span class="line">&#125;)</span><br><span class="line">.on(<span class="string">'complete'</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'Fastest is '</span> + <span class="keyword">this</span>.filter(<span class="string">'fastest'</span>).map(<span class="string">'name'</span>));</span><br><span class="line">&#125;)</span><br><span class="line"><span class="comment">// run async</span></span><br><span class="line">.run(&#123; <span class="string">'async'</span>: <span class="literal">true</span> &#125;);</span><br></pre></td></tr></table></figure></p>
-<p>你可以将同一个功能的不同实现基于同一个标准来比较不同实现的速度, 从而得到最优解.</p>
-<p>黑盒级别的基准测试, 则推荐 <a href="https://httpd.apache.org/docs/2.4/programs/ab.html" target="_blank" rel="noopener">Apache ab</a> 以及 <a href="https://github.com/wg/wrk" target="_blank" rel="noopener">wrk</a> 等。:</p>
-<h2 id="代码覆盖率"><a href="#代码覆盖率" class="headerlink" title="代码覆盖率"></a>代码覆盖率</h2><p>  测试覆盖率 (Test Coverage) 是指代码中各项逻辑被测试覆盖到的比率, 比如 90% 的覆盖率, 是指代码中 90% 的情况都被测试覆盖到了.</p>
-<p>  覆盖率通常由四个维度贡献:</p>
-<ul>
-<li><p>行覆盖率 (line coverage) 是否每一行都执行了？</p>
-</li>
-<li><p>函数覆盖率 (function coverage) 是否每个函数都调用了？</p>
-</li>
-<li><p>分支覆盖率 (branch coverage) 是否每个if代码块都执行了？</p>
-</li>
-<li><p>语句覆盖率 (statement coverage) 是否每个语句都执行了？</p>
-</li>
-</ul>
-<p>常用的测试覆盖率框架 <a href="https://github.com/gotwarlost/istanbul" target="_blank" rel="noopener">istanbul</a>.</p>
-<p>覆盖率工具根据测试用例覆盖的代码行数和分支数来判断模块的完整性。AVA 推荐使用 <code>nyc</code> 测试代码覆盖率，安装 nyc：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install nyc --save-dev</span><br></pre></td></tr></table></figure>
-<p>修改 <code>.gitignore</code> 忽略相关文件：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">node_modules</span><br><span class="line">coverage</span><br><span class="line">.nyc_output</span><br></pre></td></tr></table></figure></p>
-<p>修改 <code>package.json</code> 中的 <code>test</code> 字段：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="string">"scripts"</span>: &#123;</span><br><span class="line">        <span class="string">"test"</span>: <span class="string">"nyc ava"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>执行 <code>npm test</code>，得到：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">➜  test-in-action (master) ✔ npm test</span><br><span class="line"></span><br><span class="line">&gt; test-in-action@1.0.0 test /Users/sean/Desktop/test-in-action</span><br><span class="line">&gt; nyc ava</span><br><span class="line"></span><br><span class="line">   2 passed</span><br><span class="line">----------|----------|----------|----------|----------|----------------|</span><br><span class="line">File      |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovered Lines |</span><br><span class="line">----------|----------|----------|----------|----------|----------------|</span><br><span class="line">----------|----------|----------|----------|----------|----------------|</span><br><span class="line">All files |      100 |      100 |      100 |      100 |                |</span><br><span class="line">----------|----------|----------|----------|----------|----------------|</span><br></pre></td></tr></table></figure></p>
-<h2 id="压力测试"><a href="#压力测试" class="headerlink" title="压力测试"></a>压力测试</h2><p>压力测试 (Stress testing), 是保证系统稳定性的一种测试方法. 通过预估系统所需要承载的 QPS, TPS 等指标, 然后通过如 <a href="http://jmeter.apache.org/" target="_blank" rel="noopener">Jmeter</a> 等压测工具模拟相应的请求情况, 来验证当前应能能否达到目标.</p>
-<p>对于比较重要, 流量较高或者后期业务量会持续增长的系统, 进行压力测试是保证项目品质的重要环节. 常见的如负载是否均衡, 带宽是否合理, 以及磁盘 IO 网络 IO 等问题都可以通过比较极限的压力测试暴露出来.</p>
-<h2 id="Assert"><a href="#Assert" class="headerlink" title="Assert"></a>Assert</h2><p>断言 (Assert) 是快速判断并对不符合预期的情况进行报错的模块. 是将:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">if (condition) &#123;</span><br><span class="line">  throw new Error(&apos;Sth wrong&apos;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>写成:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">assert(!condition, &apos;Sth wrong&apos;);</span><br></pre></td></tr></table></figure>
-<p>等等情况的一种简化. 并且提供了丰富了 <code>equal</code> 判断, 对于对象类型也有深度/严格判断等情况支持.</p>
-<p>Node.js 中内置的 <code>assert</code> 模块也是属于断言模块的一种, 但是官方在文档中有注明, 该内置模块主要是用于内置代码编写时的基本断言需求, 并不是一个通用的断言库 (<strong>not intended to be used as a general purpose assertion library</strong>)</p>
-<h3 id="常见断言工具"><a href="#常见断言工具" class="headerlink" title="常见断言工具"></a>常见断言工具</h3><ul>
-<li><a href="https://github.com/chaijs/chai" target="_blank" rel="noopener">Chai</a></li>
-<li><a href="https://github.com/shouldjs/should.js" target="_blank" rel="noopener">should.js</a></li>
-</ul>
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="http://ourjs.com/detail/5738493888feaf2d031d24fa" target="_blank" rel="noopener">http://ourjs.com/detail/5738493888feaf2d031d24fa</a><br><a href="https://elemefe.github.io/node-interview/#/sections/zh-cn/test?id=mock" target="_blank" rel="noopener">https://elemefe.github.io/node-interview/#/sections/zh-cn/test?id=mock</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
         <time datetime="2017-06-05T06:45:23.000Z"><a href="/2017/06/05/Node.js_模块/你需要了解的Node.js模块/">2017-06-05</a></time>
       
       
@@ -1131,7 +1163,7 @@
   
     <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
   
-    <li><a href="/tags/Docker/">Docker</a><small>1</small></li>
+    <li><a href="/tags/Docker/">Docker</a><small>2</small></li>
   
     <li><a href="/tags/ES6/">ES6</a><small>4</small></li>
   
@@ -1145,9 +1177,9 @@
   
     <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
   
-    <li><a href="/tags/Node-js/">Node.js</a><small>1</small></li>
+    <li><a href="/tags/Node-js/">Node.js</a><small>0</small></li>
   
-    <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>3</small></li>
+    <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>4</small></li>
   
     <li><a href="/tags/Node-js-JS基础/">Node.js_JS基础</a><small>4</small></li>
   
