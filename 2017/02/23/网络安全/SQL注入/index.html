@@ -1,0 +1,267 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>SQL注入 | shouliang&#39;s blog</title>
+  <meta name="author" content="shouliang">
+  
+  <meta name="description" content="Node">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="SQL注入"/>
+  <meta property="og:site_name" content="shouliang&#39;s blog"/>
+
+  
+    <meta property="og:image" content=""/>
+  
+
+  <link href="/favicon.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="shouliang&#39;s blog" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+
+</head>
+
+
+<body>
+  <header id="header" class="inner"><div class="alignleft">
+  <h1><a href="/">shouliang&#39;s blog</a></h1>
+  <h2><a href="/"></a></h2>
+</div>
+<nav id="main-nav" class="alignright">
+  <ul>
+    
+      <li><a href="/">首页</a></li>
+    
+      <li><a href="/archives">归档</a></li>
+    
+      <li><a href="/about">关于</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+<div class="clearfix"></div></header>
+  <div id="content" class="inner">
+    <div id="main-col" class="alignleft"><div id="wrapper"><article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2017-02-23T06:45:23.000Z"><a href="/2017/02/23/网络安全/SQL注入/">2017-02-23</a></time>
+      
+      
+  
+    <h1 class="title">SQL注入</h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="如何理解SQL注入（攻击）？"><a href="#如何理解SQL注入（攻击）？" class="headerlink" title="如何理解SQL注入（攻击）？"></a>如何理解SQL注入（攻击）？</h3><ol>
+<li>SQL注入是一种将SQL代码添加到输入参数中，传递到服务器解析并执行的一种攻击手法。</li>
+<li>SQL注入攻击是输入参数未经过滤，然后直接拼接到SQL语句当中解析，执行达到预想之外的一种行为，称之为SQL注入攻击。</li>
+</ol>
+<h3 id="SQL注入是怎么产生的？"><a href="#SQL注入是怎么产生的？" class="headerlink" title="SQL注入是怎么产生的？"></a>SQL注入是怎么产生的？</h3><ol>
+<li>WEB开发人员无法保证所有的输入都已经过滤</li>
+<li>攻击者利用发送给SQL服务器的输入参数构造可执行的SQL代码（可加入到get请求、post请求、http头信息、cookie中）</li>
+<li>数据库未做相应的安全配置</li>
+</ol>
+<h3 id="如何进行SQL注入攻击"><a href="#如何进行SQL注入攻击" class="headerlink" title="如何进行SQL注入攻击"></a>如何进行SQL注入攻击</h3><p>要想发动sql注入攻击，就要知道正在使用的系统数据库，不然就没法提取重要的数据。<br>首先从Web应用技术上就给我们提供了判断的线索：</p>
+<ul>
+<li>ASP和.NET：Microsoft SQL Server</li>
+<li>PHP：MySQL、PostgreSQL</li>
+<li>Java：Oracle、MySQL</li>
+</ul>
+<p>Web容器也给我们提供了线索，比如安装IIS作为服务器平台，后台数据及很有可能是Microsoft SQL Server，而允许Apache和PHP的Linux服务器就很有可能使用开源的数据库，比如MySQL和PostgreSQL。</p>
+<h5 id="基于错误识别数据库"><a href="#基于错误识别数据库" class="headerlink" title="基于错误识别数据库"></a>基于错误识别数据库</h5><p>大多数情况下，要了解后台是什么数据库，只需要看一条详细的错误信息即可。比如判断我们事例中使用的数据库，我们加个单引号。<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">error:You have an error in your SQL syntax; <span class="keyword">check</span> the <span class="keyword">manual</span> that corresponds <span class="keyword">to</span> your MySQL <span class="keyword">server</span> <span class="keyword">version</span> <span class="keyword">for</span> the <span class="keyword">right</span> syntax <span class="keyword">to</span> <span class="keyword">use</span> near <span class="string">''' at line 1</span></span><br></pre></td></tr></table></figure></p>
+<p>从错误信息中，我们就可以发现是MySQL。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Microsoft OLE DB Provider for ODBC Drivers 错误 '80040e14'</span><br><span class="line"> [Microsoft][ODBC SQL Server Driver][SQL Server]Line 1:</span><br></pre></td></tr></table></figure>
+<p>上面错误信息可以发现是Microsoft SQL Server，如果错误信息开头是ORA，就可以判断数据库是Oracle，很简单，道理都是一样的，就不一一列举了。</p>
+<h6 id="UINON语句提取数据"><a href="#UINON语句提取数据" class="headerlink" title="UINON语句提取数据"></a>UINON语句提取数据</h6><p>UNION操作符可以合并两条或多条SELECT语句的查询结果，基本语法如下：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="keyword">column</span><span class="number">-1</span> <span class="keyword">column</span><span class="number">-2</span> <span class="keyword">from</span> <span class="keyword">table</span><span class="number">-1</span></span><br><span class="line"><span class="keyword">UNION</span></span><br><span class="line"><span class="keyword">select</span> <span class="keyword">column</span><span class="number">-1</span> <span class="keyword">column</span><span class="number">-2</span> <span class="keyword">from</span> <span class="keyword">table</span><span class="number">-2</span></span><br></pre></td></tr></table></figure></p>
+<h6 id="枚举数据库"><a href="#枚举数据库" class="headerlink" title="枚举数据库"></a>枚举数据库</h6><p>我们只以MySQL数据库为例了，枚举数据库并提取数据遵循一种层次化的方法，首先我们提取数据库名称，然后提取表，再到列，最后才是数据本身。要想获取远程数据库的表、列，就要访问专门保存描述各种数据库结构的表。通常将这些结构描述信息成为元数据。在MySQL中，这些表都保存在information_schema数据库中</p>
+<h6 id="第一步：提取数据库"><a href="#第一步：提取数据库" class="headerlink" title="第一步：提取数据库"></a>第一步：提取数据库</h6><p>在MySQL中，数据库名存放在information_schema数据库下schemata表schema_name字段中<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">id=1 union <span class="keyword">select</span> <span class="literal">null</span>,schema_name,<span class="literal">null</span> <span class="keyword">from</span> information_schema.schemata</span><br></pre></td></tr></table></figure></p>
+<h6 id="第二步：提取表名"><a href="#第二步：提取表名" class="headerlink" title="第二步：提取表名"></a>第二步：提取表名</h6><p>在MySQL中，表名存放在information_schema数据库下tables表table_name字段中<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?id=1 union <span class="keyword">select</span> <span class="literal">null</span>,table_name,<span class="literal">null</span> <span class="keyword">from</span> information_schema.tables <span class="keyword">where</span> table_schema=<span class="string">'ichunqiu'</span></span><br></pre></td></tr></table></figure></p>
+<h6 id="第三步：提取字段名"><a href="#第三步：提取字段名" class="headerlink" title="第三步：提取字段名"></a>第三步：提取字段名</h6><p>在MySQL中，字段名存放在information_schema数据库下columns表column_name字段中<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="literal">null</span>,column_name,<span class="literal">null</span> <span class="keyword">from</span> information_schema.columns <span class="keyword">where</span> table_name=<span class="string">'users'</span> <span class="keyword">and</span> table_schema=<span class="string">''</span></span><br></pre></td></tr></table></figure></p>
+<h6 id="第四步：提取数据"><a href="#第四步：提取数据" class="headerlink" title="第四步：提取数据"></a>第四步：提取数据</h6><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> username,<span class="keyword">password</span>,<span class="literal">null</span> <span class="keyword">from</span> <span class="keyword">users</span></span><br></pre></td></tr></table></figure>
+<h3 id="SQL盲注"><a href="#SQL盲注" class="headerlink" title="SQL盲注"></a>SQL盲注</h3><h4 id="布尔型注入"><a href="#布尔型注入" class="headerlink" title="布尔型注入"></a>布尔型注入</h4><p>例如：在参数后面加上or 1=1，可返回所有数据，因为 or 1=1永远为真</p>
+<h4 id="联合查询注入"><a href="#联合查询注入" class="headerlink" title="联合查询注入"></a>联合查询注入</h4><p>在参数后面加上：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UNION <span class="keyword">select</span> <span class="keyword">column</span><span class="number">-1</span> <span class="keyword">column</span><span class="number">-2</span> <span class="keyword">from</span> <span class="keyword">table</span><span class="number">-2</span></span><br></pre></td></tr></table></figure></p>
+<h4 id="多语句注入"><a href="#多语句注入" class="headerlink" title="多语句注入"></a>多语句注入</h4><p>在参数后面加上：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">;<span class="keyword">drop</span> <span class="keyword">table</span> a; <span class="keyword">select</span> * <span class="keyword">from</span> tableb;</span><br></pre></td></tr></table></figure></p>
+<h4 id="字符串注册"><a href="#字符串注册" class="headerlink" title="字符串注册"></a>字符串注册</h4><p>‘#’：’#’后所有的字符串都会被当成注释来处理用户名输入：user’#（单引号闭合user左边的单引号），密码随意输入，如：111，然后点击提交按钮。等价于SQL语句：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> <span class="keyword">user</span> <span class="keyword">WHERE</span> username = <span class="string">'user'</span>#<span class="string">'ADN password = '</span><span class="number">111</span><span class="string">'</span></span><br></pre></td></tr></table></figure></p>
+<h3 id="如何预防SQL注入"><a href="#如何预防SQL注入" class="headerlink" title="如何预防SQL注入"></a>如何预防SQL注入</h3><ol>
+<li>严格检查输入变量的类型和格式<br> 对于整数参数，加判断条件：不能为空、参数类型必须为数字<br> 对于字符串参数，可以使用正则表达式进行过滤：如：必须为[0-9a-zA-Z]范围内的字符串</li>
+<li>对URL进行编码</li>
+<li>对进入数据库的特殊字符（’”\尖括号&amp;*;等）进行转义处理，或编码转换</li>
+<li>所有的查询语句建议使用数据库提供的参数化查询接口，参数化的语句使用参数而不是将用户输入变量嵌入到SQL语句中，即不要直接拼接SQL语句</li>
+<li>避免网站打印出SQL错误信息，比如类型错误、字段不匹配等，把代码里的SQL语句暴露出来，以防止攻击者利用这些错误信息进行SQL注入。</li>
+<li>利用sql的预编译机制<br> 把sql语句的模板（变量采用占位符进行占位）发送给数据库服务器，数据库服务器对sql语句的模板进行编译，编译之后根据语句的优化分析对相应的索引进行优化，在最终绑定参数时把相应的参数传送给数据库服务器，直接进行执行，节省了sql查询时间，以及数据库服务器的资源，达到一次编译、多次执行的目的，除此之外，还可以防止SQL注入。具体是怎样防止SQL注入的呢？实际上当将绑定的参数传到数据库服务器，服务器对参数进行编译，即填充到相应的占位符的过程中，做了转义操作。</li>
+</ol>
+<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><p><a href="https://blog.csdn.net/github_36032947/article/details/78442189" target="_blank" rel="noopener">https://blog.csdn.net/github_36032947/article/details/78442189</a><br><a href="https://www.jianshu.com/p/ba35a7e1c67d" target="_blank" rel="noopener">https://www.jianshu.com/p/ba35a7e1c67d</a><br><a href="https://paper.seebug.org/15/" target="_blank" rel="noopener">https://paper.seebug.org/15/</a><br><a href="https://github.com/astaxie/build-web-application-with-golang/blob/master/zh/09.4.md" target="_blank" rel="noopener">https://github.com/astaxie/build-web-application-with-golang/blob/master/zh/09.4.md</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+  
+  <div class="tags">
+    <a href="/tags/网络安全/">网络安全</a>
+  </div>
+
+        
+  <div class="addthis addthis_toolbox addthis_default_style">
+    
+      <a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+    
+    
+      <a class="addthis_button_tweet"></a>
+    
+    
+      <a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+    
+    
+      <a class="addthis_button_pinterest_pinit" pi:pinit:layout="horizontal"></a>
+    
+    <a class="addthis_counter addthis_pill_style"></a>
+  </div>
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js"></script>
+
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">留言</h1>
+
+  
+      <div id="fb-root"></div>
+<script>
+  (function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=shouliang0816";
+    fjs.parentNode.insertBefore(js, fjs);
+  }(document, 'script', 'facebook-jssdk'));
+</script>
+
+<div class="fb-comments" data-href="https://shouliang.github.io/2017/02/23/网络安全/SQL注入/index.html" data-num-posts="5" data-width="840" data-colorscheme="light"></div>
+      
+  
+</section>
+
+</div></div>
+    <aside id="sidebar" class="alignright">
+  <div class="search">
+  <form action="//google.com/search" method="get" accept-charset="utf-8">
+    <input type="search" name="q" results="0" placeholder="搜索">
+    <input type="hidden" name="q" value="site:shouliang.github.io">
+  </form>
+</div>
+
+  
+
+  
+<div class="widget tag">
+  <h3 class="title">标签</h3>
+  <ul class="entry">
+  
+    <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
+  
+    <li><a href="/tags/Docker/">Docker</a><small>3</small></li>
+  
+    <li><a href="/tags/ES6/">ES6</a><small>4</small></li>
+  
+    <li><a href="/tags/Express/">Express</a><small>2</small></li>
+  
+    <li><a href="/tags/Git/">Git</a><small>7</small></li>
+  
+    <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
+  
+    <li><a href="/tags/Javascript/">Javascript</a><small>2</small></li>
+  
+    <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
+  
+    <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
+  
+    <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>4</small></li>
+  
+    <li><a href="/tags/Node-js-JS基础/">Node.js_JS基础</a><small>4</small></li>
+  
+    <li><a href="/tags/Node-js-事件/">Node.js_事件</a><small>4</small></li>
+  
+    <li><a href="/tags/Node-js-入门/">Node.js_入门</a><small>9</small></li>
+  
+    <li><a href="/tags/Node-js-异步编程/">Node.js_异步编程</a><small>3</small></li>
+  
+    <li><a href="/tags/Node-js-模块/">Node.js_模块</a><small>5</small></li>
+  
+    <li><a href="/tags/Node-js-测试/">Node.js_测试</a><small>5</small></li>
+  
+    <li><a href="/tags/Node-js-网络/">Node.js_网络</a><small>1</small></li>
+  
+    <li><a href="/tags/Node-js-进程/">Node.js_进程</a><small>2</small></li>
+  
+    <li><a href="/tags/Node-js-错误处理和调试/">Node.js_错误处理和调试</a><small>5</small></li>
+  
+    <li><a href="/tags/Redis/">Redis</a><small>2</small></li>
+  
+    <li><a href="/tags/Shell/">Shell</a><small>1</small></li>
+  
+    <li><a href="/tags/Unix/">Unix</a><small>3</small></li>
+  
+    <li><a href="/tags/express/">express</a><small>0</small></li>
+  
+    <li><a href="/tags/redis/">redis</a><small>0</small></li>
+  
+    <li><a href="/tags/shell/">shell</a><small>0</small></li>
+  
+    <li><a href="/tags/区块链/">区块链</a><small>1</small></li>
+  
+    <li><a href="/tags/存储/">存储</a><small>0</small></li>
+  
+    <li><a href="/tags/安全/">安全</a><small>0</small></li>
+  
+    <li><a href="/tags/数据库/">数据库</a><small>3</small></li>
+  
+    <li><a href="/tags/网络安全/">网络安全</a><small>8</small></li>
+  
+    <li><a href="/tags/计算机网络/">计算机网络</a><small>1</small></li>
+  
+  </ul>
+</div>
+
+</aside>
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div class="alignleft">
+  
+  &copy; 2018 shouliang
+  
+</div>
+<div class="clearfix"></div></footer>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+</body>
+</html>

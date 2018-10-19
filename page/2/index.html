@@ -392,11 +392,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2017-02-23T06:45:23.000Z"><a href="/2017/02/23/安全/SQL注入/">2017-02-23</a></time>
+        <time datetime="2017-02-23T06:45:23.000Z"><a href="/2017/02/23/网络安全/SQL注入/">2017-02-23</a></time>
       
       
   
-    <h1 class="title"><a href="/2017/02/23/安全/SQL注入/">SQL注入</a></h1>
+    <h1 class="title"><a href="/2017/02/23/网络安全/SQL注入/">SQL注入</a></h1>
   
 
     </header>
@@ -463,11 +463,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2017-02-20T06:45:23.000Z"><a href="/2017/02/20/安全/CSP简介/">2017-02-20</a></time>
+        <time datetime="2017-02-20T06:45:23.000Z"><a href="/2017/02/20/网络安全/CSP简介/">2017-02-20</a></time>
       
       
   
-    <h1 class="title"><a href="/2017/02/20/安全/CSP简介/">CSP简介</a></h1>
+    <h1 class="title"><a href="/2017/02/20/网络安全/CSP简介/">CSP简介</a></h1>
   
 
     </header>
@@ -559,13 +559,13 @@
 <p>hash值的例子如下，服务器给出一个允许执行的代码的hash值。</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy: script-src <span class="string">'sha256-qznLcsROx4GACP2dm0UCKCzCG-HiZ1guq6ZZDob_Tng='</span></span><br></pre></td></tr></table></figure>
 <p>下面的代码就会允许执行，因为hash值相符。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;script&gt;alert(<span class="string">'Hello, world.'</span>);<span class="xml"><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span></span><br></pre></td></tr></table></figure>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;script&gt;alert(<span class="string">'Hello, world.'</span>);&lt;/script&gt;</span><br></pre></td></tr></table></figure>
 <p>注意，计算hash值的时候，<script>标签不算在内。<br>除了<code>script-src</code>选项，nonce值和hash值还可以用在<code>style-src</code>选项，控制页面内嵌的样式表。</p>
 <h2 id="六、注意点"><a href="#六、注意点" class="headerlink" title="六、注意点"></a>六、注意点</h2><p>（1）<code>script-src</code>和<code>object-src</code>是必设的，除非设置了<code>default-src</code>。</p>
 <p>因为攻击者只要能注入脚本，其他限制都可以规避。而<code>object-src</code>必设是因为 Flash 里面可以执行外部脚本。</p>
 <p>（2）<code>script-src</code>不能使用<code>unsafe-inline</code>关键字（除非伴随一个nonce值），也不能允许设置<code>data:</code>URL。</p>
 <p>下面是两个恶意攻击的例子。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;img src=<span class="string">"x"</span> onerror=<span class="string">"evil()"</span>&gt;</span><br><span class="line">&lt;script src=<span class="string">"data:text/javascript,evil()"</span>&gt;<span class="xml"><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span></span><br></pre></td></tr></table></figure>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;img src=<span class="string">"x"</span> onerror=<span class="string">"evil()"</span>&gt;</span><br><span class="line">&lt;script src=<span class="string">"data:text/javascript,evil()"</span>&gt;&lt;/script&gt;</span><br></pre></td></tr></table></figure>
 <p>（3）必须特别注意 JSONP 的回调函数。</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;script</span><br><span class="line">  src=<span class="string">"/path/jsonp?callback=alert(document.domain)//"</span>&gt;</span><br><span class="line">&lt;<span class="regexp">/script&gt;</span></span><br></pre></td></tr></table></figure>
 <p>上面的代码中，虽然加载的脚本来自当前域名，但是通过改写回调函数，攻击者依然可以执行恶意代码。</p>
@@ -591,11 +591,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2017-02-18T06:45:23.000Z"><a href="/2017/02/18/安全/XSS攻击及预防/">2017-02-18</a></time>
+        <time datetime="2017-02-18T06:45:23.000Z"><a href="/2017/02/18/网络安全/XSS攻击及预防/">2017-02-18</a></time>
       
       
   
-    <h1 class="title"><a href="/2017/02/18/安全/XSS攻击及预防/">XSS攻击及预防</a></h1>
+    <h1 class="title"><a href="/2017/02/18/网络安全/XSS攻击及预防/">XSS攻击及预防</a></h1>
   
 
     </header>
@@ -661,11 +661,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2017-02-16T06:45:23.000Z"><a href="/2017/02/16/安全/CSRF攻击及预防/">2017-02-16</a></time>
+        <time datetime="2017-02-16T06:45:23.000Z"><a href="/2017/02/16/网络安全/CSRF攻击及预防/">2017-02-16</a></time>
       
       
   
-    <h1 class="title"><a href="/2017/02/16/安全/CSRF攻击及预防/">CSRF攻击及预防</a></h1>
+    <h1 class="title"><a href="/2017/02/16/网络安全/CSRF攻击及预防/">CSRF攻击及预防</a></h1>
   
 
     </header>
@@ -724,11 +724,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2017-02-12T06:45:23.000Z"><a href="/2017/02/12/安全/数字证书的基础知识/">2017-02-12</a></time>
+        <time datetime="2017-02-12T06:45:23.000Z"><a href="/2017/02/12/网络安全/数字证书的基础知识/">2017-02-12</a></time>
       
       
   
-    <h1 class="title"><a href="/2017/02/12/安全/数字证书的基础知识/">数字证书的基础知识</a></h1>
+    <h1 class="title"><a href="/2017/02/12/网络安全/数字证书的基础知识/">数字证书的基础知识</a></h1>
   
 
     </header>
@@ -827,11 +827,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2017-02-12T06:45:23.000Z"><a href="/2017/02/12/安全/Node.js中crypto模块/">2017-02-12</a></time>
+        <time datetime="2017-02-12T06:45:23.000Z"><a href="/2017/02/12/网络安全/Node.js中crypto模块/">2017-02-12</a></time>
       
       
   
-    <h1 class="title"><a href="/2017/02/12/安全/Node.js中crypto模块/">Node.js中的crypto模块</a></h1>
+    <h1 class="title"><a href="/2017/02/12/网络安全/Node.js中crypto模块/">Node.js中的crypto模块</a></h1>
   
 
     </header>
@@ -960,11 +960,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2017-02-10T06:45:23.000Z"><a href="/2017/02/10/安全/CDN的主要功能/">2017-02-10</a></time>
+        <time datetime="2017-02-10T06:45:23.000Z"><a href="/2017/02/10/网络安全/CDN的主要功能/">2017-02-10</a></time>
       
       
   
-    <h1 class="title"><a href="/2017/02/10/安全/CDN的主要功能/">CDN的主要功能</a></h1>
+    <h1 class="title"><a href="/2017/02/10/网络安全/CDN的主要功能/">CDN的主要功能</a></h1>
   
 
     </header>
@@ -998,11 +998,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2017-02-09T06:45:23.000Z"><a href="/2017/02/09/安全/详解https是如何确保安全的/">2017-02-09</a></time>
+        <time datetime="2017-02-09T06:45:23.000Z"><a href="/2017/02/09/网络安全/详解https是如何确保安全的/">2017-02-09</a></time>
       
       
   
-    <h1 class="title"><a href="/2017/02/09/安全/详解https是如何确保安全的/">详解https是如何确保安全的</a></h1>
+    <h1 class="title"><a href="/2017/02/09/网络安全/详解https是如何确保安全的/">详解https是如何确保安全的</a></h1>
   
 
     </header>
@@ -1111,6 +1111,8 @@
   
     <li><a href="/tags/ES6/">ES6</a><small>4</small></li>
   
+    <li><a href="/tags/Express/">Express</a><small>2</small></li>
+  
     <li><a href="/tags/Git/">Git</a><small>7</small></li>
   
     <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
@@ -1141,19 +1143,27 @@
   
     <li><a href="/tags/Node-js-错误处理和调试/">Node.js_错误处理和调试</a><small>5</small></li>
   
+    <li><a href="/tags/Redis/">Redis</a><small>2</small></li>
+  
+    <li><a href="/tags/Shell/">Shell</a><small>1</small></li>
+  
     <li><a href="/tags/Unix/">Unix</a><small>3</small></li>
   
-    <li><a href="/tags/express/">express</a><small>2</small></li>
+    <li><a href="/tags/express/">express</a><small>0</small></li>
   
-    <li><a href="/tags/redis/">redis</a><small>2</small></li>
+    <li><a href="/tags/redis/">redis</a><small>0</small></li>
   
-    <li><a href="/tags/shell/">shell</a><small>1</small></li>
+    <li><a href="/tags/shell/">shell</a><small>0</small></li>
   
     <li><a href="/tags/区块链/">区块链</a><small>1</small></li>
   
-    <li><a href="/tags/存储/">存储</a><small>3</small></li>
+    <li><a href="/tags/存储/">存储</a><small>0</small></li>
   
-    <li><a href="/tags/安全/">安全</a><small>8</small></li>
+    <li><a href="/tags/安全/">安全</a><small>0</small></li>
+  
+    <li><a href="/tags/数据库/">数据库</a><small>3</small></li>
+  
+    <li><a href="/tags/网络安全/">网络安全</a><small>8</small></li>
   
     <li><a href="/tags/计算机网络/">计算机网络</a><small>1</small></li>
   

