@@ -53,6 +53,269 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2017-02-09T06:45:23.000Z"><a href="/2017/02/09/网络安全/详解https是如何确保安全的/">2017-02-09</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2017/02/09/网络安全/详解https是如何确保安全的/">详解https是如何确保安全的</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>Https 介绍</p>
+<h3 id="什么是Https"><a href="#什么是Https" class="headerlink" title="什么是Https"></a>什么是Https</h3><p>HTTPS（全称：Hypertext Transfer Protocol over Secure Socket Layer），是以安全为目标的HTTP通道，简单讲是HTTP的安全版。即HTTP下加入SSL层，HTTPS的安全基础是SSL，因此加密的详细内容就需要SSL</p>
+<h3 id="Https的作用"><a href="#Https的作用" class="headerlink" title="Https的作用"></a>Https的作用</h3><p><strong>内容加密</strong>建立一个信息安全通道，来保证数据传输的安全；<br><strong>身份认证</strong>确认网站的真实性<br><strong>数据完整性</strong>防止内容被第三方冒充或者篡改</p>
+<h3 id="Https的劣势"><a href="#Https的劣势" class="headerlink" title="Https的劣势"></a>Https的劣势</h3><p>对数据进行加解密决定了它比http慢<br>需要进行非对称的加解密，且需要三次握手。首次连接比较慢点，当然现在也有很多的优化。<br>出于安全考虑，浏览器不会在本地保存HTTPS缓存。实际上，只要在HTTP头中使用特定命令，HTTPS是可以缓存的。Firefox默认只在内存中缓存HTTPS。但是，只要头命令中有Cache-Control: Public，缓存就会被写到硬盘上。 IE只要http头允许就可以缓存https内容，缓存策略与是否使用HTTPS协议无关。</p>
+<h3 id="HTTPS和HTTP的区别"><a href="#HTTPS和HTTP的区别" class="headerlink" title="HTTPS和HTTP的区别"></a>HTTPS和HTTP的区别</h3><p>https协议需要到CA申请证书。<br>http是超文本传输协议，信息是明文传输；https 则是具有安全性的ssl加密传输协议。<br>http和https使用的是完全不同的连接方式，用的端口也不一样，前者是80，后者是443。<br>http的连接很简单，是无状态的；HTTPS协议是由SSL+HTTP协议构建的可进行加密传输、身份认证的网络协议，比http协议安全。<br>http默认使用80端口，https默认使用443端口</p>
+<p>下面就是https的整个架构，现在的https基本都使用TLS了，因为更加安全，所以下图中的SSL应该换为<strong>SSL/TLS</strong>。</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/sslexexplation.png" alt=""></p>
+<p>下面就上图中的知识点进行一个大概的介绍。</p>
+<h2 id="加解密相关知识"><a href="#加解密相关知识" class="headerlink" title="加解密相关知识"></a>加解密相关知识</h2><h3 id="对称加密"><a href="#对称加密" class="headerlink" title="对称加密"></a>对称加密</h3><p>对称加密(也叫私钥加密)指加密和解密使用相同密钥的加密算法。有时又叫传统密码算法，就是加密密钥能够从解密密钥中推算出来，同时解密密钥也可以从加密密钥中推算出来。而在大多数的对称算法中，加密密钥和解密密钥是相同的，所以也称这种加密算法为秘密密钥算法或单密钥算法。</p>
+<p>常见的对称加密有：DES（Data Encryption Standard）、AES（Advanced Encryption Standard）、RC4、IDEA</p>
+<h3 id="非对称加密"><a href="#非对称加密" class="headerlink" title="非对称加密"></a>非对称加密</h3><p>与对称加密算法不同，非对称加密算法需要两个密钥：公开密钥（publickey）和私有密钥（privatekey）；并且加密密钥和解密密钥是成对出现的。非对称加密算法在加密和解密过程使用了不同的密钥，非对称加密也称为公钥加密，在密钥对中，其中一个密钥是对外公开的，所有人都可以获取到，称为公钥，其中一个密钥是不公开的称为私钥。</p>
+<p>非对称加密算法对加密内容的长度有限制，不能超过公钥长度。比如现在常用的公钥长度是 2048 位，意味着待加密内容不能超过 256 个字节。</p>
+<h3 id="摘要算法"><a href="#摘要算法" class="headerlink" title="摘要算法"></a>摘要算法</h3><p>数字摘要是采用单项Hash函数将需要加密的明文“摘要”成一串固定长度（128位）的密文，这一串密文又称为数字指纹，它有固定的长度，而且不同的明文摘要成密文，其结果总是不同的，而同样的明文其摘要必定一致。“数字摘要“是https能确保数据完整性和防篡改的根本原因。</p>
+<h3 id="数字签名"><a href="#数字签名" class="headerlink" title="数字签名"></a>数字签名</h3><p>数字签名技术就是对“非对称密钥加解密”和“数字摘要“两项技术的应用，它将摘要信息用发送者的私钥加密，与原文一起传送给接收者。接收者只有用发送者的公钥才能解密被加密的摘要信息，然后用HASH函数对收到的原文产生一个摘要信息，与解密的摘要信息对比。如果相同，则说明收到的信息是完整的，在传输过程中没有被修改，否则说明信息被修改过，因此数字签名能够验证信息的完整性。</p>
+<p>数字签名的过程如下：明文 –&gt; hash运算 –&gt; 摘要 –&gt; 私钥加密 –&gt; 数字签名</p>
+<p>数字签名有两种功效：<br>一、能确定消息确实是由发送方签名并发出来的，因为别人假冒不了发送方的签名。<br>二、数字签名能确定消息的完整性。</p>
+<p><strong>注意：</strong><br>数字签名只能验证数据的完整性，数据本身是否加密不属于数字签名的控制范围</p>
+<h2 id="数字证书"><a href="#数字证书" class="headerlink" title="数字证书"></a>数字证书</h2><h3 id="为什么要有数字证书？"><a href="#为什么要有数字证书？" class="headerlink" title="为什么要有数字证书？"></a>为什么要有数字证书？</h3><p>对于请求方来说，它怎么能确定它所得到的公钥一定是从目标主机那里发布的，而且没有被篡改过呢？亦或者请求的目标主机本本身就从事窃取用户信息的不正当行为呢？这时候，我们需要有一个权威的值得信赖的第三方机构(一般是由政府审核并授权的机构)来统一对外发放主机机构的公钥，只要请求方这种机构获取公钥，就避免了上述问题的发生。</p>
+<h3 id="数字证书的颁发过程"><a href="#数字证书的颁发过程" class="headerlink" title="数字证书的颁发过程"></a>数字证书的颁发过程</h3><p>用户首先产生自己的密钥对，并将公共密钥及部分个人身份信息传送给认证中心。认证中心在核实身份后，将执行一些必要的步骤，以确信请求确实由用户发送而来，然后，认证中心将发给用户一个数字证书，该证书内包含用户的个人信息和他的公钥信息，同时还附有认证中心的签名信息(根证书私钥签名)。用户就可以使用自己的数字证书进行相关的各种活动。数字证书由独立的证书发行机构发布，数字证书各不相同，每种证书可提供不同级别的可信度。</p>
+<h3 id="证书包含哪些内容"><a href="#证书包含哪些内容" class="headerlink" title="证书包含哪些内容"></a>证书包含哪些内容</h3><p>证书颁发机构的名称<br>证书本身的数字签名<br>证书持有者公钥<br>证书签名用到的Hash算法</p>
+<h3 id="验证证书的有效性"><a href="#验证证书的有效性" class="headerlink" title="验证证书的有效性"></a>验证证书的有效性</h3><p><strong>浏览器默认都会内置CA根证书，其中根证书包含了CA的公钥</strong><br>证书颁发的机构是伪造的：浏览器不认识，直接认为是危险证书</p>
+<p>证书颁发的机构是确实存在的，于是根据CA名，找到对应内置的CA根证书、CA的公钥。用CA的公钥，对伪造的证书的摘要进行解密，发现解不了，认为是危险证书。</p>
+<p>对于篡改的证书，使用CA的公钥对数字签名进行解密得到摘要A，然后再根据签名的Hash算法计算出证书的摘要B，对比A与B，若相等则正常，若不相等则是被篡改过的。</p>
+<p>证书可在其过期前被吊销，通常情况是该证书的私钥已经失密。较新的浏览器如Chrome、Firefox、Opera和Internet Explorer都实现了在线证书状态协议（OCSP）以排除这种情形：浏览器将网站提供的证书的序列号通过OCSP发送给证书颁发机构，后者会告诉浏览器证书是否还是有效的。</p>
+<p>1、2点是对伪造证书进行的，3是对于篡改后的证书验证，4是对于过期失效的验证。</p>
+<h2 id="SSL-与-TLS"><a href="#SSL-与-TLS" class="headerlink" title="SSL 与 TLS"></a>SSL 与 TLS</h2><h3 id="SSL-Secure-Socket-Layer，安全套接字层"><a href="#SSL-Secure-Socket-Layer，安全套接字层" class="headerlink" title="SSL (Secure Socket Layer，安全套接字层)"></a>SSL (Secure Socket Layer，安全套接字层)</h3><p>SSL为Netscape所研发，用以保障在Internet上数据传输之安全，利用数据加密(Encryption)技术，可确保数据在网络上之传输过程中不会被截取，当前为3.0版本。</p>
+<p>SSL协议可分为两层： SSL记录协议（SSL Record Protocol）：它建立在可靠的传输协议（如TCP）之上，为高层协议提供数据封装、压缩、加密等基本功能的支持。 SSL握手协议（SSL Handshake Protocol）：它建立在SSL记录协议之上，用于在实际的数据传输开始前，通讯双方进行身份认证、协商加密算法、交换加密密钥等。</p>
+<h3 id="TLS-Transport-Layer-Security，传输层安全协议"><a href="#TLS-Transport-Layer-Security，传输层安全协议" class="headerlink" title="TLS (Transport Layer Security，传输层安全协议)"></a>TLS (Transport Layer Security，传输层安全协议)</h3><p>用于两个应用程序之间提供保密性和数据完整性。</p>
+<p>TLS 1.0是IETF（Internet Engineering Task Force，Internet工程任务组）制定的一种新的协议，它建立在SSL 3.0协议规范之上，是SSL 3.0的后续版本，可以理解为SSL 3.1，它是写入了 RFC 的。该协议由两层组成： TLS 记录协议（TLS Record）和 TLS 握手协议（TLS Handshake）。较低的层为 TLS 记录协议，位于某个可靠的传输协议（例如 TCP）上面。</p>
+<h3 id="SSL-TLS协议作用："><a href="#SSL-TLS协议作用：" class="headerlink" title="SSL/TLS协议作用："></a>SSL/TLS协议作用：</h3><p>认证用户和服务器，确保数据发送到正确的客户机和服务器；<br>加密数据以防止数据中途被窃取；<br>维护数据的完整性，确保数据在传输过程中不被改变。</p>
+<h3 id="TLS比SSL的优势"><a href="#TLS比SSL的优势" class="headerlink" title="TLS比SSL的优势"></a>TLS比SSL的优势</h3><p>对于消息认证使用密钥散列法：TLS 使用“消息认证代码的密钥散列法”（HMAC），当记录在开放的网络（如因特网）上传送时，该代码确保记录不会被变更。SSLv3.0还提供键控消息认证，但HMAC比SSLv3.0使用的（消息认证代码）MAC 功能更安全。</p>
+<p>增强的伪随机功能（PRF）：PRF生成密钥数据。在TLS中，HMAC定义PRF。PRF使用两种散列算法保证其安全性。如果任一算法暴露了，只要第二种算法未暴露，则数据仍然是安全的。</p>
+<p>改进的已完成消息验证：TLS和SSLv3.0都对两个端点提供已完成的消息，该消息认证交换的消息没有被变更。然而，TLS将此已完成消息基于PRF和HMAC值之上，这也比SSLv3.0更安全。</p>
+<p>一致证书处理：与SSLv3.0不同，TLS试图指定必须在TLS之间实现交换的证书类型。</p>
+<p>特定警报消息：TLS提供更多的特定和附加警报，以指示任一会话端点检测到的问题。TLS还对何时应该发送某些警报进行记录。</p>
+<h3 id="SSL、TLS的握手过程"><a href="#SSL、TLS的握手过程" class="headerlink" title="SSL、TLS的握手过程"></a>SSL、TLS的握手过程</h3><p>SSL与TLS握手整个过程如下图所示，下面会详细介绍每一步的具体内容：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/clientHello.png" alt=""></p>
+<h3 id="客户端首次发出请求"><a href="#客户端首次发出请求" class="headerlink" title="客户端首次发出请求"></a>客户端首次发出请求</h3><p>由于客户端(如浏览器)对一些加解密算法的支持程度不一样，但是在TLS协议传输过程中必须使用同一套加解密算法才能保证数据能够正常的加解密。在TLS握手阶段，客户端首先要告知服务端，自己支持哪些加密算法，所以客户端需要将本地支持的加密套件(Cipher Suite)的列表传送给服务端。除此之外，客户端还要产生一个随机数，这个随机数一方面需要在客户端保存，另一方面需要传送给服务端，客户端的随机数需要跟服务端产生的随机数结合起来产生后面要讲到的 Master Secret 。</p>
+<p>客户端需要提供如下信息：<br>支持的协议版本，比如TLS 1.0版<br>一个客户端生成的随机数，稍后用于生成”对话密钥”<br>支持的加密方法，比如RSA公钥加密<br>支持的压缩方法</p>
+<h3 id="服务端首次回应"><a href="#服务端首次回应" class="headerlink" title="服务端首次回应"></a>服务端首次回应</h3><p>服务端在接收到客户端的Client Hello之后，服务端需要确定加密协议的版本，以及加密的算法，然后也生成一个随机数，以及将自己的证书发送给客户端一并发送给客户端，这里的随机数是整个过程的第二个随机数。</p>
+<p>服务端需要提供的信息：<br>协议的版本<br>加密的算法<br>随机数<br>服务器证书</p>
+<h3 id="客户端再次回应"><a href="#客户端再次回应" class="headerlink" title="客户端再次回应"></a>客户端再次回应</h3><p>客户端首先会对服务器下发的证书进行验证，验证通过之后，则会继续下面的操作，客户端再次产生一个随机数（第三个随机数），然后使用服务器证书中的公钥进行加密，以及放一个ChangeCipherSpec消息即编码改变的消息，还有整个前面所有消息的hash值，进行服务器验证，然后用新秘钥加密一段数据一并发送到服务器，确保正式通信前无误。</p>
+<p>客户端使用前面的两个随机数以及刚刚新生成的新随机数，使用与服务器确定的加密算法，生成一个Session Secret。</p>
+<p>ChangeCipherSpec</p>
+<p>ChangeCipherSpec是一个独立的协议，体现在数据包中就是一个字节的数据，用于告知服务端，客户端已经切换到之前协商好的加密套件（Cipher Suite）的状态，准备使用之前协商好的加密套件加密数据并传输了。</p>
+<h3 id="服务器再次响应"><a href="#服务器再次响应" class="headerlink" title="服务器再次响应"></a>服务器再次响应</h3><p>服务端在接收到客户端传过来的第三个随机数的 加密数据之后，使用私钥对这段加密数据进行解密，并对数据进行验证，也会使用跟客户端同样的方式生成秘钥，一切准备好之后，也会给客户端发送一个 ChangeCipherSpec，告知客户端已经切换到协商过的加密套件状态，准备使用加密套件和 Session Secret加密数据了。之后，服务端也会使用 Session Secret 加密一段 Finish 消息发送给客户端，以验证之前通过握手建立起来的加解密通道是否成功。</p>
+<h3 id="后续客户端与服务器间通信"><a href="#后续客户端与服务器间通信" class="headerlink" title="后续客户端与服务器间通信"></a>后续客户端与服务器间通信</h3><p>确定秘钥之后，服务器与客户端之间就会通过商定的秘钥加密消息了，进行通讯了。整个握手过程也就基本完成了。</p>
+<p>值得特别提出的是：<br>SSL协议在握手阶段使用的是非对称加密，在传输阶段使用的是对称加密，也就是说在SSL上传送的数据是使用对称密钥加密的！因为非对称加密的速度缓慢，耗费资源。其实当客户端和主机使用非对称加密方式建立连接后，客户端和主机已经决定好了在传输过程使用的对称加密算法和关键的对称加密密钥，由于这个过程本身是安全可靠的，也即对称加密密钥是不可能被窃取盗用的，因此，保证了在传输过程中对数据进行对称加密也是安全可靠的，因为除了客户端和主机之外，不可能有第三方窃取并解密出对称加密密钥！如果有人窃听通信，他可以知道双方选择的加密方法，以及三个随机数中的两个。整个通话的安全，只取决于第三个随机数（Premaster secret）能不能被破解。</p>
+<h3 id="其他补充"><a href="#其他补充" class="headerlink" title="其他补充"></a>其他补充</h3><p>对于非常重要的保密数据，服务端还需要对客户端进行验证，以保证数据传送给了安全的合法的客户端。服务端可以向客户端发出 Cerficate Request 消息，要求客户端发送证书对客户端的合法性进行验证。比如，金融机构往往只允许认证客户连入自己的网络，就会向正式客户提供USB密钥，里面就包含了一张客户端证书。</p>
+<p>PreMaster secret前两个字节是TLS的版本号，这是一个比较重要的用来核对握手数据的版本号，因为在Client Hello阶段，客户端会发送一份加密套件列表和当前支持的SSL/TLS的版本号给服务端，而且是使用明文传送的，如果握手的数据包被破解之后，攻击者很有可能串改数据包，选择一个安全性较低的加密套件和版本给服务端，从而对数据进行破解。所以，服务端需要对密文中解密出来对的PreMaster版本号跟之前Client Hello阶段的版本号进行对比，如果版本号变低，则说明被串改，则立即停止发送任何消息。</p>
+<h3 id="session的恢复"><a href="#session的恢复" class="headerlink" title="session的恢复"></a>session的恢复</h3><p>有两种方法可以恢复原来的session：一种叫做session ID，另一种叫做session ticket。</p>
+<h3 id="session-ID"><a href="#session-ID" class="headerlink" title="session ID"></a>session ID</h3><p>session ID的思想很简单，就是每一次对话都有一个编号（session ID）。如果对话中断，下次重连的时候，只要客户端给出这个编号，且服务器有这个编号的记录，双方就可以重新使用已有的”对话密钥”，而不必重新生成一把。</p>
+<p>session ID是目前所有浏览器都支持的方法，但是它的缺点在于session ID往往只保留在一台服务器上。所以，如果客户端的请求发到另一台服务器，就无法恢复对话</p>
+<h3 id="session-ticket"><a href="#session-ticket" class="headerlink" title="session ticket"></a>session ticket</h3><p>客户端发送一个服务器在上一次对话中发送过来的session ticket。这个session ticket是加密的，只有服务器才能解密，其中包括本次对话的主要信息，比如对话密钥和加密方法。当服务器收到session ticket以后，解密后就不必重新生成对话密钥了。<br>目前只有Firefox和Chrome浏览器支持。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>https实际就是在TCP层与http层之间加入了SSL/TLS来为上层的安全保驾护航，主要用到对称加密、非对称加密、证书，等技术进行客户端与服务器的数据加密传输，最终达到保证整个通信的安全性。</p>
+<p><a href="http://www.wxtlife.com/2016/03/27/%E8%AF%A6%E8%A7%A3https%E6%98%AF%E5%A6%82%E4%BD%95%E7%A1%AE%E4%BF%9D%E5%AE%89%E5%85%A8%E7%9A%84%EF%BC%9F/" target="_blank" rel="noopener">原文</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2017-01-07T06:45:23.000Z"><a href="/2017/01/07/数据库/数据库范式那些事/">2017-01-07</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2017/01/07/数据库/数据库范式那些事/">数据库范式那些事</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <ol>
+<li><h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a><strong>简介</strong></h2></li>
+</ol>
+<p>​      数据库范式在数据库设计中的地位一直很暧昧，教科书中对于数据库范式倒是都给出了学术性的定义，但实际应用中范式的应用却不甚乐观，这篇文章会用简单的语言和一个简单的数据库DEMO将一个不符合范式的数据库一步步从第一范式实现到第四范式。</p>
+<h2 id="范式的目标"><a href="#范式的目标" class="headerlink" title="范式的目标"></a><strong>范式的目标</strong></h2><p>​      应用数据库范式可以带来许多好处，但是最重要的好处归结为三点：<br>​      1.减少数据冗余（这是最主要的好处，其他好处都是由此而附带的）<br>​      2.消除异常（插入异常，更新异常，删除异常）<br>​      3.让数据组织的更加和谐，但剑是双刃的，应用数据库范式同样也会带来弊端。</p>
+<h2 id="什么是范式"><a href="#什么是范式" class="headerlink" title="什么是范式"></a><strong>什么是范式</strong></h2><p>​      简单的说，范式是为了消除重复数据减少冗余数据，从而让数据库内的数据更好的组织，让磁盘空间得到更有效利用的一种标准化标准，满足高等级的范式的先决条件是满足低等级范式。(比如满足2nf一定满足1nf)</p>
+<h2 id="DEMO"><a href="#DEMO" class="headerlink" title="DEMO"></a><strong>DEMO</strong></h2><p>让我们先从一个未经范式化的表看起,表如下：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/fansh01.png" alt=""></p>
+<p>先对表做一个简单说明，employeeId是员工id,departmentName是部门名称，job代表岗位，jobDescription是岗位说明，skill是员工技能，departmentDescription是部门说明，address是员工住址。</p>
+<p><strong>对表进行第一范式(1NF)</strong></p>
+<p>​    <em>如果一个关系模式R的所有属性都是不可分的基本数据项，则R∈1NF。</em></p>
+<p>​    简单的说,第一范式就是每一个属性都不可再分。不符合第一范式则不能称为关系数据库。对于上表，不难看出Address是可以再分的，比如”北京市XX路XX小区XX号”，着显然不符合第一范式，对其应用第一范式则需要将此属性分解到另一个表,如下:</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/fansh02.png" alt=""></p>
+<p><strong>对表进行第二范式(2NF)</strong></p>
+<p>   <em>若关系模式R∈1NF，并且每一个非主属性都</em><a href="http://baike.baidu.com/view/228997.htm" target="_blank" rel="noopener"><em>完全函数依赖</em></a><em>于R的码，则R∈2NF</em></p>
+<p>   简单的说，是表中的属性必须完全依赖于全部主键，而不是部分主键.所以只有一个主键的表如果符合第一范式，那一定是第二范式。这样做的目的是进一步减少插入异常和更新异常。在上表中，departmentDescription是由主键DepartmentName所决定，但却不是由主键EmployeeID决定，所以departmentDescription只依赖于两个主键中的一个，故要departmentDescription对主键是部分依赖，对其应用第二范式如下表：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/fansh03.png" alt=""></p>
+<p>  <strong>对表进行第三范式(3NF)</strong></p>
+<p><a href="http://baike.baidu.com/view/68347.htm" target="_blank" rel="noopener"><em>关系模式</em></a><em>R&lt;U，F&gt; 中若不存在这样的码X、属性组Y及非主属性Z（Z  Y）, 使得X→Y，Y→Z，成立，则称R&lt;U，F&gt; ∈ 3NF。</em></p>
+<p>  简单的说，第三范式是为了消除数据库中关键字之间的依赖关系，在上面经过第二范式化的表中，可以看出jobDescription(岗位职责)是由job(岗位)所决定，则jobDescription依赖于job,可以看出这不符合第三范式，对表进行第三范式后的关系图为：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/fansh04.png" alt=""></p>
+<p>上表中，已经不存在数据库属性互相依赖的问题，所以符合第三范式</p>
+<p><strong>对表进行BC范式(BCNF)</strong></p>
+<p><em>设</em><a href="http://baike.baidu.com/view/68347.htm" target="_blank" rel="noopener"><em>关系模式</em></a><em>R&lt;U，F&gt;∈1NF，如果对于R的每个函数依赖X→Y，若Y不属于X，则X必含有候选码，那么R∈BCNF。</em></p>
+<p>  简单的说，bc范式是在第三范式的基础上的一种特殊情况，既每个表中只有一个候选键（在一个数据库中每行的值都不相同，则可称为候选键），在上面第三范式的noNf表中可以看出，每一个员工的email都是唯一的（难道两个人用同一个email??）则，此表不符合bc范式，对其进行bc范式化后的关系图为:</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/fansh05.png" alt=""></p>
+<p>   <strong>对表进行第四范式(4NF)</strong></p>
+<p>   <a href="http://baike.baidu.com/view/68347.htm" target="_blank" rel="noopener"><em>关系模式</em></a><em>R&lt;U，F&gt;∈1NF，如果对于R的每个非平凡多值依赖X→→Y（Y  X），X都含有候选码，则R∈4NF。</em></p>
+<p>  简单的说，第四范式是消除表中的多值依赖，也就是说可以减少维护数据一致性的工作。对于上面bc范式化的表中，对于员工的skill，两个可能的值是”C#,sql,javascript”和“C#，UML,Ruby”,可以看出，这个数据库属性存在多个值，这就可能造成数据库内容不一致的问题，比如第一个值写的是”C#”,而第二个值写的是”C#.net”,解决办法是将多值属性放入一个新表，则第四范式化后的关系图如下：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/fansh06.png" alt=""></p>
+<p>而对于skill表则可能的值为:</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/fansh07.png" alt=""></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a><strong>总结</strong></h2><p>上面对于数据库范式进行分解的过程中不难看出，应用的范式登记越高，则表越多。表多会带来很多问题：</p>
+<ol>
+<li><p>查询时要连接多个表，增加了查询的复杂度</p>
+</li>
+<li><p>查询时需要连接多个表，降低了数据库查询性能，而现在的情况，磁盘空间成本基本可以忽略不计，所以数据冗余所造成的问题也并不是应用数据库范式的理由。</p>
+</li>
+<li><p>因此，并不是应用的范式越高越好，要看实际情况而定。第三范式已经很大程度上减少了数据冗余，并且减少了造成插入异常，更新异常，和删除异常了。我个人观点认为，大多数情况应用到第三范式已经足够，在一定情况下第二范式也是可以的。</p>
+</li>
+</ol>
+<h4 id="原文：http-www-cnblogs-com-CareySon-archive-2010-02-16-1668803-html"><a href="#原文：http-www-cnblogs-com-CareySon-archive-2010-02-16-1668803-html" class="headerlink" title="原文：http://www.cnblogs.com/CareySon/archive/2010/02/16/1668803.html"></a>原文：<a href="http://www.cnblogs.com/CareySon/archive/2010/02/16/1668803.html" target="_blank" rel="noopener">http://www.cnblogs.com/CareySon/archive/2010/02/16/1668803.html</a></h4>
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2017-01-05T06:45:23.000Z"><a href="/2017/01/05/数据库/INNODB还是MYISAM/">2017-01-05</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2017/01/05/数据库/INNODB还是MYISAM/">INNODB还是MYISAM</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>MyISAM 是MySQL中默认的存储引擎，一般来说不是有太多人关心这个东西。决定使用什么样的存储引擎是一个很tricky的事情，但是还是值我们去研究一下，这里的文章只考虑 MyISAM 和InnoDB这两个，因为这两个是最常见的。</p>
+<p>下面先让我们回答一些问题：</p>
+<ul>
+<li>你的数据库有外键吗？</li>
+<li>你需要事务支持吗？</li>
+<li>你需要全文索引吗？</li>
+<li>你经常使用什么样的查询模式？</li>
+<li>你的数据有多大？</li>
+</ul>
+<p>思考上面这些问题可以让你找到合适的方向，但那并不是绝对的。如果你需要事务处理或是外键，那么InnoDB 可能是比较好的方式。如果你需要全文索引，那么通常来说 MyISAM是好的选择，因为这是系统内建的，然而，我们其实并不会经常地去测试两百万行记录。所以，就算是慢一点，我们可以通过使用Sphinx从InnoDB中获得全文索引。</p>
+<p>数据的大小，是一个影响你选择什么样存储引擎的重要因素，大尺寸的数据集趋向于选择InnoDB方式，因为其支持事务处理和故障恢复。数据库的在小决定了故障恢复的时间长短，InnoDB可以利用事务日志进行数据恢复，这会比较快。而MyISAM可能会需要几个小时甚至几天来干这些事，InnoDB只需要几分钟。</p>
+<p>您操作数据库表的习惯可能也会是一个对性能影响很大的因素。比如： COUNT() 在 MyISAM 表中会非常快，而在InnoDB 表下可能会很痛苦。而主键查询则在InnoDB下会相当相当的快，但需要小心的是如果我们的主键太长了也会导致性能问题。大批的inserts 语句在MyISAM下会快一些，但是updates 在InnoDB 下会更快一些——尤其在并发量大的时候。</p>
+<p>所以，到底你检使用哪一个呢？根据经验来看，如果是一些小型的应用或项目，那么MyISAM 也许会更适合。当然，在大型的环境下使用MyISAM 也会有很大成功的时候，但却不总是这样的。如果你正在计划使用一个超大数据量的项目，而且需要事务处理或外键支持，那么你真的应该直接使用InnoDB方式。但需要记住InnoDB 的表需要更多的内存和存储，转换100GB 的MyISAM 表到InnoDB 表可能会让你有非常坏的体验。</p>
+<p>原文：<a href="https://coolshell.cn/articles/652.html" target="_blank" rel="noopener">https://coolshell.cn/articles/652.html</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2017-01-04T06:45:23.000Z"><a href="/2017/01/04/数据库/主键与唯一索引的区别/">2017-01-04</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2017/01/04/数据库/主键与唯一索引的区别/">主键与唯一索引的区别</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p><strong>1、主键</strong><br>主键ID，可以一列或多列，主键既是约束也是索引且是唯一索引，同时也用于对象缓存的键值。</p>
+<p><strong>2、索引</strong><br>组合或者引用关系的子表（数据量较大的时候），需要在关联主表的列上建立非聚集索引（如订单明细表中的产品ID字段、订单明细表中关联的订单ID字段）</p>
+<p>索引键的大小不能超过900个字节，当列表的大小超过900个字节或者若干列的和超过900个字节时，数据库将报错。</p>
+<p>表中如果建有大量索引将会影响INSERT、UPDATET、DELETE语句的性能，因为在表中的数据更改时，所有的索引都将必须进行适当的调整。需要避免对经常更新的表进行过多的索引，并且索引应保持较窄，列要尽可能的少。</p>
+<p>为经常用于查询的谓词创建索引，如用于下拉参照快速查找的code、name等。在平台现有下拉参照的查询sql语句中的like条件语句要改成不带前置通配符。还有需要关注Order By和Group By谓词的索引设计，Order By和Group By的谓词是需要排序的，某些情况下为Order By和Group By的谓词建立索引，会避免查询时的排序动作。</p>
+<p>对于内容基本重复的列，比如只有1和0，禁止建立索引，因为该索引选择性极差，在特定的情况下会误导优化器做出错误的选择，导致查询速度极大下降。</p>
+<p>当一个索引有多个列构成时，应注意将选择性强的列放在前面。仅仅前后次序的不同，性能上就可能出现数量级的差异。</p>
+<p>对小表进行索引可能不能产生优化效果，因为查询优化器在遍历用于搜索数据的索引时，花费的时间可能比执行简单的表扫描还长，设计索引时需要考虑表的大小。记录数不大于100的表不要建立索引。频繁操作的小数量表不建议建立索引，例如记录数不大于5000条。</p>
+<p><strong>索引与排序</strong><br>指定列的索引就相当于对指定的列进行排序，为什么要排序呢？</p>
+<p>因为排序有利于对该列的查询，可以大大增加查询效率。那么可能有人认为应该对所有的列排序，这样就可以增加整个数据库的查询效率。这样的想法是错误的，原因是建立索引也是要消耗系统资源的，给每个表里的每个列都建立索引那么将对系统造成极大的负担，那就更别提效率了！简单的说建立一个列的索引，就相当与建立一个列的排序。</p>
+<p>主键其实就是一个索引（特殊的唯一索引），但是这个索引跟一般的索引有所不同。主键所在的列里的每一个的记录都是唯一的，也可以说不能在主键里出现相同的记录，在同一个表里只能有一个主键。</p>
+<p>主键等于索引，索引不一定等于主键，简单的说主键就是所在列不能出现相同记录的特殊索引，而且这个索引只能在表里出现一次。</p>
+<p><strong>唯一索引与主键索引的比较</strong><br><strong>唯一索引</strong><br>唯一索引不允许两行具有相同的索引值。<br>如果现有数据中存在重复的键值，则大多数数据库都不允许将新创建的唯一索引与表一起保存。当新数据将使表中的键值重复时，数据库也拒绝接受此数据。例如，如果在 employee 表中的职员姓氏(lname) 列上创建了唯一索引，则所有职员不能同姓。</p>
+<p><strong>主键索引</strong><br>主键索引是唯一索引的特殊类型，其唯一索引名为primary。<br>表的主键，数据库表通常有一列或多列组合，其值用来唯一标识表中的每一行。<br>在数据库关系图中为表定义一个主键将自动创建主键索引，主键索引是唯一索引的特殊类型。主键索引要求主键中的每个值是唯一的。当在查询中使用主键索引时，它还允许快速访问数据。</p>
+<p><strong>二者比较：</strong><br>主键创建后一定包含一个唯一性索引，唯一性索引并不一定就是主键</p>
+<p>(1) 对于主健/unique constraint ， oracle/sql server/mysql等都会自动建立唯一索引；<br>(2) 主键不一定只包含一个字段，所以在主键的其中一个字段建唯一索引还是必要的；<br>(3) 主健可作外健，唯一索引不可；<br>(4) 主健不可为空，唯一索引可；<br>(5) 主健也可是多个字段的组合；<br>(6) 在 RBO 模式下，主键的执行计划优先级要高于唯一索引；</p>
+<p>主键严格于唯一索引体现：<br>a. 主键有not null属性<br>b. 主键在每个表只能有一个</p>
+<p><strong>主键与唯一索引的区别</strong><br>主键是一种约束，唯一索引是一种索引，两者在本质上是不同的</p>
+<ol>
+<li>主键一定是唯一性索引，其索引名为 primary，唯一性索引并不一定是主键</li>
+<li>一个表中可以有多个唯一性索引，但只能有一个主键</li>
+<li>主键列不允许空值，而唯一性索引列允许空值</li>
+</ol>
+<p><strong>原文</strong>：<a href="https://blog.mimvp.com/article/7462.html" target="_blank" rel="noopener">https://blog.mimvp.com/article/7462.html</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2016-10-16T06:45:23.000Z"><a href="/2016/10/16/Node.js_模块/Node.js中的模块循环依赖及其解决/">2016-10-16</a></time>
       
       
@@ -461,49 +724,6 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2016-08-05T14:16:53.000Z"><a href="/2016/08/05/Node.js_JS基础/如何编写一个 json对象的拷贝函数/">2016-08-05</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2016/08/05/Node.js_JS基础/如何编写一个 json对象的拷贝函数/">如何编写一个 json对象的拷贝函数</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>浅拷贝，比如浅拷贝对象A时，对象B将拷贝A的所有属性，如果属性是引用类型，B将拷贝地址，若果属性是基本类型，B将复制其值。浅拷贝的缺点是如果你修改了对象B中引用类型属性，你同时也会影响到对象A。</p>
-<p>深拷贝会完全拷贝所有数据，优点是拷贝双方不会相互依赖，比如修改了一方的引用类型属性，不会影响到另一方。缺点是拷贝的速度更慢，代价更大 （我的理解是耗费了更多内存空间）。</p>
-<h2 id="浅拷贝实现"><a href="#浅拷贝实现" class="headerlink" title="浅拷贝实现"></a>浅拷贝实现</h2><p>1、使用 ES6 的 Object.assign，其内部实现就是浅拷贝，并剔除了目标对象的原型方法</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> a = &#123;</span><br><span class="line">  p: [<span class="number">1</span>, <span class="number">2</span>]</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> b = <span class="built_in">Object</span>.assign(&#123;&#125;, a);</span><br><span class="line"><span class="built_in">console</span>.log(b.p == a.p);</span><br></pre></td></tr></table></figure>
-<p>2、遍历对象属性</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">shallowClone</span>(<span class="params">obj</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (!obj || <span class="keyword">typeof</span> obj !== <span class="string">'object'</span>) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'error arguments'</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">let</span> targetObj = obj.constructor === <span class="built_in">Array</span> ? [] : &#123;&#125;;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">let</span> key <span class="keyword">in</span> obj) &#123;</span><br><span class="line">    <span class="keyword">if</span> (obj.hasOwnProperty(key)) &#123;</span><br><span class="line">      targetObj[key] = obj[key];</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> targetObj;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="深拷贝实现"><a href="#深拷贝实现" class="headerlink" title="深拷贝实现"></a>深拷贝实现</h2><p>1、利用 JSON 序列化实现一个深拷贝，缺点是无法复制函数，并且丢失抛弃对象的 constructor 和原型链</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">deepClone</span>(<span class="params">obj</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">JSON</span>.parse(<span class="built_in">JSON</span>.stringify(obj));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> o1 = &#123;</span><br><span class="line">  arr: [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>],</span><br><span class="line">  obj: &#123; <span class="attr">key</span>: <span class="string">'value'</span> &#125;,</span><br><span class="line">  func()&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">let</span> o2 = deepClone(o1);</span><br><span class="line"><span class="built_in">console</span>.log(o2); <span class="comment">// =&gt; &#123;arr: [1,2,3], obj: &#123;key: 'value'&#125;&#125;</span></span><br></pre></td></tr></table></figure>
-<p>2、利用递归实现深拷贝，可以复制函数，同样会丢失抛弃对象的 constructor 和原型链，但是对于拷贝 json 对象的话足够了</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">deepCopy</span>(<span class="params">src</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span>(!src || <span class="keyword">typeof</span> src !== <span class="string">'object'</span>)&#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'error arguments'</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">let</span> target = src.constructor === <span class="built_in">Array</span> ? [] : &#123;&#125;;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">let</span> i <span class="keyword">in</span> src) &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">typeof</span> src[i] === <span class="string">'object'</span>) &#123;</span><br><span class="line">      target[i] = src[i].constructor === <span class="built_in">Array</span> ? [] : &#123;&#125;;</span><br><span class="line">      target[i] = deepCopy(src[i]);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      target[i] = src[i];</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> target;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="http://www.lujianan.com/2016/07/18/deep-shallow/" target="_blank" rel="noopener">http://www.lujianan.com/2016/07/18/deep-shallow/</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
         <time datetime="2016-08-05T14:16:53.000Z"><a href="/2016/08/05/Node.js_事件/The Node.js Event Loop, Timers, and process.nextTick()/">2016-08-05</a></time>
       
       
@@ -628,450 +848,27 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2016-07-31T07:45:21.000Z"><a href="/2016/07/31/Angular/AngularJS简介/">2016-07-31</a></time>
+        <time datetime="2016-08-05T14:16:53.000Z"><a href="/2016/08/05/Node.js_JS基础/如何编写一个 json对象的拷贝函数/">2016-08-05</a></time>
       
       
   
-    <h1 class="title"><a href="/2016/07/31/Angular/AngularJS简介/">一.简介</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-AugularJS简介"><a href="#1-AugularJS简介" class="headerlink" title="1.AugularJS简介"></a>1.AugularJS简介</h3><hr>
-<p>AngularJS 是一个为动态WEB应用设计的结构框架，提供给大家一种新的开发应用方式，这种方式可以让你扩展HTML的语法，以弥补在构建动态WEB应用时静态文本的不足，从而在web应用程序中使用HTML声明动态内容。</p>
-<p>AngularJS有五个主要核心特性，如下介绍：</p>
-<ul>
-<li><p>双向数据绑定 —— 实现了把model与view完全绑定在一起，model变化，view也变化，反之亦然。</p>
-</li>
-<li><p>模板 —— 在AngularJS中，模板相当于HTML文件被浏览器解析到DOM中，AngularJS遍历这些DOM，也就是说AuguarJS把模板当做DOM来操作，去生成一些指令来完成对view的数据绑定。</p>
-</li>
-<li><p>MVVM —— 吸收了传统的MVC设计模式针但又并不执行传统意义上的MVC，更接近于MVVM(Moodel-View-ViewModel)。</p>
-</li>
-<li><p>依赖注入 —— AngularJS拥有内建的依赖注入子系统，可以帮助开发人员更容易的开发，理解和测试应用。</p>
-</li>
-<li><p>指令 —— 可以用来创建自定义的标签，也可以用来装饰元素或者操作DOM属性</p>
-</li>
-</ul>
-<h3 id="2-引入AngularJS脚本"><a href="#2-引入AngularJS脚本" class="headerlink" title="2.引入AngularJS脚本"></a>2.引入AngularJS脚本</h3><hr>
-<p>认识了AngularJS框架，我们开始创建第一个AngularJS应用。</p>
-<p>AngularJS是以一个JavaScript文件形式发布的，可通过script标签载入AngularJS脚本，如下所示：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;script src=&quot;http://code.angularjs.org/angular-1.0.1.min.js&quot;&gt;&lt;/script&gt;</span><br></pre></td></tr></table></figure>
-<p>完整的html代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&lt;!doctype html&gt;</span><br><span class="line">&lt;html ng-app&gt;</span><br><span class="line">    &lt;head&gt;</span><br><span class="line">        &lt;script src=&quot;http://code.angularjs.org/angular-1.0.1.min.js&quot;&gt;&lt;/script&gt;</span><br><span class="line">    &lt;/head&gt;</span><br><span class="line">    &lt;body&gt;</span><br><span class="line">        Hello &#123;&#123;&apos;World&apos;&#125;&#125;!</span><br><span class="line">    &lt;/body&gt;</span><br><span class="line">&lt;/html&gt;</span><br></pre></td></tr></table></figure></p>
-<p>请在您的浏览器中运行以上代码查看效果。 </p>
-<h3 id="3-AngularJS指令"><a href="#3-AngularJS指令" class="headerlink" title="3.AngularJS指令"></a>3.AngularJS指令</h3><hr>
-<p>AngularJS有一套完整的、可扩展的、用来帮助web应用开发的指令集，它使得HTML可以转变成“特定领域语言(DSL)”，是用来扩展浏览器能力的技术之一，在DOM编译期间，和HTML关联着的指令会被检测到，并且被执行，这使得指令可以为DOM指定行为，或者改变它。</p>
-<p>AngularJS通过称为指令的新属性来扩展的HTML，带有前缀ng-，我们也可以称之为“指令属性”，它就是绑定在DOM元素上的函数，可以调用方法、定义行为、绑定controller及$scope对象、操作DOM，等等。</p>
-<p>AngularJS指令指示的是“当关联的HTML结构进入编译阶段时应该执行的操作”，它本质上只是一个当编译器编译到相关DOM时需要执行的函数，可以写在元素的名称里，属性里，css类名里，注释里。</p>
-<p>当浏览器启动、开始解析HTML时，DOM元素上的指令属性就会跟其他属性一样被解析，也就是说当一个Angular.js应用启动，Angular编译器就会遍历DOM树来解析HTML，寻找这些指令属性函数，在一个DOM元素上找到一个或多个这样的指令属性函数，它们就会被收集起来、排序，然后按照优先级顺序被执行。</p>
-<p>Angular.js应用的动态性和响应能力，都要归功于指令属性，常见的有：ng-app、ng-init、ng-model、ng-bind、ng-repeat等等。</p>
-<h3 id="4-指令：ng-app"><a href="#4-指令：ng-app" class="headerlink" title="4.指令：ng-app"></a>4.指令：ng-app</h3><hr>
-<p>ng-app指令来标明一个AngularJS应用程序，并通过AngularJS完成自动初始化应用和标记应用根作用域，同时载入和指令内容相关的模块，并通过拥有ng-app指令的标签为根节点开始编译其中的DOM。</p>
-<p>引用方法很简单，如下所示：</p>
-<pre><code>&lt;div ng-app=&quot;&quot;&gt;
-&lt;/div&gt;  
-</code></pre><p>如上引用，一个AngularJS应用程序初始化就完成了并标记了作用域，也就是div元素就是AngularJS应用程序的所有者，在它里面的指令也就会被Angular编译器所编译、解析了。</p>
-<h3 id="5-指令：ng-init"><a href="#5-指令：ng-init" class="headerlink" title="5.指令：ng-init"></a>5.指令：ng-init</h3><hr>
-<p>g-init指令初始化应用程序数据，也就是为AngularJS应用程序定义初始值，通常情况下，我们会使用一个控制器或模块来代替它，后面我们会介绍有关控制器和模块的知识。</p>
-<p>如下所示，我们为应用程序变量name赋定初始值。</p>
-<pre><code>&lt;div ng-app=&quot;&quot; ng-init=&quot;name=&apos;Hello World&apos;&quot;&gt;
-&lt;/div&gt;
-</code></pre><p>我们不仅可以赋值字符串，也可以赋值为数字、数组、对象，而且可以为多个变量赋初始值，如下所示：</p>
-<pre><code>&lt;div ng-app=&quot;&quot; ng-init=&quot;quantity=1;price=5&quot;&gt;
-&lt;/div&gt;
-</code></pre><p>//或者</p>
-<pre><code>&lt;div ng-app=&quot;&quot; ng-init=&quot;names=[&apos;Tom&apos;,&apos;Jerry&apos;,&apos;Gaffey&apos;]&quot;&gt;
-&lt;/div&gt;
-</code></pre><h3 id="6-数据绑定：表达式"><a href="#6-数据绑定：表达式" class="headerlink" title="6.数据绑定：表达式"></a>6.数据绑定：表达式</h3><hr>
-<p>AngularJS框架的核心功能之一 —— 数据绑定，由两个花括号组成，可以把数据绑定到HTML，类似Javascript代码片段，可以包含文字、运算符和变量，通常在绑定数据中用到，表达式可以绑定数字、字符串、对象、数组，写在双大括号内。</p>
-<p>如前面的示例，我们就可以使用表达式这样调用初始化的变量值，如下。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;div ng-app=&quot;&quot; ng-init=&quot;name=&apos;Hello World&apos;&quot;&gt;</span><br><span class="line"> 		&#123;&#123; name &#125;&#125;</span><br><span class="line">&lt;/div&gt;</span><br></pre></td></tr></table></figure></p>
-<p>当然我们也可以使用表达式输出数字、数组等等，如下所示：<br>2.1. 输出数字，如下示例：</p>
-<pre><code>&lt;div ng-app=&quot;&quot; ng-init=&quot;quantity=12;price=5&quot;&gt;
-    总价： {{ quantity * price }}
-&lt;/div&gt;
-</code></pre><p>2.2. 输出对象，如下示例：</p>
-<pre><code>&lt;div ng-app=&quot;&quot; ng-init=&quot;names=[&apos;Tom&apos;,&apos;Jerry&apos;,&apos;Gaffey&apos;]&quot;&gt;
-    名字为： {{ names[0] }}
-&lt;/div&gt;
-</code></pre><h3 id="7-指令：ng-model"><a href="#7-指令：ng-model" class="headerlink" title="7.指令：ng-model"></a>7.指令：ng-model</h3><hr>
-<p>在AngularJS中，只需要使用ng-model指令就可以把应用程序数据绑定到HTML元素，实现model和view的双向绑定。</p>
-<p>如下示例，使用ng-model指令对数据进行绑定。</p>
-<pre><code>&lt;div ng-app=&quot;&quot;&gt;
-    请输入任意值：&lt;input type=&quot;text&quot; ng-model=&quot;name&quot; /&gt;
-    你输入的为： {{ name }}
-&lt;/div&gt;
-</code></pre><p>ng-model把相关处理事件绑定到指定标签上，这样我们就可以不用在手工处理相关事件(比如change等)的条件下完成对数据的展现需求。</p>
-<h3 id="8-数据绑定：ng-bind"><a href="#8-数据绑定：ng-bind" class="headerlink" title="8.数据绑定：ng-bind"></a>8.数据绑定：ng-bind</h3><hr>
-<p>指令ng-bind和AngularJS表达式有异曲同工之妙，但不同之处就在于ng-bind是在angular解析渲染完毕后才将数据显示出来的。</p>
-<p>如下使用ng-bind指令绑定把应用程序数据。</p>
-<pre><code>&lt;div ng-app=&quot;&quot;&gt;
-        请输入一个名字：&lt;input type=&quot;text&quot; ng-model=&quot;name&quot; /&gt;
-        Hello &lt;span ng-bind=&quot;name&quot;&gt;&lt;/span&gt;
-&lt;/div&gt;
-</code></pre><p>PS：使用花括号语法时，因为浏览器需要首先加载页面，渲染它，然后AngularJS才能把它解析成你期望看到的内容，所以对于首个页面中的数据绑定操作，建议采用ng-bind，以避免其未被渲染的模板被用户看到。</p>
-<h3 id="9-指令：ng-click"><a href="#9-指令：ng-click" class="headerlink" title="9.指令：ng-click"></a>9.指令：ng-click</h3><hr>
-<p>AngularJS也有自己的HTML事件指令,比如说通过ng-click定义一个AngularJS单击事件。</p>
-<p>对按钮、链接等，我们都可以用ng-click指令属性来实现绑定，如下简单示例：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&lt;div ng-app=&quot;&quot; ng-init=&quot;click=false&quot;&gt;</span><br><span class="line">    &lt;button ng-click=&quot;click= !click&quot;&gt;隐藏/显示&lt;/button&gt;</span><br><span class="line">    &lt;div ng-hide=&quot;click&quot;&gt;</span><br><span class="line">        请输入一个名字：&lt;input type=&quot;text&quot; ng-model=&quot;name&quot; /&gt;</span><br><span class="line">        Hello &lt;span ng-bind=&quot;name&quot;&gt;&lt;/span&gt; </span><br><span class="line">    &lt;/div&gt;</span><br><span class="line">&lt;/div&gt;</span><br></pre></td></tr></table></figure></p>
-<p>PS：ng-hide=”true”，设置HTML元素不可见。</p>
-<p>ng-click指令将DOM元素的鼠标点击事件(即mousedown)绑定到一个方法上，当浏览器在该DOM元素上鼠标触发点击事件时，Angular就会调用相应的方法，是不是很简单方便呢！</p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2016-07-27T06:45:23.000Z"><a href="/2016/07/27/ES6/箭头函数/">2016-07-27</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2016/07/27/ES6/箭头函数/">箭头函数</a></h1>
+    <h1 class="title"><a href="/2016/08/05/Node.js_JS基础/如何编写一个 json对象的拷贝函数/">如何编写一个 json对象的拷贝函数</a></h1>
   
 
     </header>
     <div class="entry">
       
-        <h2 id="箭头函数"><a href="#箭头函数" class="headerlink" title="箭头函数"></a>箭头函数</h2><h3 id="基本用法"><a href="#基本用法" class="headerlink" title="基本用法"></a>基本用法</h3><p>ES6 允许使用“箭头”（<code>=&gt;</code>）定义函数。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> f = <span class="function"><span class="params">v</span> =&gt;</span> v;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 等同于</span></span><br><span class="line"><span class="keyword">var</span> f = <span class="function"><span class="keyword">function</span> (<span class="params">v</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> v;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>如果箭头函数不需要参数或需要多个参数，就使用一个圆括号代表参数部分。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> f = <span class="function"><span class="params">()</span> =&gt;</span> <span class="number">5</span>;</span><br><span class="line"><span class="comment">// 等同于</span></span><br><span class="line"><span class="keyword">var</span> f = <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123; <span class="keyword">return</span> <span class="number">5</span> &#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> sum = <span class="function">(<span class="params">num1, num2</span>) =&gt;</span> num1 + num2;</span><br><span class="line"><span class="comment">// 等同于</span></span><br><span class="line"><span class="keyword">var</span> sum = <span class="function"><span class="keyword">function</span>(<span class="params">num1, num2</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> num1 + num2;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>如果箭头函数的代码块部分多于一条语句，就要使用大括号将它们括起来，并且使用<code>return</code>语句返回。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> sum = <span class="function">(<span class="params">num1, num2</span>) =&gt;</span> &#123; <span class="keyword">return</span> num1 + num2; &#125;</span><br></pre></td></tr></table></figure>
-<p>由于大括号被解释为代码块，所以如果箭头函数直接返回一个对象，必须在对象外面加上括号，否则会报错。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 报错</span></span><br><span class="line"><span class="keyword">let</span> getTempItem = <span class="function"><span class="params">id</span> =&gt;</span> &#123; <span class="attr">id</span>: id, <span class="attr">name</span>: <span class="string">"Temp"</span> &#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 不报错</span></span><br><span class="line"><span class="keyword">let</span> getTempItem = <span class="function"><span class="params">id</span> =&gt;</span> (&#123; <span class="attr">id</span>: id, <span class="attr">name</span>: <span class="string">"Temp"</span> &#125;);</span><br></pre></td></tr></table></figure>
-<p>下面是一种特殊情况，虽然可以运行，但会得到错误的结果。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> foo = <span class="function"><span class="params">()</span> =&gt;</span> &#123; <span class="attr">a</span>: <span class="number">1</span> &#125;;</span><br><span class="line">foo() <span class="comment">// undefined</span></span><br></pre></td></tr></table></figure>
-<p>上面代码中，原始意图是返回一个对象<code>{ a: 1 }</code>，但是由于引擎认为大括号是代码块，所以执行了一行语句<code>a: 1</code>。这时，<code>a</code>可以被解释为语句的标签，因此实际执行的语句是<code>1;</code>，然后函数就结束了，没有返回值。</p>
-<p>如果箭头函数只有一行语句，且不需要返回值，可以采用下面的写法，就不用写大括号了。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> fn = <span class="function"><span class="params">()</span> =&gt;</span> <span class="keyword">void</span> doesNotReturn();</span><br></pre></td></tr></table></figure>
-<p>箭头函数可以与变量解构结合使用。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> full = <span class="function">(<span class="params">&#123; first, last &#125;</span>) =&gt;</span> first + <span class="string">' '</span> + last;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 等同于</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">full</span>(<span class="params">person</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> person.first + <span class="string">' '</span> + person.last;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>箭头函数使得表达更加简洁。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> isEven = <span class="function"><span class="params">n</span> =&gt;</span> n % <span class="number">2</span> == <span class="number">0</span>;</span><br><span class="line"><span class="keyword">const</span> square = <span class="function"><span class="params">n</span> =&gt;</span> n * n;</span><br></pre></td></tr></table></figure>
-<p>上面代码只用了两行，就定义了两个简单的工具函数。如果不用箭头函数，可能就要占用多行，而且还不如现在这样写醒目。</p>
-<p>箭头函数的一个用处是简化回调函数。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 正常函数写法</span></span><br><span class="line">[<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>].map(<span class="function"><span class="keyword">function</span> (<span class="params">x</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> x * x;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 箭头函数写法</span></span><br><span class="line">[<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>].map(<span class="function"><span class="params">x</span> =&gt;</span> x * x);</span><br></pre></td></tr></table></figure>
-<p>另一个例子是</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 正常函数写法</span></span><br><span class="line"><span class="keyword">var</span> result = values.sort(<span class="function"><span class="keyword">function</span> (<span class="params">a, b</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> a - b;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 箭头函数写法</span></span><br><span class="line"><span class="keyword">var</span> result = values.sort(<span class="function">(<span class="params">a, b</span>) =&gt;</span> a - b);</span><br></pre></td></tr></table></figure>
-<p>下面是 rest 参数与箭头函数结合的例子。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> numbers = <span class="function">(<span class="params">...nums</span>) =&gt;</span> nums;</span><br><span class="line"></span><br><span class="line">numbers(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>)</span><br><span class="line"><span class="comment">// [1,2,3,4,5]</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> headAndTail = <span class="function">(<span class="params">head, ...tail</span>) =&gt;</span> [head, tail];</span><br><span class="line"></span><br><span class="line">headAndTail(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>)</span><br><span class="line"><span class="comment">// [1,[2,3,4,5]]</span></span><br></pre></td></tr></table></figure>
-<h3 id="使用注意点"><a href="#使用注意点" class="headerlink" title="使用注意点"></a>使用注意点</h3><p>箭头函数有几个使用注意点。</p>
-<p>（1）函数体内的<code>this</code>对象，就是定义时所在的对象，而不是使用时所在的对象。</p>
-<p>（2）不可以当作构造函数，也就是说，不可以使用<code>new</code>命令，否则会抛出一个错误。</p>
-<p>（3）不可以使用<code>arguments</code>对象，该对象在函数体内不存在。如果要用，可以用 rest 参数代替。</p>
-<p>（4）不可以使用<code>yield</code>命令，因此箭头函数不能用作 Generator 函数。</p>
-<p>上面四点中，第一点尤其值得注意。<code>this</code>对象的指向是可变的，但是在箭头函数中，它是固定的。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'id:'</span>, <span class="keyword">this</span>.id);</span><br><span class="line">  &#125;, <span class="number">100</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> id = <span class="number">21</span>;</span><br><span class="line"></span><br><span class="line">foo.call(&#123; <span class="attr">id</span>: <span class="number">42</span> &#125;);</span><br><span class="line"><span class="comment">// id: 42</span></span><br></pre></td></tr></table></figure>
-<p>上面代码中，<code>setTimeout</code>的参数是一个箭头函数，这个箭头函数的定义生效是在<code>foo</code>函数生成时，而它的真正执行要等到 100 毫秒后。如果是普通函数，执行时<code>this</code>应该指向全局对象<code>window</code>，这时应该输出<code>21</code>。但是，箭头函数导致<code>this</code>总是指向函数定义生效时所在的对象（本例是<code>{id: 42}</code>），所以输出的是<code>42</code>。</p>
-<p>箭头函数可以让<code>setTimeout</code>里面的<code>this</code>，绑定定义时所在的作用域，而不是指向运行时所在的作用域。下面是另一个例子。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Timer</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">this</span>.s1 = <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">this</span>.s2 = <span class="number">0</span>;</span><br><span class="line">  <span class="comment">// 箭头函数</span></span><br><span class="line">  setInterval(<span class="function"><span class="params">()</span> =&gt;</span> <span class="keyword">this</span>.s1++, <span class="number">1000</span>);</span><br><span class="line">  <span class="comment">// 普通函数</span></span><br><span class="line">  setInterval(<span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.s2++;</span><br><span class="line">  &#125;, <span class="number">1000</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> timer = <span class="keyword">new</span> Timer();</span><br><span class="line"></span><br><span class="line">setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> <span class="built_in">console</span>.log(<span class="string">'s1: '</span>, timer.s1), <span class="number">3100</span>);</span><br><span class="line">setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> <span class="built_in">console</span>.log(<span class="string">'s2: '</span>, timer.s2), <span class="number">3100</span>);</span><br><span class="line"><span class="comment">// s1: 3</span></span><br><span class="line"><span class="comment">// s2: 0</span></span><br></pre></td></tr></table></figure>
-<p>上面代码中，<code>Timer</code>函数内部设置了两个定时器，分别使用了箭头函数和普通函数。前者的<code>this</code>绑定定义时所在的作用域（即<code>Timer</code>函数），后者的<code>this</code>指向运行时所在的作用域（即全局对象）。所以，3100 毫秒之后，<code>timer.s1</code>被更新了 3 次，而<code>timer.s2</code>一次都没更新。</p>
-<p>箭头函数可以让<code>this</code>指向固定化，这种特性很有利于封装回调函数。下面是一个例子，DOM 事件的回调函数封装在一个对象里面。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> handler = &#123;</span><br><span class="line">  id: <span class="string">'123456'</span>,</span><br><span class="line"></span><br><span class="line">  init: <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="built_in">document</span>.addEventListener(<span class="string">'click'</span>,</span><br><span class="line">      event =&gt; <span class="keyword">this</span>.doSomething(event.type), <span class="literal">false</span>);</span><br><span class="line">  &#125;,</span><br><span class="line"></span><br><span class="line">  doSomething: <span class="function"><span class="keyword">function</span>(<span class="params">type</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'Handling '</span> + type  + <span class="string">' for '</span> + <span class="keyword">this</span>.id);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>上面代码的<code>init</code>方法中，使用了箭头函数，这导致这个箭头函数里面的<code>this</code>，总是指向<code>handler</code>对象。否则，回调函数运行时，<code>this.doSomething</code>这一行会报错，因为此时<code>this</code>指向<code>document</code>对象。</p>
-<p><code>this</code>指向的固定化，并不是因为箭头函数内部有绑定<code>this</code>的机制，实际原因是箭头函数根本没有自己的<code>this</code>，导致内部的<code>this</code>就是外层代码块的<code>this</code>。正是因为它没有<code>this</code>，所以也就不能用作构造函数。</p>
-<p>所以，箭头函数转成 ES5 的代码如下。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ES6</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'id:'</span>, <span class="keyword">this</span>.id);</span><br><span class="line">  &#125;, <span class="number">100</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ES5</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> _this = <span class="keyword">this</span>;</span><br><span class="line"></span><br><span class="line">  setTimeout(<span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'id:'</span>, _this.id);</span><br><span class="line">  &#125;, <span class="number">100</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>上面代码中，转换后的 ES5 版本清楚地说明了，箭头函数里面根本没有自己的<code>this</code>，而是引用外层的<code>this</code>。</p>
-<p>请问下面的代码之中有几个<code>this</code>？</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'id:'</span>, <span class="keyword">this</span>.id);</span><br><span class="line">      &#125;;</span><br><span class="line">    &#125;;</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> f = foo.call(&#123;<span class="attr">id</span>: <span class="number">1</span>&#125;);</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> t1 = f.call(&#123;<span class="attr">id</span>: <span class="number">2</span>&#125;)()(); <span class="comment">// id: 1</span></span><br><span class="line"><span class="keyword">var</span> t2 = f().call(&#123;<span class="attr">id</span>: <span class="number">3</span>&#125;)(); <span class="comment">// id: 1</span></span><br><span class="line"><span class="keyword">var</span> t3 = f()().call(&#123;<span class="attr">id</span>: <span class="number">4</span>&#125;); <span class="comment">// id: 1</span></span><br></pre></td></tr></table></figure>
-<p>上面代码之中，只有一个<code>this</code>，就是函数<code>foo</code>的<code>this</code>，所以<code>t1</code>、<code>t2</code>、<code>t3</code>都输出同样的结果。因为所有的内层函数都是箭头函数，都没有自己的<code>this</code>，它们的<code>this</code>其实都是最外层<code>foo</code>函数的<code>this</code>。</p>
-<p>除了<code>this</code>，以下三个变量在箭头函数之中也是不存在的，指向外层函数的对应变量：<code>arguments</code>、<code>super</code>、<code>new.target</code>。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'args:'</span>, <span class="built_in">arguments</span>);</span><br><span class="line">  &#125;, <span class="number">100</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">foo(<span class="number">2</span>, <span class="number">4</span>, <span class="number">6</span>, <span class="number">8</span>)</span><br><span class="line"><span class="comment">// args: [2, 4, 6, 8]</span></span><br></pre></td></tr></table></figure>
-<p>上面代码中，箭头函数内部的变量<code>arguments</code>，其实是函数<code>foo</code>的<code>arguments</code>变量。</p>
-<p>另外，由于箭头函数没有自己的<code>this</code>，所以当然也就不能用<code>call()</code>、<code>apply()</code>、<code>bind()</code>这些方法去改变<code>this</code>的指向。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">(<span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> [</span><br><span class="line">    (<span class="function"><span class="params">()</span> =&gt;</span> <span class="keyword">this</span>.x).bind(&#123; <span class="attr">x</span>: <span class="string">'inner'</span> &#125;)()</span><br><span class="line">  ];</span><br><span class="line">&#125;).call(&#123; <span class="attr">x</span>: <span class="string">'outer'</span> &#125;);</span><br><span class="line"><span class="comment">// ['outer']</span></span><br></pre></td></tr></table></figure>
-<p>上面代码中，箭头函数没有自己的<code>this</code>，所以<code>bind</code>方法无效，内部的<code>this</code>指向外部的<code>this</code>。</p>
-<p>长期以来，JavaScript 语言的<code>this</code>对象一直是一个令人头痛的问题，在对象方法中使用<code>this</code>，必须非常小心。箭头函数”绑定”<code>this</code>，很大程度上解决了这个困扰。</p>
-<h3 id="嵌套的箭头函数"><a href="#嵌套的箭头函数" class="headerlink" title="嵌套的箭头函数"></a>嵌套的箭头函数</h3><p>箭头函数内部，还可以再使用箭头函数。下面是一个 ES5 语法的多重嵌套函数。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">insert</span>(<span class="params">value</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> &#123;<span class="attr">into</span>: <span class="function"><span class="keyword">function</span> (<span class="params">array</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="attr">after</span>: <span class="function"><span class="keyword">function</span> (<span class="params">afterValue</span>) </span>&#123;</span><br><span class="line">      array.splice(array.indexOf(afterValue) + <span class="number">1</span>, <span class="number">0</span>, value);</span><br><span class="line">      <span class="keyword">return</span> array;</span><br><span class="line">    &#125;&#125;;</span><br><span class="line">  &#125;&#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">insert(<span class="number">2</span>).into([<span class="number">1</span>, <span class="number">3</span>]).after(<span class="number">1</span>); <span class="comment">//[1, 2, 3]</span></span><br></pre></td></tr></table></figure>
-<p>上面这个函数，可以使用箭头函数改写。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> insert = <span class="function">(<span class="params">value</span>) =&gt;</span> (&#123;<span class="attr">into</span>: <span class="function">(<span class="params">array</span>) =&gt;</span> (&#123;<span class="attr">after</span>: <span class="function">(<span class="params">afterValue</span>) =&gt;</span> &#123;</span><br><span class="line">  array.splice(array.indexOf(afterValue) + <span class="number">1</span>, <span class="number">0</span>, value);</span><br><span class="line">  <span class="keyword">return</span> array;</span><br><span class="line">&#125;&#125;)&#125;);</span><br><span class="line"></span><br><span class="line">insert(<span class="number">2</span>).into([<span class="number">1</span>, <span class="number">3</span>]).after(<span class="number">1</span>); <span class="comment">//[1, 2, 3]</span></span><br></pre></td></tr></table></figure>
-<p>下面是一个部署管道机制（pipeline）的例子，即前一个函数的输出是后一个函数的输入。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> pipeline = <span class="function">(<span class="params">...funcs</span>) =&gt;</span></span><br><span class="line">  val =&gt; funcs.reduce(<span class="function">(<span class="params">a, b</span>) =&gt;</span> b(a), val);</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> plus1 = <span class="function"><span class="params">a</span> =&gt;</span> a + <span class="number">1</span>;</span><br><span class="line"><span class="keyword">const</span> mult2 = <span class="function"><span class="params">a</span> =&gt;</span> a * <span class="number">2</span>;</span><br><span class="line"><span class="keyword">const</span> addThenMult = pipeline(plus1, mult2);</span><br><span class="line"></span><br><span class="line">addThenMult(<span class="number">5</span>)</span><br><span class="line"><span class="comment">// 12</span></span><br></pre></td></tr></table></figure>
-<p>如果觉得上面的写法可读性比较差，也可以采用下面的写法。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> plus1 = <span class="function"><span class="params">a</span> =&gt;</span> a + <span class="number">1</span>;</span><br><span class="line"><span class="keyword">const</span> mult2 = <span class="function"><span class="params">a</span> =&gt;</span> a * <span class="number">2</span>;</span><br><span class="line"></span><br><span class="line">mult2(plus1(<span class="number">5</span>))</span><br><span class="line"><span class="comment">// 12</span></span><br></pre></td></tr></table></figure>
-<p>箭头函数还有一个功能，就是可以很方便地改写 λ 演算。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// λ演算的写法</span></span><br><span class="line">fix = λf.(λx.f(λv.x(x)(v)))(λx.f(λv.x(x)(v)))</span><br><span class="line"></span><br><span class="line"><span class="comment">// ES6的写法</span></span><br><span class="line"><span class="keyword">var</span> fix = <span class="function"><span class="params">f</span> =&gt;</span> (<span class="function"><span class="params">x</span> =&gt;</span> f(<span class="function"><span class="params">v</span> =&gt;</span> x(x)(v)))</span><br><span class="line">               (<span class="function"><span class="params">x</span> =&gt;</span> f(<span class="function"><span class="params">v</span> =&gt;</span> x(x)(v)));</span><br></pre></td></tr></table></figure>
-<p>上面两种写法，几乎是一一对应的。由于 λ 演算对于计算机科学非常重要，这使得我们可以用 ES6 作为替代工具，探索计算机科学。</p>
-<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="https://github.com/ruanyf/es6tutorial/blob/gh-pages/docs/function.md" target="_blank" rel="noopener">https://github.com/ruanyf/es6tutorial/blob/gh-pages/docs/function.md</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2016-07-23T14:16:53.000Z"><a href="/2016/07/23/Node.js_进程/Nodejs编写守护进程/">2016-07-23</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2016/07/23/Node.js_进程/Nodejs编写守护进程/">Nodejs编写守护进程</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>目前Nodejs编写一个守护进程非常简单，在6.3.1版本中已经存在非常方便的API，这些API可以帮助我们更方便的创建一个守护进程。本文仅在描述守护进程的创建方式，而不会对守护进程所要执行的任务做任何描述。</p>
-<h3 id="守护进程的启动方式"><a href="#守护进程的启动方式" class="headerlink" title="守护进程的启动方式"></a>守护进程的启动方式</h3><p>如果不在Nodejs环境中，我们如何创建守护进程？过程如下：</p>
-<ol>
-<li>创建一个进程A。</li>
-<li>在进程A中创建进程B，我们可以使用fork方式，或者其他方法。</li>
-<li>对进程B执行 <code>setsid</code> 方法。</li>
-<li>进程A退出，进程B由init进程接管。此时进程B为守护进程。</li>
-</ol>
-<h3 id="Setsid详解"><a href="#Setsid详解" class="headerlink" title="Setsid详解"></a>Setsid详解</h3><p><code>setsid</code> 主要完成三件事：</p>
-<ol>
-<li>该进程变成一个新会话的会话领导。</li>
-<li>该进程变成一个新进程组的组长。</li>
-<li>该进程没有控制终端。</li>
-</ol>
-<p>然而，Nodejs中并没有对 <code>setsid</code> 方法的直接封装，翻阅文档发现有一个地方是可以调用该方法的。</p>
-<h3 id="Nodejs中启动子进程方法"><a href="#Nodejs中启动子进程方法" class="headerlink" title="Nodejs中启动子进程方法"></a>Nodejs中启动子进程方法</h3><p>借助 <code>clild_process</code> 中的 <code>spawn</code> 即可创建子进程，方法如下：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> spawn = <span class="built_in">require</span>(<span class="string">'child_process'</span>).spawn;</span><br><span class="line"><span class="keyword">var</span> process = <span class="built_in">require</span>(<span class="string">'process'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> p = spawn(<span class="string">'node'</span>,[<span class="string">'b.js'</span>]);</span><br><span class="line"><span class="built_in">console</span>.log(process.pid, p.pid);</span><br></pre></td></tr></table></figure>
-<p>注意，这里只打印当前进程的PID和子进程的PID，同时为了观察效果，我并没有将父进程退出。</p>
-<p><code>b.js</code> 中代码很简单，打开一个资源，并不停的写入数据。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> fs = <span class="built_in">require</span>(<span class="string">'fs'</span>);</span><br><span class="line"><span class="keyword">var</span> process = <span class="built_in">require</span>(<span class="string">'process'</span>);</span><br><span class="line"></span><br><span class="line">fs.open(<span class="string">"/Users/mebius/Desktop/log.txt"</span>,<span class="string">'w'</span>,<span class="function"><span class="keyword">function</span>(<span class="params">err, fd</span>)</span>&#123;</span><br><span class="line">	<span class="built_in">console</span>.log(fd);</span><br><span class="line">	<span class="keyword">while</span>(<span class="literal">true</span>)</span><br><span class="line">	&#123;</span><br><span class="line">		fs.write(fd,process.pid+<span class="string">"\n"</span>,<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;&#125;);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>运行后的效果如图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/fork01_180703.png" alt=""></p>
-<p>我们来看以下 <code>top</code> 命令下的进程情况。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/fork02_180703.png" alt=""></p>
-<p>看一看到，此时父进程PID为17055，子进程的PPID为17055，PID为17056.</p>
-<h3 id="Nodejs中Setsid的调用"><a href="#Nodejs中Setsid的调用" class="headerlink" title="Nodejs中Setsid的调用"></a>Nodejs中Setsid的调用</h3><p>到此为止，守护进程已经完成一半，下面要调用setsid方法，并且退出父进程。</p>
-<p>代码修改如下：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> spawn = <span class="built_in">require</span>(<span class="string">'child_process'</span>).spawn;</span><br><span class="line"><span class="keyword">var</span> process = <span class="built_in">require</span>(<span class="string">'process'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> p = spawn(<span class="string">'node'</span>,[<span class="string">'b.js'</span>],&#123;</span><br><span class="line">        detached : <span class="literal">true</span></span><br><span class="line">    &#125;);</span><br><span class="line"><span class="built_in">console</span>.log(process.pid, p.pid);</span><br><span class="line">process.exit(<span class="number">0</span>);</span><br></pre></td></tr></table></figure>
-<p>在 <code>spawn</code> 的第三个参数中，可以设置 <code>detached</code> 属性，如果该属性为true，则会调用 <code>setsid</code> 方法。这样就满足我们对守护进程的要求。</p>
-<p>在此运行命令。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/fork03_180703.png" alt=""></p>
-<p>查看 <code>top</code> 命令</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/fork04_180703.png" alt=""></p>
-<p>可以看到，当前仅存在一个PID为17062的进程，这个进程就是我们要的守护进程。</p>
-<blockquote>
-<p>由于每次运行PID都不同，所以此次子进程的PID于第一次不同。</p>
-</blockquote>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>守护进程最重要的是稳定，如果守护进程挂掉，那么其管理的子进程都将变为孤儿进程，同时被init进程接管，这是我们不愿意看到的。于此同时，守护进程对于子进程的管理也是有非常多的发挥余地的，例如PM2中，将一个进程同时启动4次，达到CPU多核使用的目的（很有可能你的进程在同一核中运行），进程挂掉后自动重启等等，这些事情等着我们去造轮子。</p>
-<p>普通的进程, 在用户退出终端之后就会直接关闭. 通过 &amp; 启动到后台的进程, 之后会由于会（session组）被回收而终止进程. 守护进程是不依赖终端（tty）的进程, 不会因为用户退出终端而停止运行的进程.</p>
-<p>总体来说，Nodejs启动守护进程方式比较简单，默认所暴露的API也屏蔽了很多系统级别API，使得大家使用上更加方便，但没有接触过Linux的人在理解上有一些复杂。推荐大家学习Nodejs的同时，多学习Linux系统调用的和系统内核的一些东西。</p>
-<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="https://ashan.org/archives/917" target="_blank" rel="noopener">https://ashan.org/archives/917</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2016-06-29T06:45:23.000Z"><a href="/2016/06/29/ES6/Set和Map数据结构/">2016-06-29</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2016/06/29/ES6/Set和Map数据结构/">set和Map数据结构</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h2 id="Set"><a href="#Set" class="headerlink" title="Set"></a>Set</h2><h3 id="基本用法"><a href="#基本用法" class="headerlink" title="基本用法"></a>基本用法</h3><p>ES6 提供了新的数据结构 Set。它类似于数组，但是成员的值都是唯一的，没有重复的值。</p>
-<p>Set 本身是一个构造函数，用来生成 Set 数据结构。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> s = <span class="keyword">new</span> <span class="built_in">Set</span>();</span><br><span class="line"></span><br><span class="line">[<span class="number">2</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">2</span>, <span class="number">2</span>].forEach(<span class="function"><span class="params">x</span> =&gt;</span> s.add(x));</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> i <span class="keyword">of</span> s) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(i);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 2 3 5 4</span></span><br></pre></td></tr></table></figure>
-<p>上面代码通过<code>add</code>方法向 Set 结构加入成员，结果表明 Set 结构不会添加重复的值。</p>
-<p>Set 函数可以接受一个数组（或者具有 iterable 接口的其他数据结构）作为参数，用来初始化。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 例一</span></span><br><span class="line"><span class="keyword">const</span> set = <span class="keyword">new</span> <span class="built_in">Set</span>([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">4</span>]);</span><br><span class="line">[...set]</span><br><span class="line"><span class="comment">// [1, 2, 3, 4]</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 例二</span></span><br><span class="line"><span class="keyword">const</span> items = <span class="keyword">new</span> <span class="built_in">Set</span>([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">5</span>, <span class="number">5</span>, <span class="number">5</span>]);</span><br><span class="line">items.size <span class="comment">// 5</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 例三</span></span><br><span class="line"><span class="keyword">const</span> set = <span class="keyword">new</span> <span class="built_in">Set</span>(<span class="built_in">document</span>.querySelectorAll(<span class="string">'div'</span>));</span><br><span class="line">set.size <span class="comment">// 56</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 类似于</span></span><br><span class="line"><span class="keyword">const</span> set = <span class="keyword">new</span> <span class="built_in">Set</span>();</span><br><span class="line"><span class="built_in">document</span></span><br><span class="line"> .querySelectorAll(<span class="string">'div'</span>)</span><br><span class="line"> .forEach(<span class="function"><span class="params">div</span> =&gt;</span> set.add(div));</span><br><span class="line">set.size <span class="comment">// 56</span></span><br></pre></td></tr></table></figure>
-<p>上面代码中，例一和例二都是<code>Set</code>函数接受数组作为参数，例三是接受类似数组的对象作为参数。</p>
-<p>上面代码也展示了一种去除数组重复成员的方法。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 去除数组的重复成员</span></span><br><span class="line">[...new <span class="built_in">Set</span>(array)]</span><br></pre></td></tr></table></figure>
-<p>向 Set 加入值的时候，不会发生类型转换，所以<code>5</code>和<code>&quot;5&quot;</code>是两个不同的值。Set 内部判断两个值是否不同，使用的算法叫做“Same-value-zero equality”，它类似于精确相等运算符（<code>===</code>），主要的区别是<code>NaN</code>等于自身，而精确相等运算符认为<code>NaN</code>不等于自身。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> set = <span class="keyword">new</span> <span class="built_in">Set</span>();</span><br><span class="line"><span class="keyword">let</span> a = <span class="literal">NaN</span>;</span><br><span class="line"><span class="keyword">let</span> b = <span class="literal">NaN</span>;</span><br><span class="line">set.add(a);</span><br><span class="line">set.add(b);</span><br><span class="line">set <span class="comment">// Set &#123;NaN&#125;</span></span><br></pre></td></tr></table></figure>
-<p>上面代码向 Set 实例添加了两个<code>NaN</code>，但是只能加入一个。这表明，在 Set 内部，两个<code>NaN</code>是相等。</p>
-<p>另外，两个对象总是不相等的。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> set = <span class="keyword">new</span> <span class="built_in">Set</span>();</span><br><span class="line"></span><br><span class="line">set.add(&#123;&#125;);</span><br><span class="line">set.size <span class="comment">// 1</span></span><br><span class="line"></span><br><span class="line">set.add(&#123;&#125;);</span><br><span class="line">set.size <span class="comment">// 2</span></span><br></pre></td></tr></table></figure>
-<p>上面代码表示，由于两个空对象不相等，所以它们被视为两个值。</p>
-<h3 id="Set-实例的属性和方法"><a href="#Set-实例的属性和方法" class="headerlink" title="Set 实例的属性和方法"></a>Set 实例的属性和方法</h3><p>Set 结构的实例有以下属性。</p>
-<ul>
-<li><code>Set.prototype.constructor</code>：构造函数，默认就是<code>Set</code>函数。</li>
-<li><code>Set.prototype.size</code>：返回<code>Set</code>实例的成员总数。</li>
-</ul>
-<p>Set 实例的方法分为两大类：操作方法（用于操作数据）和遍历方法（用于遍历成员）。下面先介绍四个操作方法。</p>
-<ul>
-<li><code>add(value)</code>：添加某个值，返回 Set 结构本身。</li>
-<li><code>delete(value)</code>：删除某个值，返回一个布尔值，表示删除是否成功。</li>
-<li><code>has(value)</code>：返回一个布尔值，表示该值是否为<code>Set</code>的成员。</li>
-<li><code>clear()</code>：清除所有成员，没有返回值。</li>
-</ul>
-<p>上面这些属性和方法的实例如下。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">s.add(<span class="number">1</span>).add(<span class="number">2</span>).add(<span class="number">2</span>);</span><br><span class="line"><span class="comment">// 注意2被加入了两次</span></span><br><span class="line"></span><br><span class="line">s.size <span class="comment">// 2</span></span><br><span class="line"></span><br><span class="line">s.has(<span class="number">1</span>) <span class="comment">// true</span></span><br><span class="line">s.has(<span class="number">2</span>) <span class="comment">// true</span></span><br><span class="line">s.has(<span class="number">3</span>) <span class="comment">// false</span></span><br><span class="line"></span><br><span class="line">s.delete(<span class="number">2</span>);</span><br><span class="line">s.has(<span class="number">2</span>) <span class="comment">// false</span></span><br></pre></td></tr></table></figure>
-<p>下面是一个对比，看看在判断是否包括一个键上面，<code>Object</code>结构和<code>Set</code>结构的写法不同。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 对象的写法</span></span><br><span class="line"><span class="keyword">const</span> properties = &#123;</span><br><span class="line">  <span class="string">'width'</span>: <span class="number">1</span>,</span><br><span class="line">  <span class="string">'height'</span>: <span class="number">1</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (properties[someName]) &#123;</span><br><span class="line">  <span class="comment">// do something</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Set的写法</span></span><br><span class="line"><span class="keyword">const</span> properties = <span class="keyword">new</span> <span class="built_in">Set</span>();</span><br><span class="line"></span><br><span class="line">properties.add(<span class="string">'width'</span>);</span><br><span class="line">properties.add(<span class="string">'height'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (properties.has(someName)) &#123;</span><br><span class="line">  <span class="comment">// do something</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><code>Array.from</code>方法可以将 Set 结构转为数组。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> items = <span class="keyword">new</span> <span class="built_in">Set</span>([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>]);</span><br><span class="line"><span class="keyword">const</span> array = <span class="built_in">Array</span>.from(items);</span><br></pre></td></tr></table></figure>
-<p>这就提供了去除数组重复成员的另一种方法。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">dedupe</span>(<span class="params">array</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">Array</span>.from(<span class="keyword">new</span> <span class="built_in">Set</span>(array));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">dedupe([<span class="number">1</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]) <span class="comment">// [1, 2, 3]</span></span><br></pre></td></tr></table></figure>
-<h3 id="遍历操作"><a href="#遍历操作" class="headerlink" title="遍历操作"></a>遍历操作</h3><p>Set 结构的实例有四个遍历方法，可以用于遍历成员。</p>
-<ul>
-<li><code>keys()</code>：返回键名的遍历器</li>
-<li><code>values()</code>：返回键值的遍历器</li>
-<li><code>entries()</code>：返回键值对的遍历器</li>
-<li><code>forEach()</code>：使用回调函数遍历每个成员</li>
-</ul>
-<p>需要特别指出的是，<code>Set</code>的遍历顺序就是插入顺序。这个特性有时非常有用，比如使用 Set 保存一个回调函数列表，调用时就能保证按照添加顺序调用。</p>
-<p><strong>（1）<code>keys()</code>，<code>values()</code>，<code>entries()</code></strong></p>
-<p><code>keys</code>方法、<code>values</code>方法、<code>entries</code>方法返回的都是遍历器对象（详见《Iterator 对象》一章）。由于 Set 结构没有键名，只有键值（或者说键名和键值是同一个值），所以<code>keys</code>方法和<code>values</code>方法的行为完全一致。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> set = <span class="keyword">new</span> <span class="built_in">Set</span>([<span class="string">'red'</span>, <span class="string">'green'</span>, <span class="string">'blue'</span>]);</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> item <span class="keyword">of</span> set.keys()) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(item);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// red</span></span><br><span class="line"><span class="comment">// green</span></span><br><span class="line"><span class="comment">// blue</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> item <span class="keyword">of</span> set.values()) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(item);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// red</span></span><br><span class="line"><span class="comment">// green</span></span><br><span class="line"><span class="comment">// blue</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> item <span class="keyword">of</span> set.entries()) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(item);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// ["red", "red"]</span></span><br><span class="line"><span class="comment">// ["green", "green"]</span></span><br><span class="line"><span class="comment">// ["blue", "blue"]</span></span><br></pre></td></tr></table></figure>
-<p>上面代码中，<code>entries</code>方法返回的遍历器，同时包括键名和键值，所以每次输出一个数组，它的两个成员完全相等。</p>
-<p>Set 结构的实例默认可遍历，它的默认遍历器生成函数就是它的<code>values</code>方法。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">Set</span>.prototype[<span class="built_in">Symbol</span>.iterator] === <span class="built_in">Set</span>.prototype.values</span><br><span class="line"><span class="comment">// true</span></span><br></pre></td></tr></table></figure>
-<p>这意味着，可以省略<code>values</code>方法，直接用<code>for...of</code>循环遍历 Set。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> set = <span class="keyword">new</span> <span class="built_in">Set</span>([<span class="string">'red'</span>, <span class="string">'green'</span>, <span class="string">'blue'</span>]);</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> x <span class="keyword">of</span> set) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(x);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// red</span></span><br><span class="line"><span class="comment">// green</span></span><br><span class="line"><span class="comment">// blue</span></span><br></pre></td></tr></table></figure>
-<p><strong>（2）<code>forEach()</code></strong></p>
-<p>Set 结构的实例与数组一样，也拥有<code>forEach</code>方法，用于对每个成员执行某种操作，没有返回值。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">set = <span class="keyword">new</span> <span class="built_in">Set</span>([<span class="number">1</span>, <span class="number">4</span>, <span class="number">9</span>]);</span><br><span class="line">set.forEach(<span class="function">(<span class="params">value, key</span>) =&gt;</span> <span class="built_in">console</span>.log(key + <span class="string">' : '</span> + value))</span><br><span class="line"><span class="comment">// 1 : 1</span></span><br><span class="line"><span class="comment">// 4 : 4</span></span><br><span class="line"><span class="comment">// 9 : 9</span></span><br></pre></td></tr></table></figure>
-<p>上面代码说明，<code>forEach</code>方法的参数就是一个处理函数。该函数的参数与数组的<code>forEach</code>一致，依次为键值、键名、集合本身（上例省略了该参数）。这里需要注意，Set 结构的键名就是键值（两者是同一个值），因此第一个参数与第二个参数的值永远都是一样的。</p>
-<p>另外，<code>forEach</code>方法还可以有第二个参数，表示绑定处理函数内部的<code>this</code>对象。</p>
-<p><strong>（3）遍历的应用</strong></p>
-<p>扩展运算符（<code>...</code>）内部使用<code>for...of</code>循环，所以也可以用于 Set 结构。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> set = <span class="keyword">new</span> <span class="built_in">Set</span>([<span class="string">'red'</span>, <span class="string">'green'</span>, <span class="string">'blue'</span>]);</span><br><span class="line"><span class="keyword">let</span> arr = [...set];</span><br><span class="line"><span class="comment">// ['red', 'green', 'blue']</span></span><br></pre></td></tr></table></figure>
-<p>扩展运算符和 Set 结构相结合，就可以去除数组的重复成员。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> arr = [<span class="number">3</span>, <span class="number">5</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">5</span>, <span class="number">5</span>];</span><br><span class="line"><span class="keyword">let</span> unique = [...new <span class="built_in">Set</span>(arr)];</span><br><span class="line"><span class="comment">// [3, 5, 2]</span></span><br></pre></td></tr></table></figure>
-<p>而且，数组的<code>map</code>和<code>filter</code>方法也可以间接用于 Set 了。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> set = <span class="keyword">new</span> <span class="built_in">Set</span>([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]);</span><br><span class="line">set = <span class="keyword">new</span> <span class="built_in">Set</span>([...set].map(<span class="function"><span class="params">x</span> =&gt;</span> x * <span class="number">2</span>));</span><br><span class="line"><span class="comment">// 返回Set结构：&#123;2, 4, 6&#125;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> set = <span class="keyword">new</span> <span class="built_in">Set</span>([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>]);</span><br><span class="line">set = <span class="keyword">new</span> <span class="built_in">Set</span>([...set].filter(<span class="function"><span class="params">x</span> =&gt;</span> (x % <span class="number">2</span>) == <span class="number">0</span>));</span><br><span class="line"><span class="comment">// 返回Set结构：&#123;2, 4&#125;</span></span><br></pre></td></tr></table></figure>
-<p>因此使用 Set 可以很容易地实现并集（Union）、交集（Intersect）和差集（Difference）。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> a = <span class="keyword">new</span> <span class="built_in">Set</span>([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]);</span><br><span class="line"><span class="keyword">let</span> b = <span class="keyword">new</span> <span class="built_in">Set</span>([<span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>]);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 并集</span></span><br><span class="line"><span class="keyword">let</span> union = <span class="keyword">new</span> <span class="built_in">Set</span>([...a, ...b]);</span><br><span class="line"><span class="comment">// Set &#123;1, 2, 3, 4&#125;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 交集</span></span><br><span class="line"><span class="keyword">let</span> intersect = <span class="keyword">new</span> <span class="built_in">Set</span>([...a].filter(<span class="function"><span class="params">x</span> =&gt;</span> b.has(x)));</span><br><span class="line"><span class="comment">// set &#123;2, 3&#125;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 差集</span></span><br><span class="line"><span class="keyword">let</span> difference = <span class="keyword">new</span> <span class="built_in">Set</span>([...a].filter(<span class="function"><span class="params">x</span> =&gt;</span> !b.has(x)));</span><br><span class="line"><span class="comment">// Set &#123;1&#125;</span></span><br></pre></td></tr></table></figure>
-<p>如果想在遍历操作中，同步改变原来的 Set 结构，目前没有直接的方法，但有两种变通方法。一种是利用原 Set 结构映射出一个新的结构，然后赋值给原来的 Set 结构；另一种是利用<code>Array.from</code>方法。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 方法一</span></span><br><span class="line"><span class="keyword">let</span> set = <span class="keyword">new</span> <span class="built_in">Set</span>([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]);</span><br><span class="line">set = <span class="keyword">new</span> <span class="built_in">Set</span>([...set].map(<span class="function"><span class="params">val</span> =&gt;</span> val * <span class="number">2</span>));</span><br><span class="line"><span class="comment">// set的值是2, 4, 6</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 方法二</span></span><br><span class="line"><span class="keyword">let</span> set = <span class="keyword">new</span> <span class="built_in">Set</span>([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]);</span><br><span class="line">set = <span class="keyword">new</span> <span class="built_in">Set</span>(<span class="built_in">Array</span>.from(set, val =&gt; val * <span class="number">2</span>));</span><br><span class="line"><span class="comment">// set的值是2, 4, 6</span></span><br></pre></td></tr></table></figure>
-<p>上面代码提供了两种方法，直接在遍历操作中改变原来的 Set 结构。</p>
-<h2 id="Map"><a href="#Map" class="headerlink" title="Map"></a>Map</h2><h3 id="含义和基本用法"><a href="#含义和基本用法" class="headerlink" title="含义和基本用法"></a>含义和基本用法</h3><p>JavaScript 的对象（Object），本质上是键值对的集合（Hash 结构），但是传统上只能用字符串当作键。这给它的使用带来了很大的限制。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> data = &#123;&#125;;</span><br><span class="line"><span class="keyword">const</span> element = <span class="built_in">document</span>.getElementById(<span class="string">'myDiv'</span>);</span><br><span class="line"></span><br><span class="line">data[element] = <span class="string">'metadata'</span>;</span><br><span class="line">data[<span class="string">'[object HTMLDivElement]'</span>] <span class="comment">// "metadata"</span></span><br></pre></td></tr></table></figure>
-<p>上面代码原意是将一个 DOM 节点作为对象<code>data</code>的键，但是由于对象只接受字符串作为键名，所以<code>element</code>被自动转为字符串<code>[object HTMLDivElement]</code>。</p>
-<p>为了解决这个问题，ES6 提供了 Map 数据结构。它类似于对象，也是键值对的集合，但是“键”的范围不限于字符串，各种类型的值（包括对象）都可以当作键。也就是说，Object 结构提供了“字符串—值”的对应，Map 结构提供了“值—值”的对应，是一种更完善的 Hash 结构实现。如果你需要“键值对”的数据结构，Map 比 Object 更合适。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> m = <span class="keyword">new</span> <span class="built_in">Map</span>();</span><br><span class="line"><span class="keyword">const</span> o = &#123;<span class="attr">p</span>: <span class="string">'Hello World'</span>&#125;;</span><br><span class="line"></span><br><span class="line">m.set(o, <span class="string">'content'</span>)</span><br><span class="line">m.get(o) <span class="comment">// "content"</span></span><br><span class="line"></span><br><span class="line">m.has(o) <span class="comment">// true</span></span><br><span class="line">m.delete(o) <span class="comment">// true</span></span><br><span class="line">m.has(o) <span class="comment">// false</span></span><br></pre></td></tr></table></figure>
-<p>上面代码使用 Map 结构的<code>set</code>方法，将对象<code>o</code>当作<code>m</code>的一个键，然后又使用<code>get</code>方法读取这个键，接着使用<code>delete</code>方法删除了这个键。</p>
-<p>上面的例子展示了如何向 Map 添加成员。作为构造函数，Map 也可以接受一个数组作为参数。该数组的成员是一个个表示键值对的数组。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> map = <span class="keyword">new</span> <span class="built_in">Map</span>([</span><br><span class="line">  [<span class="string">'name'</span>, <span class="string">'张三'</span>],</span><br><span class="line">  [<span class="string">'title'</span>, <span class="string">'Author'</span>]</span><br><span class="line">]);</span><br><span class="line"></span><br><span class="line">map.size <span class="comment">// 2</span></span><br><span class="line">map.has(<span class="string">'name'</span>) <span class="comment">// true</span></span><br><span class="line">map.get(<span class="string">'name'</span>) <span class="comment">// "张三"</span></span><br><span class="line">map.has(<span class="string">'title'</span>) <span class="comment">// true</span></span><br><span class="line">map.get(<span class="string">'title'</span>) <span class="comment">// "Author"</span></span><br></pre></td></tr></table></figure>
-<p>上面代码在新建 Map 实例时，就指定了两个键<code>name</code>和<code>title</code>。</p>
-<p><code>Map</code>构造函数接受数组作为参数，实际上执行的是下面的算法。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> items = [</span><br><span class="line">  [<span class="string">'name'</span>, <span class="string">'张三'</span>],</span><br><span class="line">  [<span class="string">'title'</span>, <span class="string">'Author'</span>]</span><br><span class="line">];</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> map = <span class="keyword">new</span> <span class="built_in">Map</span>();</span><br><span class="line"></span><br><span class="line">items.forEach(</span><br><span class="line">  ([key, value]) =&gt; map.set(key, value)</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
-<p>事实上，不仅仅是数组，任何具有 Iterator 接口、且每个成员都是一个双元素的数组的数据结构（详见《Iterator》一章）都可以当作<code>Map</code>构造函数的参数。这就是说，<code>Set</code>和<code>Map</code>都可以用来生成新的 Map。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> set = <span class="keyword">new</span> <span class="built_in">Set</span>([</span><br><span class="line">  [<span class="string">'foo'</span>, <span class="number">1</span>],</span><br><span class="line">  [<span class="string">'bar'</span>, <span class="number">2</span>]</span><br><span class="line">]);</span><br><span class="line"><span class="keyword">const</span> m1 = <span class="keyword">new</span> <span class="built_in">Map</span>(set);</span><br><span class="line">m1.get(<span class="string">'foo'</span>) <span class="comment">// 1</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> m2 = <span class="keyword">new</span> <span class="built_in">Map</span>([[<span class="string">'baz'</span>, <span class="number">3</span>]]);</span><br><span class="line"><span class="keyword">const</span> m3 = <span class="keyword">new</span> <span class="built_in">Map</span>(m2);</span><br><span class="line">m3.get(<span class="string">'baz'</span>) <span class="comment">// 3</span></span><br></pre></td></tr></table></figure>
-<p>上面代码中，我们分别使用 Set 对象和 Map 对象，当作<code>Map</code>构造函数的参数，结果都生成了新的 Map 对象。</p>
-<p>如果对同一个键多次赋值，后面的值将覆盖前面的值。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> map = <span class="keyword">new</span> <span class="built_in">Map</span>();</span><br><span class="line"></span><br><span class="line">map</span><br><span class="line">.set(<span class="number">1</span>, <span class="string">'aaa'</span>)</span><br><span class="line">.set(<span class="number">1</span>, <span class="string">'bbb'</span>);</span><br><span class="line"></span><br><span class="line">map.get(<span class="number">1</span>) <span class="comment">// "bbb"</span></span><br></pre></td></tr></table></figure>
-<p>上面代码对键<code>1</code>连续赋值两次，后一次的值覆盖前一次的值。</p>
-<p>如果读取一个未知的键，则返回<code>undefined</code>。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">new</span> <span class="built_in">Map</span>().get(<span class="string">'asfddfsasadf'</span>)</span><br><span class="line"><span class="comment">// undefined</span></span><br></pre></td></tr></table></figure>
-<p>注意，只有对同一个对象的引用，Map 结构才将其视为同一个键。这一点要非常小心。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> map = <span class="keyword">new</span> <span class="built_in">Map</span>();</span><br><span class="line"></span><br><span class="line">map.set([<span class="string">'a'</span>], <span class="number">555</span>);</span><br><span class="line">map.get([<span class="string">'a'</span>]) <span class="comment">// undefined</span></span><br></pre></td></tr></table></figure>
-<p>上面代码的<code>set</code>和<code>get</code>方法，表面是针对同一个键，但实际上这是两个值，内存地址是不一样的，因此<code>get</code>方法无法读取该键，返回<code>undefined</code>。</p>
-<p>同理，同样的值的两个实例，在 Map 结构中被视为两个键。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> map = <span class="keyword">new</span> <span class="built_in">Map</span>();</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> k1 = [<span class="string">'a'</span>];</span><br><span class="line"><span class="keyword">const</span> k2 = [<span class="string">'a'</span>];</span><br><span class="line"></span><br><span class="line">map</span><br><span class="line">.set(k1, <span class="number">111</span>)</span><br><span class="line">.set(k2, <span class="number">222</span>);</span><br><span class="line"></span><br><span class="line">map.get(k1) <span class="comment">// 111</span></span><br><span class="line">map.get(k2) <span class="comment">// 222</span></span><br></pre></td></tr></table></figure>
-<p>上面代码中，变量<code>k1</code>和<code>k2</code>的值是一样的，但是它们在 Map 结构中被视为两个键。</p>
-<p>由上可知，Map 的键实际上是跟内存地址绑定的，只要内存地址不一样，就视为两个键。这就解决了同名属性碰撞（clash）的问题，我们扩展别人的库的时候，如果使用对象作为键名，就不用担心自己的属性与原作者的属性同名。</p>
-<p>如果 Map 的键是一个简单类型的值（数字、字符串、布尔值），则只要两个值严格相等，Map 将其视为一个键，比如<code>0</code>和<code>-0</code>就是一个键，布尔值<code>true</code>和字符串<code>true</code>则是两个不同的键。另外，<code>undefined</code>和<code>null</code>也是两个不同的键。虽然<code>NaN</code>不严格相等于自身，但 Map 将其视为同一个键。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> map = <span class="keyword">new</span> <span class="built_in">Map</span>();</span><br><span class="line"></span><br><span class="line">map.set(<span class="number">-0</span>, <span class="number">123</span>);</span><br><span class="line">map.get(+<span class="number">0</span>) <span class="comment">// 123</span></span><br><span class="line"></span><br><span class="line">map.set(<span class="literal">true</span>, <span class="number">1</span>);</span><br><span class="line">map.set(<span class="string">'true'</span>, <span class="number">2</span>);</span><br><span class="line">map.get(<span class="literal">true</span>) <span class="comment">// 1</span></span><br><span class="line"></span><br><span class="line">map.set(<span class="literal">undefined</span>, <span class="number">3</span>);</span><br><span class="line">map.set(<span class="literal">null</span>, <span class="number">4</span>);</span><br><span class="line">map.get(<span class="literal">undefined</span>) <span class="comment">// 3</span></span><br><span class="line"></span><br><span class="line">map.set(<span class="literal">NaN</span>, <span class="number">123</span>);</span><br><span class="line">map.get(<span class="literal">NaN</span>) <span class="comment">// 123</span></span><br></pre></td></tr></table></figure>
-<h3 id="实例的属性和操作方法"><a href="#实例的属性和操作方法" class="headerlink" title="实例的属性和操作方法"></a>实例的属性和操作方法</h3><p>Map 结构的实例有以下属性和操作方法。</p>
-<p><strong>（1）size 属性</strong></p>
-<p><code>size</code>属性返回 Map 结构的成员总数。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> map = <span class="keyword">new</span> <span class="built_in">Map</span>();</span><br><span class="line">map.set(<span class="string">'foo'</span>, <span class="literal">true</span>);</span><br><span class="line">map.set(<span class="string">'bar'</span>, <span class="literal">false</span>);</span><br><span class="line"></span><br><span class="line">map.size <span class="comment">// 2</span></span><br></pre></td></tr></table></figure>
-<p><strong>（2）set(key, value)</strong></p>
-<p><code>set</code>方法设置键名<code>key</code>对应的键值为<code>value</code>，然后返回整个 Map 结构。如果<code>key</code>已经有值，则键值会被更新，否则就新生成该键。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> m = <span class="keyword">new</span> <span class="built_in">Map</span>();</span><br><span class="line"></span><br><span class="line">m.set(<span class="string">'edition'</span>, <span class="number">6</span>)        <span class="comment">// 键是字符串</span></span><br><span class="line">m.set(<span class="number">262</span>, <span class="string">'standard'</span>)     <span class="comment">// 键是数值</span></span><br><span class="line">m.set(<span class="literal">undefined</span>, <span class="string">'nah'</span>)    <span class="comment">// 键是 undefined</span></span><br></pre></td></tr></table></figure>
-<p><code>set</code>方法返回的是当前的<code>Map</code>对象，因此可以采用链式写法。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> map = <span class="keyword">new</span> <span class="built_in">Map</span>()</span><br><span class="line">  .set(<span class="number">1</span>, <span class="string">'a'</span>)</span><br><span class="line">  .set(<span class="number">2</span>, <span class="string">'b'</span>)</span><br><span class="line">  .set(<span class="number">3</span>, <span class="string">'c'</span>);</span><br></pre></td></tr></table></figure>
-<p><strong>（3）get(key)</strong></p>
-<p><code>get</code>方法读取<code>key</code>对应的键值，如果找不到<code>key</code>，返回<code>undefined</code>。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> m = <span class="keyword">new</span> <span class="built_in">Map</span>();</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> hello = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;<span class="built_in">console</span>.log(<span class="string">'hello'</span>);&#125;;</span><br><span class="line">m.set(hello, <span class="string">'Hello ES6!'</span>) <span class="comment">// 键是函数</span></span><br><span class="line"></span><br><span class="line">m.get(hello)  <span class="comment">// Hello ES6!</span></span><br></pre></td></tr></table></figure>
-<p><strong>（4）has(key)</strong></p>
-<p><code>has</code>方法返回一个布尔值，表示某个键是否在当前 Map 对象之中。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> m = <span class="keyword">new</span> <span class="built_in">Map</span>();</span><br><span class="line"></span><br><span class="line">m.set(<span class="string">'edition'</span>, <span class="number">6</span>);</span><br><span class="line">m.set(<span class="number">262</span>, <span class="string">'standard'</span>);</span><br><span class="line">m.set(<span class="literal">undefined</span>, <span class="string">'nah'</span>);</span><br><span class="line"></span><br><span class="line">m.has(<span class="string">'edition'</span>)     <span class="comment">// true</span></span><br><span class="line">m.has(<span class="string">'years'</span>)       <span class="comment">// false</span></span><br><span class="line">m.has(<span class="number">262</span>)           <span class="comment">// true</span></span><br><span class="line">m.has(<span class="literal">undefined</span>)     <span class="comment">// true</span></span><br></pre></td></tr></table></figure>
-<p><strong>（5）delete(key)</strong></p>
-<p><code>delete</code>方法删除某个键，返回<code>true</code>。如果删除失败，返回<code>false</code>。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> m = <span class="keyword">new</span> <span class="built_in">Map</span>();</span><br><span class="line">m.set(<span class="literal">undefined</span>, <span class="string">'nah'</span>);</span><br><span class="line">m.has(<span class="literal">undefined</span>)     <span class="comment">// true</span></span><br><span class="line"></span><br><span class="line">m.delete(<span class="literal">undefined</span>)</span><br><span class="line">m.has(<span class="literal">undefined</span>)       <span class="comment">// false</span></span><br></pre></td></tr></table></figure>
-<p><strong>（6）clear()</strong></p>
-<p><code>clear</code>方法清除所有成员，没有返回值。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> map = <span class="keyword">new</span> <span class="built_in">Map</span>();</span><br><span class="line">map.set(<span class="string">'foo'</span>, <span class="literal">true</span>);</span><br><span class="line">map.set(<span class="string">'bar'</span>, <span class="literal">false</span>);</span><br><span class="line"></span><br><span class="line">map.size <span class="comment">// 2</span></span><br><span class="line">map.clear()</span><br><span class="line">map.size <span class="comment">// 0</span></span><br></pre></td></tr></table></figure>
-<h3 id="遍历方法"><a href="#遍历方法" class="headerlink" title="遍历方法"></a>遍历方法</h3><p>Map 结构原生提供三个遍历器生成函数和一个遍历方法。</p>
-<ul>
-<li><code>keys()</code>：返回键名的遍历器。</li>
-<li><code>values()</code>：返回键值的遍历器。</li>
-<li><code>entries()</code>：返回所有成员的遍历器。</li>
-<li><code>forEach()</code>：遍历 Map 的所有成员。</li>
-</ul>
-<p>需要特别注意的是，Map 的遍历顺序就是插入顺序。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> map = <span class="keyword">new</span> <span class="built_in">Map</span>([</span><br><span class="line">  [<span class="string">'F'</span>, <span class="string">'no'</span>],</span><br><span class="line">  [<span class="string">'T'</span>,  <span class="string">'yes'</span>],</span><br><span class="line">]);</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> key <span class="keyword">of</span> map.keys()) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(key);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// "F"</span></span><br><span class="line"><span class="comment">// "T"</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> value <span class="keyword">of</span> map.values()) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(value);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// "no"</span></span><br><span class="line"><span class="comment">// "yes"</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> item <span class="keyword">of</span> map.entries()) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(item[<span class="number">0</span>], item[<span class="number">1</span>]);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// "F" "no"</span></span><br><span class="line"><span class="comment">// "T" "yes"</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 或者</span></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> [key, value] <span class="keyword">of</span> map.entries()) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(key, value);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// "F" "no"</span></span><br><span class="line"><span class="comment">// "T" "yes"</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 等同于使用map.entries()</span></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> [key, value] <span class="keyword">of</span> map) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(key, value);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// "F" "no"</span></span><br><span class="line"><span class="comment">// "T" "yes"</span></span><br></pre></td></tr></table></figure>
-<p>上面代码最后的那个例子，表示 Map 结构的默认遍历器接口（<code>Symbol.iterator</code>属性），就是<code>entries</code>方法。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">map[<span class="built_in">Symbol</span>.iterator] === map.entries</span><br><span class="line"><span class="comment">// true</span></span><br></pre></td></tr></table></figure>
-<p>Map 结构转为数组结构，比较快速的方法是使用扩展运算符（<code>...</code>）。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> map = <span class="keyword">new</span> <span class="built_in">Map</span>([</span><br><span class="line">  [<span class="number">1</span>, <span class="string">'one'</span>],</span><br><span class="line">  [<span class="number">2</span>, <span class="string">'two'</span>],</span><br><span class="line">  [<span class="number">3</span>, <span class="string">'three'</span>],</span><br><span class="line">]);</span><br><span class="line"></span><br><span class="line">[...map.keys()]</span><br><span class="line"><span class="comment">// [1, 2, 3]</span></span><br><span class="line"></span><br><span class="line">[...map.values()]</span><br><span class="line"><span class="comment">// ['one', 'two', 'three']</span></span><br><span class="line"></span><br><span class="line">[...map.entries()]</span><br><span class="line"><span class="comment">// [[1,'one'], [2, 'two'], [3, 'three']]</span></span><br><span class="line"></span><br><span class="line">[...map]</span><br><span class="line"><span class="comment">// [[1,'one'], [2, 'two'], [3, 'three']]</span></span><br></pre></td></tr></table></figure>
-<p>结合数组的<code>map</code>方法、<code>filter</code>方法，可以实现 Map 的遍历和过滤（Map 本身没有<code>map</code>和<code>filter</code>方法）。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> map0 = <span class="keyword">new</span> <span class="built_in">Map</span>()</span><br><span class="line">  .set(<span class="number">1</span>, <span class="string">'a'</span>)</span><br><span class="line">  .set(<span class="number">2</span>, <span class="string">'b'</span>)</span><br><span class="line">  .set(<span class="number">3</span>, <span class="string">'c'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> map1 = <span class="keyword">new</span> <span class="built_in">Map</span>(</span><br><span class="line">  [...map0].filter(<span class="function">(<span class="params">[k, v]</span>) =&gt;</span> k &lt; <span class="number">3</span>)</span><br><span class="line">);</span><br><span class="line"><span class="comment">// 产生 Map 结构 &#123;1 =&gt; 'a', 2 =&gt; 'b'&#125;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> map2 = <span class="keyword">new</span> <span class="built_in">Map</span>(</span><br><span class="line">  [...map0].map(<span class="function">(<span class="params">[k, v]</span>) =&gt;</span> [k * <span class="number">2</span>, <span class="string">'_'</span> + v])</span><br><span class="line">    );</span><br><span class="line"><span class="comment">// 产生 Map 结构 &#123;2 =&gt; '_a', 4 =&gt; '_b', 6 =&gt; '_c'&#125;</span></span><br></pre></td></tr></table></figure>
-<p>此外，Map 还有一个<code>forEach</code>方法，与数组的<code>forEach</code>方法类似，也可以实现遍历。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">map.forEach(<span class="function"><span class="keyword">function</span>(<span class="params">value, key, map</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">"Key: %s, Value: %s"</span>, key, value);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p><code>forEach</code>方法还可以接受第二个参数，用来绑定<code>this</code>。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> reporter = &#123;</span><br><span class="line">  report: <span class="function"><span class="keyword">function</span>(<span class="params">key, value</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">"Key: %s, Value: %s"</span>, key, value);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">map.forEach(<span class="function"><span class="keyword">function</span>(<span class="params">value, key, map</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">this</span>.report(key, value);</span><br><span class="line">&#125;, reporter);</span><br></pre></td></tr></table></figure>
-<p>上面代码中，<code>forEach</code>方法的回调函数的<code>this</code>，就指向<code>reporter</code>。</p>
-<h3 id="与其他数据结构的互相转换"><a href="#与其他数据结构的互相转换" class="headerlink" title="与其他数据结构的互相转换"></a>与其他数据结构的互相转换</h3><p><strong>（1）Map 转为数组</strong></p>
-<p>前面已经提过，Map 转为数组最方便的方法，就是使用扩展运算符（<code>...</code>）。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> myMap = <span class="keyword">new</span> <span class="built_in">Map</span>()</span><br><span class="line">  .set(<span class="literal">true</span>, <span class="number">7</span>)</span><br><span class="line">  .set(&#123;<span class="attr">foo</span>: <span class="number">3</span>&#125;, [<span class="string">'abc'</span>]);</span><br><span class="line">[...myMap]</span><br><span class="line"><span class="comment">// [ [ true, 7 ], [ &#123; foo: 3 &#125;, [ 'abc' ] ] ]</span></span><br></pre></td></tr></table></figure>
-<p><strong>（2）数组 转为 Map</strong></p>
-<p>将数组传入 Map 构造函数，就可以转为 Map。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">new</span> <span class="built_in">Map</span>([</span><br><span class="line">  [<span class="literal">true</span>, <span class="number">7</span>],</span><br><span class="line">  [&#123;<span class="attr">foo</span>: <span class="number">3</span>&#125;, [<span class="string">'abc'</span>]]</span><br><span class="line">])</span><br><span class="line"><span class="comment">// Map &#123;</span></span><br><span class="line"><span class="comment">//   true =&gt; 7,</span></span><br><span class="line"><span class="comment">//   Object &#123;foo: 3&#125; =&gt; ['abc']</span></span><br><span class="line"><span class="comment">// &#125;</span></span><br></pre></td></tr></table></figure>
-<p><strong>（3）Map 转为对象</strong></p>
-<p>如果所有 Map 的键都是字符串，它可以无损地转为对象。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">strMapToObj</span>(<span class="params">strMap</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">let</span> obj = <span class="built_in">Object</span>.create(<span class="literal">null</span>);</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">let</span> [k,v] <span class="keyword">of</span> strMap) &#123;</span><br><span class="line">    obj[k] = v;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> obj;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> myMap = <span class="keyword">new</span> <span class="built_in">Map</span>()</span><br><span class="line">  .set(<span class="string">'yes'</span>, <span class="literal">true</span>)</span><br><span class="line">  .set(<span class="string">'no'</span>, <span class="literal">false</span>);</span><br><span class="line">strMapToObj(myMap)</span><br><span class="line"><span class="comment">// &#123; yes: true, no: false &#125;</span></span><br></pre></td></tr></table></figure>
-<p>如果有非字符串的键名，那么这个键名会被转成字符串，再作为对象的键名。</p>
-<p><strong>（4）对象转为 Map</strong></p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">objToStrMap</span>(<span class="params">obj</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">let</span> strMap = <span class="keyword">new</span> <span class="built_in">Map</span>();</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">let</span> k <span class="keyword">of</span> <span class="built_in">Object</span>.keys(obj)) &#123;</span><br><span class="line">    strMap.set(k, obj[k]);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> strMap;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">objToStrMap(&#123;<span class="attr">yes</span>: <span class="literal">true</span>, <span class="attr">no</span>: <span class="literal">false</span>&#125;)</span><br><span class="line"><span class="comment">// Map &#123;"yes" =&gt; true, "no" =&gt; false&#125;</span></span><br></pre></td></tr></table></figure>
-<p><strong>（5）Map 转为 JSON</strong></p>
-<p>Map 转为 JSON 要区分两种情况。一种情况是，Map 的键名都是字符串，这时可以选择转为对象 JSON。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">strMapToJson</span>(<span class="params">strMap</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">JSON</span>.stringify(strMapToObj(strMap));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> myMap = <span class="keyword">new</span> <span class="built_in">Map</span>().set(<span class="string">'yes'</span>, <span class="literal">true</span>).set(<span class="string">'no'</span>, <span class="literal">false</span>);</span><br><span class="line">strMapToJson(myMap)</span><br><span class="line"><span class="comment">// '&#123;"yes":true,"no":false&#125;'</span></span><br></pre></td></tr></table></figure>
-<p>另一种情况是，Map 的键名有非字符串，这时可以选择转为数组 JSON。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">mapToArrayJson</span>(<span class="params">map</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">JSON</span>.stringify([...map]);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> myMap = <span class="keyword">new</span> <span class="built_in">Map</span>().set(<span class="literal">true</span>, <span class="number">7</span>).set(&#123;<span class="attr">foo</span>: <span class="number">3</span>&#125;, [<span class="string">'abc'</span>]);</span><br><span class="line">mapToArrayJson(myMap)</span><br><span class="line"><span class="comment">// '[[true,7],[&#123;"foo":3&#125;,["abc"]]]'</span></span><br></pre></td></tr></table></figure>
-<p><strong>（6）JSON 转为 Map</strong></p>
-<p>JSON 转为 Map，正常情况下，所有键名都是字符串。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">jsonToStrMap</span>(<span class="params">jsonStr</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> objToStrMap(<span class="built_in">JSON</span>.parse(jsonStr));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">jsonToStrMap(<span class="string">'&#123;"yes": true, "no": false&#125;'</span>)</span><br><span class="line"><span class="comment">// Map &#123;'yes' =&gt; true, 'no' =&gt; false&#125;</span></span><br></pre></td></tr></table></figure>
-<p>但是，有一种特殊情况，整个 JSON 就是一个数组，且每个数组成员本身，又是一个有两个成员的数组。这时，它可以一一对应地转为 Map。这往往是 Map 转为数组 JSON 的逆操作。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">jsonToMap</span>(<span class="params">jsonStr</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">Map</span>(<span class="built_in">JSON</span>.parse(jsonStr));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">jsonToMap(<span class="string">'[[true,7],[&#123;"foo":3&#125;,["abc"]]]'</span>)</span><br><span class="line"><span class="comment">// Map &#123;true =&gt; 7, Object &#123;foo: 3&#125; =&gt; ['abc']&#125;</span></span><br></pre></td></tr></table></figure>
-<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="https://github.com/ruanyf/es6tutorial/blob/gh-pages/docs/set-map.md" target="_blank" rel="noopener">https://github.com/ruanyf/es6tutorial/blob/gh-pages/docs/set-map.md</a></p>
+        <p>浅拷贝，比如浅拷贝对象A时，对象B将拷贝A的所有属性，如果属性是引用类型，B将拷贝地址，若果属性是基本类型，B将复制其值。浅拷贝的缺点是如果你修改了对象B中引用类型属性，你同时也会影响到对象A。</p>
+<p>深拷贝会完全拷贝所有数据，优点是拷贝双方不会相互依赖，比如修改了一方的引用类型属性，不会影响到另一方。缺点是拷贝的速度更慢，代价更大 （我的理解是耗费了更多内存空间）。</p>
+<h2 id="浅拷贝实现"><a href="#浅拷贝实现" class="headerlink" title="浅拷贝实现"></a>浅拷贝实现</h2><p>1、使用 ES6 的 Object.assign，其内部实现就是浅拷贝，并剔除了目标对象的原型方法</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> a = &#123;</span><br><span class="line">  p: [<span class="number">1</span>, <span class="number">2</span>]</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> b = <span class="built_in">Object</span>.assign(&#123;&#125;, a);</span><br><span class="line"><span class="built_in">console</span>.log(b.p == a.p);</span><br></pre></td></tr></table></figure>
+<p>2、遍历对象属性</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">shallowClone</span>(<span class="params">obj</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (!obj || <span class="keyword">typeof</span> obj !== <span class="string">'object'</span>) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'error arguments'</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">let</span> targetObj = obj.constructor === <span class="built_in">Array</span> ? [] : &#123;&#125;;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">let</span> key <span class="keyword">in</span> obj) &#123;</span><br><span class="line">    <span class="keyword">if</span> (obj.hasOwnProperty(key)) &#123;</span><br><span class="line">      targetObj[key] = obj[key];</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> targetObj;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="深拷贝实现"><a href="#深拷贝实现" class="headerlink" title="深拷贝实现"></a>深拷贝实现</h2><p>1、利用 JSON 序列化实现一个深拷贝，缺点是无法复制函数，并且丢失抛弃对象的 constructor 和原型链</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">deepClone</span>(<span class="params">obj</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">JSON</span>.parse(<span class="built_in">JSON</span>.stringify(obj));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> o1 = &#123;</span><br><span class="line">  arr: [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>],</span><br><span class="line">  obj: &#123; <span class="attr">key</span>: <span class="string">'value'</span> &#125;,</span><br><span class="line">  func()&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">let</span> o2 = deepClone(o1);</span><br><span class="line"><span class="built_in">console</span>.log(o2); <span class="comment">// =&gt; &#123;arr: [1,2,3], obj: &#123;key: 'value'&#125;&#125;</span></span><br></pre></td></tr></table></figure>
+<p>2、利用递归实现深拷贝，可以复制函数，同样会丢失抛弃对象的 constructor 和原型链，但是对于拷贝 json 对象的话足够了</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">deepCopy</span>(<span class="params">src</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span>(!src || <span class="keyword">typeof</span> src !== <span class="string">'object'</span>)&#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'error arguments'</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">let</span> target = src.constructor === <span class="built_in">Array</span> ? [] : &#123;&#125;;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">let</span> i <span class="keyword">in</span> src) &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">typeof</span> src[i] === <span class="string">'object'</span>) &#123;</span><br><span class="line">      target[i] = src[i].constructor === <span class="built_in">Array</span> ? [] : &#123;&#125;;</span><br><span class="line">      target[i] = deepCopy(src[i]);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      target[i] = src[i];</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> target;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="http://www.lujianan.com/2016/07/18/deep-shallow/" target="_blank" rel="noopener">http://www.lujianan.com/2016/07/18/deep-shallow/</a></p>
 
       
     </div>
@@ -1162,6 +959,8 @@
     <li><a href="/tags/数据库/">数据库</a><small>3</small></li>
   
     <li><a href="/tags/数据结构与算法/">数据结构与算法</a><small>7</small></li>
+  
+    <li><a href="/tags/程序员的数学基础课/">程序员的数学基础课</a><small>4</small></li>
   
     <li><a href="/tags/网络安全/">网络安全</a><small>8</small></li>
   

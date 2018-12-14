@@ -53,6 +53,337 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2018-12-14T06:45:23.000Z"><a href="/2018/12/14/程序员的数学基础课/03 | 迭代法：不用编程语言的自带函数，你会如何计算平方根/">2018-12-14</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/12/14/程序员的数学基础课/03 | 迭代法：不用编程语言的自带函数，你会如何计算平方根/">03 | 迭代法：不用编程语言的自带函数，你会如何计算平方根</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>你好，我是黄申。</p>
+<p>今天我们来说一个和编程结合得非常紧密的数学概念。在解释这个重要的概念之前，我们先来看个有趣的小故事。</p>
+<blockquote>
+<p>古印度国王舍罕酷爱下棋，他打算重赏国际象棋的发明人宰相西萨·班·达依尔。这位聪明的大臣指着象棋盘对国王说：“陛下，我不要别的赏赐，请您在这张棋盘的第一个小格内放入一粒麦子，在第二个小格内放入两粒，第三小格内放入给四粒，以此类推，每一小格内都比前一小格加一倍的麦子，直至放满 64 个格子，然后将棋盘上所有的麦粒都赏给您的仆人我吧！”</p>
+</blockquote>
+<p>国王自以为小事一桩，痛快地答应了。可是，当开始放麦粒之后，国王发现，还没放到第二十格，一袋麦子已经空了。随着，一袋又一袋的麦子被放入棋盘的格子里，国王很快看出来，即便拿来全印度的粮食，也兑现不了对达依尔的诺言。</p>
+<p>放满这 64 格到底需要多少粒麦子呢？这是个相当相当大的数字，想要手动算出结果并不容易。如果你觉得自己厉害，可以试着拿笔算算。其实，这整个算麦粒的过程，在数学上，是有对应方法的，这也正是我们今天要讲的概念：<strong>迭代法</strong>（Iterative Method）。</p>
+<h2 id="到底什么是迭代法？"><a href="#到底什么是迭代法？" class="headerlink" title="到底什么是迭代法？"></a>到底什么是迭代法？</h2><p><strong>迭代法，简单来说，其实就是不断地用旧的变量值，递推计算新的变量值</strong>。</p>
+<p>我这么说可能还是比较抽象，不容易理解。我们还回到刚才的故事。大臣要求每一格的麦子都是前一格的两倍，那么前一格里麦子的数量就是旧的变量值，我们可以先记作 Xn−1Xn−1；而当前格子里麦子的数量就是新的变量值，我们记作 XnXn。这两个变量的递推关系就是这样的：</p>
+<p><img src="https://static001.geekbang.org/resource/image/c8/0e/c82c80cbf7d766f77422c564418cc70e.jpg" alt="img"></p>
+<p>如果你稍微有点编程经验，应该能发现，迭代法的思想，很容易通过计算机语言中的<strong>循环语言</strong>来实现。你知道，计算机本身就适合做重复性的工作，我们可以通过循环语句，让计算机重复执行迭代中的递推步骤，然后推导出变量的最终值。</p>
+<p>那接下来，我们就用循环语句来算算，填满格子到底需要多少粒麦子。我简单用 Java 语言写了个程序，你可以看看。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">public class Lesson3_1 &#123;</span><br><span class="line">    /**</span><br><span class="line">    * @Description: 算算舍罕王给了多少粒麦子</span><br><span class="line">    * @param grid- 放到第几格</span><br><span class="line">    * @return long- 麦粒的总数</span><br><span class="line">    */</span><br><span class="line"> </span><br><span class="line">    public static long getNumberOfWheat(int grid) &#123;</span><br><span class="line">     </span><br><span class="line">     long sum = 0;      // 麦粒总数</span><br><span class="line">     long numberOfWheatInGrid = 0;  // 当前格子里麦粒的数量</span><br><span class="line">     </span><br><span class="line">     numberOfWheatInGrid = 1;  // 第一个格子里麦粒的数量</span><br><span class="line">     sum += numberOfWheatInGrid;  </span><br><span class="line">     </span><br><span class="line">     for (int i = 2; i &lt;= grid; i ++) &#123;</span><br><span class="line">      numberOfWheatInGrid *= 2;   // 当前格子里麦粒的数量是前一格的 2 倍</span><br><span class="line">      sum += numberOfWheatInGrid;   // 累计麦粒总数</span><br><span class="line">     &#125;</span><br><span class="line">     </span><br><span class="line">     return sum;</span><br><span class="line"> </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>下面是一段测试代码，它计算了到第 63 格时，总共需要多少麦粒。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">public static void main(String[] args) &#123;</span><br><span class="line">System.out.println(String.format(&quot; 舍罕王给了这么多粒：%d&quot;,   Lesson3_1.getNumberOfWheat(63)));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>计算的结果是 9223372036854775807，多到数不清了。我大致估算了一下，一袋 50 斤的麦子估计有 130 万粒麦子，那么 9223372036854775807 相当于 70949 亿袋 50 斤的麦子！</p>
+<p>这段代码有两个地方需要注意。首先，用于计算每格麦粒数的变量以及总麦粒数的变量都是 Java 中的 long 型，这是因为计算的结果实在是太大了，超出了 Java int 型的范围；第二，我们只计算到了第 63 格，这是因为计算到第 64 格之后，总数已经超过 Java 中 long 型的范围。</p>
+<h2 id="迭代法有什么具体应用？"><a href="#迭代法有什么具体应用？" class="headerlink" title="迭代法有什么具体应用？"></a>迭代法有什么具体应用？</h2><p>看到这里，你可能大概已经理解迭代法的核心理念了。迭代法在无论是在数学，还是计算机领域都有很广泛的应用。大体上，迭代法可以运用在以下几个方面：</p>
+<ul>
+<li><strong>求数值的精确或者近似解</strong>。典型的方法包括二分法（Bisection method）和牛顿迭代法（Newton’s method）。</li>
+<li><strong>在一定范围内查找目标值。</strong>典型的方法包括二分查找。</li>
+<li><strong>机器学习算法中的迭代</strong>。相关的算法或者模型有很多，比如 K- 均值算法（K-means clustering）、PageRank 的马尔科夫链（Markov chain）、梯度下降法（Gradient descent）等等。迭代法之所以在机器学习中有广泛的应用，是因为<strong>很多时候机器学习的过程，就是根据已知的数据和一定的假设，求一个局部最优解</strong>。而迭代法可以帮助学习算法逐步搜索，直至发现这种解。</li>
+</ul>
+<p>这里，我详细讲解一下求数值的解和查找匹配记录这两个应用。</p>
+<h3 id="1-求方程的精确或者近似解"><a href="#1-求方程的精确或者近似解" class="headerlink" title="1. 求方程的精确或者近似解"></a>1. 求方程的精确或者近似解</h3><p>迭代法在数学和编程的应用有很多，如果只能用来计算庞大的数字，那就太“暴殄天物”了。迭代还可以帮助我们进行无穷次地逼近，求得方程的精确或者近似解。</p>
+<p>比如说，我们想计算某个给定正整数 n（n&gt;1）的平方根，如果不使用编程语言自带的函数，你会如何来实现呢？</p>
+<p>假设有正整数 n，这个平方根一定小于 n 本身，并且大于 1。那么这个问题就转换成，在 1 到 n 之间，找一个数字等于 n 的平方根。</p>
+<p>我这里采用迭代中常见的<strong>二分法</strong>。每次查看区间内的中间值，检验它是否符合标准。</p>
+<p>举个例子，假如我们要找到 10 的平方根。我们需要先看 1 到 10 的中间数值，也就是 11/2=5.5。5.5 的平方是大于 10 的，所以我们要一个更小的数值，就看 5.5 和 1 之间的 3.25。由于 3.25 的平方也是大于 10 的，继续查看 3.25 和 1 之间的数值，也就是 2.125。这时，2.125 的平方小于 10 了，所以看 2.125 和 3.25 之间的值，一直继续下去，直到发现某个数的平方正好是 10。</p>
+<p>我把具体的步骤画成了一张图，你可以看看。</p>
+<p><img src="https://static001.geekbang.org/resource/image/89/7d/89c9c38113624288091cd65ff3d8957d.jpg" alt="img"></p>
+<p>我这里用 Java 代码演示一下效果，你可以结合上面的讲解，来理解迭代的过程。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">public class Lesson3_2 &#123;</span><br><span class="line"> </span><br><span class="line"> /**</span><br><span class="line">    * @Description: 计算大于 1 的正整数之平方根</span><br><span class="line">    * @param n- 待求的数, deltaThreshold- 误差的阈值, maxTry- 二分查找的最大次数</span><br><span class="line">    * @return double- 平方根的解</span><br><span class="line">    */</span><br><span class="line">    public static double getSqureRoot(int n, double deltaThreshold, int maxTry) &#123;</span><br><span class="line">     </span><br><span class="line">     if (n &lt;= 1) &#123;</span><br><span class="line">      return -1.0;</span><br><span class="line">     &#125;</span><br><span class="line">     </span><br><span class="line">     double min = 1.0, max = (double)n;</span><br><span class="line">     for (int i = 0; i &lt; maxTry; i++) &#123;</span><br><span class="line">      double middle = (min + max) / 2;</span><br><span class="line">      double square = middle * middle;</span><br><span class="line">      double delta = Math.abs((square / n) - 1);</span><br><span class="line">      if (delta &lt;= deltaThreshold) &#123;</span><br><span class="line">       return middle;</span><br><span class="line">      &#125; else &#123;</span><br><span class="line">       if (square &gt; n) &#123;</span><br><span class="line">        max = middle;</span><br><span class="line">       &#125; else &#123;</span><br><span class="line">        min = middle;</span><br><span class="line">       &#125;</span><br><span class="line">      &#125;</span><br><span class="line">     &#125;</span><br><span class="line">     </span><br><span class="line">     return -2.0;</span><br><span class="line"> </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这是一段测试代码，我们用它来找正整数 10 的平方根。如果找不到精确解，我们就返回一个近似解。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">public static void main(String[] args) &#123;</span><br><span class="line">  </span><br><span class="line">  int number = 10;</span><br><span class="line">  double squareRoot = Lesson3_2.getSqureRoot(number, 0.000001, 10000);</span><br><span class="line">  if (squareRoot == -1.0) &#123;</span><br><span class="line">   System.out.println(&quot; 请输入大于 1 的整数 &quot;);</span><br><span class="line">  &#125; else if (squareRoot == -2.0) &#123;</span><br><span class="line">   System.out.println(&quot; 未能找到解 &quot;);</span><br><span class="line">  &#125; else &#123;</span><br><span class="line">   System.out.println(String.format(&quot;%d 的平方根是 %f&quot;, number, squareRoot));</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>这段代码的实现思想就是我前面讲的迭代过程，这里面有两个小细节我解释下。</p>
+<p>第一，我使用了 deltaThreshold 来控制解的精度。虽然理论上来说，可以通过二分的无限次迭代求得精确解，但是考虑到实际应用中耗费的大量时间和计算资源，绝大部分情况下，我们并不需要完全精确的数据。</p>
+<p>第二，我使用了 maxTry 来控制循环的次数。之所以没有使用 while(true) 循环，是为了避免死循环。虽然，在这里使用 deltaThreshold，理论上是不会陷入死循环的，但是出于良好的编程习惯，我们还是尽量避免产生的可能性。</p>
+<p>说完了二分迭代法，我这里再简单提一下牛顿迭代法。这是牛顿在 17 世纪提出的一种方法，用于求方程的近似解。这种方法以微分为基础，每次迭代的时候，它都会去找到比上一个值 x0x0 更接近的方程的根，最终找到近似解。该方法及其延伸也被应用在机器学习的算法中，在之后机器学习中的应用中，我会具体介绍这个算法。</p>
+<h3 id="2-查找匹配记录"><a href="#2-查找匹配记录" class="headerlink" title="2. 查找匹配记录"></a>2. 查找匹配记录</h3><p><strong>二分法中的迭代式逼近，不仅可以帮我们求得近似解，还可以帮助我们查找匹配的记录。</strong>我这里用一个查字典的案例来说明。</p>
+<p>在自然语言处理中，我们经常要处理同义词或者近义词的扩展。这时，你手头上会有一个同义词 / 近义词的词典。对于一个待查找的单词，我们需要在字典中找出这个单词，以及它所对应的同义词和近义词，然后进行扩展。比如说，这个字典里有一个关于“西红柿”的词条，其同义词包括了“番茄”和“tomato”。</p>
+<p><img src="https://static001.geekbang.org/resource/image/2d/5a/2de8a4c2b934a86ef5e8b915b6926d5a.jpg" alt="img"></p>
+<p>那么，在处理文章的时候，当我们看到了“西红柿”这个词，就去字典里查一把，拿出“番茄”“tomato”等等，并添加到文章中作为同义词 / 近义词的扩展。这样的话，用户在搜索“西红柿”这个词的时候，我们就能确保出现“番茄”或者“tomato”的文章会被返回给用户。</p>
+<p>乍一看到这个任务的时候，你也许想到了哈希表。没错，哈希表是个好方法。不过，如果不使用哈希表，你还有什么其他方法呢？这里，我来介绍一下，用二分查找法进行字典查询的思路。</p>
+<p>第一步，将整个字典先进行排序（假设从小到大）。二分法中很关键的前提条件是，所查找的区间是有序的。这样才能在每次折半的时候，确定被查找的对象属于左半边还是右半边。</p>
+<p>第二步，使用二分法逐步定位到被查找的单词。每次迭代的时候，都找到被搜索区间的中间点，看看这个点上的单词，是否和待查单词一致。如果一致就返回；如果不一致，要看被查单词比中间点上的单词是小还是大。如果小，那说明被查的单词如果存在字典中，那一定在左半边；否则就在右半边。</p>
+<p>第三步，根据第二步的判断，选择左半边或者后半边，继续迭代式地查找，直到范围缩小到单个的词。如果到最终仍然无法找到，则返回不存在。</p>
+<p>当然，你也可以对单词进行从大到小的排序，如果是那样，在第二步的判断就需要相应地修改一下。</p>
+<p>我把在 a 到 g 的 7 个字符中查找 f 的过程，画成了一张图，你可以看看。</p>
+<p><img src="https://static001.geekbang.org/resource/image/d3/99/d39dfcea9385baef98846d2a5914a599.jpg" alt="img"></p>
+<p>这个方法的整体思路和二分法求解平方根是一致的，主要区别有两个方面：第一，每次判断是否终结迭代的条件不同。求平方根的时候，我们需要判断某个数的平方是否和输入的数据一致。而这里，我们需要判断字典中某个单词是否和待查的单词相同。第二，二分查找需要确保被搜索的空间是有序的。</p>
+<p>我把具体的代码写出来了，你可以看一下。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">import java.util.Arrays;</span><br><span class="line"> </span><br><span class="line">public class Lesson3_3 &#123;</span><br><span class="line"> </span><br><span class="line"> /**</span><br><span class="line">    * @Description: 查找某个单词是否在字典里出现</span><br><span class="line">    * @param dictionary- 排序后的字典, wordToFind- 待查的单词</span><br><span class="line">    * @return boolean- 是否发现待查的单词</span><br><span class="line">    */</span><br><span class="line">    public static boolean search(String[] dictionary, String wordToFind) &#123;</span><br><span class="line">     </span><br><span class="line">     if (dictionary == null) &#123;</span><br><span class="line">      return false;</span><br><span class="line">     &#125;</span><br><span class="line">     </span><br><span class="line">     if (dictionary.length == 0) &#123;</span><br><span class="line">      return false;</span><br><span class="line">     &#125;</span><br><span class="line">     </span><br><span class="line">     int left = 0, right = dictionary.length - 1;</span><br><span class="line">     while (left &lt;= right) &#123;</span><br><span class="line">      int middle = (left + right) / 2;</span><br><span class="line">      if (dictionary[middle].equals(wordToFind)) &#123;</span><br><span class="line">       return true;</span><br><span class="line">      &#125; else &#123;</span><br><span class="line">       if (dictionary[middle].compareTo(wordToFind) &gt; 0) &#123;</span><br><span class="line">        right = middle - 1;</span><br><span class="line">       &#125; else &#123;</span><br><span class="line">        left = middle + 1;</span><br><span class="line">       &#125;</span><br><span class="line">      &#125;</span><br><span class="line">     &#125;</span><br><span class="line">     </span><br><span class="line">     return false;</span><br><span class="line"> </span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我测试代码首先建立了一个非常简单的字典，然后使用二分查找法在这个字典中查找单词“i”。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">public static void main(String[] args) &#123;</span><br><span class="line">  </span><br><span class="line">  </span><br><span class="line">  String[] dictionary = &#123;&quot;i&quot;, &quot;am&quot;, &quot;one&quot;, &quot;of&quot;, &quot;the&quot;, &quot;authors&quot;, &quot;in&quot;, &quot;geekbang&quot;&#125;;</span><br><span class="line">  </span><br><span class="line">  Arrays.sort(dictionary);</span><br><span class="line"> </span><br><span class="line">  String wordToFind = &quot;i&quot;;</span><br><span class="line">  </span><br><span class="line">  boolean found = Lesson3_3.search(dictionary, wordToFind);</span><br><span class="line">  if (found) &#123;</span><br><span class="line">   System.out.println(String.format(&quot; 找到了单词 %s&quot;, wordToFind));</span><br><span class="line">  &#125; else &#123;</span><br><span class="line">   System.out.println(String.format(&quot; 未能找到单词 %s&quot;, wordToFind));</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>说的这两个例子，都属于迭代法中的二分法，我在第一节的时候说过，二分法其实也体现了二进制的思想。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>到这里，我想你对迭代的核心思路有了比较深入的理解。</p>
+<p>实际上，人类并不擅长重复性的劳动，而计算机却很适合做这种事。这也是为什么，以重复为特点的迭代法在编程中有着广泛的应用。不过，日常的实际项目可能并没有体现出明显的重复性，以至于让我们很容易就忽视了迭代法的使用。所以，你要多观察问题的现象，思考其本质，看看不断更新变量值或者缩小搜索的区间范围，是否可以获得最终的解（或近似解、局部最优解），如果是，那么你就可以尝试迭代法。</p>
+<p><img src="https://static001.geekbang.org/resource/image/a1/28/a101ca1166cd6dd61527e5e0acd1cf28.jpg" alt="img"></p>
+<h2 id="思考题"><a href="#思考题" class="headerlink" title="思考题"></a>思考题</h2><p>在你曾经做过的项目中，是否使用过迭代法？如果有，你觉得迭代法最大的特点是什么？如果还没用过，你想想看现在的项目中是否有可以使用的地方？</p>
+<p>极客时间版权所有: <a href="https://time.geekbang.org/column/article/72243" target="_blank" rel="noopener">https://time.geekbang.org/column/article/72243</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2018-12-12T06:45:23.000Z"><a href="/2018/12/12/程序员的数学基础课/02 | 余数：原来取余操作本身就是个哈希函数/">2018-12-12</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/12/12/程序员的数学基础课/02 | 余数：原来取余操作本身就是个哈希函数/">02 | 余数：原来取余操作本身就是个哈希函数</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>你好，我是黄申。今天我们来聊聊“余数”。</p>
+<p>提起来余数，我想你肯定不陌生，因为我们生活中就有很多很多与余数相关的例子。</p>
+<p>比如说，今天是星期三，你想知道 50 天之后是星期几，那你可以这样算，拿 50 除以 7（因为一个星期有 7 天），然后余 1，最后在今天的基础上加一天，这样你就能知道 50 天之后是星期四了。</p>
+<p>再比如，我们做 Web 编程的时候，经常要用到分页的概念。如果你要展示 1123 条数据，每页 10 条，那该怎么计算总共的页数呢？我想你肯定是拿 1123 除以 10，最后得到商是 112，余数是 3，所以你的总页数就是 112+1=113，而最后的余数就是多出来，凑不够一页的数据。</p>
+<p>看完这几个例子，不知道你有没有发现，<strong>余数总是在一个固定的范围内</strong>。</p>
+<p>比如你拿任何一个整数除以 7，那得到的余数肯定是在 0～6 之间的某一个数。所以当我们知道 1900 年的 1 月 1 日是星期一，那便可以知道这一天之后的第 1 万天、10 万天是星期几，是不是很神奇？</p>
+<p>你知道，整数是没有边界的，它可能是正无穷，也可能是负无穷。但是余数却可以通过某一种关系，让整数处于一个确定的边界内。我想这也是人类发明星期或者礼拜的初衷吧，任你时光变迁，我都是以 7 天为一个周期，“周”而复始地过着确定的生活。因为从星期的角度看，不管你是哪一天，都会落到星期一到星期日的某一天里。</p>
+<p>我们再拿上面星期的例子来看。假如今天是星期一，从今天开始的 100 天里，都有多少个星期呢？你拿 100 除以 7，得到商 14 余 2，也就是说这 100 天里有 14 周多 2 天。换个角度看，我们可以说，这 100 天里，你的第 1 天、第 8 天、第 15 天等等，在余数的世界里都被认为是同一天，因为它们的余数都是 1，都是星期一，你要上班的日子。同理，第 2 天、第 9 天、第 16 天余数都是 2，它们都是星期二。</p>
+<p>这些数的余数都是一样的，所以被归类到了一起，有意思吧？是的，我们的前人早已注意到了这一规律或者特点，所以他们把这一结论称为<strong>同余定理</strong>。简单来说，就是两个整数 a 和 b，如果它们除以正整数 m 得到的余数相等，我们就可以说 a 和 b 对于模 m 同余。</p>
+<p>也就是说，上面我们说的 100 天里，所有星期一的这些天都是同余的，所有星期二的这些天就是同余的，同理，星期三、星期四等等这些天也都是同余的。</p>
+<p>还有，我们经常提到的奇数和偶数，其实也是同余定理的一个应用。当然，这个应用里，它的模就是 2 了，2 除以 2 余 0，所以它是偶数；3 除以 2 余 1，所以它是奇数。2 和 4 除以 2 的余数都是 0，所以它们都是一类，都是偶数。3 和 5 除以 2 的余数都是 1，所以它们都是一类，都是奇数。</p>
+<p>你肯定会说，同余定理就这么简单吗，这个定理到底有什么实际的用途啊？其实，我上面已经告诉你答案了，你不妨先自己思考下，同余定理的意义到底是什么。</p>
+<p>简单来说，<strong>同余定理其实就是用来分类的</strong>。你知道，我们有无穷多个整数，那怎么能够全面、多维度地管理这些整数？同余定理就提供了一个思路。</p>
+<p>因为不管你的模是几，最终得到的余数肯定都在一个范围内。比如我们上面除以 7，就得到了星期几；我们除以 2，就得到了奇偶数。所以按照这种方式, 我们就可以把无穷多个整数分成有限多个类。</p>
+<p>这一点，在我们的计算机中，可是有大用途。</p>
+<p>哈希（Hash）你应该不陌生，在每个编程语言中，都会有对应的哈希函数。哈希有的时候也会被翻译为散列，简单来说，它就是<strong>将任意长度的输入，通过哈希算法，压缩为某一固定长度的输出</strong>。这话听着是不是有点耳熟？我们上面的求余过程不就是在做这事儿吗？</p>
+<p>举个例子，假如你想要快速读写 100 万条数据记录，要达到高速地存取，最理想的情况当然是开辟一个连续的空间存放这些数据，这样就可以减少寻址的时间。但是由于条件的限制，我们并没有能够容纳 100 万条记录的连续地址空间，这个时候该怎么办呢？</p>
+<p>我们可以考察一下，看看系统是否可以提供若干个较小的连续空间，而每个空间又能存放一定数量的记录。比如我们找到了 100 个较小的连续空间，也就是说，这些空间彼此之间是被分隔开来的，但是内部是连续的，并足以容纳 1 万条记录连续存放，那么我们就可以使用余数和同余定理来设计一个散列函数，并实现哈希表的结构。</p>
+<p>那这个函数应该怎么设计呢？你可以先停下来思考思考，提醒你下，你可以再想想星期几的那个例子，因为这里面用的就是余数的思想。</p>
+<p><img src="https://static001.geekbang.org/resource/image/f1/8d/f156cef76582b3ee77b038cd2347968d.jpg" alt="img"></p>
+<p>下面是我想到的一种方法：</p>
+<p><img src="https://static001.geekbang.org/resource/image/b3/58/b32e791f822044f579b80ad2cfe48c58.jpg" alt="img"></p>
+<p>在这个公式中，x 表示等待被转换的数值，而 size 表示有限存储空间的大小，mod 表示取余操作。<strong>通过余数，你就能将任何数值，转换为有限范围内的一个数值，然后根据这个新的数值，来确定将数据存放在何处。</strong></p>
+<p>具体来说，我们可以通过记录标号模 100 的余数，指定某条记录存放在哪个空间。这个时候，我们的公式就变成了这样：</p>
+<p><img src="https://static001.geekbang.org/resource/image/fe/ac/fe96e521ed9d0a574ddaeeb0f00bbaac.jpg" alt="img"></p>
+<p>假设有两条记录，它们的记录标号分别是 1 和 101。我们把这些模 100 之后余数都是 1 的，存放到第 1 个可用空间里。以此类推，将余数为 2 的 2、102、202 等，存放到第 2 个可用空间，将 100、200、300 等存放到第 100 个可用空间里。</p>
+<p>这样，我们就可以根据求余的快速数字变化，对数据进行分组，并把它们存放到不同的地址空间里。而求余操作本身非常简单，因此几乎不会增加寻址时间。</p>
+<p><img src="https://static001.geekbang.org/resource/image/37/2c/372f09d2ff666150fd2855506a84f02c.jpg" alt="img"></p>
+<p>除此之外，为了增加数据散列的随机程度，我们还可以在公式中加入一个较大的随机数 MAX，于是，上面的公式就可以写成这样：</p>
+<p><img src="https://static001.geekbang.org/resource/image/78/c0/78a943e119d823d39cdcaf35a75a42c0.jpg" alt="img"></p>
+<p>我们假设随机数 MAX 是 590199，那么我们针对标号为 1 的记录进行重新计算，最后的计算结果就是 0，而针对标号 101 的记录，如果随机数 MAX 取 627901，对应的结果应该是 2。这样先前被分配到空间 1 的两条记录，在新的计算公式作用下，就会被分配到不同的可用空间中。</p>
+<p>你可以尝试记录 2 和 102，或者记录 100 和 200，最后应该也是同样的情况。你会发现，使用了 MAX 这个随机数之后，被分配到同一个空间中的记录就更加“随机”，更适合需要将数据重新洗牌的应用场景，比如加密算法、MapReduce 中的数据分发、记录的高速查询和定位等等。</p>
+<p>让我以加密算法为例，在这里面引入 MAX 随机数就可以增强加密算法的保密程度，是不是很厉害？举个例子，比如说我们要加密一组三位数，那我们设定一个这样的加密规则：</p>
+<ol>
+<li>先对每个三位数的个、十和百位数，都加上一个较大的随机数。</li>
+<li>然后将每位上的数都除以 7，用所得的余数代替原有的个、十、百位数；</li>
+<li>最后将第一位和第三位交换。</li>
+</ol>
+<p>这就是一个基本的加密变换过程。</p>
+<p>假如说，我们要加密数字 625，根据刚才的规则，我们来试试。假设随机数我选择 590127。那百、十和个位分别加上这个随机数，就变成了 590133，590129，590132。然后，三位分别除以 7 求余后得到 5，1，4。最终，我们可以得到加密后的数字就是 415。因为加密的人知道加密的规则、求余所用的除数 7、除法的商、以及所引入的随机数 590127，所以当拿到 415 的时候，加密者就可以算出原始的数据是 625。是不是很有意思？</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>到这里，余数的所有知识点我们都讲完了。我想在此之前，你肯定是知道余数，也明白怎么求余。但对于余数的应用不知道你之前是否有思考过呢？我们经常说，数学是计算机的基础，在余数这个小知识点里，我们就能找到很多的应用场景，比如我前面介绍的散列函数、加密算法，当然，也还有我们没有介绍到的，比如循环冗余校验等等。</p>
+<p>余数只是数学知识中的沧海一粟。你在中学或者大学的时候，肯定接触过很多的数学知识和定理，编程的时候也会经常和数字、公式以及数据打交道，但是真正学懂数学的人却没几个。希望我们可以从余数这个小概念开始，让你认识到数学思想其实非常实用，用好这些知识，对你的编程，甚至生活都有意想不到的作用。</p>
+<p><img src="https://static001.geekbang.org/resource/image/97/5a/97a4d55737df060e213a12da82963e5a.jpg" alt="img"></p>
+<h2 id="思考题"><a href="#思考题" class="headerlink" title="思考题"></a>思考题</h2><p>你可以想想，在生活和编程中，还有哪些地方用到了余数的思想呢？</p>
+<p>极客时间版权所有: <a href="https://time.geekbang.org/column/article/72163" target="_blank" rel="noopener">https://time.geekbang.org/column/article/72163</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2018-12-10T06:45:23.000Z"><a href="/2018/12/10/程序员的数学基础课/01 | 二进制：不了解计算机的源头，你学什么编程/">2018-12-10</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/12/10/程序员的数学基础课/01 | 二进制：不了解计算机的源头，你学什么编程/">01 | 二进制：不了解计算机的源头，你学什么编程</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>我们都知道，计算机的起源是数学中的二进制计数法。可以说，没有二进制，就没有如今的计算机系统。那什么是二进制呢？为什么计算机要使用二进制，而不是我们日常生活中的十进制呢？如何在代码中操作二进制呢？专栏开始，我们就从计算机认知的起源——二进制出发，讲讲它在计算机中的“玄机”。</p>
+<h2 id="什么是二进制计数法？"><a href="#什么是二进制计数法？" class="headerlink" title="什么是二进制计数法？"></a>什么是二进制计数法？</h2><p>为了让你更好地理解二进制计数法，我们先来简单地回顾一下人类计数的发展史。</p>
+<p>原始时代，人类用路边的小石子，来统计放牧归来的羊只数量，这表明我们很早就产生了计数的意识。后来，罗马人用手指作为计数的工具，并在羊皮上画出Ⅰ、Ⅱ、Ⅲ来代替手指的数量。表示一只手时，就写成“Ⅴ”形，表示两只手时，就画成“ⅤⅤ”形等等。</p>
+<p>公元 3 世纪左右，印度数学家（也有说法是阿拉伯人）发明了阿拉伯数字。阿拉伯数字由从 0 到 9 这样 10 个计数符号组成，并采取<strong>进位制法</strong>，高位在左，低位在右，从左往右书写。由于阿拉伯数字本身笔画简单，演算便利，因此它们逐渐在各国流行起来，成为世界通用的数字。</p>
+<p>日常生活中，我们广泛使用的十进制计数法，也是基于阿拉伯数字的。这也是十进制计数法的基础。因此，相对其他计数方法，十进制最容易被我们所理解。</p>
+<p>让我们来观察一个数字：2871。</p>
+<p><img src="https://static001.geekbang.org/resource/image/d9/3d/d99f094c432638924f8665a178162c3d.jpg" alt="img"></p>
+<p>其中 ^ 表示幂或次方运算。十进制的数位（千位、百位、十位等）全部都是 10^n 的形式。需要特别注意的是，任何非 0 数字的 0 次方均为 1。在这个新的表示式里，10 被称为十进制计数法的<strong>基数</strong>，也是十进制中“十”的由来。这个我想你应该好理解，因为这和我们日常生活的习惯是统一的。</p>
+<p>明白了十进制，我们再试着用类似的思路来理解二进制的定义。我以二进制数字 110101 为例，解释给你听。我们先来看，这里 110101 究竟代表了十进制中的数字几呢？</p>
+<p>刚才我们说了，十进制计数是使用 10 作为基数，那么二进制就是使用 2 作为基数，类比过来，<strong>二进制的数位就是 2^n 的形式</strong>。如果需要将这个数字转化为人们易于理解的十进制，我们就可以这样来计算：</p>
+<p><img src="https://static001.geekbang.org/resource/image/c6/c0/c6ae1772d7bf369aa9939fc00ca7b5c0.jpg" alt="img"></p>
+<p>按照这个思路，我们还可以推导出八进制（以 8 为基数）、十六进制（以 16 为基数）等等计数法，很简单，我在这里就不赘述了。</p>
+<p>至此，你应该已经理解了什么是二进制。但是仅有数学的理论知识是不够的，结合相关的代码实践，相信你会有更深刻的印象。</p>
+<p>基于此，我们来看看二进制和十进制数在 Java 语言中是如何互相转换的，并验证一下我们之前的推算。我这里使用的是 Java 语言来实现的，其他主流的编程语言实现方式都是类似的。</p>
+<p>这段代码的实现采用了 Java 的 BigInteger 类及其 API 函数，我都加了代码注释，并且穿插一些解释，你应该可以看懂。</p>
+<p>首先，我们引入 BigInteger 包，通过它和 Integer 类的 API 函数进行二进制和十进制的互相转换。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">import java.math.BigInteger;</span><br><span class="line"> </span><br><span class="line">public class Lesson1_1 &#123;</span><br><span class="line">  </span><br><span class="line">   /**</span><br><span class="line"> </span><br><span class="line">    * @Description: 十进制转换成二进制</span><br><span class="line">    * @param decimalSource</span><br><span class="line">    * @return String</span><br><span class="line">    */</span><br><span class="line">    public static String decimalToBinary(int decimalSource) &#123;</span><br><span class="line">       // 转换成 BigInteger 类型，默认是十进制</span><br><span class="line">       BigInteger bi = new BigInteger(String.valueOf(decimalSource)); </span><br><span class="line">       return bi.toString(2); // 参数 2 指定的是转化成二进制</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    /**</span><br><span class="line">    * @Description: 二进制转换成十进制</span><br><span class="line">    * @param binarySource</span><br><span class="line">    * @return int</span><br><span class="line">    */</span><br><span class="line">    public static int binaryToDecimal(String binarySource) &#123;</span><br><span class="line">       // 转换为BigInteger 类型，参数 2 指定的是二进制 </span><br><span class="line">       BigInteger bi = new BigInteger(binarySource, 2); </span><br><span class="line">       return Integer.parseInt(bi.toString());     // 默认转换成十进制</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后，我们通过一个十进制数和一个二进制数，来验证一下上述代码的正确性。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">public static void main(String[] args) &#123;     </span><br><span class="line">     int a = 53;</span><br><span class="line">     String b = &quot;110101&quot;;</span><br><span class="line">     System.out.println(String.format(&quot; 数字 %d 的二进制是 %s&quot;, a, Lesson1_1.decimalToBinary(a))); // 获取十进制数 53 的二进制数</span><br><span class="line">     System.out.println(String.format(&quot; 数字 %s 的十进制是 %d&quot;, b, Lesson1_1.binaryToDecimal(b))); // 获取二进制数 110101 的十进制数</span><br><span class="line"></span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>这段代码运行的结果是：十进制数字 53 的二进制是 110101，二进制数字 110101 的十进制是 53。</p>
+<p>好了，关于十进制和二进制的概念以及进制之间的相互转换，你应该都很清楚了。既然有十进制，又有二进制，你可能就要问了，为啥计算机使用的是二进制而不是十进制呢？</p>
+<h2 id="计算机为什么使用二进制？"><a href="#计算机为什么使用二进制？" class="headerlink" title="计算机为什么使用二进制？"></a>计算机为什么使用二进制？</h2><p>我觉得，计算机使用二进制和现代计算机系统的硬件实现有关。组成计算机系统的逻辑电路通常只有两个状态，即开关的接通与断开。</p>
+<p>断开的状态我们用“0”来表示，接通的状态用“1”来表示。由于每位数据只有断开与接通两种状态，所以即便系统受到一定程度的干扰时，它仍然能够可靠地分辨出数字是“0”还是“1”。因此，在具体的系统实现中，二进制的数据表达具有抗干扰能力强、可靠性高的优点。</p>
+<p>相比之下，如果用十进制设计具有 10 种状态的电路，情况就会非常复杂，判断状态的时候出错的几率就会大大提高。</p>
+<p>另外，二进制也非常适合逻辑运算。逻辑运算中的“真”和“假”，正好与二进制的“0”和“1”两个数字相对应。逻辑运算中的加法（“或”运算）、乘法（“与”运算）以及否定（“非”运算）都可以通过“0”和“1”的加法、乘法和减法来实现。</p>
+<h2 id="二进制的位操作"><a href="#二进制的位操作" class="headerlink" title="二进制的位操作"></a>二进制的位操作</h2><p>了解了现代计算机是基于二进制的，我们就来看看，计算机语言中针对二进制的位操作。这里的<strong>位操作</strong>，也叫作<strong>位运算</strong>，就是直接对内存中的二进制位进行操作。常见的二进制位操作包括向左移位和向右移位的移位操作，以及“或”“与”“异或”的逻辑操作。下面我们一一来看。</p>
+<h3 id="向左移位"><a href="#向左移位" class="headerlink" title="向左移位"></a>向左移位</h3><p>我们先来看向左移位。</p>
+<p>二进制 110101 向左移一位，就是在末尾添加一位 0，因此 110101 就变成了 1101010。请注意，这里讨论的是数字没有溢出的情况。</p>
+<p>所谓<strong>数字溢出</strong>，就是二进制数的位数超过了系统所指定的位数。目前主流的系统都支持至少 32 位的整型数字，而 1101010 远未超过 32 位，所以不会溢出。如果进行左移操作的二进制已经超出了 32 位，左移后数字就会溢出，需要将溢出的位数去除。</p>
+<p><img src="https://static001.geekbang.org/resource/image/cd/76/cdbeb658035f275aa941a0d3f6eac876.jpg" alt="img"></p>
+<p>在这个例子中，如果将 1101010 换算为十进制，就是 106，你有没有发现，106 正好是 53 的 2 倍。所以，我们可以得出一个结论：<strong>二进制左移一位，其实就是将数字翻倍</strong>。</p>
+<h3 id="向右移位"><a href="#向右移位" class="headerlink" title="向右移位"></a>向右移位</h3><p>接下来我们来看向右移位。</p>
+<p>二进制 110101 向右移一位，就是去除末尾的那一位，因此 110101 就变成了 11010（最前面的 0 可以省略）。我们将 11010 换算为十进制，就是 26，正好是 53 除以 2 的整数商。所以<strong>二进制右移一位，就是将数字除以 2 并求整数商的操作</strong>。</p>
+<p><img src="https://static001.geekbang.org/resource/image/8d/34/8df282639b609d5269582c789796c334.jpg" alt="img"></p>
+<p>下面我们来看看，用代码如何进行移位操作。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">import java.math.BigInteger;</span><br><span class="line"> </span><br><span class="line">public class Lesson1_2 &#123;  </span><br><span class="line"> </span><br><span class="line">   /**</span><br><span class="line">    * @Description: 向左移位</span><br><span class="line">    * @param num- 等待移位的十进制数, m- 向左移的位数</span><br><span class="line">    * @return int- 移位后的十进制数</span><br><span class="line">    */</span><br><span class="line">   public static int leftShift(int num, int m) &#123;</span><br><span class="line">      return num &lt;&lt; m;</span><br><span class="line">   &#125;</span><br><span class="line">  </span><br><span class="line">   /**</span><br><span class="line">    * @Description: 向右移位</span><br><span class="line">    * @param num- 等待移位的十进制数, m- 向右移的位数</span><br><span class="line">    * @return int- 移位后的十进制数</span><br><span class="line">    */</span><br><span class="line">   public static int rightShift(int num, int m) &#123;</span><br><span class="line">      return num &gt;&gt;&gt; m;</span><br><span class="line">   &#125; </span><br><span class="line"> </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后，我们用一段测试代码验证下结果。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">public static void main(String[] args) &#123;     </span><br><span class="line"> </span><br><span class="line">      int num = 53;</span><br><span class="line">      int m = 1;</span><br><span class="line">      System.out.println(String.format(&quot; 数字 %d 的二进制向左移 %d 位是 %d&quot;, num, m, Lesson1_2.leftShift(num, m)));   // 测试向左移位</span><br><span class="line">      System.out.println(String.format(&quot; 数字 %d 的二进制向右移 %d 位是 %d&quot;, num, m, Lesson1_2.rightShift(num, m)));   // 测试向右移位     </span><br><span class="line"> </span><br><span class="line">      System.out.println();</span><br><span class="line">     </span><br><span class="line">      m = 3;</span><br><span class="line">      System.out.println(String.format(&quot; 数字 %d 的二进制向左移 %d 位是 %d&quot;, num, m, Lesson1_2.leftShift(num, m)));   // 测试向左移位</span><br><span class="line">      System.out.println(String.format(&quot; 数字 %d 的二进制向右移 %d 位是 %d&quot;, num, m, Lesson1_2.rightShift(num, m)));   // 测试向右移位 </span><br><span class="line"> </span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+<p>这段代码的运行结果是：数字 53 向左移 1 位是 106；数字 53 向右移 1 位是 26。数字 53 向左移 3 位是 424，数字 53 向右移 3 位是 6。</p>
+<p>我来解释一下。其中，移位 1 次相当于乘以或除以 2，而移位 3 次就相当于乘以或除以 8（即 2 的 3 次方）。细心的话，你可能已经发现，Java 中的左移位和右移位的表示是不太一样的。</p>
+<p><strong>左移位是 &lt;&lt;，那右移位为什么是 &gt;&gt;&gt; 而不是 &gt;&gt; 呢？</strong>实际上，&gt;&gt; 也是右移操作。简单来说，之所以有这两种表达方式，根本原因是 Java 的二进制数值中最高一位是符号位。这里我给你详细解释一下。</p>
+<p>当符号位为 0 时，表示该数值为正数；当符号位为 1 时，表示该数值为负数。我们以 32 位 Java 为例，数字 53 的二进制为 110101，从右往左数的第 32 位是 0，表示该数是正数，只是通常我们都将其省略。</p>
+<p><img src="https://static001.geekbang.org/resource/image/83/ef/831a21734048b1fc3e357609527175ef.jpg" alt="img"></p>
+<p>如果数字是 -53 呢？那么第 32 位就不是 0，而是 1。请注意我这里列出的是补码。</p>
+<p><img src="https://static001.geekbang.org/resource/image/85/1e/857248d65d7c4b746b3677d45b2a2c1e.jpg" alt="img"></p>
+<p>那么这个时候向右移位，就会产生一个问题：对于符号位（特别是符号位为 1 的时候），我们是否也需要将其右移呢？因此，Java 里定义了两种右移，<strong>逻辑右移</strong>和<strong>算术右移</strong>。逻辑右移 1 位，左边补 0 即可。</p>
+<p><img src="https://static001.geekbang.org/resource/image/74/c7/745a4880417a4dcb62f88bad7be800c7.jpg" alt="img"></p>
+<p>算术右移时保持符号位不变，除符号位之外的右移一位并补符号位 1。补的 1 仍然在符号位之后。</p>
+<p><img src="https://static001.geekbang.org/resource/image/b0/07/b00b38ba0e8e2349a64b52905852e107.jpg" alt="img"></p>
+<p>逻辑右移在 Java 和 Python 语言中使用 &gt;&gt;&gt; 表示，而算术右移使用 &gt;&gt; 表示。如果你有兴趣，可以自己编码尝试一下，看看这两种操作符输出的结果有何不同。</p>
+<p>在 C 或 C++ 语言中，逻辑右移和算数右移共享同一个运算符 &gt;&gt;。那么，编译器是如何决定使用逻辑右移还是算数右移呢？答案是，取决于运算数的类型。如果运算数类型是 unsigned，则采用逻辑右移；而是 signed，则采用算数右移。如果你针对 unsigned 类型的数据使用算数右移，或者针对 signed 类型的数据使用逻辑右移，那么你首先需要进行类型的转换。</p>
+<p>由于左移位无需考虑高位补 1 还是补 0（符号位可能为 1 或 0），所以不需要区分逻辑左移和算术左移。</p>
+<h3 id="位的“或”"><a href="#位的“或”" class="headerlink" title="位的“或”"></a>位的“或”</h3><p>我们刚才说了，二进制的“1”和“0”分别对应逻辑中的“真”和“假”，因此可以针对位进行逻辑操作。</p>
+<p>逻辑“或”的意思是，参与操作的位中只要有一个位是 1，那么最终结果就是 1，也就是“真”。如果我们将二进制 110101 和 100011 的每一位对齐，进行按位的“或”操作，就会得到 110111。</p>
+<p><img src="https://static001.geekbang.org/resource/image/83/15/8394b6daf1d9727069736506332c4915.jpg" alt="img"></p>
+<h3 id="位的“与”"><a href="#位的“与”" class="headerlink" title="位的“与”"></a>位的“与”</h3><p>同理，我们也可以针对位进行逻辑“与”的操作。“与”的意思是，参与操作的位中必须全都是 1，那么最终结果才是 1（真），否则就为 0（假）。如果我们将二进制 110101 和 100011 的每一位对齐，进行按位的“与”操作，就会得到 100001。</p>
+<p><img src="https://static001.geekbang.org/resource/image/b1/19/b1c520385f4e5a5b719c393f9e1d0019.jpg" alt="img"></p>
+<h3 id="位的“异或”"><a href="#位的“异或”" class="headerlink" title="位的“异或”"></a>位的“异或”</h3><p>逻辑“异或”和“或”有所不同，它具有排异性，也就是说如果参与操作的位相同，那么最终结果就为 0（假），否则为 1（真）。所以，如果要得到 1，参与操作的两个位必须不同，这就是此处“异”的含义。我们将二进制 110101 和 100011 的每一位对齐，进行按位的“异或”操作，可以得到结果是 10110。</p>
+<p><img src="https://static001.geekbang.org/resource/image/c7/87/c7ae84301b2742b6714c01a77e6a6b87.jpg" alt="img"></p>
+<p>我总结一下，“异或”操作的本质其实就是，所有数值和自身进行按位的“异或”操作之后都为 0。而且要通过“异或”操作得到 0，也必须通过两个相同的数值进行按位“异或”。这表明了两个数值按位“异或”结果为 0，是这两个数值相等的必要充分条件，可以作为判断两个变量是否相等的条件。</p>
+<p>接下来，我们来学习一下，在代码中如何实现二进制的逻辑操作。Java 中使用|表示按位的“或”，&amp; 表示按位“与”，^ 表示按位“异或”。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line">import java.math.BigInteger;</span><br><span class="line"> </span><br><span class="line">public class Lesson1_3 &#123;  </span><br><span class="line"> </span><br><span class="line">   /**</span><br><span class="line">    * @Description: 二进制按位“或”的操作</span><br><span class="line">    * @param num1- 第一个数字，num2- 第二个数字</span><br><span class="line">    * @return 二进制按位“或”的结果</span><br><span class="line">    */</span><br><span class="line">   public static int or(int num1, int num2) &#123;</span><br><span class="line">        </span><br><span class="line">      return (num1 | num2);</span><br><span class="line">     </span><br><span class="line">   &#125;  </span><br><span class="line"> </span><br><span class="line">   /**</span><br><span class="line">    * @Description: 二进制按位“与”的操作</span><br><span class="line">    * @param num1- 第一个数字，num2- 第二个数字</span><br><span class="line">    * @return 二进制按位“与”的结果</span><br><span class="line">    */</span><br><span class="line">   public static int and(int num1, int num2) &#123;     </span><br><span class="line">   </span><br><span class="line">      return (num1 &amp; num2);</span><br><span class="line">     </span><br><span class="line">   &#125; </span><br><span class="line"> </span><br><span class="line">   /**</span><br><span class="line"> </span><br><span class="line">    * @Description: 二进制按位“异或”的操作</span><br><span class="line">    * @param num1- 第一个数字，num2- 第二个数字</span><br><span class="line">    * @return 二进制按位“异或”的结果</span><br><span class="line">    */</span><br><span class="line"> </span><br><span class="line">   public static int xor(int num1, int num2) &#123;     </span><br><span class="line"> </span><br><span class="line">      return (num1 ^ num2);</span><br><span class="line">     </span><br><span class="line">   &#125;  </span><br><span class="line"> </span><br><span class="line"> </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>同样，我们写一段测试代码，验证一下上面三个函数。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">public static void main(String[] args) &#123;</span><br><span class="line"></span><br><span class="line">     int a = 53;</span><br><span class="line">     int b = 35;</span><br><span class="line"></span><br><span class="line">     System.out.println(String.format(&quot; 数字 %d(%s) 和数字 %d(%s) 的按位‘或’结果是 %d(%s)&quot;,</span><br><span class="line">           a, decimalToBinary(a), b, decimalToBinary(b), Lesson2_3.or(a, b), decimalToBinary(Lesson1_3.or(a, b)))); // 获取十进制数 53 和 35 的按位“或”     </span><br><span class="line"></span><br><span class="line">     System.out.println(String.format(&quot; 数字 %d(%s) 和数字 %d(%s) 的按位‘与’结果是 %d(%s)&quot;,</span><br><span class="line">           a, decimalToBinary(a), b, decimalToBinary(b), Lesson2_3.and(a, b), decimalToBinary(Lesson1_3.and(a, b))));  // 获取十进制数 53 和 35 的按位“与”     </span><br><span class="line"></span><br><span class="line">     System.out.println(String.format(&quot; 数字 %d(%s) 和数字 %d(%s) 的按位‘异或’结果是 %d(%s)&quot;,</span><br><span class="line">           a, decimalToBinary(a), a, decimalToBinary(a), Lesson2_3.xor(a, a), decimalToBinary(Lesson1_3.xor(a, a))));  // 获取十进制数 53 和 35 的按位“异或”     </span><br><span class="line"></span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>这段代码的运行结果是：数字 53(110101) 和数字 35(100011) 的按位‘或’结果是 55(110111)，数字 53(110101) 和数字 35(100011) 的按位‘与’结果是 33(100001)，数字 53(110101) 和数字 53(110101) 的按位‘异或’结果是 0(0)。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>今天我们聊了二进制，你可能会问：学习二进制究竟有什么用呢？平时的编程中，我们好像并没有使用相关的知识啊？确实，目前的高级语言可以帮助我们将人类的思维逻辑转换为使用 0 和 1 的机器语言，我们不用再为此操心了。但是，二进制作为现代计算机体系的基石，这些基础的概念和操作，你一定要非常了解。</p>
+<p>二进制贯穿在很多常用的概念和思想中，例如逻辑判断、二分法、二叉树等等。逻辑判断中的真假值就是用二进制的 1 和 0 来表示的；二分法和二叉树都是把要处理的问题一分为二，正好也可以通过二进制的 1 和 0 来表示。因此，理解了二进制，你就能更加容易地理解很多计算机的数据结构和算法，也为我们后面的学习打下基础。</p>
+<p><img src="https://static001.geekbang.org/resource/image/20/74/209f1b06efdf9a7413fb793571c7ed74.jpg" alt="img"></p>
+<h2 id="思考题"><a href="#思考题" class="headerlink" title="思考题"></a>思考题</h2><p>如果不使用 Java 语言自带的 BigInteger 类，我们还有什么方法来实现十进制到二进制的转换呢？（提示：可以使用二进制的移位和按位逻辑操作来实现。）</p>
+<p>极客时间版权所有: <a href="https://time.geekbang.org/column/article/71840" target="_blank" rel="noopener">https://time.geekbang.org/column/article/71840</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2018-12-03T06:45:23.000Z"><a href="/2018/12/03/程序员的数学基础课/开篇词 | 作为程序员，为什么你应该学好数学/">2018-12-03</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/12/03/程序员的数学基础课/开篇词 | 作为程序员，为什么你应该学好数学/">开篇词 | 作为程序员，为什么你应该学好数学</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>你好，我是黄申，目前在 LinkedIn 从事数据科学的工作，主要负责全球领英的搜索引擎优化，算法和数据架构的搭建。</p>
+<p>2006 年，我博士毕业于上海交通大学计算机科学与工程专业，在接下来十余年时间里，我曾经在微软亚洲研究院、IBM 研究院、eBay 中国研发中心做机器学习方向的研究工作，也负责过大润发飞牛网和 1 号店这两家互联网公司的核心搜索和推荐项目，还写过一本书《大数据架构商业之路》。</p>
+<p>对于数学和计算机编程的联系，我之前也没有思考过。直到有一次，在硅谷的一个技术交流 Meetup 上，我听到一位嘉宾分享说：“如果你只想当一个普通的程序员，那么数学对你来说，并不重要。但是如果你想做一个顶级程序员，梦想着改变世界，那么数学对你来说就很重要了。”</p>
+<p>听完这句话，我马上感受到强烈的共鸣，因为就我自己的工作经历而言，越是往高处走，就越能发现数学的重要性。我知道，数学对于我们每一个程序员来说，都是最熟悉的陌生人。你从小就开始学习数学，中考、高考、研究生考试还要考数学，所以那些熟悉的数学定理、数学公式，陪伴你至少也有 10 年时间了。</p>
+<p>但是，自从做了程序员，你可能早就把数学抛在了脑后，甚至觉得曾经为了应试而“硬学”的数学应该是彻底没什么用了，终于可以和他们 say goodbye 了。毕竟作为一个基础学科，数学肯定是没操作系统、数据结构、计算机网络这样的课程看起来“实用”。</p>
+<p>起码我之前就是这么认为的。大学的时候，我非常喜欢编程，甚至还翘过数学课，专门在图书馆看计算机类的图书。那会儿我觉得，数学这东西，完全就是应试教育，我更喜欢计算机这样操作类的课程，不喜欢待在教室里听数学老师讲那些枯燥的理论和定理。</p>
+<p>再到后来，我读了硕士，开始接触机器学习，猛然间才发现，机器学习表面上是“写程序”，但实际上剥去外表，本质上就是在研究数学。从那会儿开始，我对数学的认知也才逐步客观和理性起来。</p>
+<p>再到现在，我参加了工作，写了这么多年代码，我想说，数学学得好不好，将会直接决定一个程序员有没有发展潜力。因为往大了说，<strong>数学它其实是一种思维模式，考验的是一个人归纳、总结和抽象的能力</strong>。把这个能力放到程序员的世界里，其实就是解决问题的能力。</p>
+<p>往小了说，不管是数据结构与算法还是程序设计，其实底层很多原理或者思路都是源自于数学，所以很多大公司，在招人时，也会优先考虑数学专业的毕业生，这些人他们数学基础很好，学起编程也更容易上手。</p>
+<p>所以我觉得，<strong>如果编程语言是血肉，数学的思想和知识就是灵魂</strong>。它可以帮助你选择合适的数据结构和算法、提升系统效率、并且赋予机器智慧。尤其是在大数据和智能化的时代，更是如此。</p>
+<p>举个例子，比如我们小学就学到的余数，其实在编程的世界里也有很多应用。你经常用到的分页功能，根据记录的总条数和每页展示的条数，最后来计算整体的页数，这里面就会有余数的思想。再难一点，奇偶校验、循环冗余检验、散列函数、密码学等等都有余数相关的知识。</p>
+<p>遇到这些问题的时候，你能说你不懂余数吗？我想你肯定懂，只是很多时候没有想到可以用余数的思想来解决相关问题罢了。那为什么没有想到呢？我认为，本质原因还是你没有数学思维，还是你数学的基础不够好。</p>
+<p>所以，在这个专栏里，我想和你重点聊聊数学。当然，我知道数学博大精深，所以在一开始做专栏的时候，我就和极客时间团队一起定义好了专栏的边界，用一句话来说就是“<strong>只做程序员需要学的数学知识</strong>”。</p>
+<p>首先，我梳理了编程中最常用的数学概念，由浅入深剖析它们的本质，希望能够帮你彻底掌握这些最基础、也最核心的数学知识。这其中包括那些你曾经熟悉的数学名词，比如数学归纳法、迭代法、递归、排列、组合等等。</p>
+<p>其次，我把线性代数和概率统计中的抽象概念、公式、定理都由内而外地讲了出来，并分析它们在编程中的应用案例，帮助你提升编程的高阶能力。对于这些内容，我会从基本的概念入手，结合生活和工作中的实际案例，让你更轻松地理解概念的含义。</p>
+<p>比如，对于朴素贝叶斯方法，我会从基本的随机现象、随机变量和概率分布等着手。随后，我会逐步深入，结合这些数学知识在编程算法中的应用进行展开。比方说，贝叶斯定理是什么，随机变量之间的独立性是什么，这些是如何构成朴素贝叶斯方法的，而最终朴素贝叶斯又是如何被运用在机器学习的分类算法之中的。</p>
+<p><img src="https://static001.geekbang.org/resource/image/72/61/7288e9715163adb95f7047ae0c263a61.jpg" alt="img"></p>
+<p>这样的讲解路线，既能让你巩固基础的概念和知识，同时也能让你明白这些基础性的内容，对计算机编程和算法究竟意味着什么。</p>
+<p>不过话又说回来，我认为数学理论和编程实践的结合其实是“决裂”的，所以学习数学的时候，你不能太功利，觉得今天学完明天就能用得着，我觉得这个学习思路可以用在其他课程上，但放在数学里绝对不合适。</p>
+<p>因为数学知识总是比较抽象，特别是概率统计和线性代数中的概率、数据分布、矩阵、向量等概念。它们真的很不好理解，也需要我们花时间琢磨，但是对于高级一点的程序设计而言，特别是和数据相关的算法，这些概念就非常重要了，这可都是先人总结出来的经验。</p>
+<p>如果你能够将这些基本概念和核心理论都搞懂、搞透，那么面对系统框架设计、性能优化、准确率提升这些难题的时候，你就能从更高的角度出发去解决问题，而不只是站在一个“熟练工”的视角，去增删改查。</p>
+<p>最后，我希望数学能够成为你的一种基础能力，希望这个专栏能帮你用数学思维来分析问题和解决问题。数学思想是启发我们思维的中枢，如果你对数学有更好的理解，遇到问题的时候就能追本溯源，快、准、稳地找到解决方案。</p>
+<p>伽利略曾经说过，“宇宙这本书是用数学语言写成的”，数学是人类科学进步的重要基础，所以，你我都要怀着敬畏的心态去学习、思考数学。同样，我还要求我自己的孩子一定要学好数学，因为我确信，这对于他未来的发展来说，至关重要。</p>
+<p>编程的世界远不止条件和循环语句，程序员的人生应当是创造的舞台。我希望，通过这个专栏的学习，能够让你切实感受到数学这个古老学科的活力和魅力。</p>
+<p>好了，说了这么多，相信你已经下定决心和我一起攻克数学。重新开始就要告别过去，你可以在留言区做个“<strong>数学学习复盘</strong>”，在之前的学习过程中，你的学习状况是怎样的？你遇到的最大困难是什么？现在，你最希望学到的是什么？</p>
+<p>Now，你说，我听！</p>
+<p>极客时间版权所有: <a href="https://time.geekbang.org/column/article/70844" target="_blank" rel="noopener">https://time.geekbang.org/column/article/70844</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2018-10-05T06:45:23.000Z"><a href="/2018/10/05/数据结构与算法/07 | 链表（下）：如何轻松写出正确的链表代码/">2018-10-05</a></time>
       
       
@@ -640,431 +971,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2018-09-21T06:45:23.000Z"><a href="/2018/09/21/数据结构与算法/01 | 为什么要学习数据结构和算法/">2018-09-21</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2018/09/21/数据结构与算法/01 | 为什么要学习数据结构和算法/">01 | 为什么要学习数据结构和算法</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>你是不是觉得数据结构和算法，跟操作系统、计算机网络一样，是脱离实际工作的知识？可能除了面试，这辈子也用不着？</p>
-<p>尽管计算机相关专业的同学在大学都学过这门课程，甚至很多培训机构也会培训这方面的知识，但是据我了解，很多程序员对数据结构和算法依旧一窍不通。还有一些人也只听说过数组、链表、快排这些最最基本的数据结构和算法，稍微复杂一点的就完全没概念。</p>
-<p>当然，也有很多人说，自己实际工作中根本用不到数据结构和算法。所以，就算不懂这块知识，只要 Java API、开发框架用得熟练，照样可以把代码写得“飞”起来。事实真的是这样吗？</p>
-<p>今天我们就来详细聊一聊，为什么要学习数据结构和算法。</p>
-<h2 id="想要通关大厂面试，千万别让数据结构和算法拖了后腿"><a href="#想要通关大厂面试，千万别让数据结构和算法拖了后腿" class="headerlink" title="想要通关大厂面试，千万别让数据结构和算法拖了后腿"></a>想要通关大厂面试，千万别让数据结构和算法拖了后腿</h2><p>很多大公司，比如 BAT、Google、Facebook，面试的时候都喜欢考算法、让人现场写代码。有些人虽然技术不错，但每次去面试都会“跪”在算法上，很是可惜。那你有没有想过，为什么这些大公司都喜欢考算法呢？</p>
-<p>校招的时候，参加面试的学生通常没有实际项目经验，公司只能考察他们的基础知识是否牢固。社招就更不用说了，越是厉害的公司，越是注重考察数据结构与算法这类基础知识。相比短期能力，他们更看中你的长期潜力。</p>
-<p>你可能要说了，我不懂数据结构与算法，照样找到了好工作啊。那我是不是就不用学数据结构和算法呢？当然不是，你别忘了，<strong>我们学任何知识都是为了“用”的，是为了解决实际工作问题的</strong>，学习数据结构和算法自然也不例外。</p>
-<h2 id="业务开发工程师，你真的愿意做一辈子-CRUD-boy-吗？"><a href="#业务开发工程师，你真的愿意做一辈子-CRUD-boy-吗？" class="headerlink" title="业务开发工程师，你真的愿意做一辈子 CRUD boy 吗？"></a>业务开发工程师，你真的愿意做一辈子 CRUD boy 吗？</h2><p>如果你是一名业务开发工程师，你可能要说，我整天就是做数据库 CRUD（增删改查），哪里用得到数据结构和算法啊？</p>
-<p>是的，对于大部分业务开发来说，我们平时可能更多的是利用已经封装好的现成的接口、类库来堆砌、翻译业务逻辑，很少需要自己实现数据结构和算法。但是，<strong>不需要自己实现，并不代表什么都不需要了解</strong>。</p>
-<p>如果不知道这些类库背后的原理，不懂得时间、空间复杂度分析，你如何能用好、用对它们？存储某个业务数据的时候，你如何知道应该用 ArrayList，还是 Linked List 呢？调用了某个函数之后，你又该如何评估代码的性能和资源的消耗呢？</p>
-<p>作为业务开发，我们会用到各种框架、中间件和底层系统，比如 Spring、RPC 框架、消息中间件、Redis 等等。<strong>在这些基础框架中，一般都揉和了很多基础数据结构和算法的设计思想。</strong></p>
-<p>比如，我们常用的 Key-Value 数据库 Redis 中，里面的有序集合是用什么数据结构来实现的呢？为什么要用跳表来实现呢？为什么不用二叉树呢？</p>
-<p>如果你能弄明白这些底层原理，你就能更好地使用它们。即便出现问题，也很容易就能定位。因此，<strong>掌握数据结构和算法，不管对于阅读框架源码，还是理解其背后的设计思想，都是非常有用的。</strong></p>
-<p>在平时的工作中，数据结构和算法的应用到处可见。我来举一个你非常熟悉的例子：如何实时地统计业务接口的 99% 响应时间？</p>
-<p>你可能最先想到，每次查询时，从小到大排序所有的响应时间，如果总共有 1200 个数据，那第 1188 个数据就是 99% 的响应时间。很显然，每次用这个方法查询的话都要排序，效率是非常低的。但是，如果你知道“堆”这个数据结构，用两个堆可以非常高效地解决这个问题。</p>
-<h2 id="基础架构研发工程师，写出达到开源水平的框架才是你的目标！"><a href="#基础架构研发工程师，写出达到开源水平的框架才是你的目标！" class="headerlink" title="基础架构研发工程师，写出达到开源水平的框架才是你的目标！"></a>基础架构研发工程师，写出达到开源水平的框架才是你的目标！</h2><p>现在互联网上的技术文章、架构分享、开源项目满天飞，照猫画虎做一套基础框架并不难。我就拿 RPC 框架举例。</p>
-<p>不同的公司、不同的人做出的 RPC 框架，架构设计思路都差不多，最后实现的功能也都差不多。但是有的人做出来的框架，Bug 很多、性能一般、扩展性也不好，只能在自己公司仅有的几个项目里面用一下。而有的人做的框架可以开源到 GitHub 上给很多人用，甚至被 Apache 收录。为什么会有这么大的差距呢？</p>
-<p>我觉得，高手之间的竞争其实就在细节。这些细节包括：你用的算法是不是够优化，数据存取的效率是不是够高，内存是不是够节省等等。这些累积起来，决定了一个框架是不是优秀。所以，如果你还不懂数据结构和算法，没听说过大 O 复杂度分析，不知道怎么分析代码的时间复杂度和空间复杂度，那肯定说不过去了，赶紧来补一补吧！</p>
-<h2 id="对编程还有追求？不想被行业淘汰？那就不要只会写凑合能用的代码！"><a href="#对编程还有追求？不想被行业淘汰？那就不要只会写凑合能用的代码！" class="headerlink" title="对编程还有追求？不想被行业淘汰？那就不要只会写凑合能用的代码！"></a>对编程还有追求？不想被行业淘汰？那就不要只会写凑合能用的代码！</h2><p>何为编程能力强？是代码的可读性好、健壮？还是扩展性好？我觉得没法列，也列不全。但是，在我看来，<strong>性能好坏起码是其中一个非常重要的评判标准</strong>。但是，如果你连代码的时间复杂度、空间复杂度都不知道怎么分析，怎么写出高性能的代码呢？</p>
-<p>你可能会说，我在小公司工作，用户量很少，需要处理的数据量也很少，开发中不需要考虑那么多性能的问题，完成功能就可以，用什么数据结构和算法，差别根本不大。但是你真的想“十年如一日”地做一样的工作吗？</p>
-<p>经常有人说，程序员 35 岁之后很容易陷入瓶颈，被行业淘汰，我觉得原因其实就在此。有的人写代码的时候，从来都不考虑非功能性的需求，只是完成功能，凑合能用就好；做事情的时候，也从来没有长远规划，只把眼前事情做好就满足了。</p>
-<p>我曾经面试过很多大龄候选人，简历能写十几页，经历的项目有几十个，但是细看下来，每个项目都是重复地堆砌业务逻辑而已，完全没有难度递进，看不出有能力提升。久而久之，十年的积累可能跟一年的积累没有任何区别。这样的人，怎么不会被行业淘汰呢？</p>
-<p>如果你在一家成熟的公司，或者 BAT 这样的大公司，面对的是千万级甚至亿级的用户，开发的是 TB、PB 级别数据的处理系统。性能几乎是开发过程中时刻都要考虑的问题。一个简单的 ArrayList、Linked List 的选择问题，就可能会产生成千上万倍的性能差别。这个时候，数据结构和算法的意义就完全凸显出来了。</p>
-<p>其实，我觉得，数据结构和算法这个东西，如果你不去学，可能真的这辈子都用不到，也感受不到它的好。但是一旦掌握，你就会常常被它的强大威力所折服。之前你可能需要费很大劲儿来优化的代码，需要花很多心思来设计的架构，用了数据结构和算法之后，很容易就可以解决了。</p>
-<h2 id="内容小结"><a href="#内容小结" class="headerlink" title="内容小结"></a>内容小结</h2><p>我们学习数据结构和算法，并不是为了死记硬背几个知识点。我们的目的是建立时间复杂度、空间复杂度意识，写出高质量的代码，能够设计基础架构，提升编程技能，训练逻辑思维，积攒人生经验，以此获得工作回报，实现你的价值，完善你的人生。</p>
-<p>所以，不管你是业务开发工程师，还是基础架构工程师；不管你是初入职场的初级工程师，还是工作多年的资深架构师，又或者是想转人工智能、区块链这些热门领域的程序员，数据结构与算法作为计算机的基础知识、核心知识，都是必须要掌握的。</p>
-<p><strong>掌握了数据结构与算法，你看待问题的深度，解决问题的角度就会完全不一样</strong>。因为这样的你，就像是站在巨人的肩膀上，拿着生存利器行走世界。数据结构与算法，会为你的编程之路，甚至人生之路打开一扇通往新世界的大门。</p>
-<p>极客时间版权所有: <a href="https://time.geekbang.org/column/article/39972" target="_blank" rel="noopener">https://time.geekbang.org/column/article/39972</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2018-04-27T06:45:23.000Z"><a href="/2018/04/27/Docker/Docker入门/">2018-04-27</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2018/04/27/Docker/Docker入门/">Docker入门</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>2013年发布至今， <a href="https://www.docker.com/" target="_blank" rel="noopener">Docker</a> 一直广受瞩目，被认为可能会改变软件行业。</p>
-<p>但是，许多人并不清楚 Docker 到底是什么，要解决什么问题，好处又在哪里？本文就来详细解释，帮助大家理解它，还带有简单易懂的实例，教你如何将它用于日常开发。</p>
-<h2 id="一、环境配置的难题"><a href="#一、环境配置的难题" class="headerlink" title="一、环境配置的难题"></a>一、环境配置的难题</h2><p>软件开发最大的麻烦事之一，就是环境配置。用户计算机的环境都不相同，你怎么知道自家的软件，能在那些机器跑起来？</p>
-<p>用户必须保证两件事：操作系统的设置，各种库和组件的安装。只有它们都正确，软件才能运行。举例来说，安装一个 Python 应用，计算机必须有 Python 引擎，还必须有各种依赖，可能还要配置环境变量。</p>
-<p>如果某些老旧的模块与当前环境不兼容，那就麻烦了。开发者常常会说：”它在我的机器可以跑了”（It works on my machine），言下之意就是，其他机器很可能跑不了。</p>
-<p>环境配置如此麻烦，换一台机器，就要重来一次，旷日费时。很多人想到，能不能从根本上解决问题，软件可以带环境安装？也就是说，安装的时候，把原始环境一模一样地复制过来。</p>
-<h2 id="二、虚拟机"><a href="#二、虚拟机" class="headerlink" title="二、虚拟机"></a>二、虚拟机</h2><p>虚拟机（virtual machine）就是带环境安装的一种解决方案。它可以在一种操作系统里面运行另一种操作系统，比如在 Windows 系统里面运行 Linux 系统。应用程序对此毫无感知，因为虚拟机看上去跟真实系统一模一样，而对于底层系统来说，虚拟机就是一个普通文件，不需要了就删掉，对其他部分毫无影响。</p>
-<p>虽然用户可以通过虚拟机还原软件的原始环境。但是，这个方案有几个缺点。</p>
-<p><strong>（1）资源占用多</strong></p>
-<p>虚拟机会独占一部分内存和硬盘空间。它运行的时候，其他程序就不能使用这些资源了。哪怕虚拟机里面的应用程序，真正使用的内存只有 1MB，虚拟机依然需要几百 MB 的内存才能运行。</p>
-<p><strong>（2）冗余步骤多</strong></p>
-<p>虚拟机是完整的操作系统，一些系统级别的操作步骤，往往无法跳过，比如用户登录。</p>
-<p><strong>（3）启动慢</strong></p>
-<p>启动操作系统需要多久，启动虚拟机就需要多久。可能要等几分钟，应用程序才能真正运行。</p>
-<h2 id="三、Linux-容器"><a href="#三、Linux-容器" class="headerlink" title="三、Linux 容器"></a>三、Linux 容器</h2><p>由于虚拟机存在这些缺点，Linux 发展出了另一种虚拟化技术：Linux 容器（Linux Containers，缩写为 LXC）。</p>
-<p><strong>Linux 容器不是模拟一个完整的操作系统，而是对进程进行隔离。</strong>或者说，在正常进程的外面套了一个<a href="https://opensource.com/article/18/1/history-low-level-container-runtimes" target="_blank" rel="noopener">保护层</a>。对于容器里面的进程来说，它接触到的各种资源都是虚拟的，从而实现与底层系统的隔离。</p>
-<p>由于容器是进程级别的，相比虚拟机有很多优势。</p>
-<p><strong>（1）启动快</strong></p>
-<p>容器里面的应用，直接就是底层系统的一个进程，而不是虚拟机内部的进程。所以，启动容器相当于启动本机的一个进程，而不是启动一个操作系统，速度就快很多。</p>
-<p><strong>（2）资源占用少</strong></p>
-<p>容器只占用需要的资源，不占用那些没有用到的资源；虚拟机由于是完整的操作系统，不可避免要占用所有资源。另外，多个容器可以共享资源，虚拟机都是独享资源。</p>
-<p><strong>（3）体积小</strong></p>
-<p>容器只要包含用到的组件即可，而虚拟机是整个操作系统的打包，所以容器文件比虚拟机文件要小很多。</p>
-<p>总之，容器有点像轻量级的虚拟机，能够提供虚拟化的环境，但是成本开销小得多。</p>
-<h2 id="四、Docker-是什么？"><a href="#四、Docker-是什么？" class="headerlink" title="四、Docker 是什么？"></a>四、Docker 是什么？</h2><p><strong>Docker 属于 Linux 容器的一种封装，提供简单易用的容器使用接口。</strong>它是目前最流行的 Linux 容器解决方案。</p>
-<p>Docker 将应用程序与该程序的依赖，打包在一个文件里面。运行这个文件，就会生成一个虚拟容器。程序在这个虚拟容器里运行，就好像在真实的物理机上运行一样。有了 Docker，就不用担心环境问题。</p>
-<p>总体来说，Docker 的接口相当简单，用户可以方便地创建和使用容器，把自己的应用放入容器。容器还可以进行版本管理、复制、分享、修改，就像管理普通的代码一样。</p>
-<h2 id="五、Docker-的用途"><a href="#五、Docker-的用途" class="headerlink" title="五、Docker 的用途"></a>五、Docker 的用途</h2><p>Docker 的主要用途，目前有三大类。</p>
-<p><strong>（1）提供一次性的环境。</strong>比如，本地测试他人的软件、持续集成的时候提供单元测试和构建的环境。</p>
-<p><strong>（2）提供弹性的云服务。</strong>因为 Docker 容器可以随开随关，很适合动态扩容和缩容。</p>
-<p><strong>（3）组建微服务架构。</strong>通过多个容器，一台机器可以跑多个服务，因此在本机就可以模拟出微服务架构。</p>
-<h2 id="六、Docker-的安装"><a href="#六、Docker-的安装" class="headerlink" title="六、Docker 的安装"></a>六、Docker 的安装</h2><p>Docker 是一个开源的商业产品，有两个版本：社区版（Community Edition，缩写为 CE）和企业版（Enterprise Edition，缩写为 EE）。企业版包含了一些收费服务，个人开发者一般用不到。下面的介绍都针对社区版。</p>
-<p>Docker CE 的安装请参考官方文档。</p>
-<p><a href="https://docs.docker.com/docker-for-mac/install/" target="_blank" rel="noopener">Mac</a><br><a href="https://docs.docker.com/docker-for-windows/install/" target="_blank" rel="noopener">Windows</a><br><a href="https://docs.docker.com/install/linux/docker-ce/ubuntu/" target="_blank" rel="noopener">Ubuntu</a><br><a href="https://docs.docker.com/install/linux/docker-ce/debian/" target="_blank" rel="noopener">Debian</a><br><a href="https://docs.docker.com/install/linux/docker-ce/centos/" target="_blank" rel="noopener">CentOS</a><br><a href="https://docs.docker.com/install/linux/docker-ce/fedora/" target="_blank" rel="noopener">Fedora</a><br><a href="https://docs.docker.com/install/linux/docker-ce/binaries/" target="_blank" rel="noopener">其他 Linux 发行版</a></p>
-<p>安装完成后，运行下面的命令，验证是否安装成功。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span>docker version</span><br><span class="line"><span class="meta"> #</span> 或者</span><br><span class="line"><span class="meta">$</span>docker info</span><br></pre></td></tr></table></figure>
-<p>Docker 需要用户具有 sudo 权限，为了避免每次命令都输入<code>sudo</code>，可以把用户加入 Docker 用户组（<a href="https://docs.docker.com/install/linux/linux-postinstall/#manage-docker-as-a-non-root-user" target="_blank" rel="noopener">官方文档</a>）。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span>sudo usermod -aG docker $USER</span><br></pre></td></tr></table></figure>
-<p>Docker 是服务器—-客户端架构。命令行运行<code>docker</code>命令的时候，需要本机有 Docker 服务。如果这项服务没有启动，可以用下面的命令启动（<a href="https://docs.docker.com/config/daemon/systemd/" target="_blank" rel="noopener">官方文档</a>）。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span> service 命令的用法</span><br><span class="line"><span class="meta">$</span>sudo service docker start</span><br></pre></td></tr></table></figure>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span> systemctl 命令的用法</span><br><span class="line"><span class="meta">$</span>sudo systemctl start docker</span><br></pre></td></tr></table></figure>
-<h2 id="六、image-文件"><a href="#六、image-文件" class="headerlink" title="六、image 文件"></a>六、image 文件</h2><p><strong>Docker 把应用程序及其依赖，打包在 image 文件里面。</strong>只有通过这个文件，才能生成 Docker 容器。image 文件可以看作是容器的模板。Docker 根据 image 文件生成容器的实例。同一个 image 文件，可以生成多个同时运行的容器实例。</p>
-<p>image 是二进制文件。实际开发中，一个 image 文件往往通过继承另一个 image 文件，加上一些个性化设置而生成。举例来说，你可以在 Ubuntu 的 image 基础上，往里面加入 Apache 服务器，形成你的 image。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span> 列出本机的所有 image 文件。</span><br><span class="line"><span class="meta">$</span>docker image ls</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span> 删除 image 文件</span><br><span class="line"><span class="meta">$</span>docker image rm [imageName]</span><br></pre></td></tr></table></figure>
-<p>image 文件是通用的，一台机器的 image 文件拷贝到另一台机器，照样可以使用。一般来说，为了节省时间，我们应该尽量使用别人制作好的 image 文件，而不是自己制作。即使要定制，也应该基于别人的 image 文件进行加工，而不是从零开始制作。</p>
-<p>为了方便共享，image 文件制作完成后，可以上传到网上的仓库。Docker 的官方仓库 <a href="https://hub.docker.com/" target="_blank" rel="noopener">Docker Hub</a> 是最重要、最常用的 image 仓库。此外，出售自己制作的 image 文件也是可以的。</p>
-<h2 id="七、实例：hello-world"><a href="#七、实例：hello-world" class="headerlink" title="七、实例：hello world"></a>七、实例：hello world</h2><p>下面，我们通过最简单的 image 文件”<a href="https://hub.docker.com/r/library/hello-world/" target="_blank" rel="noopener">hello world”</a>，感受一下 Docker。</p>
-<p>首先，运行下面的命令，将 image 文件从仓库抓取到本地。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker image pull library/hello-world</span><br></pre></td></tr></table></figure>
-<p>上面代码中，<code>docker image pull</code>是抓取 image 文件的命令。<code>library/hello-world</code>是 image 文件在仓库里面的位置，其中<code>library</code>是 image 文件所在的组，<code>hello-world</code>是 image 文件的名字。</p>
-<p>由于 Docker 官方提供的 image 文件，都放在<a href="https://hub.docker.com/r/library/" target="_blank" rel="noopener"><code>library</code></a>组里面，所以它的是默认组，可以省略。因此，上面的命令可以写成下面这样。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker image pull hello-world</span><br></pre></td></tr></table></figure>
-<p>抓取成功以后，就可以在本机看到这个 image 文件了。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker image ls</span><br></pre></td></tr></table></figure>
-<p>现在，运行这个 image 文件。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container run hello-world</span><br></pre></td></tr></table></figure>
-<p><code>docker container run</code>命令会从 image 文件，生成一个正在运行的容器实例。</p>
-<p>注意，<code>docker container run</code>命令具有自动抓取 image 文件的功能。如果发现本地没有指定的 image 文件，就会从仓库自动抓取。因此，前面的<code>docker image pull</code>命令并不是必需的步骤。</p>
-<p>如果运行成功，你会在屏幕上读到下面的输出。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container run hello-world</span><br><span class="line"></span><br><span class="line">Hello from Docker!</span><br><span class="line">This message shows that your installation appears to be working correctly.</span><br><span class="line"></span><br><span class="line">... ...</span><br></pre></td></tr></table></figure>
-<p>输出这段提示以后，<code>hello world</code>就会停止运行，容器自动终止。</p>
-<p>有些容器不会自动终止，因为提供的是服务。比如，安装运行 Ubuntu 的 image，就可以在命令行体验 Ubuntu 系统。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container run -it ubuntu bash</span><br></pre></td></tr></table></figure>
-<p>对于那些不会自动终止的容器，必须使用<a href="https://docs.docker.com/engine/reference/commandline/container_kill/" target="_blank" rel="noopener"><code>docker container kill</code></a> 命令手动终止。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container kill [containID]</span><br></pre></td></tr></table></figure>
-<h2 id="八、容器文件"><a href="#八、容器文件" class="headerlink" title="八、容器文件"></a>八、容器文件</h2><p><strong>image 文件生成的容器实例，本身也是一个文件，称为容器文件。</strong>也就是说，一旦容器生成，就会同时存在两个文件： image 文件和容器文件。而且关闭容器并不会删除容器文件，只是容器停止运行而已。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span> 列出本机正在运行的容器</span><br><span class="line"><span class="meta">$</span> docker container ls</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span> 列出本机所有容器，包括终止运行的容器</span><br><span class="line"><span class="meta">$</span> docker container ls --all</span><br></pre></td></tr></table></figure>
-<p>上面命令的输出结果之中，包括容器的 ID。很多地方都需要提供这个 ID，比如上一节终止容器运行的<code>docker container kill</code>命令。</p>
-<p>终止运行的容器文件，依然会占据硬盘空间，可以使用<a href="https://docs.docker.com/engine/reference/commandline/container_rm/" target="_blank" rel="noopener"><code>docker container rm</code></a>命令删除。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container rm [containerID]</span><br></pre></td></tr></table></figure>
-<p>运行上面的命令之后，再使用<code>docker container ls --all</code>命令，就会发现被删除的容器文件已经消失了。</p>
-<h2 id="九、Dockerfile-文件"><a href="#九、Dockerfile-文件" class="headerlink" title="九、Dockerfile 文件"></a>九、Dockerfile 文件</h2><p>学会使用 image 文件以后，接下来的问题就是，如何可以生成 image 文件？如果你要推广自己的软件，势必要自己制作 image 文件。</p>
-<p>这就需要用到 Dockerfile 文件。它是一个文本文件，用来配置 image。Docker 根据 该文件生成二进制的 image 文件。</p>
-<p>下面通过一个实例，演示如何编写 Dockerfile 文件。</p>
-<h2 id="十、实例：制作自己的-Docker-容器"><a href="#十、实例：制作自己的-Docker-容器" class="headerlink" title="十、实例：制作自己的 Docker 容器"></a>十、实例：制作自己的 Docker 容器</h2><p>下面我以 <a href="http://www.ruanyifeng.com/blog/2017/08/koa.html" target="_blank" rel="noopener">koa-demos</a> 项目为例，介绍怎么写 Dockerfile 文件，实现让用户在 Docker 容器里面运行 Koa 框架。</p>
-<p>作为准备工作，请先<a href="https://github.com/ruanyf/koa-demos/archive/master.zip" target="_blank" rel="noopener">下载源码</a>。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> git clone https://github.com/ruanyf/koa-demos.git</span><br><span class="line"><span class="meta">$</span> cd koa-demos</span><br></pre></td></tr></table></figure>
-<h3 id="10-1-编写-Dockerfile-文件"><a href="#10-1-编写-Dockerfile-文件" class="headerlink" title="10.1 编写 Dockerfile 文件"></a>10.1 编写 Dockerfile 文件</h3><p>首先，在项目的根目录下，新建一个文本文件<code>.dockerignore</code>，写入下面的<a href="https://github.com/ruanyf/koa-demos/blob/master/.dockerignore" target="_blank" rel="noopener">内容</a>。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">.git</span><br><span class="line">node_modules</span><br><span class="line">npm-debug.log</span><br></pre></td></tr></table></figure>
-<p>上面代码表示，这三个路径要排除，不要打包进入 image 文件。如果你没有路径要排除，这个文件可以不新建。</p>
-<p>然后，在项目的根目录下，新建一个文本文件 Dockerfile，写入下面的<a href="https://github.com/ruanyf/koa-demos/blob/master/Dockerfile" target="_blank" rel="noopener">内容</a>。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">FROM node:8.4</span><br><span class="line">COPY . /app</span><br><span class="line">WORKDIR /app</span><br><span class="line">RUN npm install --registry=https://registry.npm.taobao.org</span><br><span class="line">EXPOSE 3000</span><br></pre></td></tr></table></figure>
-<p>上面代码一共五行，含义如下。</p>
-<ul>
-<li><code>FROM node:8.4</code>：该 image 文件继承官方的 node image，冒号表示标签，这里标签是<code>8.4</code>，即8.4版本的 node。</li>
-<li><code>COPY . /app</code>：将当前目录下的所有文件（除了<code>.dockerignore</code>排除的路径），都拷贝进入 image 文件的<code>/app</code>目录。</li>
-<li><code>WORKDIR /app</code>：指定接下来的工作路径为<code>/app</code>。</li>
-<li><code>RUN npm install</code>：在<code>/app</code>目录下，运行<code>npm install</code>命令安装依赖。注意，安装后所有的依赖，都将打包进入 image 文件。</li>
-<li><code>EXPOSE 3000</code>：将容器 3000 端口暴露出来， 允许外部连接这个端口。</li>
-</ul>
-<h3 id="10-2-创建-image-文件"><a href="#10-2-创建-image-文件" class="headerlink" title="10.2 创建 image 文件"></a>10.2 创建 image 文件</h3><p>有了 Dockerfile 文件以后，就可以使用<code>docker image build</code>命令创建 image 文件了。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker image build -t koa-demo .</span><br><span class="line"><span class="meta">#</span> 或者</span><br><span class="line"><span class="meta">$</span> docker image build -t koa-demo:0.0.1 .</span><br></pre></td></tr></table></figure>
-<p>上面代码中，<code>-t</code>参数用来指定 image 文件的名字，后面还可以用冒号指定标签。如果不指定，默认的标签就是<code>latest</code>。最后的那个点表示 Dockerfile 文件所在的路径，上例是当前路径，所以是一个点。</p>
-<p>如果运行成功，就可以看到新生成的 image 文件<code>koa-demo</code>了。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker image ls</span><br></pre></td></tr></table></figure>
-<h3 id="10-3-生成容器"><a href="#10-3-生成容器" class="headerlink" title="10.3 生成容器"></a>10.3 生成容器</h3><p><code>docker container run</code>命令会从 image 文件生成容器。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container run -p 8000:3000 -it koa-demo /bin/bash</span><br><span class="line"><span class="meta">#</span> 或者</span><br><span class="line"><span class="meta">$</span> docker container run -p 8000:3000 -it koa-demo:0.0.1 /bin/bash</span><br></pre></td></tr></table></figure>
-<p>上面命令的各个参数含义如下：</p>
-<ul>
-<li><code>-p</code>参数：容器的 3000 端口映射到本机的 8000 端口。</li>
-<li><code>-it</code>参数：容器的 Shell 映射到当前的 Shell，然后你在本机窗口输入的命令，就会传入容器。</li>
-<li><code>koa-demo:0.0.1</code>：image 文件的名字（如果有标签，还需要提供标签，默认是 latest 标签）。</li>
-<li><code>/bin/bash</code>：容器启动以后，内部第一个执行的命令。这里是启动 Bash，保证用户可以使用 Shell。</li>
-</ul>
-<p>如果一切正常，运行上面的命令以后，就会返回一个命令行提示符。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">root@66d80f4aaf1e:/app#</span><br></pre></td></tr></table></figure>
-<p>这表示你已经在容器里面了，返回的提示符就是容器内部的 Shell 提示符。执行下面的命令。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">root@66d80f4aaf1e:/app# node demos/01.js</span><br></pre></td></tr></table></figure>
-<p>这时，Koa 框架已经运行起来了。打开本机的浏览器，访问 <a href="http://127.0.0.1:8000，网页显示&quot;Not" target="_blank" rel="noopener">http://127.0.0.1:8000，网页显示&quot;Not</a> Found”，这是因为这个 <a href="https://github.com/ruanyf/koa-demos/blob/master/demos/01.js" target="_blank" rel="noopener">demo</a>没有写路由。</p>
-<p>这个例子中，Node 进程运行在 Docker 容器的虚拟环境里面，进程接触到的文件系统和网络接口都是虚拟的，与本机的文件系统和网络接口是隔离的，因此需要定义容器与物理机的端口映射（map）。</p>
-<p>现在，在容器的命令行，按下 Ctrl + c 停止 Node 进程，然后按下 Ctrl + d （或者输入 exit）退出容器。此外，也可以用<code>docker container kill</code>终止容器运行。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span> 在本机的另一个终端窗口，查出容器的 ID</span><br><span class="line"><span class="meta">$</span> docker container ls</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span> 停止指定的容器运行</span><br><span class="line"><span class="meta">$</span> docker container kill [containerID]</span><br></pre></td></tr></table></figure>
-<p>容器停止运行之后，并不会消失，用下面的命令删除容器文件。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span> 查出容器的 ID</span><br><span class="line"><span class="meta">$</span> docker container ls --all</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span> 删除指定的容器文件</span><br><span class="line"><span class="meta">$</span> docker container rm [containerID]</span><br></pre></td></tr></table></figure>
-<p>也可以使用<code>docker container run</code>命令的<code>--rm</code>参数，在容器终止运行后自动删除容器文件。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container run --rm -p 8000:3000 -it koa-demo /bin/bash</span><br></pre></td></tr></table></figure>
-<h3 id="10-4-CMD-命令"><a href="#10-4-CMD-命令" class="headerlink" title="10.4 CMD 命令"></a>10.4 CMD 命令</h3><p>上一节的例子里面，容器启动以后，需要手动输入命令<code>node demos/01.js</code>。我们可以把这个命令写在 Dockerfile 里面，这样容器启动以后，这个命令就已经执行了，不用再手动输入了。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">FROM node:8.4</span><br><span class="line">COPY . /app</span><br><span class="line">WORKDIR /app</span><br><span class="line">RUN npm install --registry=https://registry.npm.taobao.org</span><br><span class="line">EXPOSE 3000</span><br><span class="line">CMD node demos/01.js</span><br></pre></td></tr></table></figure>
-<p>上面的 Dockerfile 里面，多了最后一行<code>CMD node demos/01.js</code>，它表示容器启动后自动执行<code>node demos/01.js</code>。</p>
-<p>你可能会问，<code>RUN</code>命令与<code>CMD</code>命令的区别在哪里？简单说，<code>RUN</code>命令在 image 文件的构建阶段执行，执行结果都会打包进入 image 文件；<code>CMD</code>命令则是在容器启动后执行。另外，一个 Dockerfile 可以包含多个<code>RUN</code>命令，但是只能有一个<code>CMD</code>命令。</p>
-<p>注意，指定了<code>CMD</code>命令以后，<code>docker container run</code>命令就不能附加命令了（比如前面的<code>/bin/bash</code>），否则它会覆盖<code>CMD</code>命令。现在，启动容器可以使用下面的命令。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container run --rm -p 8000:3000 -it koa-demo:0.0.1</span><br></pre></td></tr></table></figure>
-<h3 id="10-5-发布-image-文件"><a href="#10-5-发布-image-文件" class="headerlink" title="10.5 发布 image 文件"></a>10.5 发布 image 文件</h3><p>容器运行成功后，就确认了 image 文件的有效性。这时，我们就可以考虑把 image 文件分享到网上，让其他人使用。</p>
-<p>首先，去 <a href="https://hub.docker.com/" target="_blank" rel="noopener">hub.docker.com</a> 或 <a href="https://cloud.docker.com/" target="_blank" rel="noopener">cloud.docker.com</a> 注册一个账户。然后，用下面的命令登录。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker login</span><br></pre></td></tr></table></figure>
-<p>接着，为本地的 image 标注用户名和版本。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker image tag [imageName] [username]/[repository]:[tag]</span><br><span class="line"><span class="meta">#</span> 实例</span><br><span class="line"><span class="meta">$</span> docker image tag koa-demos:0.0.1 ruanyf/koa-demos:0.0.1</span><br></pre></td></tr></table></figure>
-<p>也可以不标注用户名，重新构建一下 image 文件。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker image build -t [username]/[repository]:[tag] .</span><br></pre></td></tr></table></figure>
-<p>最后，发布 image 文件。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker image push [username]/[repository]:[tag]</span><br></pre></td></tr></table></figure>
-<p>发布成功以后，登录 hub.docker.com，就可以看到已经发布的 image 文件。</p>
-<h2 id="十一、其他有用的命令"><a href="#十一、其他有用的命令" class="headerlink" title="十一、其他有用的命令"></a>十一、其他有用的命令</h2><p>docker 的主要用法就是上面这些，此外还有几个命令，也非常有用。</p>
-<p><strong>（1）docker container start</strong></p>
-<p>前面的<code>docker container run</code>命令是新建容器，每运行一次，就会新建一个容器。同样的命令运行两次，就会生成两个一模一样的容器文件。如果希望重复使用容器，就要使用<code>docker container start</code>命令，它用来启动已经生成、已经停止运行的容器文件。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container start [containerID]</span><br></pre></td></tr></table></figure>
-<p><strong>（2）docker container stop</strong></p>
-<p>前面的<code>docker container kill</code>命令终止容器运行，相当于向容器里面的主进程发出 SIGKILL 信号。而<code>docker container stop</code>命令也是用来终止容器运行，相当于向容器里面的主进程发出 SIGTERM 信号，然后过一段时间再发出 SIGKILL 信号。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> bash container stop [containerID]</span><br></pre></td></tr></table></figure>
-<p>这两个信号的差别是，应用程序收到 SIGTERM 信号以后，可以自行进行收尾清理工作，但也可以不理会这个信号。如果收到 SIGKILL 信号，就会强行立即终止，那些正在进行中的操作会全部丢失。</p>
-<p><strong>（3）docker container logs</strong></p>
-<p><code>docker container logs</code>命令用来查看 docker 容器的输出，即容器里面 Shell 的标准输出。如果<code>docker run</code>命令运行容器的时候，没有使用<code>-it</code>参数，就要用这个命令查看输出。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container logs [containerID]</span><br></pre></td></tr></table></figure>
-<p><strong>（4）docker container exec</strong></p>
-<p><code>docker container exec</code>命令用于进入一个正在运行的 docker 容器。如果<code>docker run</code>命令运行容器的时候，没有使用<code>-it</code>参数，就要用这个命令进入容器。一旦进入了容器，就可以在容器的 Shell 执行命令了。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container exec -it [containerID] /bin/bash</span><br></pre></td></tr></table></figure>
-<p><strong>（5）docker container cp</strong></p>
-<p><code>docker container cp</code>命令用于从正在运行的 Docker 容器里面，将文件拷贝到本机。下面是拷贝到当前目录的写法。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container cp [containID]:[/path/to/file] .</span><br></pre></td></tr></table></figure>
-<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="http://www.ruanyifeng.com/blog/2018/02/docker-tutorial.html" target="_blank" rel="noopener">http://www.ruanyifeng.com/blog/2018/02/docker-tutorial.html</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2018-04-20T06:45:23.000Z"><a href="/2018/04/20/Docker/Dockerizing a Node.js web app/">2018-04-20</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2018/04/20/Docker/Dockerizing a Node.js web app/">Dockerizing a Node.js web app</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>The goal of this example is to show you how to get a Node.js application into a Docker container. The guide is intended for development, and <em>not</em> for a production deployment. The guide also assumes you have a working <a href="https://docs.docker.com/engine/installation/" target="_blank" rel="noopener">Docker installation</a> and a basic understanding of how a Node.js application is structured.</p>
-<p>In the first part of this guide we will create a simple web application in Node.js, then we will build a Docker image for that application, and lastly we will run the image as a container.</p>
-<p>Docker allows you to package an application with all of its dependencies into a standardized unit, called a container, for software development. A container is a stripped-to-basics version of a Linux operating system. An image is software you load into a container.</p>
-<h2 id="Create-the-Node-js-app"><a href="#Create-the-Node-js-app" class="headerlink" title="Create the Node.js app"></a>Create the Node.js app</h2><p>First, create a new directory where all the files would live. In this directory create a <code>package.json</code> file that describes your app and its dependencies:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;name&quot;: &quot;docker_web_app&quot;,</span><br><span class="line">  &quot;version&quot;: &quot;1.0.0&quot;,</span><br><span class="line">  &quot;description&quot;: &quot;Node.js on Docker&quot;,</span><br><span class="line">  &quot;author&quot;: &quot;First Last &lt;first.last@example.com&gt;&quot;,</span><br><span class="line">  &quot;main&quot;: &quot;server.js&quot;,</span><br><span class="line">  &quot;scripts&quot;: &#123;</span><br><span class="line">    &quot;start&quot;: &quot;node server.js&quot;</span><br><span class="line">  &#125;,</span><br><span class="line">  &quot;dependencies&quot;: &#123;</span><br><span class="line">    &quot;express&quot;: &quot;^4.16.1&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>With your new <code>package.json</code> file, run <code>npm install</code>. If you are using <code>npm</code> version 5 or later, this will generate a <code>package-lock.json</code> file which will be copied to your Docker image.</p>
-<p>Then, create a <code>server.js</code> file that defines a web app using the <a href="https://expressjs.com/" target="_blank" rel="noopener">Express.js</a> framework:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">&apos;use strict&apos;;</span><br><span class="line"></span><br><span class="line">const express = require(&apos;express&apos;);</span><br><span class="line"></span><br><span class="line">// Constants</span><br><span class="line">const PORT = 8080;</span><br><span class="line">const HOST = &apos;0.0.0.0&apos;;</span><br><span class="line"></span><br><span class="line">// App</span><br><span class="line">const app = express();</span><br><span class="line">app.get(&apos;/&apos;, (req, res) =&gt; &#123;</span><br><span class="line">  res.send(&apos;Hello world\n&apos;);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">app.listen(PORT, HOST);</span><br><span class="line">console.log(`Running on http://$&#123;HOST&#125;:$&#123;PORT&#125;`);</span><br></pre></td></tr></table></figure>
-<p>In the next steps, we’ll look at how you can run this app inside a Docker container using the official Docker image. First, you’ll need to build a Docker image of your app.</p>
-<h2 id="Creating-a-Dockerfile"><a href="#Creating-a-Dockerfile" class="headerlink" title="Creating a Dockerfile"></a>Creating a Dockerfile</h2><p>Create an empty file called <code>Dockerfile</code>:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">touch Dockerfile</span><br></pre></td></tr></table></figure>
-<p>Open the <code>Dockerfile</code> in your favorite text editor</p>
-<p>The first thing we need to do is define from what image we want to build from. Here we will use the latest LTS (long term support) version <code>8</code> of <code>node</code> available from the <a href="https://hub.docker.com/" target="_blank" rel="noopener">Docker Hub</a>:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">FROM node:8</span><br></pre></td></tr></table></figure>
-<p>Next we create a directory to hold the application code inside the image, this will be the working directory for your application:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># Create app directory</span><br><span class="line">WORKDIR /usr/src/app</span><br></pre></td></tr></table></figure>
-<p>This image comes with Node.js and NPM already installed so the next thing we need to do is to install your app dependencies using the <code>npm</code> binary. Please note that if you are using <code>npm</code> version 4 or earlier a <code>package-lock.json</code> file will <em>not</em> be generated.</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># Install app dependencies</span><br><span class="line"># A wildcard is used to ensure both package.json AND package-lock.json are copied</span><br><span class="line"># where available (npm@5+)</span><br><span class="line">COPY package*.json ./</span><br><span class="line"></span><br><span class="line">RUN npm install</span><br><span class="line"># If you are building your code for production</span><br><span class="line"># RUN npm install --only=production</span><br></pre></td></tr></table></figure>
-<p>Note that, rather than copying the entire working directory, we are only copying the <code>package.json</code> file. This allows us to take advantage of cached Docker layers. bitJudo has a good explanation of this <a href="http://bitjudo.com/blog/2014/03/13/building-efficient-dockerfiles-node-dot-js/" target="_blank" rel="noopener">here</a>.</p>
-<p>To bundle your app’s source code inside the Docker image, use the <code>COPY</code> instruction:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># Bundle app source</span><br><span class="line">COPY . .</span><br></pre></td></tr></table></figure>
-<p>Your app binds to port <code>8080</code> so you’ll use the <code>EXPOSE</code> instruction to have it mapped by the <code>docker</code> daemon:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">EXPOSE 8080</span><br></pre></td></tr></table></figure>
-<p>Last but not least, define the command to run your app using <code>CMD</code> which defines your runtime. Here we will use the basic <code>npm start</code> which will run <code>node server.js</code> to start your server:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">CMD [ &quot;npm&quot;, &quot;start&quot; ]</span><br></pre></td></tr></table></figure>
-<p>Your <code>Dockerfile</code> should now look like this:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">FROM node:8</span><br><span class="line"></span><br><span class="line"># Create app directory</span><br><span class="line">WORKDIR /usr/src/app</span><br><span class="line"></span><br><span class="line"># Install app dependencies</span><br><span class="line"># A wildcard is used to ensure both package.json AND package-lock.json are copied</span><br><span class="line"># where available (npm@5+)</span><br><span class="line">COPY package*.json ./</span><br><span class="line"></span><br><span class="line">RUN npm install</span><br><span class="line"># If you are building your code for production</span><br><span class="line"># RUN npm install --only=production</span><br><span class="line"></span><br><span class="line"># Bundle app source</span><br><span class="line">COPY . .</span><br><span class="line"></span><br><span class="line">EXPOSE 8080</span><br><span class="line">CMD [ &quot;npm&quot;, &quot;start&quot; ]</span><br></pre></td></tr></table></figure>
-<h2 id="dockerignore-file"><a href="#dockerignore-file" class="headerlink" title=".dockerignore file"></a>.dockerignore file</h2><p>Create a <code>.dockerignore</code> file in the same directory as your <code>Dockerfile</code> with following content:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">node_modules</span><br><span class="line">npm-debug.log</span><br></pre></td></tr></table></figure>
-<p>This will prevent your local modules and debug logs from being copied onto your Docker image and possibly overwriting modules installed within your image.</p>
-<h2 id="Building-your-image"><a href="#Building-your-image" class="headerlink" title="Building your image"></a>Building your image</h2><p>Go to the directory that has your <code>Dockerfile</code> and run the following command to build the Docker image. The <code>-t</code> flag lets you tag your image so it’s easier to find later using the <code>docker images</code> command:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ docker build -t &lt;your username&gt;/node-web-app .</span><br></pre></td></tr></table></figure>
-<p>Your image will now be listed by Docker:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ docker images</span><br><span class="line"></span><br><span class="line"># Example</span><br><span class="line">REPOSITORY                      TAG        ID              CREATED</span><br><span class="line">node                            8          1934b0b038d1    5 days ago</span><br><span class="line">&lt;your username&gt;/node-web-app    latest     d64d3505b0d2    1 minute ago</span><br></pre></td></tr></table></figure>
-<h2 id="Run-the-image"><a href="#Run-the-image" class="headerlink" title="Run the image"></a>Run the image</h2><p>Running your image with <code>-d</code> runs the container in detached mode, leaving the container running in the background. The <code>-p</code> flag redirects a public port to a private port inside the container. Run the image you previously built:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ docker run -p 49160:8080 -d &lt;your username&gt;/node-web-app</span><br></pre></td></tr></table></figure>
-<p>Print the output of your app:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># Get container ID</span><br><span class="line">$ docker ps</span><br><span class="line"></span><br><span class="line"># Print app output</span><br><span class="line">$ docker logs &lt;container id&gt;</span><br><span class="line"></span><br><span class="line"># Example</span><br><span class="line">Running on http://localhost:8080</span><br></pre></td></tr></table></figure>
-<p>If you need to go inside the container you can use the <code>exec</code> command:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># Enter the container</span><br><span class="line">$ docker exec -it &lt;container id&gt; /bin/bash</span><br></pre></td></tr></table></figure>
-<h2 id="Test"><a href="#Test" class="headerlink" title="Test"></a>Test</h2><p>To test your app, get the port of your app that Docker mapped:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ docker ps</span><br><span class="line"></span><br><span class="line"># Example</span><br><span class="line">ID            IMAGE                                COMMAND    ...   PORTS</span><br><span class="line">ecce33b30ebf  &lt;your username&gt;/node-web-app:latest  npm start  ...   49160-&gt;8080</span><br></pre></td></tr></table></figure>
-<p>In the example above, Docker mapped the <code>8080</code> port inside of the container to the port <code>49160</code> on your machine.</p>
-<p>Now you can call your app using <code>curl</code> (install if needed via: <code>sudo apt-get install curl</code>):</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">$ curl -i localhost:49160</span><br><span class="line"></span><br><span class="line">HTTP/1.1 200 OK</span><br><span class="line">X-Powered-By: Express</span><br><span class="line">Content-Type: text/html; charset=utf-8</span><br><span class="line">Content-Length: 12</span><br><span class="line">ETag: W/&quot;c-M6tWOb/Y57lesdjQuHeB1P/qTV0&quot;</span><br><span class="line">Date: Mon, 13 Nov 2017 20:53:59 GMT</span><br><span class="line">Connection: keep-alive</span><br><span class="line"></span><br><span class="line">Hello world</span><br></pre></td></tr></table></figure>
-<p>We hope this tutorial helped you get up and running a simple Node.js application on Docker.</p>
-<p>You can find more information about Docker and Node.js on Docker in the following places:</p>
-<ul>
-<li><a href="https://registry.hub.docker.com/_/node/" target="_blank" rel="noopener">Official Node.js Docker Image</a></li>
-<li><a href="https://github.com/nodejs/docker-node/blob/master/docs/BestPractices.md" target="_blank" rel="noopener">Node.js Docker Best Practices Guide</a></li>
-<li><a href="https://docs.docker.com/" target="_blank" rel="noopener">Official Docker documentation</a></li>
-<li><a href="https://stackoverflow.com/questions/tagged/docker" target="_blank" rel="noopener">Docker Tag on Stack Overflow</a></li>
-<li><a href="https://reddit.com/r/docker" target="_blank" rel="noopener">Docker Subreddit</a></li>
-</ul>
-<h3 id="original"><a href="#original" class="headerlink" title="original"></a>original</h3><p><a href="https://nodejs.org/en/docs/guides/nodejs-docker-webapp/" target="_blank" rel="noopener">https://nodejs.org/en/docs/guides/nodejs-docker-webapp/</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2018-03-25T14:16:53.000Z"><a href="/2018/03/25/Node.js_IO/Node源码解析_buffer/">2018-03-25</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2018/03/25/Node.js_IO/Node源码解析_buffer/">Node源码解析_buffer</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>在Node、ES2015出现之前，前端工程师只需要进行一些简单的字符串或DOM操作就可以满足业务需要，所以对二进制数据是比较陌生。node出现以后，前端面对的技术场景发生了变化，可以深入到网络传输、文件操作、图片处理等领域，而这些操作都与二进制数据紧密相关。</p>
-<p>Node里面的buffer，是一个二进制数据容器，数据结构类似与数组，数组里面的方法在buffer都存在(slice操作的结果不一样)。下面就从源码(v6.0版本)层面分析，揭开buffer操作的面纱。</p>
-<h2 id="1-buffer的基本使用"><a href="#1-buffer的基本使用" class="headerlink" title="1. buffer的基本使用"></a>1. buffer的基本使用</h2><p>在Node 6.0以前，直接使用<code>new Buffer</code>，但是这种方式存在两个问题:</p>
-<ul>
-<li>参数复杂: 内存分配，还是内存分配+内容写入，需要根据参数来确定</li>
-<li>安全隐患: 分配到的内存可能还存储着旧数据，这样就存在安全隐患</li>
-</ul>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 本来只想申请一块内存，但是里面却存在旧数据</span></span><br><span class="line"><span class="keyword">const</span> buf1 = <span class="keyword">new</span> Buffer(<span class="number">10</span>) <span class="comment">// &lt;Buffer 90 09 70 6b bf 7f 00 00 50 3a&gt;</span></span><br><span class="line"><span class="comment">// 不小心，旧数据就被读取出来了</span></span><br><span class="line">buf1.toString()  <span class="comment">// '�\tpk�\u0000\u0000P:'</span></span><br></pre></td></tr></table></figure>
-<p>为了解决上述问题，Buffer提供了<code>Buffer.from</code>、<code>Buffer.alloc</code>、<code>Buffer.allocUnsafe</code>、<code>Buffer.allocUnsafeSlow</code>四个方法来申请内存。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 申请10个字节的内存</span></span><br><span class="line"><span class="keyword">const</span> buf2 = Buffer.alloc(<span class="number">10</span>) <span class="comment">// &lt;Buffer 00 00 00 00 00 00 00 00 00 00&gt;</span></span><br><span class="line"><span class="comment">// 默认情况下，用0进行填充</span></span><br><span class="line">buf2.toString() <span class="comment">//'\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000'</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 上述操作就相当于</span></span><br><span class="line"><span class="keyword">const</span> buf1 = <span class="keyword">new</span> Buffer(<span class="number">10</span>);</span><br><span class="line">buf.fill(<span class="number">0</span>);</span><br><span class="line">buf.toString(); <span class="comment">// '\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000'</span></span><br></pre></td></tr></table></figure>
-<h2 id="2-buffer的结构"><a href="#2-buffer的结构" class="headerlink" title="2. buffer的结构"></a>2. buffer的结构</h2><p>buffer是一个典型的javascript与c++结合的模块，其性能部分用c++实现，非性能部分用javascript来实现。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/buffer01_180710.png" alt=""></p>
-<p>下面看看buffer模块的内部结构:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">exports.Buffer = Buffer;</span><br><span class="line">exports.SlowBuffer = SlowBuffer;</span><br><span class="line">exports.INSPECT_MAX_BYTES = 50;</span><br><span class="line">exports.kMaxLength = binding.kMaxLength;</span><br></pre></td></tr></table></figure>
-<p>buffer模块提供了4个接口:</p>
-<ul>
-<li>Buffer: 二进制数据容器类，node启动时默认加载</li>
-<li>SlowBuffer: 同样也是二进制数据容器类，不过直接进行内存申请</li>
-<li>INSPECT_MAX_BYTES: 限制<code>bufObject.inspect()</code>输出的长度</li>
-<li>kMaxLength: 一次性内存分配的上限，大小为(2^31 - 1)</li>
-</ul>
-<p>其中，由于Buffer经常使用，所以node在启动的时候，就已经加载了Buffer，而其他三个，仍然需要使用<code>require(&#39;buffer&#39;).***</code>。</p>
-<p>关于buffer的内存申请、填充、修改等涉及性能问题的操作，均通过c++里面的node_buffer.cc来实现:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">// c++里面的node_buffer</span><br><span class="line">namespace node &#123;</span><br><span class="line">  bool zero_fill_all_buffers = false;</span><br><span class="line">  namespace Buffer &#123;</span><br><span class="line">    ...</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">NODE_MODULE_CONTEXT_AWARE_BUILTIN(buffer, node::Buffer::Initialize)</span><br></pre></td></tr></table></figure>
-<h2 id="3-内存分配的策略"><a href="#3-内存分配的策略" class="headerlink" title="3. 内存分配的策略"></a>3. 内存分配的策略</h2><p>Node中Buffer内存分配太过常见，从系统性能考虑出发，Buffer采用了如下的管理策略。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/buffer02_180710.png" alt=""></p>
-<h3 id="3-1-Buffer-from"><a href="#3-1-Buffer-from" class="headerlink" title="3.1 Buffer.from"></a>3.1 Buffer.from</h3><p><code>Buffer.from(value, ...)</code>用于申请内存，并将内容写入刚刚申请的内存中，value值是多样的，Buffer是如何处理的呢？让我们一起看看源码:</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">Buffer.from = <span class="function"><span class="keyword">function</span>(<span class="params">value, encodingOrOffset, length</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">typeof</span> value === <span class="string">'number'</span>)</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">TypeError</span>(<span class="string">'"value" argument must not be a number'</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (value <span class="keyword">instanceof</span> <span class="built_in">ArrayBuffer</span>)</span><br><span class="line">    <span class="keyword">return</span> fromArrayBuffer(value, encodingOrOffset, length);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">typeof</span> value === <span class="string">'string'</span>)</span><br><span class="line">    <span class="keyword">return</span> fromString(value, encodingOrOffset);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> fromObject(value);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>value可以分成三类:</p>
-<ul>
-<li>ArrayBuffer的实例: ArrayBuffer是ES2015里面引入的，用于在浏览器端直接操作二进制数据，这样Node就与ES2015关联起来，同时，新创建的Buffer与ArrayBuffer内存是共享的</li>
-<li>string: 该方法实现了将字符串转变为Buffer</li>
-<li>Buffer/TypeArray/Array: 会进行值的copy</li>
-</ul>
-<h4 id="3-1-1-ArrayBuffer的实例"><a href="#3-1-1-ArrayBuffer的实例" class="headerlink" title="3.1.1 ArrayBuffer的实例"></a>3.1.1 ArrayBuffer的实例</h4><p>Node v6与时俱进，将浏览器、node中对二进制数据的操作关联起来，同时二者会进行内存的共享。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> b = <span class="keyword">new</span> <span class="built_in">ArrayBuffer</span>(<span class="number">4</span>);</span><br><span class="line"><span class="keyword">var</span> v1 = <span class="keyword">new</span> <span class="built_in">Uint8Array</span>(b);</span><br><span class="line"><span class="keyword">var</span> buf = Buffer.from(b)</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'first, typeArray: '</span>, v1) <span class="comment">// first, typeArray:  Uint8Array [ 0, 0, 0, 0 ]</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'first, Buffer: '</span>, buf) <span class="comment">// first, Buffer:  &lt;Buffer 00 00 00 00&gt;</span></span><br><span class="line">v1[<span class="number">0</span>] = <span class="number">12</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'second, typeArray: '</span>, v1) <span class="comment">// second, typeArray:  Uint8Array [ 12, 0, 0, 0 ]</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'second, Buffer: '</span>, buf) <span class="comment">// second, Buffer:  &lt;Buffer 0c 00 00 00&gt;</span></span><br></pre></td></tr></table></figure>
-<p>在上述操作中，对ArrayBuffer的操作，引起Buffer值的修改，说明二者在内存上是同享的，再从源码层面了解下这个过程:</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// buffer.js Buffer.from(arrayBuffer, ...)进入的分支:</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fromArrayBuffer</span>(<span class="params">obj, byteOffset, length</span>) </span>&#123;</span><br><span class="line">  byteOffset &gt;&gt;&gt;= <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">typeof</span> length === <span class="string">'undefined'</span>)</span><br><span class="line">    <span class="keyword">return</span> binding.createFromArrayBuffer(obj, byteOffset);</span><br><span class="line"></span><br><span class="line">  length &gt;&gt;&gt;= <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">return</span> binding.createFromArrayBuffer(obj, byteOffset, length);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// c++ 模块中的node_buffer:</span></span><br><span class="line"><span class="keyword">void</span> CreateFromArrayBuffer(<span class="keyword">const</span> FunctionCallbackInfo&lt;Value&gt;&amp; args) &#123;</span><br><span class="line">  ...</span><br><span class="line">  Local&lt;<span class="built_in">ArrayBuffer</span>&gt; ab = args[<span class="number">0</span>].As&lt;<span class="built_in">ArrayBuffer</span>&gt;();</span><br><span class="line">  ...</span><br><span class="line">  Local&lt;<span class="built_in">Uint8Array</span>&gt; ui = <span class="built_in">Uint8Array</span>::New(ab, offset, max_length);</span><br><span class="line">  ...</span><br><span class="line">  args.GetReturnValue().Set(ui);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="3-1-2-string"><a href="#3-1-2-string" class="headerlink" title="3.1.2 string"></a>3.1.2 string</h4><p>可以实现字符串与Buffer之间的转换，同时考虑到操作的性能，采用了一些优化策略避免频繁进行内存分配:</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fromString</span>(<span class="params">string, encoding</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  <span class="keyword">var</span> length = byteLength(string, encoding);</span><br><span class="line">  <span class="keyword">if</span> (length === <span class="number">0</span>)</span><br><span class="line">    <span class="keyword">return</span> Buffer.alloc(<span class="number">0</span>);</span><br><span class="line">  <span class="comment">// 当字符所需要的字节数大于4KB时: 直接进行内存分配</span></span><br><span class="line">  <span class="keyword">if</span> (length &gt;= (Buffer.poolSize &gt;&gt;&gt; <span class="number">1</span>))</span><br><span class="line">    <span class="keyword">return</span> binding.createFromString(string, encoding);</span><br><span class="line">  <span class="comment">// 当字符所需字节数小于4KB: 借助allocPool先申请、后分配的策略</span></span><br><span class="line">  <span class="keyword">if</span> (length &gt; (poolSize - poolOffset))</span><br><span class="line">    createPool();</span><br><span class="line">  <span class="keyword">var</span> actual = allocPool.write(string, poolOffset, encoding);</span><br><span class="line">  <span class="keyword">var</span> b = allocPool.slice(poolOffset, poolOffset + actual);</span><br><span class="line">  poolOffset += actual;</span><br><span class="line">  alignPool();</span><br><span class="line">  <span class="keyword">return</span> b;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><em>a. 直接内存分配</em></p>
-<p>当字符串所需要的字节大于4KB时，如何还从8KB的buffer pool中进行申请，那么就可能存在内存浪费，例如:</p>
-<p>poolSize - poolOffset &lt; 4KB: 这样就要重新申请一个8KB的pool，刚才那个pool剩余空间就会被浪费掉</p>
-<p>看看c++是如何进行内存分配的:</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// c++</span></span><br><span class="line"><span class="keyword">void</span> CreateFromString(<span class="keyword">const</span> FunctionCallbackInfo&lt;Value&gt;&amp; args) &#123;</span><br><span class="line">  ...</span><br><span class="line">  Local&lt;<span class="built_in">Object</span>&gt; buf;</span><br><span class="line">  <span class="keyword">if</span> (New(args.GetIsolate(), args[<span class="number">0</span>].As&lt;<span class="built_in">String</span>&gt;(), enc).ToLocal(&amp;buf))</span><br><span class="line">    args.GetReturnValue().Set(buf);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><em>b. 借助于pool管理</em></p>
-<p>用一个pool来管理频繁的行为，在计算机中是非常常见的行为，例如http模块中，关于tcp连接的建立，就设置了一个tcp pool。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fromString</span>(<span class="params">string, encoding</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  <span class="comment">// 当字符所需字节数小于4KB: 借助allocPool先申请、后分配的策略</span></span><br><span class="line">  <span class="comment">// pool的空间不够用，重新分配8kb的内存</span></span><br><span class="line">  <span class="keyword">if</span> (length &gt; (poolSize - poolOffset))</span><br><span class="line">    createPool();</span><br><span class="line">  <span class="comment">// 在buffer pool中进行分配</span></span><br><span class="line">  <span class="keyword">var</span> actual = allocPool.write(string, poolOffset, encoding);</span><br><span class="line">  <span class="comment">// 得到一个内存的视图view, 特殊说明: slice不进行copy，仅仅创建view</span></span><br><span class="line">  <span class="keyword">var</span> b = allocPool.slice(poolOffset, poolOffset + actual);</span><br><span class="line">  poolOffset += actual;</span><br><span class="line">  <span class="comment">// 校验poolOffset是8的整数倍</span></span><br><span class="line">  alignPool();</span><br><span class="line">  <span class="keyword">return</span> b;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// pool的申请</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">createPool</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  poolSize = Buffer.poolSize;</span><br><span class="line">  allocPool = createBuffer(poolSize, <span class="literal">true</span>);</span><br><span class="line">  poolOffset = <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// node加载的时候，就会创建第一个buffer pool</span></span><br><span class="line">createPool();</span><br><span class="line"><span class="comment">// 校验poolOffset是8的整数倍</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">alignPool</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="comment">// Ensure aligned slices</span></span><br><span class="line">  <span class="keyword">if</span> (poolOffset &amp; <span class="number">0x7</span>) &#123;</span><br><span class="line">    poolOffset |= <span class="number">0x7</span>;</span><br><span class="line">    poolOffset++;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="3-1-3-Buffer-TypeArray-Array"><a href="#3-1-3-Buffer-TypeArray-Array" class="headerlink" title="3.1.3 Buffer/TypeArray/Array"></a>3.1.3 Buffer/TypeArray/Array</h4><p>可用从一个现有的Buffer、TypeArray或Array中创建Buffer，内存不会共享，仅仅进行值的copy。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> buf1 = <span class="keyword">new</span> Buffer([<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>]);</span><br><span class="line"><span class="keyword">var</span> buf2 = <span class="keyword">new</span> Buffer(buf1);</span><br><span class="line"><span class="built_in">console</span>.log(buf1); <span class="comment">// &lt;Buffer 01 02 03 04 05&gt;</span></span><br><span class="line"><span class="built_in">console</span>.log(buf2); <span class="comment">// &lt;Buffer 01 02 03 04 05&gt;</span></span><br><span class="line">buf1[<span class="number">0</span>] = <span class="number">16</span></span><br><span class="line"><span class="built_in">console</span>.log(buf1); <span class="comment">// &lt;Buffer 10 02 03 04 05&gt;</span></span><br><span class="line"><span class="built_in">console</span>.log(buf2); <span class="comment">// &lt;Buffer 01 02 03 04 05&gt;</span></span><br></pre></td></tr></table></figure>
-<p>上述示例就证明了buf1、buf2没有进行内存的共享，仅仅是值的copy，再从源码层面进行分析:</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fromObject</span>(<span class="params">obj</span>) </span>&#123;</span><br><span class="line">  <span class="comment">// 当obj为Buffer时</span></span><br><span class="line">  <span class="keyword">if</span> (obj <span class="keyword">instanceof</span> Buffer) &#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">const</span> b = allocate(obj.length);</span><br><span class="line">    obj.copy(b, <span class="number">0</span>, <span class="number">0</span>, obj.length);</span><br><span class="line">    <span class="keyword">return</span> b;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 当obj为TypeArray或Array时</span></span><br><span class="line">  <span class="keyword">if</span> (obj) &#123;</span><br><span class="line">    <span class="keyword">if</span> (obj.buffer <span class="keyword">instanceof</span> <span class="built_in">ArrayBuffer</span> || <span class="string">'length'</span> <span class="keyword">in</span> obj) &#123;</span><br><span class="line">      ...</span><br><span class="line">      <span class="keyword">return</span> fromArrayLike(obj);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (obj.type === <span class="string">'Buffer'</span> &amp;&amp; <span class="built_in">Array</span>.isArray(obj.data)) &#123;</span><br><span class="line">      <span class="keyword">return</span> fromArrayLike(obj.data);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">TypeError</span>(kFromErrorMsg);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 数组或类数组，逐个进行值的copy</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fromArrayLike</span>(<span class="params">obj</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">const</span> length = obj.length;</span><br><span class="line">  <span class="keyword">const</span> b = allocate(length);</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">var</span> i = <span class="number">0</span>; i &lt; length; i++)</span><br><span class="line">    b[i] = obj[i] &amp; <span class="number">255</span>;</span><br><span class="line">  <span class="keyword">return</span> b;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="3-2-Buffer-alloc"><a href="#3-2-Buffer-alloc" class="headerlink" title="3.2 Buffer.alloc"></a>3.2 Buffer.alloc</h3><p>Buffer.alloc用于内存的分配，同时会对内存的旧数据进行覆盖，避免安全隐患的产生。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">Buffer.alloc = <span class="function"><span class="keyword">function</span>(<span class="params">size, fill, encoding</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  <span class="keyword">if</span> (size &lt;= <span class="number">0</span>)</span><br><span class="line">    <span class="keyword">return</span> createBuffer(size);</span><br><span class="line">  <span class="keyword">if</span> (fill !== <span class="literal">undefined</span>) &#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">typeof</span> encoding === <span class="string">'string'</span> ?</span><br><span class="line">        createBuffer(size, <span class="literal">true</span>).fill(fill, encoding) :</span><br><span class="line">        createBuffer(size, <span class="literal">true</span>).fill(fill);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> createBuffer(size);</span><br><span class="line">&#125;;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">createBuffer</span>(<span class="params">size, noZeroFill</span>) </span>&#123;</span><br><span class="line">  flags[kNoZeroFill] = noZeroFill ? <span class="number">1</span> : <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">const</span> ui8 = <span class="keyword">new</span> <span class="built_in">Uint8Array</span>(size);</span><br><span class="line">    <span class="built_in">Object</span>.setPrototypeOf(ui8, Buffer.prototype);</span><br><span class="line">    <span class="keyword">return</span> ui8;</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    flags[kNoZeroFill] = <span class="number">0</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>上述代码有几个需要注意的点:</p>
-<h4 id="3-2-1-先申请后填充"><a href="#3-2-1-先申请后填充" class="headerlink" title="3.2.1 先申请后填充"></a>3.2.1 先申请后填充</h4><p>alloc先通过<code>createBuffer</code>申请一块内存，然后再进行填充，保证申请的内存全部用<code>fill</code>进行填充。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> buf = Buffer.alloc(<span class="number">10</span>, <span class="number">11</span>);</span><br><span class="line"><span class="built_in">console</span>.log(buf); <span class="comment">// &lt;Buffer 0b 0b 0b 0b 0b 0b 0b 0b 0b 0b&gt;</span></span><br></pre></td></tr></table></figure>
-<h4 id="3-2-2-flags标示"><a href="#3-2-2-flags标示" class="headerlink" title="3.2.2 flags标示"></a>3.2.2 flags标示</h4><p><code>flags</code>用于标识默认的填充值是否为<code>0</code>，该值在javascript中设置，在c++中进行读取。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// js</span></span><br><span class="line"><span class="keyword">const</span> binding = process.binding(<span class="string">'buffer'</span>);</span><br><span class="line"><span class="keyword">const</span> bindingObj = &#123;&#125;;</span><br><span class="line">...</span><br><span class="line">binding.setupBufferJS(Buffer.prototype, bindingObj);</span><br><span class="line">...</span><br><span class="line"><span class="keyword">const</span> flags = bindingObj.flags;</span><br><span class="line"><span class="keyword">const</span> kNoZeroFill = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// c++</span></span><br><span class="line"><span class="keyword">void</span> SetupBufferJS(<span class="keyword">const</span> FunctionCallbackInfo&lt;Value&gt;&amp; args) &#123;</span><br><span class="line">  ...</span><br><span class="line">  Local&lt;<span class="built_in">Object</span>&gt; bObj = args[<span class="number">1</span>].As&lt;<span class="built_in">Object</span>&gt;();</span><br><span class="line">  ...</span><br><span class="line">  bObj-&gt;<span class="built_in">Set</span>(<span class="built_in">String</span>::NewFromUtf8(env-&gt;isolate(), <span class="string">"flags"</span>),</span><br><span class="line">    <span class="built_in">Uint32Array</span>::New(array_buffer, <span class="number">0</span>, fields_count));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="3-2-3-Uint8Array"><a href="#3-2-3-Uint8Array" class="headerlink" title="3.2.3 Uint8Array"></a>3.2.3 Uint8Array</h4><p><code>Uint8Array</code>是ES2015 TypeArray中的一种，可以在浏览器中创建二进制数据，这样就把浏览器、Node连接起来。</p>
-<h3 id="3-3-Buffer-allocUnSafe"><a href="#3-3-Buffer-allocUnSafe" class="headerlink" title="3.3 Buffer.allocUnSafe"></a>3.3 Buffer.allocUnSafe</h3><p>Buffer.allocUnSafe与Buffer.alloc的区别在于，前者是从采用<code>allocate</code>的策略，尝试从<code>buffer pool</code>中申请内存，而<code>buffer pool</code>是不会进行默认值填充的，所以这种行为是不安全的。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Buffer.allocUnsafe = <span class="function"><span class="keyword">function</span>(<span class="params">size</span>) </span>&#123;</span><br><span class="line">  assertSize(size);</span><br><span class="line">  <span class="keyword">return</span> allocate(size);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<h3 id="3-4-Buffer-allocUnsafeSlow"><a href="#3-4-Buffer-allocUnsafeSlow" class="headerlink" title="3.4 Buffer.allocUnsafeSlow"></a>3.4 Buffer.allocUnsafeSlow</h3><p>Buffer.allocUnsafeSlow有两个大特点: 直接通过c++进行内存分配；不会进行旧值填充。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Buffer.allocUnsafeSlow = <span class="function"><span class="keyword">function</span>(<span class="params">size</span>) </span>&#123;</span><br><span class="line">  assertSize(size);</span><br><span class="line">  <span class="keyword">return</span> createBuffer(size, <span class="literal">true</span>);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<h2 id="4-结语"><a href="#4-结语" class="headerlink" title="4. 结语"></a>4. 结语</h2><p>字符串与Buffer之间存在较大的差距，同时二者又存在编码关系。通过Node，前端工程师已经深入到网络操作、文件操作等领域，对二进制数据的操作就显得非常重要，因此理解Buffer的诸多细节十分必要。</p>
-<h2 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h2><p><a href="http://zhenhua-lee.github.io/node/buffer.html" target="_blank" rel="noopener">http://zhenhua-lee.github.io/node/buffer.html</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -1137,6 +1043,8 @@
     <li><a href="/tags/数据库/">数据库</a><small>3</small></li>
   
     <li><a href="/tags/数据结构与算法/">数据结构与算法</a><small>7</small></li>
+  
+    <li><a href="/tags/程序员的数学基础课/">程序员的数学基础课</a><small>4</small></li>
   
     <li><a href="/tags/网络安全/">网络安全</a><small>8</small></li>
   
