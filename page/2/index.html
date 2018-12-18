@@ -53,6 +53,388 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2018-10-01T06:45:23.000Z"><a href="/2018/10/01/数据结构与算法/05 | 数组：为什么很多编程语言中数组都从0开始编号/">2018-10-01</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/10/01/数据结构与算法/05 | 数组：为什么很多编程语言中数组都从0开始编号/">05 | 数组：为什么很多编程语言中数组都从0开始编号</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>提到数组，我想你肯定不陌生，甚至还会自信地说，它很简单啊。</p>
+<p>是的，在每一种编程语言中，基本都会有数组这种数据类型。不过，它不仅仅是一种编程语言中的数据类型，还是一种最基础的数据结构。尽管数组看起来非常基础、简单，但是我估计很多人都并没有理解这个基础数据结构的精髓。</p>
+<p>在大部分编程语言中，数组都是从 0 开始编号的，但你是否下意识地想过，<strong>为什么数组要从 0 开始编号，而不是从 1 开始呢？</strong> 从 1 开始不是更符合人类的思维习惯吗？</p>
+<p>你可以带着这个问题来学习接下来的内容。</p>
+<h2 id="如何实现随机访问？"><a href="#如何实现随机访问？" class="headerlink" title="如何实现随机访问？"></a>如何实现随机访问？</h2><p>什么是数组？我估计你心中已经有了答案。不过，我还是想用专业的话来给你做下解释。<strong>数组（Array）是一种线性表数据结构。它用一组连续的内存空间，来存储一组具有相同类型的数据。</strong></p>
+<p>这个定义里有几个关键词，理解了这几个关键词，我想你就能彻底掌握数组的概念了。下面就从我的角度分别给你“点拨”一下。</p>
+<p>第一是<strong>线性表</strong>（Linear List）。顾名思义，线性表就是数据排成像一条线一样的结构。每个线性表上的数据最多只有前和后两个方向。其实除了数组，链表、队列、栈等也是线性表结构。</p>
+<p><img src="https://static001.geekbang.org/resource/image/b6/77/b6b71ec46935130dff5c4b62cf273477.jpg" alt="img"></p>
+<p>而与它相对立的概念是<strong>非线性表</strong>，比如二叉树、堆、图等。之所以叫非线性，是因为，在非线性表中，数据之间并不是简单的前后关系。</p>
+<p><img src="https://static001.geekbang.org/resource/image/6e/69/6ebf42641b5f98f912d36f6bf86f6569.jpg" alt="img"></p>
+<p>第二个是<strong>连续的内存空间和相同类型的数据</strong>。正是因为这两个限制，它才有了一个堪称“杀手锏”的特性：“随机访问”。但有利就有弊，这两个限制也让数组的很多操作变得非常低效，比如要想在数组中删除、插入一个数据，为了保证连续性，就需要做大量的数据搬移工作。</p>
+<p>说到数据的访问，那你知道数组是如何实现根据下标随机访问数组元素的吗？</p>
+<p>我们拿一个长度为 10 的 int 类型的数组 int[] a = new int[10] 来举例。在我画的这个图中，计算机给数组 a[10]，分配了一块连续内存空间 1000～1039，其中，内存块的首地址为 base_address = 1000。</p>
+<p><img src="https://static001.geekbang.org/resource/image/98/c4/98df8e702b14096e7ee4a5141260cdc4.jpg" alt="img"></p>
+<p>我们知道，计算机会给每个内存单元分配一个地址，计算机通过地址来访问内存中的数据。当计算机需要随机访问数组中的某个元素时，它会首先通过下面的寻址公式，计算出该元素存储的内存地址：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">a[i]_address = base_address + i * data_type_size</span><br><span class="line">复制代码</span><br></pre></td></tr></table></figure>
+<p>其中 data_type_size 表示数组中每个元素的大小。我们举的这个例子里，数组中存储的是 int 类型数据，所以 data_type_size 就为 4 个字节。这个公式非常简单，我就不多做解释了。</p>
+<p>这里我要特别纠正一个“错误”。我在面试的时候，常常会问数组和链表的区别，很多人都回答说，“链表适合插入、删除，时间复杂度 O(1)；数组适合查找，查找时间复杂度为 O(1)”。</p>
+<p>实际上，这种表述是不准确的。数组是适合查找操作，但是查找的时间复杂度并不为 O(1)。即便是排好序的数组，你用二分查找，时间复杂度也是 O(logn)。所以，正确的表述应该是，数组支持随机访问，根据下标随机访问的时间复杂度为 O(1)。</p>
+<h2 id="低效的“插入”和“删除”"><a href="#低效的“插入”和“删除”" class="headerlink" title="低效的“插入”和“删除”"></a>低效的“插入”和“删除”</h2><p>前面概念部分我们提到，数组为了保持内存数据的连续性，会导致插入、删除这两个操作比较低效。现在我们就来详细说一下，究竟为什么会导致低效？又有哪些改进方法呢？</p>
+<p>我们先来看<strong>插入操作</strong>。</p>
+<p>假设数组的长度为 n，现在，如果我们需要将一个数据插入到数组中的第 k 个位置。为了把第 k 个位置腾出来，给新来的数据，我们需要将第 k～n 这部分的元素都顺序地往后挪一位。那插入操作的时间复杂度是多少呢？你可以自己先试着分析一下。</p>
+<p>如果在数组的末尾插入元素，那就不需要移动数据了，这时的时间复杂度为 O(1)。但如果在数组的开头插入元素，那所有的数据都需要依次往后移动一位，所以最坏时间复杂度是 O(n)。 因为我们在每个位置插入元素的概率是一样的，所以平均情况时间复杂度为 (1+2+…n)/n=O(n)。</p>
+<p>如果数组中的数据是有序的，我们在某个位置插入一个新的元素时，就必须按照刚才的方法搬移 k 之后的数据。但是，如果数组中存储的数据并没有任何规律，数组只是被当作一个存储数据的集合。在这种情况下，如果要将某个数组插入到第 k 个位置，为了避免大规模的数据搬移，我们还有一个简单的办法就是，直接将第 k 位的数据搬移到数组元素的最后，把新的元素直接放入第 k 个位置。</p>
+<p>为了更好地理解，我们举一个例子。假设数组 a[10] 中存储了如下 5 个元素：a，b，c，d，e。</p>
+<p>我们现在需要将元素 x 插入到第 3 个位置。我们只需要将 c 放入到 a[5]，将 a[2] 赋值为 x 即可。最后，数组中的元素如下： a，b，x，d，e，c。</p>
+<p><img src="https://static001.geekbang.org/resource/image/3f/dc/3f70b4ad9069ec568a2caaddc231b7dc.jpg" alt="img"></p>
+<p>利用这种处理技巧，在特定场景下，在第 k 个位置插入一个元素的时间复杂度就会降为 O(1)。这个处理思想在快排中也会用到，我会在排序那一节具体来讲，这里就说到这儿。</p>
+<p>我们再来看<strong>删除操作</strong>。</p>
+<p>跟插入数据类似，如果我们要删除第 k 个位置的数据，为了内存的连续性，也需要搬移数据，不然中间就会出现空洞，内存就不连续了。</p>
+<p>和插入类似，如果删除数组末尾的数据，则最好情况时间复杂度为 O(1)；如果删除开头的数据，则最坏情况时间复杂度为 O(n)；平均情况时间复杂度也为 O(n)。</p>
+<p>实际上，在某些特殊场景下，我们并不一定非得追求数组中数据的连续性。如果我们将多次删除操作集中在一起执行，删除的效率是不是会提高很多呢？</p>
+<p>我们继续来看例子。数组 a[10] 中存储了 8 个元素：a，b，c，d，e，f，g，h。现在，我们要依次删除 a，b，c 三个元素。</p>
+<p><img src="https://static001.geekbang.org/resource/image/b6/e5/b69b8c5dbf6248649ddab7d3e7cfd7e5.jpg" alt="img"></p>
+<p>为了避免 d，e，f，g，h 这几个数据会被搬移三次，我们可以先记录下已经删除的数据。每次的删除操作并不是真正地搬移数据，只是记录数据已经被删除。当数组没有更多空间存储数据时，我们再触发执行一次真正的删除操作，这样就大大减少了删除操作导致的数据搬移。</p>
+<p>如果你了解 JVM，你会发现，这不就是 JVM 标记清除垃圾回收算法的核心思想吗？没错，数据结构和算法的魅力就在于此，<strong>很多时候我们并不是要去死记硬背某个数据结构或者算法，而是要学习它背后的思想和处理技巧，这些东西才是最有价值的</strong>。如果你细心留意，不管是在软件开发还是架构设计中，总能找到某些算法和数据结构的影子。</p>
+<h2 id="警惕数组的访问越界问题"><a href="#警惕数组的访问越界问题" class="headerlink" title="警惕数组的访问越界问题"></a>警惕数组的访问越界问题</h2><p>了解了数组的几个基本操作后，我们来聊聊数组访问越界的问题。</p>
+<p>首先，我请你来分析一下这段 C 语言代码的运行结果：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">int main(int argc, char* argv[])&#123;</span><br><span class="line">    int i = 0;</span><br><span class="line">    int arr[3] = &#123;0&#125;;</span><br><span class="line">    for(; i&lt;=3; i++)&#123;</span><br><span class="line">        arr[i] = 0;</span><br><span class="line">        printf(&quot;hello world\n&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>你发现问题了吗？这段代码的运行结果并非是打印三行“hello word”，而是会无限打印“hello world”，这是为什么呢？</p>
+<p>因为，数组大小为 3，a[0]，a[1]，a[2]，而我们的代码因为书写错误，导致 for 循环的结束条件错写为了 i&lt;=3 而非 i&lt;3，所以当 i=3 时，数组 a[3] 访问越界。</p>
+<p>我们知道，在 C 语言中，只要不是访问受限的内存，所有的内存空间都是可以自由访问的。根据我们前面讲的数组寻址公式，a[3] 也会被定位到某块不属于数组的内存地址上，而这个地址正好是存储变量 i 的内存地址，那么 a[3]=0 就相当于 i=0，所以就会导致代码无限循环。</p>
+<p>数组越界在 C 语言中是一种未决行为，并没有规定数组访问越界时编译器应该如何处理。因为，访问数组的本质就是访问一段连续内存，只要数组通过偏移计算得到的内存地址是可用的，那么程序就可能不会报任何错误。</p>
+<p>这种情况下，一般都会出现莫名其妙的逻辑错误，就像我们刚刚举的那个例子，debug 的难度非常的大。而且，很多计算机病毒也正是利用到了代码中的数组越界可以访问非法地址的漏洞，来攻击系统，所以写代码的时候一定要警惕数组越界。</p>
+<p>但并非所有的语言都像 C 一样，把数组越界检查的工作丢给程序员来做，像 Java 本身就会做越界检查，比如下面这几行 Java 代码，就会抛出 java.lang.ArrayIndexOutOfBoundsException。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">int[] a = new int[3];</span><br><span class="line">a[3] = 10;</span><br></pre></td></tr></table></figure>
+<h2 id="容器能否完全替代数组？"><a href="#容器能否完全替代数组？" class="headerlink" title="容器能否完全替代数组？"></a>容器能否完全替代数组？</h2><p>针对数组类型，很多语言都提供了容器类，比如 Java 中的 ArrayList、C++ STL 中的 vector。在项目开发中，什么时候适合用数组，什么时候适合用容器呢？</p>
+<p>这里我拿 Java 语言来举例。如果你是 Java 工程师，几乎天天都在用 ArrayList，对它应该非常熟悉。那它与数组相比，到底有哪些优势呢？</p>
+<p>我个人觉得，ArrayList 最大的优势就是<strong>可以将很多数组操作的细节封装起来</strong>。比如前面提到的数组插入、删除数据时需要搬移其他数据等。另外，它还有一个优势，就是<strong>支持动态扩容</strong>。</p>
+<p>数组本身在定义的时候需要预先指定大小，因为需要分配连续的内存空间。如果我们申请了大小为 10 的数组，当第 11 个数据需要存储到数组中时，我们就需要重新分配一块更大的空间，将原来的数据复制过去，然后再将新的数据插入。</p>
+<p>如果使用 ArrayList，我们就完全不需要关心底层的扩容逻辑，ArrayList 已经帮我们实现好了。每次存储空间不够的时候，它都会将空间自动扩容为 1.5 倍大小。</p>
+<p>不过，这里需要注意一点，因为扩容操作涉及内存申请和数据搬移，是比较耗时的。所以，如果事先能确定需要存储的数据大小，最好<strong>在创建 ArrayList 的时候事先指定数据大小</strong>。</p>
+<p>比如我们要从数据库中取出 10000 条数据放入 ArrayList。我们看下面这几行代码，你会发现，相比之下，事先指定数据大小可以省掉很多次内存申请和数据搬移操作。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ArrayList&lt;User&gt; users = new ArrayList(10000);</span><br><span class="line">for (int i = 0; i &lt; 10000; ++i) &#123;</span><br><span class="line">  users.add(xxx);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>作为高级语言编程者，是不是数组就无用武之地了呢？当然不是，有些时候，用数组会更合适些，我总结了几点自己的经验。</p>
+<p>1.Java ArrayList 无法存储基本类型，比如 int、long，需要封装为 Integer、Long 类，而 Autoboxing、Unboxing 则有一定的性能消耗，所以如果特别关注性能，或者希望使用基本类型，就可以选用数组。</p>
+<ol start="2">
+<li><p>如果数据大小事先已知，并且对数据的操作非常简单，用不到 ArrayList 提供的大部分方法，也可以直接使用数组。</p>
+</li>
+<li><p>还有一个是我个人的喜好，当要表示多维数组时，用数组往往会更加直观。比如 Object[][] array；而用容器的话则需要这样定义：ArrayList<arraylist> array。<br>我总结一下，对于业务开发，直接使用容器就足够了，省时省力。毕竟损耗一丢丢性能，完全不会影响到系统整体的性能。但如果你是做一些非常底层的开发，比如开发网络框架，性能的优化需要做到极致，这个时候数组就会优于容器，成为首选。</arraylist></p>
+</li>
+</ol>
+<h2 id="解答开篇"><a href="#解答开篇" class="headerlink" title="解答开篇"></a>解答开篇</h2><p>现在我们来思考开篇的问题：为什么大多数编程语言中，数组要从 0 开始编号，而不是从 1 开始呢？</p>
+<p>从数组存储的内存模型上来看，“下标”最确切的定义应该是“偏移（offset）”。前面也讲到，如果用 a 来表示数组的首地址，a[0] 就是偏移为 0 的位置，也就是首地址，a[k] 就表示偏移 k 个 type_size 的位置，所以计算 a[k] 的内存地址只需要用这个公式：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">a[k]_address = base_address + k * type_size</span><br></pre></td></tr></table></figure></p>
+<p>但是，如果数组从 1 开始计数，那我们计算数组元素 a[k] 的内存地址就会变为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">a[k]_address = base_address + (k-1)*type_size</span><br></pre></td></tr></table></figure></p>
+<p>对比两个公式，我们不难发现，从 1 开始编号，每次随机访问数组元素都多了一次减法运算，对于 CPU 来说，就是多了一次减法指令。</p>
+<p>数组作为非常基础的数据结构，通过下标随机访问数组元素又是其非常基础的编程操作，效率的优化就要尽可能做到极致。所以为了减少一次减法操作，数组选择了从 0 开始编号，而不是从 1 开始。</p>
+<p>不过我认为，上面解释得再多其实都算不上压倒性的证明，说数组起始编号非 0 开始不可。所以我觉得最主要的原因可能是历史原因。</p>
+<p>C 语言设计者用 0 开始计数数组下标，之后的 Java、JavaScript 等高级语言都效仿了 C 语言，或者说，为了在一定程度上减少 C 语言程序员学习 Java 的学习成本，因此继续沿用了从 0 开始计数的习惯。实际上，很多语言中数组也并不是从 0 开始计数的，比如 Matlab。甚至还有一些语言支持负数下标，比如 Python。</p>
+<h2 id="内容小结"><a href="#内容小结" class="headerlink" title="内容小结"></a>内容小结</h2><p>我们今天学习了数组。它可以说是最基础、最简单的数据结构了。数组用一块连续的内存空间，来存储相同类型的一组数据，最大的特点就是支持随机访问，但插入、删除操作也因此变得比较低效，平均情况时间复杂度为 O(n)。在平时的业务开发中，我们可以直接使用编程语言提供的容器类，但是，如果是特别底层的开发，直接使用数组可能会更合适。</p>
+<p>极客时间版权所有: <a href="https://time.geekbang.org/column/article/40961" target="_blank" rel="noopener">https://time.geekbang.org/column/article/40961</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2018-09-28T06:45:23.000Z"><a href="/2018/09/28/数据结构与算法/04 | 复杂度分析（下）：浅析最好、最坏、平均、均摊时间复杂度/">2018-09-28</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/09/28/数据结构与算法/04 | 复杂度分析（下）：浅析最好、最坏、平均、均摊时间复杂度/">04 | 复杂度分析（下）：浅析最好、最坏、平均、均摊时间复杂度</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>上一节，我们讲了复杂度的大 O 表示法和几个分析技巧，还举了一些常见复杂度分析的例子，比如 O(1)、O(logn)、O(n)、O(nlogn) 复杂度分析。掌握了这些内容，对于复杂度分析这个知识点，你已经可以到及格线了。但是，我想你肯定不会满足于此。</p>
+<p>今天我会继续给你讲四个复杂度分析方面的知识点，<strong>最好情况时间复杂度</strong>（best case time complexity）、<strong>最坏情况时间复杂度</strong>（worst case time complexity）、<strong>平均情况时间复杂度</strong>（average case time complexity）、<strong>均摊时间复杂度</strong>（amortized time complexity）。如果这几个概念你都能掌握，那对你来说，复杂度分析这部分内容就没什么大问题了。</p>
+<h2 id="最好、最坏情况时间复杂度"><a href="#最好、最坏情况时间复杂度" class="headerlink" title="最好、最坏情况时间复杂度"></a>最好、最坏情况时间复杂度</h2><p>上一节我举的分析复杂度的例子都很简单，今天我们来看一个稍微复杂的。你可以用我上节教你的分析技巧，自己先试着分析一下这段代码的时间复杂度。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">// n 表示数组 array 的长度</span><br><span class="line">int find(int[] array, int n, int x) &#123;</span><br><span class="line">  int i = 0;</span><br><span class="line">  int pos = -1;</span><br><span class="line">  for (; i &lt; n; ++i) &#123;</span><br><span class="line">    if (array[i] == x) pos = i;</span><br><span class="line">  &#125;</span><br><span class="line">  return pos;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>你应该可以看出来，这段代码要实现的功能是，在一个无序的数组（array）中，查找变量 x 出现的位置。如果没有找到，就返回 -1。按照上节课讲的分析方法，这段代码的复杂度是 O(n)，其中，n 代表数组的长度。</p>
+<p>我们在数组中查找一个数据，并不需要每次都把整个数组都遍历一遍，因为有可能中途找到就可以提前结束循环了。但是，这段代码写得不够高效。我们可以这样优化一下这段查找代码。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">// n 表示数组 array 的长度</span><br><span class="line">int find(int[] array, int n, int x) &#123;</span><br><span class="line">  int i = 0;</span><br><span class="line">  int pos = -1;</span><br><span class="line">  for (; i &lt; n; ++i) &#123;</span><br><span class="line">    if (array[i] == x) &#123;</span><br><span class="line">       pos = i;</span><br><span class="line">       break;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  return pos;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个时候，问题就来了。我们优化完之后，这段代码的时间复杂度还是 O(n) 吗？很显然，咱们上一节讲的分析方法，解决不了这个问题。</p>
+<p>因为，要查找的变量 x 可能出现在数组的任意位置。如果数组中第一个元素正好是要查找的变量 x，那就不需要继续遍历剩下的 n-1 个数据了，那时间复杂度就是 O(1)。但如果数组中不存在变量 x，那我们就需要把整个数组都遍历一遍，时间复杂度就成了 O(n)。所以，不同的情况下，这段代码的时间复杂度是不一样的。</p>
+<p>为了表示代码在不同情况下的不同时间复杂度，我们需要引入三个概念：最好情况时间复杂度、最坏情况时间复杂度和平均情况时间复杂度。</p>
+<p>顾名思义，<strong>最好情况时间复杂度就是，在最理想的情况下，执行这段代码的时间复杂度</strong>。就像我们刚刚讲到的，在最理想的情况下，要查找的变量 x 正好是数组的第一个元素，这个时候对应的时间复杂度就是最好情况时间复杂度。</p>
+<p>同理，<strong>最坏情况时间复杂度就是，在最糟糕的情况下，执行这段代码的时间复杂度</strong>。就像刚举的那个例子，如果数组中没有要查找的变量 x，我们需要把整个数组都遍历一遍才行，所以这种最糟糕情况下对应的时间复杂度就是最坏情况时间复杂度。</p>
+<h2 id="平均情况时间复杂度"><a href="#平均情况时间复杂度" class="headerlink" title="平均情况时间复杂度"></a>平均情况时间复杂度</h2><p>我们都知道，最好情况时间复杂度和最坏情况时间复杂度对应的都是极端情况下的代码复杂度，发生的概率其实并不大。为了更好地表示平均情况下的复杂度，我们需要引入另一个概念：平均情况时间复杂度，后面我简称为平均时间复杂度。</p>
+<p>平均时间复杂度又该怎么分析呢？我还是借助刚才查找变量 x 的例子来给你解释。</p>
+<p>要查找的变量 x 在数组中的位置，有 n+1 种情况：<strong>在数组的 0～n-1 位置中</strong>和<strong>不在数组中</strong>。我们把每种情况下，查找需要遍历的元素个数累加起来，然后再除以 n+1，就可以得到需要遍历的元素个数的平均值，即：</p>
+<p><img src="https://static001.geekbang.org/resource/image/d8/2f/d889a358b8eccc5bbb90fc16e327a22f.jpg" alt="img"></p>
+<p>我们知道，时间复杂度的大 O 标记法中，可以省略掉系数、低阶、常量，所以，咱们把刚刚这个公式简化之后，得到的平均时间复杂度就是 O(n)。</p>
+<p>这个结论虽然是正确的，但是计算过程稍微有点儿问题。究竟是什么问题呢？我们刚讲的这 n+1 种情况，出现的概率并不是一样的。我带你具体分析一下。（这里要稍微用到一点儿概率论的知识，不过非常简单，你不用担心。）</p>
+<p>我们知道，要查找的变量 x，要么在数组里，要么就不在数组里。这两种情况对应的概率统计起来很麻烦，为了方便你理解，我们假设在数组中与不在数组中的概率都为 1/2。另外，要查找的数据出现在 0～n-1 这 n 个位置的概率也是一样的，为 1/n。所以，根据概率乘法法则，要查找的数据出现在 0～n-1 中任意位置的概率就是 1/(2n)。</p>
+<p>因此，前面的推导过程中存在的最大问题就是，没有将各种情况发生的概率考虑进去。如果我们把每种情况发生的概率也考虑进去，那平均时间复杂度的计算过程就变成了这样：</p>
+<p><img src="https://static001.geekbang.org/resource/image/36/7f/36c0aabdac69032f8a43368f5e90c67f.jpg" alt="img"></p>
+<p>这个值就是概率论中的<strong>加权平均值</strong>，也叫作<strong>期望值</strong>，所以平均时间复杂度的全称应该叫<strong>加权平均时间复杂度</strong>或者<strong>期望时间复杂度</strong>。</p>
+<p>引入概率之后，前面那段代码的加权平均值为 (3n+1)/4。用大 O 表示法来表示，去掉系数和常量，这段代码的加权平均时间复杂度仍然是 O(n)。</p>
+<p>你可能会说，平均时间复杂度分析好复杂啊，还要涉及概率论的知识。实际上，在大多数情况下，我们并不需要区分最好、最坏、平均情况时间复杂度三种情况。像我们上一节课举的那些例子那样，很多时候，我们使用一个复杂度就可以满足需求了。只有同一块代码在不同的情况下，时间复杂度有量级的差距，我们才会使用这三种复杂度表示法来区分。</p>
+<h2 id="均摊时间复杂度"><a href="#均摊时间复杂度" class="headerlink" title="均摊时间复杂度"></a>均摊时间复杂度</h2><p>到此为止，你应该已经掌握了算法复杂度分析的大部分内容了。下面我要给你讲一个更加高级的概念，均摊时间复杂度，以及它对应的分析方法，摊还分析（或者叫平摊分析）。</p>
+<p>均摊时间复杂度，听起来跟平均时间复杂度有点儿像。对于初学者来说，这两个概念确实非常容易弄混。我前面说了，大部分情况下，我们并不需要区分最好、最坏、平均三种复杂度。平均复杂度只在某些特殊情况下才会用到，而均摊时间复杂度应用的场景比它更加特殊、更加有限。</p>
+<p>老规矩，我还是借助一个具体的例子来帮助你理解。（当然，这个例子只是我为了方便讲解想出来的，实际上没人会这么写。）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">// array 表示一个长度为 n 的数组</span><br><span class="line">// 代码中的 array.length 就等于 n</span><br><span class="line">int[] array = new int[n];</span><br><span class="line">int count = 0;</span><br><span class="line"></span><br><span class="line">void insert(int val) &#123;</span><br><span class="line">   if (count == array.length) &#123;</span><br><span class="line">      int sum = 0;</span><br><span class="line">      for (int i = 0; i &lt; array.length; ++i) &#123;</span><br><span class="line">         sum = sum + array[i];</span><br><span class="line">      &#125;</span><br><span class="line">      array[0] = sum;</span><br><span class="line">      count = 1;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   array[count] = val;</span><br><span class="line">   ++count;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我先来解释一下这段代码。这段代码实现了一个往数组中插入数据的功能。当数组满了之后，也就是代码中的 count == array.length 时，我们用 for 循环遍历数组求和，并清空数组，将求和之后的 sum 值放到数组的第一个位置，然后再将新的数据插入。但如果数组一开始就有空闲空间，则直接将数据插入数组。</p>
+<p>那这段代码的时间复杂度是多少呢？你可以先用我们刚讲到的三种时间复杂度的分析方法来分析一下。</p>
+<p>最理想的情况下，数组中有空闲空间，我们只需要将数据插入到数组下标为 count 的位置就可以了，所以最好情况时间复杂度为 O(1)。最坏的情况下，数组中没有空闲空间了，我们需要先做一次数组的遍历求和，然后再将数据插入，所以最坏情况时间复杂度为 O(n)。</p>
+<p>那平均时间复杂度是多少呢？答案是 O(1)。我们还是可以通过前面讲的概率论的方法来分析。</p>
+<p>假设数组的长度是 n，根据数据插入的位置的不同，我们可以分为 n 种情况，每种情况的时间复杂度是 O(1)。除此之外，还有一种“额外”的情况，就是在数组没有空闲空间时插入一个数据，这个时候的时间复杂度是 O(n)。而且，这 n+1 种情况发生的概率一样，都是 1/(n+1)。所以，根据加权平均的计算方法，我们求得的平均时间复杂度就是：</p>
+<p><img src="https://static001.geekbang.org/resource/image/6d/ed/6df62366a60336d9de3bc34f488d8bed.jpg" alt="img"></p>
+<p>至此为止，前面的最好、最坏、平均时间复杂度的计算，理解起来应该都没有问题。但是这个例子里的平均复杂度分析其实并不需要这么复杂，不需要引入概率论的知识。这是为什么呢？我们先来对比一下这个 insert() 的例子和前面那个 find() 的例子，你就会发现这两者有很大差别。</p>
+<p>首先，find() 函数在极端情况下，复杂度才为 O(1)。但 insert() 在大部分情况下，时间复杂度都为 O(1)。只有个别情况下，复杂度才比较高，为 O(n)。这是 insert()<strong>第一个</strong>区别于 find() 的地方。</p>
+<p>我们再来看<strong>第二个</strong>不同的地方。对于 insert() 函数来说，O(1) 时间复杂度的插入和 O(n) 时间复杂度的插入，出现的频率是非常有规律的，而且有一定的前后时序关系，一般都是一个 O(n) 插入之后，紧跟着 n-1 个 O(1) 的插入操作，循环往复。</p>
+<p>所以，针对这样一种特殊场景的复杂度分析，我们并不需要像之前讲平均复杂度分析方法那样，找出所有的输入情况及相应的发生概率，然后再计算加权平均值。</p>
+<p>针对这种特殊的场景，我们引入了一种更加简单的分析方法：<strong>摊还分析法</strong>，通过摊还分析得到的时间复杂度我们起了一个名字，叫<strong>均摊时间复杂度</strong>。</p>
+<p>那究竟如何使用摊还分析法来分析算法的均摊时间复杂度呢？</p>
+<p>我们还是继续看在数组中插入数据的这个例子。每一次 O(n) 的插入操作，都会跟着 n-1 次 O(1) 的插入操作，所以把耗时多的那次操作均摊到接下来的 n-1 次耗时少的操作上，均摊下来，这一组连续的操作的均摊时间复杂度就是 O(1)。这就是均摊分析的大致思路。你都理解了吗？</p>
+<p>均摊时间复杂度和摊还分析应用场景比较特殊，所以我们并不会经常用到。为了方便你理解、记忆，我这里简单总结一下它们的应用场景。如果你遇到了，知道是怎么回事儿就行了。</p>
+<p>对一个数据结构进行一组连续操作中，大部分情况下时间复杂度都很低，只有个别情况下时间复杂度比较高，而且这些操作之间存在前后连贯的时序关系，这个时候，我们就可以将这一组操作放在一块儿分析，看是否能将较高时间复杂度那次操作的耗时，平摊到其他那些时间复杂度比较低的操作上。而且，在能够应用均摊时间复杂度分析的场合，一般均摊时间复杂度就等于最好情况时间复杂度。</p>
+<p>尽管很多数据结构和算法书籍都花了很大力气来区分平均时间复杂度和均摊时间复杂度，但其实我个人认为，<strong>均摊时间复杂度就是一种特殊的平均时间复杂度</strong>，我们没必要花太多精力去区分它们。你最应该掌握的是它的分析方法，摊还分析。至于分析出来的结果是叫平均还是叫均摊，这只是个说法，并不重要。</p>
+<h2 id="内容小结"><a href="#内容小结" class="headerlink" title="内容小结"></a>内容小结</h2><p>今天我们学习了几个复杂度分析相关的概念，分别有：最好情况时间复杂度、最坏情况时间复杂度、平均情况时间复杂度、均摊时间复杂度。之所以引入这几个复杂度概念，是因为，同一段代码，在不同输入的情况下，复杂度量级有可能是不一样的。</p>
+<p>在引入这几个概念之后，我们可以更加全面地表示一段代码的执行效率。而且，这几个概念理解起来都不难。最好、最坏情况下的时间复杂度分析起来比较简单，但平均、均摊两个复杂度分析相对比较复杂。如果你觉得理解得还不是很深入，不用担心，在后续具体的数据结构和算法学习中，我们可以继续慢慢实践！</p>
+<p>极客时间版权所有: <a href="https://time.geekbang.org/column/article/40447" target="_blank" rel="noopener">https://time.geekbang.org/column/article/40447</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2018-09-26T06:45:23.000Z"><a href="/2018/09/26/数据结构与算法/03 | 复杂度分析（上）：如何分析、统计算法的执行效率和资源消耗/">2018-09-26</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/09/26/数据结构与算法/03 | 复杂度分析（上）：如何分析、统计算法的执行效率和资源消耗/">03 | 复杂度分析（上）：如何分析、统计算法的执行效率和资源消耗</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>我们都知道，数据结构和算法本身解决的是“快”和“省”的问题，即如何让代码运行得更快，如何让代码更省存储空间。所以，执行效率是算法一个非常重要的考量指标。那如何来衡量你编写的算法代码的执行效率呢？这里就要用到我们今天要讲的内容：时间、空间复杂度分析。</p>
+<p>其实，只要讲到数据结构与算法，就一定离不开时间、空间复杂度分析。而且，我个人认为，<strong>复杂度分析是整个算法学习的精髓，只要掌握了它，数据结构和算法的内容基本上就掌握了一半</strong>。</p>
+<p>复杂度分析实在太重要了，因此我准备用两节内容来讲。希望你学完这个内容之后，无论在任何场景下，面对任何代码的复杂度分析，你都能做到“庖丁解牛”般游刃有余。</p>
+<h2 id="为什么需要复杂度分析？"><a href="#为什么需要复杂度分析？" class="headerlink" title="为什么需要复杂度分析？"></a>为什么需要复杂度分析？</h2><p>你可能会有些疑惑，我把代码跑一遍，通过统计、监控，就能得到算法执行的时间和占用的内存大小。为什么还要做时间、空间复杂度分析呢？这种分析方法能比我实实在在跑一遍得到的数据更准确吗？</p>
+<p>首先，我可以肯定地说，你这种评估算法执行效率的方法是正确的。很多数据结构和算法书籍还给这种方法起了一个名字，叫<strong>事后统计法</strong>。但是，这种统计方法有非常大的局限性。</p>
+<p><strong>1. 测试结果非常依赖测试环境</strong></p>
+<p>测试环境中硬件的不同会对测试结果有很大的影响。比如，我们拿同样一段代码，分别用 Intel Core i9 处理器和 Intel Core i3 处理器来运行，不用说，i9 处理器要比 i3 处理器执行的速度快很多。还有，比如原本在这台机器上 a 代码执行的速度比 b 代码要快，等我们换到另一台机器上时，可能会有截然相反的结果。</p>
+<p><strong>2. 测试结果受数据规模的影响很大</strong></p>
+<p>后面我们会讲排序算法，我们先拿它举个例子。对同一个排序算法，待排序数据的有序度不一样，排序的执行时间就会有很大的差别。极端情况下，如果数据已经是有序的，那排序算法不需要做任何操作，执行时间就会非常短。除此之外，如果测试数据规模太小，测试结果可能无法真实地反应算法的性能。比如，对于小规模的数据排序，插入排序可能反倒会比快速排序要快！</p>
+<p>所以，<strong>我们需要一个不用具体的测试数据来测试，就可以粗略地估计算法的执行效率的方法</strong>。这就是我们今天要讲的时间、空间复杂度分析方法。</p>
+<h2 id="大-O-复杂度表示法"><a href="#大-O-复杂度表示法" class="headerlink" title="大 O 复杂度表示法"></a>大 O 复杂度表示法</h2><p>算法的执行效率，粗略地讲，就是算法代码执行的时间。但是，如何在不运行代码的情况下，用“肉眼”得到一段代码的执行时间呢？</p>
+<p>这里有段非常简单的代码，求 1,2,3…n 的累加和。现在，我就带你一块来估算一下这段代码的执行时间。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">int cal(int n) &#123;</span><br><span class="line">  int sum = 0;</span><br><span class="line">  int i = 1;</span><br><span class="line">  for (; i &lt;= n; ++i) &#123;</span><br><span class="line">    sum = sum + i;</span><br><span class="line">  &#125;</span><br><span class="line">  return sum;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从 CPU 的角度来看，这段代码的每一行都执行着类似的操作：<strong>读数据</strong>-<strong>运算</strong>-<strong>写数据</strong>。尽管每行代码对应的 CPU 执行的个数、执行的时间都不一样，但是，我们这里只是粗略估计，所以可以假设每行代码执行的时间都一样，为 unit_time。在这个假设的基础之上，这段代码的总执行时间是多少呢？</p>
+<p>第 2、3 行代码分别需要 1 个 unit_time 的执行时间，第 4、5 行都运行了 n 遍，所以需要 2n<em>unit_time 的执行时间，所以这段代码总的执行时间就是 (2n+2)</em>unit_time。可以看出来，<strong>所有代码的执行时间 T(n) 与每行代码的执行次数成正比</strong>。</p>
+<p>按照这个分析思路，我们再来看这段代码。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">int cal(int n) &#123;</span><br><span class="line">  int sum = 0;</span><br><span class="line">  int i = 1;</span><br><span class="line">  int j = 1;</span><br><span class="line">  for (; i &lt;= n; ++i) &#123;</span><br><span class="line">    j = 1;</span><br><span class="line">    for (; j &lt;= n; ++j) &#123;</span><br><span class="line">      sum = sum +  i * j;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们依旧假设每个语句的执行时间是 unit_time。那这段代码的总执行时间 T(n) 是多少呢？</p>
+<p>第 2、3、4 行代码，每行都需要 1 个 unit_time 的执行时间，第 5、6 行代码循环执行了 n 遍，需要 2n <em> unit_time 的执行时间，第 7、8 行代码循环执行了 n2遍，所以需要 2n2 </em> unit_time 的执行时间。所以，整段代码总的执行时间 T(n) = (2n2+2n+3)*unit_time。</p>
+<p>尽管我们不知道 unit_time 的具体值，但是通过这两段代码执行时间的推导过程，我们可以得到一个非常重要的规律，那就是，<strong>所有代码的执行时间 T(n) 与每行代码的执行次数 n 成正比</strong>。</p>
+<p>我们可以把这个规律总结成一个公式。注意，大 O 就要登场了！</p>
+<p><img src="https://static001.geekbang.org/resource/image/22/ef/22900968aa2b190072c985a08b0e92ef.png" alt="img"></p>
+<p>我来具体解释一下这个公式。其中，T(n) 我们已经讲过了，它表示代码执行的时间；n 表示数据规模的大小；f(n) 表示每行代码执行的次数总和。因为这是一个公式，所以用 f(n) 来表示。公式中的 O，表示代码的执行时间 T(n) 与 f(n) 表达式成正比。</p>
+<p>所以，第一个例子中的 T(n) = O(2n+2)，第二个例子中的 T(n) = O(2n2+2n+3)。这就是<strong>大 O 时间复杂度表示法</strong>。大 O 时间复杂度实际上并不具体表示代码真正的执行时间，而是表示<strong>代码执行时间随数据规模增长的变化趋势</strong>，所以，也叫作<strong>渐进时间复杂度</strong>（asymptotic time complexity），简称<strong>时间复杂度</strong>。</p>
+<p>当 n 很大时，你可以把它想象成 10000、100000。而公式中的低阶、常量、系数三部分并不左右增长趋势，所以都可以忽略。我们只需要记录一个最大量级就可以了，如果用大 O 表示法表示刚讲的那两段代码的时间复杂度，就可以记为：T(n) = O(n)； T(n) = O(n2)。</p>
+<h2 id="时间复杂度分析"><a href="#时间复杂度分析" class="headerlink" title="时间复杂度分析"></a>时间复杂度分析</h2><p>前面介绍了大 O 时间复杂度的由来和表示方法。现在我们来看下，如何分析一段代码的时间复杂度？我这儿有三个比较实用的方法可以分享给你。</p>
+<p><strong>1. 只关注循环执行次数最多的一段代码</strong></p>
+<p>我刚才说了，大 O 这种复杂度表示方法只是表示一种变化趋势。我们通常会忽略掉公式中的常量、低阶、系数，只需要记录一个最大阶的量级就可以了。所以，<strong>我们在分析一个算法、一段代码的时间复杂度的时候，也只关注循环执行次数最多的那一段代码就可以了</strong>。这段核心代码执行次数的 n 的量级，就是整段要分析代码的时间复杂度。</p>
+<p>为了便于你理解，我还拿前面的例子来说明。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">int cal(int n) &#123;</span><br><span class="line">  int sum = 0;</span><br><span class="line">  int i = 1;</span><br><span class="line">  for (; i &lt;= n; ++i) &#123;</span><br><span class="line">    sum = sum + i;</span><br><span class="line">  &#125;</span><br><span class="line">  return sum;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中第 2、3 行代码都是常量级的执行时间，与 n 的大小无关，所以对于复杂度并没有影响。循环执行次数最多的是第 4、5 行代码，所以这块代码要重点分析。前面我们也讲过，这两行代码被执行了 n 次，所以总的时间复杂度就是 O(n)。</p>
+<p><strong>2. 加法法则：总复杂度等于量级最大的那段代码的复杂度</strong></p>
+<p>我这里还有一段代码。你可以先试着分析一下，然后再往下看跟我的分析思路是否一样。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">int cal(int n) &#123;</span><br><span class="line">   int sum_1 = 0;</span><br><span class="line">   int p = 1;</span><br><span class="line">   for (; p &lt; 100; ++p) &#123;</span><br><span class="line">     sum_1 = sum_1 + p;</span><br><span class="line">   &#125;</span><br><span class="line"> </span><br><span class="line">   int sum_2 = 0;</span><br><span class="line">   int q = 1;</span><br><span class="line">   for (; q &lt; n; ++q) &#123;</span><br><span class="line">     sum_2 = sum_2 + q;</span><br><span class="line">   &#125;</span><br><span class="line"> </span><br><span class="line">   int sum_3 = 0;</span><br><span class="line">   int i = 1;</span><br><span class="line">   int j = 1;</span><br><span class="line">   for (; i &lt;= n; ++i) &#123;</span><br><span class="line">     j = 1; </span><br><span class="line">     for (; j &lt;= n; ++j) &#123;</span><br><span class="line">       sum_3 = sum_3 +  i * j;</span><br><span class="line">     &#125;</span><br><span class="line">   &#125;</span><br><span class="line"> </span><br><span class="line">   return sum_1 + sum_2 + sum_3;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>这个代码分为三部分，分别是求 sum_1、sum_2、sum_3。我们可以分别分析每一部分的时间复杂度，然后把它们放到一块儿，再取一个量级最大的作为整段代码的复杂度。</p>
+<p>第一段的时间复杂度是多少呢？这段代码循环执行了 100 次，所以是一个常量的执行时间，跟 n 的规模无关。</p>
+<p>这里我要再强调一下，即便这段代码循环 10000 次、100000 次，只要是一个已知的数，跟 n 无关，照样也是常量级的执行时间。当 n 无限大的时候，就可以忽略。尽管对代码的执行时间会有很大影响，但是回到时间复杂度的概念来说，它表示的是一个算法执行效率与数据规模增长的变化趋势，所以不管常量的执行时间多大，我们都可以忽略掉。因为它本身对增长趋势并没有影响。</p>
+<p>那第二段代码和第三段代码的时间复杂度是多少呢？答案是 O(n) 和 O(n2)，你应该能容易就分析出来，我就不啰嗦了。</p>
+<p>综合这三段代码的时间复杂度，我们取其中最大的量级。所以，整段代码的时间复杂度就为 O(n2)。也就是说：<strong>总的时间复杂度就等于量级最大的那段代码的时间复杂度</strong>。那我们将这个规律抽象成公式就是：</p>
+<p>如果 T1(n)=O(f(n))，T2(n)=O(g(n))；那么 T(n)=T1(n)+T2(n)=max(O(f(n)), O(g(n))) =O(max(f(n), g(n))).</p>
+<p><strong>3. 乘法法则：嵌套代码的复杂度等于嵌套内外代码复杂度的乘积</strong></p>
+<p>我刚讲了一个复杂度分析中的加法法则，这儿还有一个<strong>乘法法则</strong>。类比一下，你应该能“猜到”公式是什么样子的吧？</p>
+<p>如果 T1(n)=O(f(n))，T2(n)=O(g(n))；那么 T(n)=T1(n)<em>T2(n)=O(f(n))</em>O(g(n))=O(f(n)*g(n)).</p>
+<p>也就是说，假设 T1(n) = O(n)，T2(n) = O(n2)，则 T1(n) * T2(n) = O(n3)。落实到具体的代码上，我们可以把乘法法则看成是<strong>嵌套循环</strong>，我举个例子给你解释一下。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">int cal(int n) &#123;</span><br><span class="line">   int ret = 0; </span><br><span class="line">   int i = 1;</span><br><span class="line">   for (; i &lt; n; ++i) &#123;</span><br><span class="line">     ret = ret + f(i);</span><br><span class="line">   &#125; </span><br><span class="line"> &#125; </span><br><span class="line"> </span><br><span class="line"> int f(int n) &#123;</span><br><span class="line">  int sum = 0;</span><br><span class="line">  int i = 1;</span><br><span class="line">  for (; i &lt; n; ++i) &#123;</span><br><span class="line">    sum = sum + i;</span><br><span class="line">  &#125; </span><br><span class="line">  return sum;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>我们单独看 cal() 函数。假设 f() 只是一个普通的操作，那第 4～6 行的时间复杂度就是，T1(n) = O(n)。但 f() 函数本身不是一个简单的操作，它的时间复杂度是 T2(n) = O(n)，所以，整个 cal() 函数的时间复杂度就是，T(n) = T1(n) <em> T2(n) = O(n</em>n) = O(n2)。</p>
+<p>我刚刚讲了三种复杂度的分析技巧。不过，你并不用刻意去记忆。实际上，复杂度分析这个东西关键在于“熟练”。你只要多看案例，多分析，就能做到“无招胜有招”。</p>
+<h2 id="几种常见时间复杂度实例分析"><a href="#几种常见时间复杂度实例分析" class="headerlink" title="几种常见时间复杂度实例分析"></a>几种常见时间复杂度实例分析</h2><p>虽然代码千差万别，但是常见的复杂度量级并不多。我稍微总结了一下，这些复杂度量级几乎涵盖了你今后可以接触的所有代码的复杂度量级。</p>
+<p><img src="https://static001.geekbang.org/resource/image/37/0a/3723793cc5c810e9d5b06bc95325bf0a.jpg" alt="img"></p>
+<p>对于刚罗列的复杂度量级，我们可以粗略地分为两类，<strong>多项式量级</strong>和<strong>非多项式量级</strong>。其中，非多项式量级只有两个：O(2n) 和 O(n!)。</p>
+<p>当数据规模 n 越来越大时，非多项式量级算法的执行时间会急剧增加，求解问题的执行时间会无限增长。所以，非多项式时间复杂度的算法其实是非常低效的算法。因此，关于 NP 时间复杂度我就不展开讲了。我们主要来看几种常见的<strong>多项式时间复杂度</strong>。</p>
+<p><strong>1. O(1)</strong></p>
+<p>首先你必须明确一个概念，O(1) 只是常量级时间复杂度的一种表示方法，并不是指只执行了一行代码。比如这段代码，即便有 3 行，它的时间复杂度也是 O(1），而不是 O(3)。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">int i = 8;</span><br><span class="line">int j = 6;</span><br><span class="line">int sum = i + j;</span><br></pre></td></tr></table></figure>
+<p>我稍微总结一下，只要代码的执行时间不随 n 的增大而增长，这样代码的时间复杂度我们都记作 O(1)。或者说，<strong>一般情况下，只要算法中不存在循环语句、递归语句，即使有成千上万行的代码，其时间复杂度也是Ο(1)</strong>。</p>
+<p><strong>2. O(logn)、O(nlogn)</strong></p>
+<p>对数阶时间复杂度非常常见，同时也是最难分析的一种时间复杂度。我通过一个例子来说明一下。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">i=1;</span><br><span class="line">while (i &lt;= n)  &#123;</span><br><span class="line">  i = i * 2;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>根据我们前面讲的复杂度分析方法，第三行代码是循环执行次数最多的。所以，我们只要能计算出这行代码被执行了多少次，就能知道整段代码的时间复杂度。</p>
+<p>从代码中可以看出，变量 i 的值从 1 开始取，每循环一次就乘以 2。当大于 n 时，循环结束。还记得我们高中学过的等比数列吗？实际上，变量 i 的取值就是一个等比数列。如果我把它一个一个列出来，就应该是这个样子的：</p>
+<p><img src="https://static001.geekbang.org/resource/image/9b/9a/9b1c88264e7a1a20b5954be9bc4bec9a.jpg" alt="img"></p>
+<p>所以，我们只要知道 x 值是多少，就知道这行代码执行的次数了。通过 2x=n 求解 x 这个问题我们想高中应该就学过了，我就不多说了。x=log2n，所以，这段代码的时间复杂度就是 O(log2n)。</p>
+<p>现在，我把代码稍微改下，你再看看，这段代码的时间复杂度是多少？</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">i=1;</span><br><span class="line">while (i &lt;= n)  &#123;</span><br><span class="line">  i = i * 3;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>根据我刚刚讲的思路，很简单就能看出来，这段代码的时间复杂度为 O(log3n)。</p>
+<p>实际上，不管是以 2 为底、以 3 为底，还是以 10 为底，我们可以把所有对数阶的时间复杂度都记为 O(logn)。为什么呢？</p>
+<p>我们知道，对数之间是可以互相转换的，log3n 就等于 log32 <em> log2n，所以 O(log3n) = O(C </em> log2n)，其中 C=log32 是一个常量。基于我们前面的一个理论：<strong>在采用大 O 标记复杂度的时候，可以忽略系数，即 O(Cf(n)) = O(f(n))</strong>。所以，O(log2n) 就等于 O(log3n)。因此，在对数阶时间复杂度的表示方法里，我们忽略对数的“底”，统一表示为 O(logn)。</p>
+<p>如果你理解了我前面讲的 O(logn)，那 O(nlogn) 就很容易理解了。还记得我们刚讲的乘法法则吗？如果一段代码的时间复杂度是 O(logn)，我们循环执行 n 遍，时间复杂度就是 O(nlogn) 了。而且，O(nlogn) 也是一种非常常见的算法时间复杂度。比如，归并排序、快速排序的时间复杂度都是 O(nlogn)。</p>
+<p><strong>3. O(m+n)、O(m*n)</strong></p>
+<p>我们再来讲一种跟前面都不一样的时间复杂度，代码的复杂度<strong>由两个数据的规模</strong>来决定。老规矩，先看代码！</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">int cal(int m, int n) &#123;</span><br><span class="line">  int sum_1 = 0;</span><br><span class="line">  int i = 1;</span><br><span class="line">  for (; i &lt; m; ++i) &#123;</span><br><span class="line">    sum_1 = sum_1 + i;</span><br><span class="line">  &#125;</span><br><span class="line"> </span><br><span class="line">  int sum_2 = 0;</span><br><span class="line">  int j = 1;</span><br><span class="line">  for (; j &lt; n; ++j) &#123;</span><br><span class="line">    sum_2 = sum_2 + j;</span><br><span class="line">  &#125;</span><br><span class="line"> </span><br><span class="line">  return sum_1 + sum_2;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从代码中可以看出，m 和 n 是表示两个数据规模。我们无法事先评估 m 和 n 谁的量级大，所以我们在表示复杂度的时候，就不能简单地利用加法法则，省略掉其中一个。所以，上面代码的时间复杂度就是 O(m+n)。</p>
+<p>针对这种情况，原来的加法法则就不正确了，我们需要将加法规则改为：T1(m) + T2(n) = O(f(m) + g(n))。但是乘法法则继续有效：T1(m)<em>T2(n) = O(f(m) </em> f(n))。</p>
+<h2 id="空间复杂度分析"><a href="#空间复杂度分析" class="headerlink" title="空间复杂度分析"></a>空间复杂度分析</h2><p>前面，咱们花了很长时间讲大 O 表示法和时间复杂度分析，理解了前面讲的内容，空间复杂度分析方法学起来就非常简单了。</p>
+<p>前面我讲过，时间复杂度的全称是<strong>渐进时间复杂度</strong>，<strong>表示算法的执行时间与数据规模之间的增长关系</strong>。类比一下，空间复杂度全称就是<strong>渐进空间复杂度</strong>（asymptotic space complexity），<strong>表示算法的存储空间与数据规模之间的增长关系</strong>。</p>
+<p>我还是拿具体的例子来给你说明。（这段代码有点“傻”，一般没人会这么写，我这么写只是为了方便给你解释。）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">void print(int n) &#123;</span><br><span class="line">  int i = 0;</span><br><span class="line">  int[] a = new int[n];</span><br><span class="line">  for (i; i &lt;n; ++i) &#123;</span><br><span class="line">    a[i] = i * i;</span><br><span class="line">  &#125;</span><br><span class="line"> </span><br><span class="line">  for (i = n-1; i &gt;= 0; --i) &#123;</span><br><span class="line">    print out a[i]</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>跟时间复杂度分析一样，我们可以看到，第 2 行代码中，我们申请了一个空间存储变量 i，但是它是常量阶的，跟数据规模 n 没有关系，所以我们可以忽略。第 3 行申请了一个大小为 n 的 int 类型数组，除此之外，剩下的代码都没有占用更多的空间，所以整段代码的空间复杂度就是 O(n)。</p>
+<p>我们常见的空间复杂度就是 O(1)、O(n)、O(n2 )，像 O(logn)、O(nlogn) 这样的对数阶复杂度平时都用不到。而且，空间复杂度分析比时间复杂度分析要简单很多。所以，对于空间复杂度，掌握刚我说的这些内容已经足够了。</p>
+<h2 id="内容小结"><a href="#内容小结" class="headerlink" title="内容小结"></a>内容小结</h2><p>基础复杂度分析的知识到此就讲完了，我们来总结一下。</p>
+<p>复杂度也叫渐进复杂度，包括时间复杂度和空间复杂度，用来分析算法执行效率与数据规模之间的增长关系，可以粗略地表示，越高阶复杂度的算法，执行效率越低。常见的复杂度并不多，从低阶到高阶有：O(1)、O(logn)、O(n)、O(nlogn)、O(n2 )。等你学完整个专栏之后，你就会发现几乎所有的数据结构和算法的复杂度都跑不出这几个。</p>
+<p><img src="https://static001.geekbang.org/resource/image/49/04/497a3f120b7debee07dc0d03984faf04.jpg" alt="img"></p>
+<p><strong>复杂度分析并不难，关键在于多练。</strong> 之后讲后面的内容时，我还会带你详细地分析每一种数据结构和算法的时间、空间复杂度。只要跟着我的思路学习、练习，你很快就能和我一样，每次看到代码的时候，简单的一眼就能看出其复杂度，难的稍微分析一下就能得出答案。</p>
+<p>极客时间版权所有:<a href="https://time.geekbang.org/column/article/40036" target="_blank" rel="noopener">https://time.geekbang.org/column/article/40036</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2018-09-24T06:45:23.000Z"><a href="/2018/09/24/数据结构与算法/02 | 如何抓住重点，系统高效地学习数据结构与算法/">2018-09-24</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/09/24/数据结构与算法/02 | 如何抓住重点，系统高效地学习数据结构与算法/">02 | 如何抓住重点，系统高效地学习数据结构与算法</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>你是否曾跟我一样，因为看不懂数据结构和算法，而一度怀疑是自己太笨？实际上，很多人在第一次接触这门课时，都会有这种感觉，觉得数据结构和算法很抽象，晦涩难懂，宛如天书。正是这个原因，让很多初学者对这门课望而却步。</p>
+<p>我个人觉得，其实真正的原因是你<strong>没有找到好的学习方法</strong>，<strong>没有抓住学习的重点</strong>。实际上，数据结构和算法的东西并不多，常用的、基础的知识点更是屈指可数。只要掌握了正确的学习方法，学起来并没有看上去那么难，更不需要什么高智商、厚底子。</p>
+<p>还记得大学里每次考前老师都要划重点吗？今天，我就给你划划我们这门课的重点，再告诉你一些我总结的学习小窍门。相信有了这些之后，你学起来就会有的放矢、事半功倍了。</p>
+<h2 id="什么是数据结构？什么是算法？"><a href="#什么是数据结构？什么是算法？" class="headerlink" title="什么是数据结构？什么是算法？"></a>什么是数据结构？什么是算法？</h2><p>大部分数据结构和算法教材，在开篇都会给这两个概念下一个明确的定义。但是，这些定义都很抽象，对理解这两个概念并没有实质性的帮助，反倒会让你陷入死抠定义的误区。毕竟，我们现在学习，并不是为了考试，所以，概念背得再牢，不会用也就没什么用。</p>
+<p><strong>虽然我们说没必要深挖严格的定义，但是这并不等于不需要理解概念。</strong> 下面我就从广义和狭义两个层面，来帮你理解数据结构与算法这两个概念。</p>
+<p>从广义上讲，数据结构就是指一组数据的存储结构。算法就是操作数据的一组方法。</p>
+<p>图书馆储藏书籍你肯定见过吧？为了方便查找，图书管理员一般会将书籍分门别类进行“存储”。按照一定规律编号，就是书籍这种“数据”的存储结构。</p>
+<p>那我们如何来查找一本书呢？有很多种办法，你当然可以一本一本地找，也可以先根据书籍类别的编号，是人文，还是科学、计算机，来定位书架，然后再依次查找。笼统地说，这些查找方法都是算法。</p>
+<p>从狭义上讲，也就是我们专栏要讲的，是指某些著名的数据结构和算法，比如队列、栈、堆、二分查找、动态规划等。这些都是前人智慧的结晶，我们可以直接拿来用。我们要讲的这些经典数据结构和算法，都是前人从很多实际操作场景中抽象出来的，经过非常多的求证和检验，可以高效地帮助我们解决很多实际的开发问题。</p>
+<p>那数据结构和算法有什么关系呢？为什么大部分书都把这两个东西放到一块儿来讲呢？</p>
+<p>这是因为，数据结构和算法是相辅相成的。<strong>数据结构是为算法服务的，算法要作用在特定的数据结构之上。</strong> 因此，我们无法孤立数据结构来讲算法，也无法孤立算法来讲数据结构。</p>
+<p>比如，因为数组具有随机访问的特点，常用的二分查找算法需要用数组来存储数据。但如果我们选择链表这种数据结构，二分查找算法就无法工作了，因为链表并不支持随机访问。</p>
+<p>数据结构是静态的，它只是组织数据的一种方式。如果不在它的基础上操作、构建算法，孤立存在的数据结构就是没用的。</p>
+<p>现在你对数据结构与算法是不是有了比较清晰的理解了呢？有了这些储备，下面我们来看看，究竟该怎么学数据结构与算法。</p>
+<h2 id="学习这个专栏需要什么基础？"><a href="#学习这个专栏需要什么基础？" class="headerlink" title="学习这个专栏需要什么基础？"></a>学习这个专栏需要什么基础？</h2><p>看到数据结构和算法里的“算法”两个字，很多人就会联想到“数学”，觉得算法会涉及到很多深奥的数学知识。那我数学基础不是很好，学起来会不会很吃力啊？</p>
+<p>数据结构和算法课程确实会涉及一些数学方面的推理、证明，尤其是在分析某个算法的时间、空间复杂度的时候，但是这个你完全不需要担心。</p>
+<p>这个专栏不会像《算法导论》那样，里面有非常复杂的数学证明和推理。我会由浅入深，从概念到应用，一点一点给你解释清楚。你只要有高中数学水平，就完全可以学习。</p>
+<p>当然，我希望你最好有些编程基础，如果有项目经验就更好了。这样我给你讲数据结构和算法如何提高效率、如何节省存储空间，你就会有很直观的感受。因为，对于每个概念和实现过程，我都会从实际场景出发，不仅教你“<strong>是什么</strong>”，还会教你“<strong>为什么</strong>”，并且告诉你遇到同类型问题应该“<strong>怎么做</strong>”。</p>
+<h2 id="学习的重点在什么地方？"><a href="#学习的重点在什么地方？" class="headerlink" title="学习的重点在什么地方？"></a>学习的重点在什么地方？</h2><p>提到数据结构和算法，很多人就很头疼，因为这里面的内容实在是太多了。这里，我就帮你梳理一下，应该先学什么，后学什么。你可以对照看看，你属于哪个阶段，然后有针对地进行学习。</p>
+<p>想要学习数据结构与算法，<strong>首先要掌握一个数据结构与算法中最重要的概念——复杂度分析。</strong></p>
+<p>这个概念究竟有多重要呢？可以这么说，它几乎占了数据结构和算法这门课的半壁江山，是数据结构和算法学习的精髓。</p>
+<p>数据结构和算法解决的是如何更省、更快地存储和处理数据的问题，因此，我们就需要一个考量效率和资源消耗的方法，这就是复杂度分析方法。所以，如果你只掌握了数据结构和算法的特点、用法，但是没有学会复杂度分析，那就相当于只知道操作口诀，而没掌握心法。只有把心法了然于胸，才能做到无招胜有招！</p>
+<p>所以，复杂度分析这个内容，我会用很大篇幅给你讲透。你也一定要花大力气来啃，必须要拿下，并且要搞得非常熟练。否则，后面的数据结构和算法也很难学好。</p>
+<p>搞定复杂度分析，下面就要进入<strong>数据结构与算法的正文内容</strong>了。</p>
+<p>为了让你对数据结构和算法能有个全面的认识，我画了一张图，里面几乎涵盖了所有数据结构和算法书籍中都会讲到的知识点。</p>
+<p><img src="https://static001.geekbang.org/resource/image/91/a7/913e0ababe43a2d57267df5c5f0832a7.jpg" alt="img"><br>（图谱内容较多，建议长按保存后浏览）</p>
+<p>但是，作为初学者，或者一个非算法工程师来说，你并不需要掌握图里面的所有知识点。很多高级的数据结构与算法，比如二分图、最大流等，这些在我们平常的开发中很少会用到。所以，你暂时可以不用看。我还是那句话，咱们学习要学会找重点。如果不分重点地学习，眉毛胡子一把抓，学起来肯定会比较吃力。</p>
+<p>所以，结合我自己的学习心得，还有这些年的面试、开发经验，我总结了<strong>20 个最常用的、最基础</strong>数据结构与算法，<strong>不管是应付面试还是工作需要，只要集中精力逐一攻克这 20 个知识点就足够了。</strong></p>
+<p>这里面有 10 个数据结构：数组、链表、栈、队列、散列表、二叉树、堆、跳表、图、Trie 树；10 个算法：递归、排序、二分查找、搜索、哈希算法、贪心算法、分治算法、回溯算法、动态规划、字符串匹配算法。</p>
+<p>掌握了这些基础的数据结构和算法，再学更加复杂的数据结构和算法，就会非常容易、非常快。</p>
+<p>在学习数据结构和算法的过程中，你也要注意，不要只是死记硬背，不要为了学习而学习，而是<strong>要学习它的“来历”“自身的特点”“适合解决的问题”以及“实际的应用场景”</strong>。对于每一种数据结构或算法，我都会从这几个方面进行详细讲解。只要你掌握了我每节课里讲的内容，就能在开发中灵活应用。</p>
+<p>学习数据结构和算法的过程，是非常好的思维训练的过程，所以，千万不要被动地记忆，要多辩证地思考，多问为什么。如果你一直这么坚持做，你会发现，等你学完之后，写代码的时候就会不由自主地考虑到很多性能方面的事情，时间复杂度、空间复杂度非常高的垃圾代码出现的次数就会越来越少。你的编程内功就真正得到了修炼。</p>
+<h2 id="一些可以让你事半功倍的学习技巧"><a href="#一些可以让你事半功倍的学习技巧" class="headerlink" title="一些可以让你事半功倍的学习技巧"></a>一些可以让你事半功倍的学习技巧</h2><p>前面我给你划了学习的重点，也讲了学习这门课需要具备的基础。作为一个过来人，现在我就给你分享一下，专栏学习的一些技巧。掌握了这些技巧，可以让你化被动为主动，学起来更加轻松，更加有动力！</p>
+<h3 id="1-边学边练，适度刷题"><a href="#1-边学边练，适度刷题" class="headerlink" title="1. 边学边练，适度刷题"></a>1. 边学边练，适度刷题</h3><p>“边学边练”这一招非常有用。建议你每周花 1～2 个小时的时间，集中把这周的三节内容涉及的数据结构和算法，全都自己写出来，用代码实现一遍。这样一定会比单纯地看或者听的效果要好很多！</p>
+<p>有面试需求的同学，可能会问了，那我还要不要去刷题呢？</p>
+<p>我个人的观点是<strong>可以“适度”刷题，但一定不要浪费太多时间在刷题上</strong>。我们<strong>学习的目的还是掌握，然后应用</strong>。除非你要面试 Google、Facebook 这样的公司，它们的算法题目非常非常难，必须大量刷题，才能在短期内提升应试正确率。如果是应对国内公司的技术面试，即便是 BAT 这样的公司，你只要彻底掌握这个专栏的内容，就足以应对。</p>
+<h3 id="2-多问、多思考、多互动"><a href="#2-多问、多思考、多互动" class="headerlink" title="2. 多问、多思考、多互动"></a>2. 多问、多思考、多互动</h3><p><strong>学习最好的方法是，找到几个人一起学习，一块儿讨论切磋，有问题及时寻求老师答疑。</strong> 但是，离开大学之后，既没有同学也没有老师，这个条件就比较难具备了。</p>
+<p>不过，这也就是咱们专栏学习的优势。专栏里有很多跟你一样的学习者。你可以多在留言区写下自己的疑问、思考和总结，也可以经常看看别人的留言，和他们进行互动。</p>
+<p>除此之外，如果你有疑问，你可以随时在留言区给我留言，我只要有空就会及时回复你。你不要担心问的问题太小白。因为我初学的时候，也常常会被一些小白问题困扰。不懂一点都不丢人，只要你勇敢提出来，我们一起解决了就可以了。</p>
+<p>我也会力争每节课都最大限度地给你讲透，帮你扫除知识盲点，而你要做的就是，避免一知半解，要想尽一切办法去搞懂我讲的所有内容。</p>
+<h3 id="3-打怪升级学习法"><a href="#3-打怪升级学习法" class="headerlink" title="3. 打怪升级学习法"></a>3. 打怪升级学习法</h3><p><strong>学习的过程中，我们碰到最大的问题就是，坚持不下来。</strong> 是的，很多基础课程学起来都非常枯燥。为此，我自己总结了一套“打怪升级学习法”。</p>
+<p>游戏你肯定玩过吧？为什么很多看起来非常简单又没有乐趣的游戏，你会玩得不亦乐乎呢？这是因为，当你努力打到一定级别之后，每天看着自己的经验值、战斗力在慢慢提高，那种每天都在一点一点成长的成就感就不由自主地产生了。</p>
+<p>所以，<strong>我们在枯燥的学习过程中，也可以给自己设立一个切实可行的目标</strong>，就像打怪升级一样。</p>
+<p>比如，针对这个专栏，你就可以设立这样一个目标：每节课后的思考题都认真思考，并且回复到留言区。当你看到很多人给你点赞之后，你就会为了每次都能发一个漂亮的留言，而更加认真地学习。</p>
+<p>当然，还有很多其他的目标，比如，每节课后都写一篇学习笔记或者学习心得；或者你还可以每节课都找一下我讲得不对、不合理的地方……诸如此类，你可以总结一个适合你的“打怪升级攻略”。</p>
+<p>如果你能这样学习一段时间，不仅能收获到知识，你还会有意想不到的成就感。因为，这其实帮你改掉了一点学习的坏习惯。这个习惯一旦改掉了，你的人生也会变得不一样。</p>
+<h3 id="4-知识需要沉淀，不要想试图一下子掌握所有"><a href="#4-知识需要沉淀，不要想试图一下子掌握所有" class="headerlink" title="4. 知识需要沉淀，不要想试图一下子掌握所有"></a>4. 知识需要沉淀，不要想试图一下子掌握所有</h3><p>在学习的过程中，一定会碰到“拦路虎”。如果哪个知识点没有怎么学懂，不要着急，这是正常的。因为，想听一遍、看一遍就把所有知识掌握，这肯定是不可能的。<strong>学习知识的过程是反复迭代、不断沉淀的过程。</strong></p>
+<p>如果碰到“拦路虎”，你可以尽情地在留言区问我，也可以先沉淀一下，过几天再重新学一遍。所谓，书读百遍其义自见，我觉得是很有道理的！</p>
+<p>我讲的这些学习方法，不仅仅针对咱们这一个课程的学习，其实完全适用任何知识的学习过程。你可以通过这个专栏的学习，实践一下这些方法。如果效果不错，再推广到之后的学习过程中。</p>
+<h2 id="内容小结"><a href="#内容小结" class="headerlink" title="内容小结"></a>内容小结</h2><p>今天，我带你划了划数据结构和算法的学习重点，复杂度分析，以及 10 个数据结构和 10 个算法。</p>
+<p>这些内容是我根据平时的学习和工作、面试经验积累，精心筛选出来的。只要掌握这些内容，应付日常的面试、工作，基本不会有问题。</p>
+<p>除此之外，我还给你分享了我总结的一些学习技巧，比如边学边练、多问、多思考，还有两个比较通用的学习方法，打怪升级法和沉淀法。掌握了这些学习技巧，可以让你学习过程中事半功倍。所以，你一定要好好实践哦！</p>
+<p>极客时间版权所有: <a href="https://time.geekbang.org/column/article/40011" target="_blank" rel="noopener">https://time.geekbang.org/column/article/40011</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2018-09-21T06:45:23.000Z"><a href="/2018/09/21/数据结构与算法/01 | 为什么要学习数据结构和算法/">2018-09-21</a></time>
       
       
@@ -590,373 +972,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2018-01-25T14:16:53.000Z"><a href="/2018/01/25/Node.js_事件/事件循环机制-实例/">2018-01-25</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2018/01/25/Node.js_事件/事件循环机制-实例/">事件循环机制-实例</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>在node服务器端运行以下代码会出现什么输出结果？</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">setTimeout(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'setTimeout'</span>);</span><br><span class="line">    process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'nextTick1'</span>);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'main1'</span>);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">say</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'hello! '</span>);</span><br><span class="line">    process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'nextTick2'</span>);</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function"><span class="keyword">function</span>(<span class="params">resolve</span>)</span>&#123;</span><br><span class="line">    process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'nextTick3'</span>);</span><br><span class="line">    &#125;)</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'promise 1'</span>);</span><br><span class="line">    resolve(<span class="string">'promise then'</span>)</span><br><span class="line">&#125;).then(<span class="function"><span class="keyword">function</span>(<span class="params">data</span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(data);</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'main2'</span>);</span><br><span class="line"></span><br><span class="line">process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'nextTick4'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">say();</span><br></pre></td></tr></table></figure>
-<p>下面就结合这个原理图，根据问题，来一步一步分析：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/micro_macro_180703" alt=""></p>
-<p>也可参考下图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/runtime_180703.png" alt=""></p>
-<p>我们经常会听到引擎和runtime，它们的区别是什么呢？</p>
-<ul>
-<li>引擎：解释并编译代码，让它变成能交给机器运行的代码（runnable commands）。</li>
-<li>runtime：就是运行环境，它提供一些对外接口供Js调用，以跟外界打交道。不同的runtime，会提供不同的接口，比如，在 Node.js 环境中，我们可以通过 <code>require</code> 来引入模块；而在浏览器中，我们有 <code>window</code>、 DOM。</li>
-</ul>
-<p>Js引擎是单线程的，如上图中，它负责维护任务队列，并通过 Event Loop 的机制，按顺序把任务放入栈中执行。而图中的异步处理模块，就是 runtime 提供的，拥有和Js引擎互不干扰的线程。</p>
-<h3 id="任务队列"><a href="#任务队列" class="headerlink" title="任务队列"></a>任务队列</h3><p>Js 中，有两类任务队列：宏任务队列（macro tasks）和微任务队列（micro tasks）。宏任务队列可以有多个，微任务队列只有<strong>一个</strong>。那么什么任务，会分到哪个队列呢？</p>
-<ul>
-<li>宏任务：script（全局任务）, setTimeout, setInterval, setImmediate, I/O, UI rendering.</li>
-<li>微任务：process.nextTick, Promise, Object.observer, MutationObserver.</li>
-</ul>
-<p>我们上面讲到，当stack空的时候，就会从任务队列中，取任务来执行。共分3步：</p>
-<ol>
-<li>取一个宏任务来执行。执行完毕后，下一步。</li>
-<li>取一个微任务来执行，执行完毕后，再取一个微任务来执行。直到微任务队列为空，执行下一步。</li>
-</ol>
-<p>从执行步骤来看，我们发现微任务，受到了特殊待遇！我们代码开始执行都是从script（全局任务）开始，所以，一旦我们的全局任务（属于宏任务）执行完，就马上执行完整个微任务队列。</p>
-<p>我们代码的开始执行都是从script（全局任务）开始，这个全局任务属于宏任务；代码由上向下执行；</p>
-<p>第1行，遇到了一个timer异步任务，属于宏任务，放入宏任务队列；</p>
-<p>第8行，遇到log,内部没有其它函数，直接输出main1;</p>
-<p>第10行，函数的定义，不执行；</p>
-<p>第17行，遇到new Promise()，进入回调函数内部:<br>1） 遇到promise.nextTick,属于微任务，放入微任务队列nextTick3;<br>2） 遇到log,内部没有其它函数，直接输出promise 1;<br>3） 遇到resolve回调，属于微任务，放入微任务队列promise then;</p>
-<p>第27行，遇到log,内部没有其它函数，直接输出main2;</p>
-<p>第29行，遇到promise.nextTick,属于微任务，放入微任务队列nextTick4;</p>
-<p>第33行，执行say()：<br>1）遇到log,内部没有其它函数，直接输出hello;<br>2）遇到promise.nextTick,属于微任务，放入微任务队列nextTick2;<br>到此为止，我们已经做了如下事情：<br>1）宏任务队列中放入了一个timer函数；<br>2）输出了main1，promise 1，main2，hello1；<br>3）微任务队列中已经放入了promise then,nextTick3,nextTick4,nextTick2;</p>
-<p>此时，我们的全局任务已执行完成了，就要马上执行完整个微任务队列。但是在微任务中，process.nextTick 是一个特殊的任务，它会被直接插入到微任务的队首（当然了，多个process.nextTick 之间也是先入先出的），优先级最高。所以，依次输出nextTick3,nextTick4,nextTick2,promise then</p>
-<p>这时，执行栈为空了，可是别忘了，我们的宏任务队列还放者一个timer函数待执行，进入timer函数：<br>1）遇到log,内部没有其它函数，直接输出setTimeout;<br>2）遇到promise.nextTick,属于微任务，放入微任务队列nextTick1;</p>
-<p>这个timer宏任务也执行完了，就马上执行完整个微任务队列，微任务队列目前只有一个任务，直接输出nextTick1；</p>
-<p>这时，执行栈又为空了，还有其它任务吗? 没有了，大功告成；</p>
-<p>以上的这种当函数执行栈为空，从任务队列中去一个任务来执行。再次为空，再取一个任务来执行，如此循环，这就是Event Loop，事件循环机制；</p>
-<p>参考：</p>
-<p><a href="https://juejin.im/post/5a63470bf265da3e2c383068" target="_blank" rel="noopener">https://juejin.im/post/5a63470bf265da3e2c383068</a></p>
-<p><a href="https://segmentfault.com/a/1190000011198232" target="_blank" rel="noopener">https://segmentfault.com/a/1190000011198232</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2017-12-05T14:16:53.000Z"><a href="/2017/12/05/Node.js_事件/理解事件循环机制/">2017-12-05</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/12/05/Node.js_事件/理解事件循环机制/">理解事件循环机制</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><blockquote>
-<p>Node.js 是基于V8引擎的javascript运行环境. Node.js具有<code>事件驱动</code>, <code>非阻塞I/O</code>等特点. 结合Node API, Node.js 具有网络编程, 文件系统等服务端的功能, Node.js用<code>libuv</code>库进行异步事件处理.</p>
-</blockquote>
-<h3 id="线程"><a href="#线程" class="headerlink" title="线程"></a>线程</h3><blockquote>
-<p>Node.js的单线程含义, 实际上说的是执行同步代码的主线程. 一个Node程序的启动, 不止是分配了一个线程，而是我们只能在一个线程执行代码. 当出现I/O资源调用, TCP连接等外部资源申请的时候, 不会阻塞主线程, 而是委托给I/O线程进行处理,并且进入等待队列. 一旦主线程执行完成，将会消费事件队列(Event Queue). 因为只有一个主线程, 只占用CPU内核处理逻辑计算, 因此不适合在CPU密集型进行使用.</p>
-</blockquote>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/180701NodeSystem.png" alt=""></p>
-<p><strong>注意，上图的EVENT_QUEUE 给人看起来是只有一个队列, 根据Node.js官方介绍, EventLoop有6个阶段, 同时每个阶段都有对应的一个先进先出的回调队列.</strong></p>
-<h3 id="什么是事件循环-EventLoop"><a href="#什么是事件循环-EventLoop" class="headerlink" title="什么是事件循环(EventLoop) ?"></a>什么是事件循环(EventLoop) ?</h3><blockquote>
-<p>In computer science, the event loop, message dispatcher, message loop, message pump, or run loop is a programming construct that waits for and dispatches events or messages in a program. – <a href="https://en.wikipedia.org/wiki/Event_loop" target="_blank" rel="noopener">from wiki</a></p>
-</blockquote>
-<p><strong>大概含义: EventLoop 是一种常用的机制，通过对内部或外部的事件提供者发出请求, 如文件读写, 网络连接 等异步操作, 完成后调用事件处理程序. 整个过程都是异步阶段</strong></p>
-<h3 id="Node-js的事件循环机制"><a href="#Node-js的事件循环机制" class="headerlink" title="Node.js的事件循环机制"></a>Node.js的事件循环机制</h3><blockquote>
-<p>When Node.js starts, it initializes the event loop, processes the provided input script (or drops into the REPL, which is not covered in this document) which may make async API calls, schedule timers, or call process.nextTick(), then begins processing the event loop. – from <a href="https://github.com/nodejs/node/blob/v6.x/doc/topics/event-loop-timers-and-nexttick.md" target="_blank" rel="noopener">node.js doc</a></p>
-</blockquote>
-<p><strong>大致含义: 当Node.js 启动, 就会初始化一个 event loop, 处理脚本时, 可能会发生异步API行为调用, 使用定时器任务或者nexTick, 处理完成后进入事件循环处理过程</strong></p>
-<h3 id="事件循环阶段"><a href="#事件循环阶段" class="headerlink" title="事件循环阶段"></a>事件循环阶段</h3><p><a href="https://en.wikipedia.org/wiki/Node.js" target="_blank" rel="noopener">Node.js</a>采用V8作为js的解析引擎，而I/O处理方面使用了自己设计的libuv，libuv是一个基于事件驱动的跨平台抽象层，封装了不同操作系统一些底层特性，对外提供统一的API，事件循环机制也是它里面的实现<a href="https://github.com/libuv/libuv/blob/v1.x/src/unix/core.c#L348-L397" target="_blank" rel="noopener">核心源码参考</a>：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">int uv_run(uv_loop_t* loop, uv_run_mode mode) &#123;</span><br><span class="line">  int timeout;</span><br><span class="line">  int r;</span><br><span class="line">  int ran_pending;</span><br><span class="line"></span><br><span class="line">  r = uv__loop_alive(loop);</span><br><span class="line">  if (!r)</span><br><span class="line">    uv__update_time(loop);</span><br><span class="line"></span><br><span class="line">  while (r != 0 &amp;&amp; loop-&gt;stop_flag == 0) &#123;</span><br><span class="line">    uv__update_time(loop);</span><br><span class="line">    // timers阶段</span><br><span class="line">    uv__run_timers(loop);</span><br><span class="line">    // I/O callbacks阶段</span><br><span class="line">    ran_pending = uv__run_pending(loop);</span><br><span class="line">    // idle阶段</span><br><span class="line">    uv__run_idle(loop);</span><br><span class="line">    // prepare阶段</span><br><span class="line">    uv__run_prepare(loop);</span><br><span class="line"></span><br><span class="line">    timeout = 0;</span><br><span class="line">    if ((mode == UV_RUN_ONCE &amp;&amp; !ran_pending) || mode == UV_RUN_DEFAULT)</span><br><span class="line">      timeout = uv_backend_timeout(loop);</span><br><span class="line">    // poll阶段</span><br><span class="line">    uv__io_poll(loop, timeout);</span><br><span class="line">    // check阶段</span><br><span class="line">    uv__run_check(loop);</span><br><span class="line">    // close callbacks阶段</span><br><span class="line">    uv__run_closing_handles(loop);</span><br><span class="line"></span><br><span class="line">    if (mode == UV_RUN_ONCE) &#123;</span><br><span class="line">      uv__update_time(loop);</span><br><span class="line">      uv__run_timers(loop);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    r = uv__loop_alive(loop);</span><br><span class="line">    if (mode == UV_RUN_ONCE || mode == UV_RUN_NOWAIT)</span><br><span class="line">      break;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  if (loop-&gt;stop_flag != 0)</span><br><span class="line">    loop-&gt;stop_flag = 0;</span><br><span class="line"></span><br><span class="line">  return r;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>根据<a href="https://nodejs.org/en/docs/guides/event-loop-timers-and-nexttick/" target="_blank" rel="noopener">Node.js</a>官方介绍，每次事件循环都包含了6个阶段，对应到 libuv 源码中的实现，如下图所示</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/node-libuv_180703.png" alt=""></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">   ┌───────────────────────┐</span><br><span class="line">┌─&gt;│        timers         │</span><br><span class="line">│  └──────────┬────────────┘</span><br><span class="line">│  ┌──────────┴────────────┐</span><br><span class="line">│  │     I/O callbacks     │</span><br><span class="line">│  └──────────┬────────────┘</span><br><span class="line">│  ┌──────────┴────────────┐</span><br><span class="line">│  │     idle, prepare     │</span><br><span class="line">│  └──────────┬────────────┘      ┌───────────────┐</span><br><span class="line">│  ┌──────────┴────────────┐      │   incoming:   │</span><br><span class="line">│  │         poll          │&lt;─────┤  connections, │</span><br><span class="line">│  └──────────┬────────────┘      │   data, etc.  │</span><br><span class="line">│  ┌──────────┴────────────┐      └───────────────┘</span><br><span class="line">│  │        check          │</span><br><span class="line">│  └──────────┬────────────┘</span><br><span class="line">│  ┌──────────┴────────────┐</span><br><span class="line">└──┤    close callbacks    │</span><br><span class="line">   └───────────────────────┘</span><br></pre></td></tr></table></figure>
-<p><strong>每一个阶段都有一个FIFO的callbacks队列, 每个阶段都有自己的事件处理方式. 当事件循环进入某个阶段时, 将会在该阶段内执行回调，直到队列耗尽或者回调的最大数量已执行, 那么将进入下一个处理阶段.</strong></p>
-<ul>
-<li><strong>timers</strong> 阶段: 这个阶段执行setTimeout(callback) and setInterval(callback)预定的callback;</li>
-<li><strong>I/O callbacks</strong> 阶段: 执行除了close事件的callbacks、被timers(定时器，setTimeout、setInterval等)设定的callbacks、setImmediate()设定的callbacks之外的callbacks; (目前这个阶段)</li>
-<li><strong>idle, prepare</strong> 阶段: 仅node内部使用;</li>
-<li><strong>poll</strong> 阶段: 获取新的I/O事件, 适当的条件下node将阻塞在这里;</li>
-<li><strong>check</strong> 阶段: 执行setImmediate() 设定的callbacks;</li>
-<li><strong>close callbacks</strong> 阶段: 比如socket.on(‘close’, callback)的callback会在这个阶段执行.</li>
-</ul>
-<h4 id="timers阶段"><a href="#timers阶段" class="headerlink" title="timers阶段"></a><strong>timers阶段</strong></h4><p>一个timer指定一个下限时间而不是准确时间，在达到这个下限时间后执行回调。在指定时间过后，timers会尽可能早地执行回调，但系统调度或者其它回调的执行可能会延迟它们。</p>
-<p>注意：技术上来说，poll 阶段控制 timers 什么时候执行。</p>
-<p>注意：这个下限时间有个范围：[1, 2147483647]，如果设定的时间不在这个范围，将被设置为1。</p>
-<h4 id="I-O-callbacks阶段"><a href="#I-O-callbacks阶段" class="headerlink" title="I/O callbacks阶段"></a><strong>I/O callbacks阶段</strong></h4><p>这个阶段执行一些系统操作的回调。比如TCP错误，如一个TCP socket在想要连接时收到ECONNREFUSED,<br>类unix系统会等待以报告错误，这就会放到 I/O callbacks 阶段的队列执行.<br>名字会让人误解为执行I/O回调处理程序, 实际上I/O回调会由poll阶段处理.</p>
-<h4 id="poll阶段"><a href="#poll阶段" class="headerlink" title="poll阶段"></a><strong>poll阶段</strong></h4><p>poll 阶段有两个主要功能：</p>
-<p>执行下限时间已经达到的timers的回调，然后<br>处理 poll 队列里的事件。<br>当event loop进入 poll 阶段，并且 没有设定的timers（there are no timers scheduled），会发生下面两件事之一：</p>
-<p>如果 poll 队列不空，event loop会遍历队列并同步执行回调，直到队列清空或执行的回调数到达系统上限；</p>
-<p>如果 poll 队列为空，则发生以下两件事之一：</p>
-<ol>
-<li>如果代码已经被setImmediate()设定了回调, event loop将结束 poll 阶段进入 check 阶段来执行 check 队列（里的回调）。</li>
-<li>如果代码没有被setImmediate()设定回调，event loop将阻塞在该阶段等待回调被加入 poll 队列，并立即执行。</li>
-</ol>
-<p>但是，当event loop进入 poll 阶段，并且 有设定的timers，一旦 poll 队列为空（poll 阶段空闲状态）：</p>
-<ol>
-<li>event loop将检查timers,如果有1个或多个timers的下限时间已经到达，event loop将绕回 <strong>timers</strong> 阶段，并执行 <strong>timer</strong>队列。</li>
-</ol>
-<h3 id="check阶段"><a href="#check阶段" class="headerlink" title="check阶段"></a><strong>check阶段</strong></h3><p>这个阶段允许在 poll 阶段结束后立即执行回调。如果 poll 阶段空闲，并且有被setImmediate()设定的回调，event loop会转到 check 阶段而不是继续等待。</p>
-<p>setImmediate()实际上是一个特殊的timer，跑在event loop中一个独立的阶段。它使用libuv的API<br>来设定在 poll 阶段结束后立即执行回调。</p>
-<p>通常上来讲，随着代码执行，event loop终将进入 poll 阶段，在这个阶段等待 incoming connection, request 等等。但是，只要有被setImmediate()设定了回调，一旦 poll 阶段空闲，那么程序将结束 poll 阶段并进入 check 阶段，而不是继续等待 poll 事件们 （poll events）。</p>
-<h3 id="close-callbacks-阶段"><a href="#close-callbacks-阶段" class="headerlink" title="close callbacks 阶段"></a><strong>close callbacks 阶段</strong></h3><p>如果一个 socket 或 handle 被突然关掉（比如 socket.destroy()），close事件将在这个阶段被触发，否则将通过process.nextTick()触发</p>
-<p><strong>简单的 EventLoop</strong></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">const fs = require(&apos;fs&apos;);</span><br><span class="line">let counts = 0;</span><br><span class="line"></span><br><span class="line">function wait (mstime) &#123;</span><br><span class="line">  let date = Date.now();</span><br><span class="line">  while (Date.now() - date &lt; mstime) &#123;</span><br><span class="line">    // do nothing</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">function asyncOperation (callback) &#123;</span><br><span class="line">  fs.readFile(__dirname + &apos;/&apos; + __filename, callback);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">const lastTime = Date.now();</span><br><span class="line"></span><br><span class="line">setTimeout(() =&gt; &#123;</span><br><span class="line">  console.log(&apos;timers&apos;, Date.now() - lastTime + &apos;ms&apos;);</span><br><span class="line">&#125;, 0);</span><br><span class="line"></span><br><span class="line">process.nextTick(() =&gt; &#123;</span><br><span class="line">  // 进入event loop</span><br><span class="line">  // timers阶段之前执行</span><br><span class="line">  wait(20);</span><br><span class="line">  asyncOperation(() =&gt; &#123;</span><br><span class="line">    console.log(&apos;poll&apos;);</span><br><span class="line">  &#125;);  </span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * result:</span><br><span class="line"> * timers 21ms</span><br><span class="line"> * poll</span><br><span class="line"> */</span><br></pre></td></tr></table></figure>
-<p>为了让<code>setTimeout</code>优先于<code>fs.readFile</code> 回调, 执行了process.nextTick, 表示在进入 timers阶段前, 等待20ms后执行文件读取.</p>
-<h3 id="nextTick-与-setImmediate"><a href="#nextTick-与-setImmediate" class="headerlink" title="nextTick 与 setImmediate"></a>nextTick 与 setImmediate</h3><p>process.nextTick 不属于事件循环的任何一个阶段，它属于该阶段与下阶段之间的过渡, 即本阶段执行结束, 进入下一个阶段前, 所要执行的回调。有给人一种插队的感觉.</p>
-<p>setImmediate的回调处于check阶段, 当poll阶段的队列为空, 且check阶段的事件队列存在的时候，切换到check阶段执行.</p>
-<p><strong>nextTick 递归的危害</strong><br>由于nextTick具有插队的机制，nextTick的递归会让事件循环机制无法进入下一个阶段. 导致I/O处理完成或者定时任务超时后仍然无法执行, 导致了其它事件处理程序处于饥饿状态. 为了防止递归产生的问题, Node.js 提供了一个 process.maxTickDepth (默认 1000)。</p>
-<p>递归nextTick</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">const fs = require(&apos;fs&apos;);</span><br><span class="line">let counts = 0;</span><br><span class="line"></span><br><span class="line">function wait (mstime) &#123;</span><br><span class="line">  let date = Date.now();</span><br><span class="line">  while (Date.now() - date &lt; mstime) &#123;</span><br><span class="line">    // do nothing</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">function nextTick () &#123;</span><br><span class="line">  process.nextTick(() =&gt; &#123;</span><br><span class="line">    wait(20);</span><br><span class="line">    nextTick();</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">const lastTime = Date.now();</span><br><span class="line"></span><br><span class="line">setTimeout(() =&gt; &#123;</span><br><span class="line">  console.log(&apos;timers&apos;, Date.now() - lastTime + &apos;ms&apos;);</span><br><span class="line">&#125;, 0);</span><br><span class="line"></span><br><span class="line">nextTick();</span><br></pre></td></tr></table></figure>
-<p>此时永远无法跳到timer阶段, 因为在进入timers阶段前有不断的nextTick插入执行. 除非执行了1000次到了执行上限.</p>
-<p><strong>setImmediate</strong><br>如果在一个I/O周期内进行调度，setImmediate（）将始终在任何定时器之前执行.</p>
-<h3 id="setTimeout-与-setImmediate"><a href="#setTimeout-与-setImmediate" class="headerlink" title="setTimeout 与 setImmediate"></a>setTimeout 与 setImmediate</h3><ul>
-<li>setImmediate()被设计在 poll 阶段结束后立即执行回调；</li>
-<li>setTimeout()被设计在指定下限时间到达后执行回调;</li>
-</ul>
-<p>无 I/O 处理情况下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">setTimeout(function timeout () &#123;</span><br><span class="line">  console.log(&apos;timeout&apos;);</span><br><span class="line">&#125;,0);</span><br><span class="line"></span><br><span class="line">setImmediate(function immediate () &#123;</span><br><span class="line">  console.log(&apos;immediate&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p><strong>输出结果是 不确定 的！</strong><br>setTimeout(fn, 0) 具有几毫秒的不确定性. 无法保证进入timers阶段, 定时器能够立即执行处理程序.</p>
-<p>在I/O事件处理程序下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">var fs = require(&apos;fs&apos;)</span><br><span class="line"></span><br><span class="line">fs.readFile(__filename, () =&gt; &#123;</span><br><span class="line">  setTimeout(() =&gt; &#123;</span><br><span class="line">    console.log(&apos;timeout&apos;)</span><br><span class="line">  &#125;, 0)</span><br><span class="line">  setImmediate(() =&gt; &#123;</span><br><span class="line">    console.log(&apos;immediate&apos;)</span><br><span class="line">  &#125;)</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
-<p>此时 <code>setImmediate</code> 优先于 <code>setTimeout</code> 执行，因为 poll阶段执行完成后 进入 check阶段. timers阶段处于下一个事件循环阶段了.</p>
-<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><p><a href="https://segmentfault.com/a/1190000012258592" target="_blank" rel="noopener">https://segmentfault.com/a/1190000012258592</a><br><a href="http://lynnelv.github.io/js-event-loop-nodejs" target="_blank" rel="noopener">http://lynnelv.github.io/js-event-loop-nodejs</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2017-09-11T14:16:53.000Z"><a href="/2017/09/11/Node.js_IO/深入理解Node.js中Stream内部机制/">2017-09-11</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/09/11/Node.js_IO/深入理解Node.js中Stream内部机制/">深入理解Node.js Stream内部机制</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>相信很多人对 Node.js 的 Stream 已经不陌生了，不论是请求流、响应流、文件流还是 socket 流，这些流的底层都是使用 <code>stream</code> 模块封装的，甚至我们平时用的最多的 <code>console.log</code> 打印日志也使用了它，不信你打开 Node.js runtime 的源码，看看 <a href="https://github.com/nodejs/node/blob/master/lib/console.js#L82-L109" target="_blank" rel="noopener"><code>lib/console.js</code></a>：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">function write(ignoreErrors, stream, string, errorhandler) &#123;</span><br><span class="line">  // ...</span><br><span class="line">  stream.once(&apos;error&apos;, noop);</span><br><span class="line">  stream.write(string, errorhandler);</span><br><span class="line">  //...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Console.prototype.log = function log(...args) &#123;</span><br><span class="line">  write(this._ignoreErrors,</span><br><span class="line">        this._stdout,</span><br><span class="line">        `$&#123;util.format.apply(null, args)&#125;\n`,</span><br><span class="line">        this._stdoutErrorHandler);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>Stream 模块做了很多事情，了解了 Stream，那么 Node.js 中其他很多模块理解起来就顺畅多了。</p>
-<h3 id="stream-模块"><a href="#stream-模块" class="headerlink" title="stream 模块"></a>stream 模块</h3><p>如果你了解 <a href="https://zh.wikipedia.org/zh-hans/%E7%94%9F%E4%BA%A7%E8%80%85%E6%B6%88%E8%B4%B9%E8%80%85%E9%97%AE%E9%A2%98" target="_blank" rel="noopener">生产者和消费者问题</a> 的解法，那理解 stream 就基本没有压力了，它不仅仅是资料的起点和落点，还包含了一系列状态控制，可以说一个 stream 就是一个状态管理单元。了解内部机制的最佳方式除了看 <a href="https://nodejs.org/api/stream.html" target="_blank" rel="noopener">Node.js 官方文档</a>，还可以去看看 Node.js 的 <a href="https://github.com/nodejs/node/blob/master/lib/" target="_blank" rel="noopener">源码</a>：</p>
-<ul>
-<li><code>lib/module.js</code></li>
-<li><code>lib/_stream_readable.js</code></li>
-<li><code>lib/_stream_writable.js</code></li>
-<li><code>lib/_stream_tranform.js</code></li>
-<li><code>lib/_stream_duplex.js</code></li>
-</ul>
-<p>把 <code>Readable</code> 和 <code>Writable</code> 看明白，Tranform 和 Duplex 就不难理解了。</p>
-<h3 id="Readable-Stream"><a href="#Readable-Stream" class="headerlink" title="Readable Stream"></a>Readable Stream</h3><p>Readable Stream 存在两种模式，一种是叫做 <code>Flowing Mode</code>，流动模式，在 Stream 上绑定 ondata 方法就会自动触发这个模式，比如：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">const readable = getReadableStreamSomehow();</span><br><span class="line">readable.on(&apos;data&apos;, (chunk) =&gt; &#123;</span><br><span class="line">  console.log(`Received $&#123;chunk.length&#125; bytes of data.`);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>这个模式的流程图如下：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream01_180706.png" alt=""></p>
-<p>资源的数据流并不是直接流向消费者，而是先 push 到缓存池，缓存池有一个水位标记 <code>highWatermark</code>，超过这个标记阈值，push 的时候会返回 <code>false</code>，什么场景下会出现这种情况呢？</p>
-<ul>
-<li>消费者主动执行了 <code>.pause()</code></li>
-<li>消费速度比数据 push 到缓存池的生产速度慢</li>
-</ul>
-<p>有个专有名词来形成这种情况，叫做「背压」，Writable Stream 也存在类似的情况。</p>
-<p>流动模式，这个名词还是很形象的，缓存池就像一个水桶，消费者通过管口接水，同时，资源池就像一个水泵，不断地往水桶中泵水，而 highWaterMark 是水桶的浮标，达到阈值就停止蓄水。<br>下面是一个简单的 Demo：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">const Readable = require(&apos;stream&apos;).Readable;</span><br><span class="line"></span><br><span class="line">// Stream 实现</span><br><span class="line">class MyReadable extends Readable &#123;</span><br><span class="line">  constructor(dataSource, options) &#123;</span><br><span class="line">    super(options);</span><br><span class="line">    this.dataSource = dataSource;</span><br><span class="line">  &#125;</span><br><span class="line">  // 继承了 Readable 的类必须实现这个函数</span><br><span class="line">  // 触发系统底层对流的读取</span><br><span class="line">  _read() &#123;</span><br><span class="line">    const data = this.dataSource.makeData();</span><br><span class="line">    this.push(data);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 模拟资源池</span><br><span class="line">const dataSource = &#123;</span><br><span class="line">  data: new Array(10).fill(&apos;-&apos;),</span><br><span class="line">  // 每次读取时 pop 一个数据</span><br><span class="line">  makeData() &#123;</span><br><span class="line">    if (!dataSource.data.length) return null;</span><br><span class="line">    return dataSource.data.pop();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">const myReadable = new MyReadable(dataSource);</span><br><span class="line">myReadable.setEncoding(&apos;utf8&apos;);</span><br><span class="line">myReadable.on(&apos;data&apos;, (chunk) =&gt; &#123;</span><br><span class="line">  console.log(chunk);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>另外一种模式是 <code>Non-Flowing Mode</code>，没流动，也就是暂停模式，这是 Stream 的预设模式，Stream 实例的 <code>_readableState.flow</code> 有三个状态，分别是：</p>
-<ul>
-<li><code>_readableState.flow = null</code>，暂时没有消费者过来</li>
-<li><code>_readableState.flow = false</code>，主动触发了 <code>.pause()</code></li>
-<li><code>_readableState.flow = true</code>，流动模式</li>
-</ul>
-<p>当我们监听了 onreadable 事件后，会进入这种模式，比如：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">const myReadable = new MyReadable(dataSource);</span><br><span class="line">myReadable.setEncoding(&apos;utf8&apos;);</span><br><span class="line">myReadable.on(&apos;readable&apos;, () =&gt; &#123;&#125;);</span><br></pre></td></tr></table></figure>
-<p>监听 <code>readable</code> 的回调函数第一个参数不会传递内容，需要我们通过 <code>myReadable.read()</code> 主动读取，为啥呢，可以看看下面这张图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream02_180706.png" alt=""></p>
-<p>资源池会不断地往缓存池输送数据，直到 highWaterMark 阈值，消费者监听了 readable 事件并不会消费数据，需要主动调用 <code>.read([size])</code> 函数才会从缓存池取出，并且可以带上 size 参数，用多少就取多少：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">const myReadable = new MyReadable(dataSource);</span><br><span class="line">myReadable.setEncoding(&apos;utf8&apos;);</span><br><span class="line">myReadable.on(&apos;readable&apos;, () =&gt; &#123;</span><br><span class="line">  let chunk;</span><br><span class="line">  while (null !== (chunk = myReadable.read())) &#123;</span><br><span class="line">    console.log(`Received $&#123;chunk.length&#125; bytes of data.`);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>这里需要注意一点，只要数据达到缓存池都会触发一次 readable 事件，有可能出现「消费者正在消费数据的时候，又触发了一次 readable 事件，那么下次回调中 read 到的数据可能为空」的情况。我们可以通过 <code>_readableState.buffer</code> 来查看缓存池到底缓存了多少资源：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">let once = false;</span><br><span class="line">myReadable.on(&apos;readable&apos;, (chunk) =&gt; &#123;</span><br><span class="line">  console.log(myReadable._readableState.buffer.length);</span><br><span class="line">  if (once) return;</span><br><span class="line">  once = true;</span><br><span class="line">  console.log(myReadable.read());</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>上面的代码我们只消费一次缓存池的数据，那么在消费后，缓存池又收到了一次资源池的 push 操作，此时还会触发一次 readable 事件，我们可以看看这次存了多大的 buffer。</p>
-<p>需要注意的是，buffer 大小也是有上限的，默认设置为 16kb，也就是 16384 个字节长度，它最大可设置为 8Mb，没记错的话，这个值好像是 Node 的 new space memory 的大小。</p>
-<p>上面介绍了 Readable Stream 大概的机制，还有很多细节部分没有提到，比如 <code>Flowing Mode</code> 在不同 Node 版本中的 Stream 实现不太一样，实际上，它有三个版本，上面提到的是第 2 和 第 3 个版本的实现；再比如 <code>Mixins Mode</code> 模式，一般我们只推荐（允许）使用 ondata 和 onreadable 的一种来处理 Readable Stream，但是如果要求在 <code>Non-Flowing Mode</code> 的情况下使用 ondata 如何实现呢？那么就可以考虑 <code>Mixins Mode</code> 了。</p>
-<h3 id="Writable-Stream"><a href="#Writable-Stream" class="headerlink" title="Writable Stream"></a>Writable Stream</h3><p>原理与 Readable Stream 是比较相似的，数据流过来的时候，会直接写入到资源池，当写入速度比较缓慢或者写入暂停时，数据流会进入队列池缓存起来，如下图所示：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream03_180706.png" alt=""></p>
-<p>当生产者写入速度过快，把队列池装满了之后，就会出现「背压」，这个时候是需要告诉生产者暂停生产的，当队列释放之后，Writable Stream 会给生产者发送一个 <code>drain</code> 消息，让它恢复生产。下面是一个写入一百万条数据的 Demo：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">function writeOneMillionTimes(writer, data, encoding, callback) &#123;</span><br><span class="line">  let i = 10000;</span><br><span class="line">  write();</span><br><span class="line">  function write() &#123;</span><br><span class="line">    let ok = true;</span><br><span class="line">    while(i-- &gt; 0 &amp;&amp; ok) &#123;</span><br><span class="line">      // 写入结束时回调</span><br><span class="line">      ok = writer.write(data, encoding, i === 0 ? callback : null);</span><br><span class="line">    &#125;</span><br><span class="line">    if (i &gt; 0) &#123;</span><br><span class="line">      // 这里提前停下了，&apos;drain&apos; 事件触发后才可以继续写入  </span><br><span class="line">      console.log(&apos;drain&apos;, i);</span><br><span class="line">      writer.once(&apos;drain&apos;, write);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>我们构造一个 Writable Stream，在写入到资源池的时候，我们稍作处理，让它效率低一点：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">const Writable = require(&apos;stream&apos;).Writable;</span><br><span class="line">const writer = new Writable(&#123;</span><br><span class="line">  write(chunk, encoding, callback) &#123;</span><br><span class="line">    // 比 process.nextTick() 稍慢</span><br><span class="line">    setTimeout(() =&gt; &#123;</span><br><span class="line">      callback &amp;&amp; callback();</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">writeOneMillionTimes(writer, &apos;simple&apos;, &apos;utf8&apos;, () =&gt; &#123;</span><br><span class="line">  console.log(&apos;end&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>最后执行的结果是：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">drain 7268</span><br><span class="line">drain 4536</span><br><span class="line">drain 1804</span><br><span class="line">end</span><br></pre></td></tr></table></figure>
-<p>说明程序遇到了三次「背压」，如果我们没有在上面绑定 <code>writer.once(&#39;drain&#39;)</code>，那么最后的结果就是 Stream 将第一次获取的数据消耗完变结束了程序。</p>
-<h3 id="pipe"><a href="#pipe" class="headerlink" title="pipe"></a>pipe</h3><p>了解了 Readable 和 Writable，pipe 这个常用的函数应该就很好理解了，</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">readable.pipe(writable);</span><br></pre></td></tr></table></figure>
-<p>这句代码的语意性很强，readable 通过 pipe（管道）传输给 writable，pipe 的实现大致如下（伪代码）：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">Readable.prototype.pipe = function(writable, options) &#123;</span><br><span class="line">  this.on(&apos;data&apos;, (chunk) =&gt; &#123;</span><br><span class="line">    let ok = writable.write(chunk);</span><br><span class="line">	// 背压，暂停</span><br><span class="line">    !ok &amp;&amp; this.pause();</span><br><span class="line">  &#125;);</span><br><span class="line">  writable.on(&apos;drain&apos;, () =&gt; &#123;</span><br><span class="line">    // 恢复</span><br><span class="line">    this.resume();</span><br><span class="line">  &#125;);</span><br><span class="line">  // 告诉 writable 有流要导入</span><br><span class="line">  writable.emit(&apos;pipe&apos;, this);</span><br><span class="line">  // 支持链式调用</span><br><span class="line">  return writable;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>上面做了五件事情：</p>
-<ul>
-<li><code>emit(pipe)</code>，通知写入</li>
-<li><code>.write()</code>，新数据过来，写入</li>
-<li><code>.pause()</code>，消费者消费速度慢，暂停写入</li>
-<li><code>.resume()</code>，消费者完成消费，继续写入</li>
-<li><code>return writable</code>，支持链式调用</li>
-</ul>
-<p>当然，上面只是最简单的逻辑，还有很多异常和临界判断没有加入，具体可以去看看 Node.js 的代码（ <a href="https://github.com/nodejs/node/blob/master/lib/_stream_readable.js#L541-L684" target="_blank" rel="noopener">/lib/_stream_readable.js</a>）。</p>
-<h3 id="Duplex-Stream"><a href="#Duplex-Stream" class="headerlink" title="Duplex Stream"></a>Duplex Stream</h3><p>Duplex，双工的意思，它的输入和输出可以没有任何关系，<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream04_180706.png" alt=""></p>
-<p>Duplex Stream 实现特别简单，不到一百行代码，它继承了 Readable Stream，并拥有 Writable Stream 的方法（<a href="https://github.com/nodejs/node/blob/master/lib/_stream_duplex.js#L31-L42" target="_blank" rel="noopener">源码地址</a>）：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">const util = require(&apos;util&apos;);</span><br><span class="line">const Readable = require(&apos;_stream_readable&apos;);</span><br><span class="line">const Writable = require(&apos;_stream_writable&apos;);</span><br><span class="line"></span><br><span class="line">util.inherits(Duplex, Readable);</span><br><span class="line"></span><br><span class="line">var keys = Object.keys(Writable.prototype);</span><br><span class="line">for (var v = 0; v &lt; keys.length; v++) &#123;</span><br><span class="line">  var method = keys[v];</span><br><span class="line">  if (!Duplex.prototype[method])</span><br><span class="line">    Duplex.prototype[method] = Writable.prototype[method];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>我们可以通过 options 参数来配置它为只可读、只可写或者半工模式，一个简单的 Demo：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">var Duplex = require(&apos;stream&apos;).Duplex</span><br><span class="line"></span><br><span class="line">const duplex = Duplex();</span><br><span class="line"></span><br><span class="line">// readable</span><br><span class="line">let i = 2;</span><br><span class="line">duplex._read = function () &#123;</span><br><span class="line">  this.push(i-- ? &apos;read &apos; + i : null);</span><br><span class="line">&#125;;</span><br><span class="line">duplex.on(&apos;data&apos;, data =&gt; console.log(data.toString()));</span><br><span class="line"></span><br><span class="line">// writable</span><br><span class="line">duplex._write = function (chunk, encoding, callback) &#123;</span><br><span class="line">  console.log(chunk.toString());</span><br><span class="line">  callback();</span><br><span class="line">&#125;;</span><br><span class="line">duplex.write(&apos;write&apos;);</span><br></pre></td></tr></table></figure>
-<p>输出的结果为：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">write</span><br><span class="line">read 1</span><br><span class="line">read 0</span><br></pre></td></tr></table></figure>
-<p>可以看出，两个管道是相互之间不干扰的。</p>
-<h3 id="Transform-Stream"><a href="#Transform-Stream" class="headerlink" title="Transform Stream"></a>Transform Stream</h3><p>Transform Stream 集成了 Duplex Stream，它同样具备 Readable 和 Writable 的能力，只不过它的输入和输出是存在相互关联的，中间做了一次转换处理。常见的处理有 Gzip 压缩、解压等。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream05_180706.png" alt=""></p>
-<p>Transform 的处理就是通过 <code>_transform</code> 函数将 Duplex 的 Readable 连接到 Writable，由于 Readable 的生产效率与 Writable 的消费效率是一样的，所以这里 Transform 内部不存在「背压」问题，背压问题的源头是外部的生产者和消费者速度差造成的。</p>
-<p>关于 Transfrom Stream，我写了一个简单的 Demo：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">const Transform = require(&apos;stream&apos;).Transform;</span><br><span class="line">const MAP = &#123;</span><br><span class="line">  &apos;Barret&apos;: &apos;靖&apos;,</span><br><span class="line">  &apos;Lee&apos;: &apos;李&apos;</span><br><span class="line">&#125;;</span><br><span class="line">  </span><br><span class="line">class Translate extends Transform &#123;</span><br><span class="line">  constructor(dataSource, options) &#123;</span><br><span class="line">    super(options);</span><br><span class="line">  &#125;</span><br><span class="line">  _transform(buf, enc, next) &#123;</span><br><span class="line">    const key = buf.toString();</span><br><span class="line">    const data = MAP[key];</span><br><span class="line">    this.push(data);</span><br><span class="line">    next();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var transform = new Translate();</span><br><span class="line">transform.on(&apos;data&apos;, data =&gt; console.log(data.toString()));</span><br><span class="line">transform.write(&apos;Lee&apos;);</span><br><span class="line">transform.write(&apos;Barret&apos;);</span><br><span class="line">transform.end();</span><br></pre></td></tr></table></figure>
-<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><p>本文主要参考和查阅 Node.js 官网的文档和源码，细节问题都是从源码中找到的答案，如有理解不准确之处，还请斧正。关于 Stream，这篇文章只是讲述了基础的原理，还有很多细节之处没有讲到，要真正理解它，还是需要多读读文档，写写代码。</p>
-<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="http://taobaofed.org/blog/2017/08/31/nodejs-stream/" target="_blank" rel="noopener">http://taobaofed.org/blog/2017/08/31/nodejs-stream/</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2017-08-27T06:45:23.000Z"><a href="/2017/08/27/Docker/当Node.js遇见Docker/">2017-08-27</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/08/27/Docker/当Node.js遇见Docker/">当Node.js遇见Docker</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="什么是Docker"><a href="#什么是Docker" class="headerlink" title="什么是Docker?"></a>什么是Docker?</h3><p>Docker是最流行的的容器工具，<strong>没有之一</strong>。本文并不打算深入介绍Docker，不过可以从几个简单的角度来理解Docker。</p>
-<h5 id="从进程的角度理解Docker"><a href="#从进程的角度理解Docker" class="headerlink" title="从进程的角度理解Docker"></a>从进程的角度理解Docker</h5><p>在Linux中，所有的进程构成了一棵树。可以使用<a href="http://man7.org/linux/man-pages/man1/pstree.1.html" target="_blank" rel="noopener">pstree</a>命令进行查看:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">pstree</span><br><span class="line">init─┬─VBoxService───7*[&#123;VBoxService&#125;]</span><br><span class="line">     ├─acpid</span><br><span class="line">     ├─atd</span><br><span class="line">     ├─cron</span><br><span class="line">     ├─dbus-daemon</span><br><span class="line">     ├─dhclient</span><br><span class="line">     ├─dockerd─┬─docker-containe─┬─docker-containe─┬─redis-server───2*[&#123;redis-server&#125;]</span><br><span class="line">     │         │                 │                 └─8*[&#123;docker-containe&#125;]</span><br><span class="line">     │         │                 ├─docker-containe─┬─mongod───16*[&#123;mongod&#125;]</span><br><span class="line">     │         │                 │                 └─8*[&#123;docker-containe&#125;]</span><br><span class="line">     │         │                 └─11*[&#123;docker-containe&#125;]</span><br><span class="line">     │         └─13*[&#123;dockerd&#125;]</span><br><span class="line">     ├─6*[getty]</span><br><span class="line">     ├─influxd───9*[&#123;influxd&#125;]</span><br><span class="line">     ├─irqbalance</span><br><span class="line">     ├─puppet───&#123;puppet&#125;</span><br><span class="line">     ├─rpc.idmapd</span><br><span class="line">     ├─rpc.statd</span><br><span class="line">     ├─rpcbind</span><br><span class="line">     ├─rsyslogd───3*[&#123;rsyslogd&#125;]</span><br><span class="line">     ├─ruby───&#123;ruby&#125;</span><br><span class="line">     ├─sshd─┬─sshd───sshd───zsh───pstree</span><br><span class="line">     │      ├─sshd───sshd───zsh</span><br><span class="line">     │      └─sshd───sshd───zsh───mongo───2*[&#123;mongo&#125;]</span><br><span class="line">     ├─systemd-logind</span><br><span class="line">     ├─systemd-udevd</span><br><span class="line">     ├─upstart-file-br</span><br><span class="line">     ├─upstart-socket-</span><br><span class="line">     └─upstart-udev-br</span><br></pre></td></tr></table></figure>
-<p>可知，init进程为所有进程的根(root)，其PID为1。</p>
-<p>Docker将不同应用的进程隔离了起来，这些被隔离的进程就是一个个容器。隔离是基于两个Linux内核机制实现的，Namesapce和Cgroups。</p>
-<p>Namespace可以从UTD、IPC、PID、Mount，User和Network的角度隔离进程。比如，不同的进程将拥有不同PID空间，这样容器中的进程将看不到主机上的进程，也看不到其他容器中的进程。这与Node.js中模块化以隔离变量的命名空间的思想是异曲同工的。</p>
-<p>通过Cgroups，可以限制进程对CPU，内存等资源的使用。简单地说，我们可以通过Cgroups指定容器只能使用1G内存。</p>
-<p>从进程角度理解Docker，那<strong>每一个Docker容器就是被隔离的进程及其子进程</strong>。上文pstree的输出中可以分辨出2个容器: mongodb和redis。</p>
-<h5 id="从文件的角度理解Docker"><a href="#从文件的角度理解Docker" class="headerlink" title="从文件的角度理解Docker"></a>从文件的角度理解Docker</h5><p>基于Namespace与Cgroups的容器工具其实早已存在，例如<a href="http://linux-vserver.org/Welcome_to_Linux-VServer.org" target="_blank" rel="noopener">Linux-VServer</a>，<a href="https://openvz.org/Main_Page" target="_blank" rel="noopener">OpenVZ</a>，<a href="https://linuxcontainers.org/" target="_blank" rel="noopener">LXC</a>。然而，真正引爆容器技术的却是后来者Docker。为什么呢？个人觉得是因为<strong>Docker镜像</strong>以及<strong>Dockerfile</strong>。</p>
-<p>在Linux中，一切皆文件，进程的运行离不开各种各样的文件。跑一个简单的Node.js程序，传统的做法是手动安装各种依赖然后运行；而Docker则是将所有依赖（包括操作系统，Node，NPM模块，源代码）打包到一个<strong>Docker镜像</strong>中，然后基于这个镜像运行容器。</p>
-<p><strong>Docker镜像</strong>可以通过<strong>Docker仓库</strong>共享给其他人，这样他们只需要下载镜像即可运行程序。想象一下，当我们需要在另一台主机(比如生产服务器，新同事的机器)上运行一个Node.js应用，仅仅需要下载对应的Docker镜像就可以了，是不是很方便呢？</p>
-<p><strong>Docker镜像</strong>可以通过文本文件，即<strong>Dockerfile</strong>进行定义。不妨看一个简单的例子(由于不可抗力，这个Dockerfile构建大概会失败，仅作为参考):</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"># 基于Ubuntu</span><br><span class="line">FROM ubuntu</span><br><span class="line"></span><br><span class="line"># 安装Node.js与NPM</span><br><span class="line">RUN apt-get update &amp;&amp; apt-get -y install nodejs npm</span><br><span class="line"></span><br><span class="line"># 安装NPM模块:Express</span><br><span class="line">RUN npm install express</span><br><span class="line"></span><br><span class="line"># 添加源代码</span><br><span class="line">ADD app.js /</span><br></pre></td></tr></table></figure>
-<p>其中，<strong>FROM</strong>，<strong>RUN</strong>与<strong>ADD</strong>为Dockerfile命令。结合注释，该Dockerfile的含义非常直白。基于这个Dockerfile，使用<strong>docker build</strong>命令就可以构建对应的Docker镜像。基于这个Docker镜像，就可以运行Docker容器来执行app.js:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">var express = require(&quot;express&quot;);</span><br><span class="line">var app = express();</span><br><span class="line"></span><br><span class="line">app.get(&quot;/&quot;, function(req, res)</span><br><span class="line">&#123;</span><br><span class="line">    res.send(&quot;Hello Fundebug!\n&quot;);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">app.listen(3000);</span><br></pre></td></tr></table></figure>
-<p>Dockerfile实际上是将<strong>Docker镜像代码化</strong>了，另一方面也是将<strong>安装依赖的过程代码化</strong>了，于是我们就可以像管理源码一样使用git对Dockerfile进行版本管理。</p>
-<h3 id="为啥用Docker"><a href="#为啥用Docker" class="headerlink" title="为啥用Docker?"></a>为啥用Docker?</h3><p>当你的系统越来越复杂的时候，你会发现Docker的价值。</p>
-<h5 id="从应用架构角度理解Docker"><a href="#从应用架构角度理解Docker" class="headerlink" title="从应用架构角度理解Docker"></a>从应用架构角度理解Docker</h5><p>刚开始，你只需要写一个Node.js程序，挂载一个静态网站；然后，你做了一个用户账号系统，这时需要数据库了，比如说MySQL; 后来，为了提升性能，你引入了Memcached缓存；终于有一天，你决定把前后端分离，这样可以提高开发效率；当用户越来越多，你又不得不使用Nginx做反向代理; 对了，随着功能越来越多，你的应用依赖也会越来越多…总之，你的应用架构只会越来越复杂。不同的组件的安装，配置与运行步骤各不相同，于是你不得不写一个很长的文档给新同事，只为了让他搭建一个<strong>开发环境</strong>。</p>
-<p>使用Docker的话，你可以为不同的组件逐一编写Dockerfile，分别构建镜像，然后运行在各个容器中。这样做，将复杂的架构统一了，所有组件的安装和运行步骤统一为几个简单的命令:</p>
-<ul>
-<li>构建Docker镜像: docker build</li>
-<li>上传Docker镜像: docker push</li>
-<li>下载Docker镜像: docker pull</li>
-<li>运行Docker容器: docker run</li>
-</ul>
-<h5 id="从应用部署角度理解Docker"><a href="#从应用部署角度理解Docker" class="headerlink" title="从应用部署角度理解Docker"></a>从应用部署角度理解Docker</h5><p>通常，你会有<strong>开发</strong>，<strong>测试</strong>和<strong>生产</strong>服务器，对于某些应用，还会需要进行<strong>构建</strong>。不同步骤的依赖会有一些不同，并且在不同的服务器上执行。如果手动地在不同的服务器上安装依赖，是件很麻烦的事情。比如说，当你需要为Node.js应用添加一个新的npm模块，或者升级一下Node.js，是不是得重复操作很多次？友情提示一下，手动敲命令是极易出错的，有些失误会导致致命的后果（参考最近Gitlab误删数据库与AWS的S3故障）。</p>
-<p>如果使用Docker的话，<strong>开发</strong>、<strong>构建</strong>、<strong>测试</strong>、<strong>生产</strong>将全部在Docker容器中执行，你需要为不同步骤编写不同的Dockerfile。当依赖变化时，仅需要稍微修改Dockerfile即可。结合构建工具<a href="https://jenkins.io/" target="_blank" rel="noopener">Jenkins</a>，就可以将整个部署流程自动化。</p>
-<p>另一方面，Dockerfile将Docker镜像描述得非常精准，能够保证很强的一致性。比如，操作系统的版本，Node.js的版本，NPM模块的版本等。这就意味着，在本地开发环境运行成功的镜像，在<strong>构建</strong>、<strong>测试</strong>、<strong>生产</strong>环境中也没有问题。还有，不同的Docker容器是依赖于不同的Docker镜像，这样他们互不干扰。比如，两个Node.js应用可以分别使用不同版本的Node.js。</p>
-<h5 id="从集群管理角度理解Docker"><a href="#从集群管理角度理解Docker" class="headerlink" title="从集群管理角度理解Docker"></a>从集群管理角度理解Docker</h5><p>架构规模越来越大的时候，你有必要引入集群了。这就意味着，服务器由1台变成了多台，同一个应用需要运行多个备份来分担负载。当然，你可以手动对集群的功能进行划分: Nginx服务器，Node.js服务器，MySQL服务器，测试服务器，生产服务器…这样做的好处是简单粗暴；也可以说财大气粗，因为资源闲置会非常严重。还有一点，每次新增节点的时候，你就不得不花大量时间进行安装与配置，这其实是一种低效的重复劳动。</p>
-<p>下载Docker镜像之后，Docker容器可以运行在集群的任何一个节点。一方面，各个组件可以共享主机，且互不干扰；另一方面，也不需要在集群的节点上安装和配置任何组件。至于整个Docker集群的管理，业界有很多成熟的解决方案，例如<a href="http://mesos.apache.org/" target="_blank" rel="noopener">Mesos</a>，<a href="https://kubernetes.io/" target="_blank" rel="noopener">Kubernetes</a>与<a href="https://github.com/docker/swarm" target="_blank" rel="noopener">Docker Swarm</a>。这些集群系统提供了<strong>调度</strong>，<strong>服务发现</strong>，<strong>负载均衡</strong>等功能，让整个集群变成一个整体。</p>
-<h3 id="如何用Docker"><a href="#如何用Docker" class="headerlink" title="如何用Docker?"></a>如何用Docker?</h3><h5 id="编写Dockerfile"><a href="#编写Dockerfile" class="headerlink" title="编写Dockerfile"></a>编写Dockerfile</h5><p>正确的<a href="https://github.com/Fundebug/nodejs-docker/blob/master/Dockerfile" target="_blank" rel="noopener">Dockerfile</a>是这样的:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"># 使用DaoCloud的Ubuntu镜像</span><br><span class="line">FROM daocloud.io/library/ubuntu:14.04</span><br><span class="line"></span><br><span class="line"># 设置镜像作者</span><br><span class="line">MAINTAINER Fundebug &lt;help@fundebug.com&gt;</span><br><span class="line"></span><br><span class="line"># 设置时区</span><br><span class="line">RUN sudo sh -c &quot;echo &apos;Asia/Shanghai&apos; &gt; /etc/timezone&quot; &amp;&amp; \</span><br><span class="line">    sudo dpkg-reconfigure -f noninteractive tzdata</span><br><span class="line"></span><br><span class="line"># 使用阿里云的Ubuntu镜像</span><br><span class="line">RUN echo &apos;\n\</span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ trusty main restricted universe multiverse\n\</span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ trusty-security main restricted universe multiverse\n\</span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ trusty-updates main restricted universe multiverse\n\</span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ trusty-proposed main restricted universe multiverse\n\</span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ trusty-backports main restricted universe multiverse\n\</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ trusty main restricted universe multiverse\n\</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ trusty-security main restricted universe multiverse\n\</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ trusty-updates main restricted universe multiverse\n\</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ trusty-proposed main restricted universe multiverse\n\</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ trusty-backports main restricted universe multiverse\n&apos;\</span><br><span class="line">&gt; /etc/apt/sources.list</span><br><span class="line"></span><br><span class="line"># 安装node v6.10.1</span><br><span class="line">RUN sudo apt-get update &amp;&amp; sudo apt-get install -y wget</span><br><span class="line"></span><br><span class="line"># 使用淘宝镜像安装Node.js v6.10.1</span><br><span class="line">RUN wget https://npm.taobao.org/mirrors/node/v6.10.1/node-v6.10.1-linux-x64.tar.gz &amp;&amp; \</span><br><span class="line">    tar -C /usr/local --strip-components 1 -xzf node-v6.10.1-linux-x64.tar.gz &amp;&amp; \</span><br><span class="line">    rm node-v6.10.1-linux-x64.tar.gz </span><br><span class="line"></span><br><span class="line">WORKDIR /app</span><br><span class="line"></span><br><span class="line"># 安装npm模块</span><br><span class="line">ADD package.json /app/package.json</span><br><span class="line"></span><br><span class="line"># 使用淘宝的npm镜像</span><br><span class="line">RUN npm install --production -d --registry=https://registry.npm.taobao.org</span><br><span class="line"></span><br><span class="line"># 添加源代码</span><br><span class="line">ADD . /app</span><br><span class="line"></span><br><span class="line"># 运行app.js</span><br><span class="line">CMD [&quot;node&quot;, &quot;/app/app.js&quot;]</span><br></pre></td></tr></table></figure>
-<p>有几点值得注意的地方：</p>
-<ul>
-<li>使用国内<a href="https://www.daocloud.io/" target="_blank" rel="noopener">DaoCloud</a>的Docker仓库，阿里云的ubuntu镜像以及淘宝的npm镜像，否则会出事情的;</li>
-<li>将时区设为Asia/Shanghai，否则日志的时间会不大对劲;</li>
-<li>使用.dockerignore忽略不需要添加到Docker镜像的文件和目录，其语法与.gitigore一致;</li>
-</ul>
-<p>更重要的一点是，<strong>package.json需要单独添加</strong>。Docker在构建镜像的时候，是一层一层构建的，仅当这一层有变化时，重新构建对应的层。如果package.json和源代码一起添加到镜像，则每次修改源码都需要重新安装npm模块，这样木有必要。所以，正确的顺序是: 添加package.json；安装npm模块；添加源代码。</p>
-<h5 id="构建Docker镜像"><a href="#构建Docker镜像" class="headerlink" title="构建Docker镜像"></a>构建Docker镜像</h5><p>使用<strong>docker build</strong>命令构建Docker镜像</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo docker build -t fundebug/nodejs .</span><br></pre></td></tr></table></figure>
-<p>其中，-t选项用于指定镜像的名称。</p>
-<p>使用<strong>docker images</strong>命令查看Docker镜像</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">sudo docker images</span><br><span class="line">REPOSITORY                    TAG                 IMAGE ID            CREATED             SIZE</span><br><span class="line">fundebug/nodejs               latest              64530ce811a1        32 minutes ago      266.4 MB</span><br><span class="line">daocloud.io/library/ubuntu    14.04               b969ab9f929b        9 weeks ago         188 MB</span><br></pre></td></tr></table></figure>
-<p>可知，fundebug/nodejs镜像的大小为266.4MB，在ubuntu镜像的基础上增加了80MB左右。</p>
-<h5 id="运行Docker容器"><a href="#运行Docker容器" class="headerlink" title="运行Docker容器"></a>运行Docker容器</h5><p>使用<strong>docker run</strong>命令运行Docker容器</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo docker run -d --net=host --name=hello-fundebug fundebug/nodejs</span><br></pre></td></tr></table></figure>
-<p>其中，-d选项表示容器在后台运行；–net选项指定容器的网络模式，host表示与主机共享网络；–name指定了容器的名称。</p>
-<p>使用<strong>docker ps</strong>命令查看Docker容器</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo docker ps</span><br><span class="line">CONTAINER ID        IMAGE                             COMMAND                  CREATED             STATUS              PORTS               NAMES</span><br><span class="line">e8eb5473970c        fundebug/nodejs                   &quot;node /app/app.js&quot;       37 minutes ago      Up 37 minutes                           hello-</span><br></pre></td></tr></table></figure>
-<p>可知，COMMAND为”node /app/app.js”，表示容器中运行的命令。这是我们再Dockerfile中使用CMD指定的。不妨使用<strong>docker exec</strong>命令在容器内执行ps命令<strong>查看容器内的进程</strong>：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo docker exec hello-fundebug ps -f</span><br><span class="line">UID        PID  PPID  C STIME TTY          TIME CMD</span><br><span class="line">root         1     0  0 15:14 ?        00:00:00 node /app/app.js</span><br></pre></td></tr></table></figure>
-<p>可知，容器内的1号进程即为node进程<strong>node /app/app.js</strong>。在Linux中，PID为1进程按说是唯一的，即init进程。但是，容器使用了内核的Namespace机制，为容器创建了独立的PID空间，因此容器中也有1号进程。</p>
-<h5 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h5><p>使用curl命令访问:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">curl localhost:3000</span><br><span class="line">Hello Fundebug!</span><br></pre></td></tr></table></figure>
-<h3 id="是否用Docker？"><a href="#是否用Docker？" class="headerlink" title="是否用Docker？"></a>是否用Docker？</h3><p>一方面，使用Docker能够带来很大益处；另一方面，引入Docker必然会有很多挑战，需要熟悉Docker才能应对自如。<strong>想必这是一个艰难的决定</strong>。如果从长远的角度来看，Docker正在成为应用开发，部署，发布的标准技术，也许我们不得不用开放的心态对待它。</p>
-<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p> <a href="https://blog.fundebug.com/2017/03/27/nodejs-docker/" target="_blank" rel="noopener">https://blog.fundebug.com/2017/03/27/nodejs-docker/</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -1030,7 +1045,7 @@
   
     <li><a href="/tags/数据库/">数据库</a><small>3</small></li>
   
-    <li><a href="/tags/数据结构与算法/">数据结构与算法</a><small>7</small></li>
+    <li><a href="/tags/数据结构与算法/">数据结构与算法</a><small>11</small></li>
   
     <li><a href="/tags/程序员的数学基础课/">程序员的数学基础课</a><small>4</small></li>
   

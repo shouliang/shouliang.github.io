@@ -53,6 +53,373 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2018-01-25T14:16:53.000Z"><a href="/2018/01/25/Node.js_事件/事件循环机制-实例/">2018-01-25</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/01/25/Node.js_事件/事件循环机制-实例/">事件循环机制-实例</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>在node服务器端运行以下代码会出现什么输出结果？</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">setTimeout(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'setTimeout'</span>);</span><br><span class="line">    process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'nextTick1'</span>);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'main1'</span>);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">say</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'hello! '</span>);</span><br><span class="line">    process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'nextTick2'</span>);</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function"><span class="keyword">function</span>(<span class="params">resolve</span>)</span>&#123;</span><br><span class="line">    process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'nextTick3'</span>);</span><br><span class="line">    &#125;)</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'promise 1'</span>);</span><br><span class="line">    resolve(<span class="string">'promise then'</span>)</span><br><span class="line">&#125;).then(<span class="function"><span class="keyword">function</span>(<span class="params">data</span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(data);</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'main2'</span>);</span><br><span class="line"></span><br><span class="line">process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'nextTick4'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">say();</span><br></pre></td></tr></table></figure>
+<p>下面就结合这个原理图，根据问题，来一步一步分析：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/micro_macro_180703" alt=""></p>
+<p>也可参考下图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/runtime_180703.png" alt=""></p>
+<p>我们经常会听到引擎和runtime，它们的区别是什么呢？</p>
+<ul>
+<li>引擎：解释并编译代码，让它变成能交给机器运行的代码（runnable commands）。</li>
+<li>runtime：就是运行环境，它提供一些对外接口供Js调用，以跟外界打交道。不同的runtime，会提供不同的接口，比如，在 Node.js 环境中，我们可以通过 <code>require</code> 来引入模块；而在浏览器中，我们有 <code>window</code>、 DOM。</li>
+</ul>
+<p>Js引擎是单线程的，如上图中，它负责维护任务队列，并通过 Event Loop 的机制，按顺序把任务放入栈中执行。而图中的异步处理模块，就是 runtime 提供的，拥有和Js引擎互不干扰的线程。</p>
+<h3 id="任务队列"><a href="#任务队列" class="headerlink" title="任务队列"></a>任务队列</h3><p>Js 中，有两类任务队列：宏任务队列（macro tasks）和微任务队列（micro tasks）。宏任务队列可以有多个，微任务队列只有<strong>一个</strong>。那么什么任务，会分到哪个队列呢？</p>
+<ul>
+<li>宏任务：script（全局任务）, setTimeout, setInterval, setImmediate, I/O, UI rendering.</li>
+<li>微任务：process.nextTick, Promise, Object.observer, MutationObserver.</li>
+</ul>
+<p>我们上面讲到，当stack空的时候，就会从任务队列中，取任务来执行。共分3步：</p>
+<ol>
+<li>取一个宏任务来执行。执行完毕后，下一步。</li>
+<li>取一个微任务来执行，执行完毕后，再取一个微任务来执行。直到微任务队列为空，执行下一步。</li>
+</ol>
+<p>从执行步骤来看，我们发现微任务，受到了特殊待遇！我们代码开始执行都是从script（全局任务）开始，所以，一旦我们的全局任务（属于宏任务）执行完，就马上执行完整个微任务队列。</p>
+<p>我们代码的开始执行都是从script（全局任务）开始，这个全局任务属于宏任务；代码由上向下执行；</p>
+<p>第1行，遇到了一个timer异步任务，属于宏任务，放入宏任务队列；</p>
+<p>第8行，遇到log,内部没有其它函数，直接输出main1;</p>
+<p>第10行，函数的定义，不执行；</p>
+<p>第17行，遇到new Promise()，进入回调函数内部:<br>1） 遇到promise.nextTick,属于微任务，放入微任务队列nextTick3;<br>2） 遇到log,内部没有其它函数，直接输出promise 1;<br>3） 遇到resolve回调，属于微任务，放入微任务队列promise then;</p>
+<p>第27行，遇到log,内部没有其它函数，直接输出main2;</p>
+<p>第29行，遇到promise.nextTick,属于微任务，放入微任务队列nextTick4;</p>
+<p>第33行，执行say()：<br>1）遇到log,内部没有其它函数，直接输出hello;<br>2）遇到promise.nextTick,属于微任务，放入微任务队列nextTick2;<br>到此为止，我们已经做了如下事情：<br>1）宏任务队列中放入了一个timer函数；<br>2）输出了main1，promise 1，main2，hello1；<br>3）微任务队列中已经放入了promise then,nextTick3,nextTick4,nextTick2;</p>
+<p>此时，我们的全局任务已执行完成了，就要马上执行完整个微任务队列。但是在微任务中，process.nextTick 是一个特殊的任务，它会被直接插入到微任务的队首（当然了，多个process.nextTick 之间也是先入先出的），优先级最高。所以，依次输出nextTick3,nextTick4,nextTick2,promise then</p>
+<p>这时，执行栈为空了，可是别忘了，我们的宏任务队列还放者一个timer函数待执行，进入timer函数：<br>1）遇到log,内部没有其它函数，直接输出setTimeout;<br>2）遇到promise.nextTick,属于微任务，放入微任务队列nextTick1;</p>
+<p>这个timer宏任务也执行完了，就马上执行完整个微任务队列，微任务队列目前只有一个任务，直接输出nextTick1；</p>
+<p>这时，执行栈又为空了，还有其它任务吗? 没有了，大功告成；</p>
+<p>以上的这种当函数执行栈为空，从任务队列中去一个任务来执行。再次为空，再取一个任务来执行，如此循环，这就是Event Loop，事件循环机制；</p>
+<p>参考：</p>
+<p><a href="https://juejin.im/post/5a63470bf265da3e2c383068" target="_blank" rel="noopener">https://juejin.im/post/5a63470bf265da3e2c383068</a></p>
+<p><a href="https://segmentfault.com/a/1190000011198232" target="_blank" rel="noopener">https://segmentfault.com/a/1190000011198232</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2017-12-05T14:16:53.000Z"><a href="/2017/12/05/Node.js_事件/理解事件循环机制/">2017-12-05</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2017/12/05/Node.js_事件/理解事件循环机制/">理解事件循环机制</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><blockquote>
+<p>Node.js 是基于V8引擎的javascript运行环境. Node.js具有<code>事件驱动</code>, <code>非阻塞I/O</code>等特点. 结合Node API, Node.js 具有网络编程, 文件系统等服务端的功能, Node.js用<code>libuv</code>库进行异步事件处理.</p>
+</blockquote>
+<h3 id="线程"><a href="#线程" class="headerlink" title="线程"></a>线程</h3><blockquote>
+<p>Node.js的单线程含义, 实际上说的是执行同步代码的主线程. 一个Node程序的启动, 不止是分配了一个线程，而是我们只能在一个线程执行代码. 当出现I/O资源调用, TCP连接等外部资源申请的时候, 不会阻塞主线程, 而是委托给I/O线程进行处理,并且进入等待队列. 一旦主线程执行完成，将会消费事件队列(Event Queue). 因为只有一个主线程, 只占用CPU内核处理逻辑计算, 因此不适合在CPU密集型进行使用.</p>
+</blockquote>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/180701NodeSystem.png" alt=""></p>
+<p><strong>注意，上图的EVENT_QUEUE 给人看起来是只有一个队列, 根据Node.js官方介绍, EventLoop有6个阶段, 同时每个阶段都有对应的一个先进先出的回调队列.</strong></p>
+<h3 id="什么是事件循环-EventLoop"><a href="#什么是事件循环-EventLoop" class="headerlink" title="什么是事件循环(EventLoop) ?"></a>什么是事件循环(EventLoop) ?</h3><blockquote>
+<p>In computer science, the event loop, message dispatcher, message loop, message pump, or run loop is a programming construct that waits for and dispatches events or messages in a program. – <a href="https://en.wikipedia.org/wiki/Event_loop" target="_blank" rel="noopener">from wiki</a></p>
+</blockquote>
+<p><strong>大概含义: EventLoop 是一种常用的机制，通过对内部或外部的事件提供者发出请求, 如文件读写, 网络连接 等异步操作, 完成后调用事件处理程序. 整个过程都是异步阶段</strong></p>
+<h3 id="Node-js的事件循环机制"><a href="#Node-js的事件循环机制" class="headerlink" title="Node.js的事件循环机制"></a>Node.js的事件循环机制</h3><blockquote>
+<p>When Node.js starts, it initializes the event loop, processes the provided input script (or drops into the REPL, which is not covered in this document) which may make async API calls, schedule timers, or call process.nextTick(), then begins processing the event loop. – from <a href="https://github.com/nodejs/node/blob/v6.x/doc/topics/event-loop-timers-and-nexttick.md" target="_blank" rel="noopener">node.js doc</a></p>
+</blockquote>
+<p><strong>大致含义: 当Node.js 启动, 就会初始化一个 event loop, 处理脚本时, 可能会发生异步API行为调用, 使用定时器任务或者nexTick, 处理完成后进入事件循环处理过程</strong></p>
+<h3 id="事件循环阶段"><a href="#事件循环阶段" class="headerlink" title="事件循环阶段"></a>事件循环阶段</h3><p><a href="https://en.wikipedia.org/wiki/Node.js" target="_blank" rel="noopener">Node.js</a>采用V8作为js的解析引擎，而I/O处理方面使用了自己设计的libuv，libuv是一个基于事件驱动的跨平台抽象层，封装了不同操作系统一些底层特性，对外提供统一的API，事件循环机制也是它里面的实现<a href="https://github.com/libuv/libuv/blob/v1.x/src/unix/core.c#L348-L397" target="_blank" rel="noopener">核心源码参考</a>：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">int uv_run(uv_loop_t* loop, uv_run_mode mode) &#123;</span><br><span class="line">  int timeout;</span><br><span class="line">  int r;</span><br><span class="line">  int ran_pending;</span><br><span class="line"></span><br><span class="line">  r = uv__loop_alive(loop);</span><br><span class="line">  if (!r)</span><br><span class="line">    uv__update_time(loop);</span><br><span class="line"></span><br><span class="line">  while (r != 0 &amp;&amp; loop-&gt;stop_flag == 0) &#123;</span><br><span class="line">    uv__update_time(loop);</span><br><span class="line">    // timers阶段</span><br><span class="line">    uv__run_timers(loop);</span><br><span class="line">    // I/O callbacks阶段</span><br><span class="line">    ran_pending = uv__run_pending(loop);</span><br><span class="line">    // idle阶段</span><br><span class="line">    uv__run_idle(loop);</span><br><span class="line">    // prepare阶段</span><br><span class="line">    uv__run_prepare(loop);</span><br><span class="line"></span><br><span class="line">    timeout = 0;</span><br><span class="line">    if ((mode == UV_RUN_ONCE &amp;&amp; !ran_pending) || mode == UV_RUN_DEFAULT)</span><br><span class="line">      timeout = uv_backend_timeout(loop);</span><br><span class="line">    // poll阶段</span><br><span class="line">    uv__io_poll(loop, timeout);</span><br><span class="line">    // check阶段</span><br><span class="line">    uv__run_check(loop);</span><br><span class="line">    // close callbacks阶段</span><br><span class="line">    uv__run_closing_handles(loop);</span><br><span class="line"></span><br><span class="line">    if (mode == UV_RUN_ONCE) &#123;</span><br><span class="line">      uv__update_time(loop);</span><br><span class="line">      uv__run_timers(loop);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    r = uv__loop_alive(loop);</span><br><span class="line">    if (mode == UV_RUN_ONCE || mode == UV_RUN_NOWAIT)</span><br><span class="line">      break;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  if (loop-&gt;stop_flag != 0)</span><br><span class="line">    loop-&gt;stop_flag = 0;</span><br><span class="line"></span><br><span class="line">  return r;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>根据<a href="https://nodejs.org/en/docs/guides/event-loop-timers-and-nexttick/" target="_blank" rel="noopener">Node.js</a>官方介绍，每次事件循环都包含了6个阶段，对应到 libuv 源码中的实现，如下图所示</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/node-libuv_180703.png" alt=""></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">   ┌───────────────────────┐</span><br><span class="line">┌─&gt;│        timers         │</span><br><span class="line">│  └──────────┬────────────┘</span><br><span class="line">│  ┌──────────┴────────────┐</span><br><span class="line">│  │     I/O callbacks     │</span><br><span class="line">│  └──────────┬────────────┘</span><br><span class="line">│  ┌──────────┴────────────┐</span><br><span class="line">│  │     idle, prepare     │</span><br><span class="line">│  └──────────┬────────────┘      ┌───────────────┐</span><br><span class="line">│  ┌──────────┴────────────┐      │   incoming:   │</span><br><span class="line">│  │         poll          │&lt;─────┤  connections, │</span><br><span class="line">│  └──────────┬────────────┘      │   data, etc.  │</span><br><span class="line">│  ┌──────────┴────────────┐      └───────────────┘</span><br><span class="line">│  │        check          │</span><br><span class="line">│  └──────────┬────────────┘</span><br><span class="line">│  ┌──────────┴────────────┐</span><br><span class="line">└──┤    close callbacks    │</span><br><span class="line">   └───────────────────────┘</span><br></pre></td></tr></table></figure>
+<p><strong>每一个阶段都有一个FIFO的callbacks队列, 每个阶段都有自己的事件处理方式. 当事件循环进入某个阶段时, 将会在该阶段内执行回调，直到队列耗尽或者回调的最大数量已执行, 那么将进入下一个处理阶段.</strong></p>
+<ul>
+<li><strong>timers</strong> 阶段: 这个阶段执行setTimeout(callback) and setInterval(callback)预定的callback;</li>
+<li><strong>I/O callbacks</strong> 阶段: 执行除了close事件的callbacks、被timers(定时器，setTimeout、setInterval等)设定的callbacks、setImmediate()设定的callbacks之外的callbacks; (目前这个阶段)</li>
+<li><strong>idle, prepare</strong> 阶段: 仅node内部使用;</li>
+<li><strong>poll</strong> 阶段: 获取新的I/O事件, 适当的条件下node将阻塞在这里;</li>
+<li><strong>check</strong> 阶段: 执行setImmediate() 设定的callbacks;</li>
+<li><strong>close callbacks</strong> 阶段: 比如socket.on(‘close’, callback)的callback会在这个阶段执行.</li>
+</ul>
+<h4 id="timers阶段"><a href="#timers阶段" class="headerlink" title="timers阶段"></a><strong>timers阶段</strong></h4><p>一个timer指定一个下限时间而不是准确时间，在达到这个下限时间后执行回调。在指定时间过后，timers会尽可能早地执行回调，但系统调度或者其它回调的执行可能会延迟它们。</p>
+<p>注意：技术上来说，poll 阶段控制 timers 什么时候执行。</p>
+<p>注意：这个下限时间有个范围：[1, 2147483647]，如果设定的时间不在这个范围，将被设置为1。</p>
+<h4 id="I-O-callbacks阶段"><a href="#I-O-callbacks阶段" class="headerlink" title="I/O callbacks阶段"></a><strong>I/O callbacks阶段</strong></h4><p>这个阶段执行一些系统操作的回调。比如TCP错误，如一个TCP socket在想要连接时收到ECONNREFUSED,<br>类unix系统会等待以报告错误，这就会放到 I/O callbacks 阶段的队列执行.<br>名字会让人误解为执行I/O回调处理程序, 实际上I/O回调会由poll阶段处理.</p>
+<h4 id="poll阶段"><a href="#poll阶段" class="headerlink" title="poll阶段"></a><strong>poll阶段</strong></h4><p>poll 阶段有两个主要功能：</p>
+<p>执行下限时间已经达到的timers的回调，然后<br>处理 poll 队列里的事件。<br>当event loop进入 poll 阶段，并且 没有设定的timers（there are no timers scheduled），会发生下面两件事之一：</p>
+<p>如果 poll 队列不空，event loop会遍历队列并同步执行回调，直到队列清空或执行的回调数到达系统上限；</p>
+<p>如果 poll 队列为空，则发生以下两件事之一：</p>
+<ol>
+<li>如果代码已经被setImmediate()设定了回调, event loop将结束 poll 阶段进入 check 阶段来执行 check 队列（里的回调）。</li>
+<li>如果代码没有被setImmediate()设定回调，event loop将阻塞在该阶段等待回调被加入 poll 队列，并立即执行。</li>
+</ol>
+<p>但是，当event loop进入 poll 阶段，并且 有设定的timers，一旦 poll 队列为空（poll 阶段空闲状态）：</p>
+<ol>
+<li>event loop将检查timers,如果有1个或多个timers的下限时间已经到达，event loop将绕回 <strong>timers</strong> 阶段，并执行 <strong>timer</strong>队列。</li>
+</ol>
+<h3 id="check阶段"><a href="#check阶段" class="headerlink" title="check阶段"></a><strong>check阶段</strong></h3><p>这个阶段允许在 poll 阶段结束后立即执行回调。如果 poll 阶段空闲，并且有被setImmediate()设定的回调，event loop会转到 check 阶段而不是继续等待。</p>
+<p>setImmediate()实际上是一个特殊的timer，跑在event loop中一个独立的阶段。它使用libuv的API<br>来设定在 poll 阶段结束后立即执行回调。</p>
+<p>通常上来讲，随着代码执行，event loop终将进入 poll 阶段，在这个阶段等待 incoming connection, request 等等。但是，只要有被setImmediate()设定了回调，一旦 poll 阶段空闲，那么程序将结束 poll 阶段并进入 check 阶段，而不是继续等待 poll 事件们 （poll events）。</p>
+<h3 id="close-callbacks-阶段"><a href="#close-callbacks-阶段" class="headerlink" title="close callbacks 阶段"></a><strong>close callbacks 阶段</strong></h3><p>如果一个 socket 或 handle 被突然关掉（比如 socket.destroy()），close事件将在这个阶段被触发，否则将通过process.nextTick()触发</p>
+<p><strong>简单的 EventLoop</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">const fs = require(&apos;fs&apos;);</span><br><span class="line">let counts = 0;</span><br><span class="line"></span><br><span class="line">function wait (mstime) &#123;</span><br><span class="line">  let date = Date.now();</span><br><span class="line">  while (Date.now() - date &lt; mstime) &#123;</span><br><span class="line">    // do nothing</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">function asyncOperation (callback) &#123;</span><br><span class="line">  fs.readFile(__dirname + &apos;/&apos; + __filename, callback);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">const lastTime = Date.now();</span><br><span class="line"></span><br><span class="line">setTimeout(() =&gt; &#123;</span><br><span class="line">  console.log(&apos;timers&apos;, Date.now() - lastTime + &apos;ms&apos;);</span><br><span class="line">&#125;, 0);</span><br><span class="line"></span><br><span class="line">process.nextTick(() =&gt; &#123;</span><br><span class="line">  // 进入event loop</span><br><span class="line">  // timers阶段之前执行</span><br><span class="line">  wait(20);</span><br><span class="line">  asyncOperation(() =&gt; &#123;</span><br><span class="line">    console.log(&apos;poll&apos;);</span><br><span class="line">  &#125;);  </span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * result:</span><br><span class="line"> * timers 21ms</span><br><span class="line"> * poll</span><br><span class="line"> */</span><br></pre></td></tr></table></figure>
+<p>为了让<code>setTimeout</code>优先于<code>fs.readFile</code> 回调, 执行了process.nextTick, 表示在进入 timers阶段前, 等待20ms后执行文件读取.</p>
+<h3 id="nextTick-与-setImmediate"><a href="#nextTick-与-setImmediate" class="headerlink" title="nextTick 与 setImmediate"></a>nextTick 与 setImmediate</h3><p>process.nextTick 不属于事件循环的任何一个阶段，它属于该阶段与下阶段之间的过渡, 即本阶段执行结束, 进入下一个阶段前, 所要执行的回调。有给人一种插队的感觉.</p>
+<p>setImmediate的回调处于check阶段, 当poll阶段的队列为空, 且check阶段的事件队列存在的时候，切换到check阶段执行.</p>
+<p><strong>nextTick 递归的危害</strong><br>由于nextTick具有插队的机制，nextTick的递归会让事件循环机制无法进入下一个阶段. 导致I/O处理完成或者定时任务超时后仍然无法执行, 导致了其它事件处理程序处于饥饿状态. 为了防止递归产生的问题, Node.js 提供了一个 process.maxTickDepth (默认 1000)。</p>
+<p>递归nextTick</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">const fs = require(&apos;fs&apos;);</span><br><span class="line">let counts = 0;</span><br><span class="line"></span><br><span class="line">function wait (mstime) &#123;</span><br><span class="line">  let date = Date.now();</span><br><span class="line">  while (Date.now() - date &lt; mstime) &#123;</span><br><span class="line">    // do nothing</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">function nextTick () &#123;</span><br><span class="line">  process.nextTick(() =&gt; &#123;</span><br><span class="line">    wait(20);</span><br><span class="line">    nextTick();</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">const lastTime = Date.now();</span><br><span class="line"></span><br><span class="line">setTimeout(() =&gt; &#123;</span><br><span class="line">  console.log(&apos;timers&apos;, Date.now() - lastTime + &apos;ms&apos;);</span><br><span class="line">&#125;, 0);</span><br><span class="line"></span><br><span class="line">nextTick();</span><br></pre></td></tr></table></figure>
+<p>此时永远无法跳到timer阶段, 因为在进入timers阶段前有不断的nextTick插入执行. 除非执行了1000次到了执行上限.</p>
+<p><strong>setImmediate</strong><br>如果在一个I/O周期内进行调度，setImmediate（）将始终在任何定时器之前执行.</p>
+<h3 id="setTimeout-与-setImmediate"><a href="#setTimeout-与-setImmediate" class="headerlink" title="setTimeout 与 setImmediate"></a>setTimeout 与 setImmediate</h3><ul>
+<li>setImmediate()被设计在 poll 阶段结束后立即执行回调；</li>
+<li>setTimeout()被设计在指定下限时间到达后执行回调;</li>
+</ul>
+<p>无 I/O 处理情况下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">setTimeout(function timeout () &#123;</span><br><span class="line">  console.log(&apos;timeout&apos;);</span><br><span class="line">&#125;,0);</span><br><span class="line"></span><br><span class="line">setImmediate(function immediate () &#123;</span><br><span class="line">  console.log(&apos;immediate&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p><strong>输出结果是 不确定 的！</strong><br>setTimeout(fn, 0) 具有几毫秒的不确定性. 无法保证进入timers阶段, 定时器能够立即执行处理程序.</p>
+<p>在I/O事件处理程序下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">var fs = require(&apos;fs&apos;)</span><br><span class="line"></span><br><span class="line">fs.readFile(__filename, () =&gt; &#123;</span><br><span class="line">  setTimeout(() =&gt; &#123;</span><br><span class="line">    console.log(&apos;timeout&apos;)</span><br><span class="line">  &#125;, 0)</span><br><span class="line">  setImmediate(() =&gt; &#123;</span><br><span class="line">    console.log(&apos;immediate&apos;)</span><br><span class="line">  &#125;)</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<p>此时 <code>setImmediate</code> 优先于 <code>setTimeout</code> 执行，因为 poll阶段执行完成后 进入 check阶段. timers阶段处于下一个事件循环阶段了.</p>
+<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><p><a href="https://segmentfault.com/a/1190000012258592" target="_blank" rel="noopener">https://segmentfault.com/a/1190000012258592</a><br><a href="http://lynnelv.github.io/js-event-loop-nodejs" target="_blank" rel="noopener">http://lynnelv.github.io/js-event-loop-nodejs</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2017-09-11T14:16:53.000Z"><a href="/2017/09/11/Node.js_IO/深入理解Node.js中Stream内部机制/">2017-09-11</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2017/09/11/Node.js_IO/深入理解Node.js中Stream内部机制/">深入理解Node.js Stream内部机制</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>相信很多人对 Node.js 的 Stream 已经不陌生了，不论是请求流、响应流、文件流还是 socket 流，这些流的底层都是使用 <code>stream</code> 模块封装的，甚至我们平时用的最多的 <code>console.log</code> 打印日志也使用了它，不信你打开 Node.js runtime 的源码，看看 <a href="https://github.com/nodejs/node/blob/master/lib/console.js#L82-L109" target="_blank" rel="noopener"><code>lib/console.js</code></a>：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">function write(ignoreErrors, stream, string, errorhandler) &#123;</span><br><span class="line">  // ...</span><br><span class="line">  stream.once(&apos;error&apos;, noop);</span><br><span class="line">  stream.write(string, errorhandler);</span><br><span class="line">  //...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Console.prototype.log = function log(...args) &#123;</span><br><span class="line">  write(this._ignoreErrors,</span><br><span class="line">        this._stdout,</span><br><span class="line">        `$&#123;util.format.apply(null, args)&#125;\n`,</span><br><span class="line">        this._stdoutErrorHandler);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>Stream 模块做了很多事情，了解了 Stream，那么 Node.js 中其他很多模块理解起来就顺畅多了。</p>
+<h3 id="stream-模块"><a href="#stream-模块" class="headerlink" title="stream 模块"></a>stream 模块</h3><p>如果你了解 <a href="https://zh.wikipedia.org/zh-hans/%E7%94%9F%E4%BA%A7%E8%80%85%E6%B6%88%E8%B4%B9%E8%80%85%E9%97%AE%E9%A2%98" target="_blank" rel="noopener">生产者和消费者问题</a> 的解法，那理解 stream 就基本没有压力了，它不仅仅是资料的起点和落点，还包含了一系列状态控制，可以说一个 stream 就是一个状态管理单元。了解内部机制的最佳方式除了看 <a href="https://nodejs.org/api/stream.html" target="_blank" rel="noopener">Node.js 官方文档</a>，还可以去看看 Node.js 的 <a href="https://github.com/nodejs/node/blob/master/lib/" target="_blank" rel="noopener">源码</a>：</p>
+<ul>
+<li><code>lib/module.js</code></li>
+<li><code>lib/_stream_readable.js</code></li>
+<li><code>lib/_stream_writable.js</code></li>
+<li><code>lib/_stream_tranform.js</code></li>
+<li><code>lib/_stream_duplex.js</code></li>
+</ul>
+<p>把 <code>Readable</code> 和 <code>Writable</code> 看明白，Tranform 和 Duplex 就不难理解了。</p>
+<h3 id="Readable-Stream"><a href="#Readable-Stream" class="headerlink" title="Readable Stream"></a>Readable Stream</h3><p>Readable Stream 存在两种模式，一种是叫做 <code>Flowing Mode</code>，流动模式，在 Stream 上绑定 ondata 方法就会自动触发这个模式，比如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">const readable = getReadableStreamSomehow();</span><br><span class="line">readable.on(&apos;data&apos;, (chunk) =&gt; &#123;</span><br><span class="line">  console.log(`Received $&#123;chunk.length&#125; bytes of data.`);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>这个模式的流程图如下：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream01_180706.png" alt=""></p>
+<p>资源的数据流并不是直接流向消费者，而是先 push 到缓存池，缓存池有一个水位标记 <code>highWatermark</code>，超过这个标记阈值，push 的时候会返回 <code>false</code>，什么场景下会出现这种情况呢？</p>
+<ul>
+<li>消费者主动执行了 <code>.pause()</code></li>
+<li>消费速度比数据 push 到缓存池的生产速度慢</li>
+</ul>
+<p>有个专有名词来形成这种情况，叫做「背压」，Writable Stream 也存在类似的情况。</p>
+<p>流动模式，这个名词还是很形象的，缓存池就像一个水桶，消费者通过管口接水，同时，资源池就像一个水泵，不断地往水桶中泵水，而 highWaterMark 是水桶的浮标，达到阈值就停止蓄水。<br>下面是一个简单的 Demo：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">const Readable = require(&apos;stream&apos;).Readable;</span><br><span class="line"></span><br><span class="line">// Stream 实现</span><br><span class="line">class MyReadable extends Readable &#123;</span><br><span class="line">  constructor(dataSource, options) &#123;</span><br><span class="line">    super(options);</span><br><span class="line">    this.dataSource = dataSource;</span><br><span class="line">  &#125;</span><br><span class="line">  // 继承了 Readable 的类必须实现这个函数</span><br><span class="line">  // 触发系统底层对流的读取</span><br><span class="line">  _read() &#123;</span><br><span class="line">    const data = this.dataSource.makeData();</span><br><span class="line">    this.push(data);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 模拟资源池</span><br><span class="line">const dataSource = &#123;</span><br><span class="line">  data: new Array(10).fill(&apos;-&apos;),</span><br><span class="line">  // 每次读取时 pop 一个数据</span><br><span class="line">  makeData() &#123;</span><br><span class="line">    if (!dataSource.data.length) return null;</span><br><span class="line">    return dataSource.data.pop();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">const myReadable = new MyReadable(dataSource);</span><br><span class="line">myReadable.setEncoding(&apos;utf8&apos;);</span><br><span class="line">myReadable.on(&apos;data&apos;, (chunk) =&gt; &#123;</span><br><span class="line">  console.log(chunk);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>另外一种模式是 <code>Non-Flowing Mode</code>，没流动，也就是暂停模式，这是 Stream 的预设模式，Stream 实例的 <code>_readableState.flow</code> 有三个状态，分别是：</p>
+<ul>
+<li><code>_readableState.flow = null</code>，暂时没有消费者过来</li>
+<li><code>_readableState.flow = false</code>，主动触发了 <code>.pause()</code></li>
+<li><code>_readableState.flow = true</code>，流动模式</li>
+</ul>
+<p>当我们监听了 onreadable 事件后，会进入这种模式，比如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">const myReadable = new MyReadable(dataSource);</span><br><span class="line">myReadable.setEncoding(&apos;utf8&apos;);</span><br><span class="line">myReadable.on(&apos;readable&apos;, () =&gt; &#123;&#125;);</span><br></pre></td></tr></table></figure>
+<p>监听 <code>readable</code> 的回调函数第一个参数不会传递内容，需要我们通过 <code>myReadable.read()</code> 主动读取，为啥呢，可以看看下面这张图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream02_180706.png" alt=""></p>
+<p>资源池会不断地往缓存池输送数据，直到 highWaterMark 阈值，消费者监听了 readable 事件并不会消费数据，需要主动调用 <code>.read([size])</code> 函数才会从缓存池取出，并且可以带上 size 参数，用多少就取多少：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">const myReadable = new MyReadable(dataSource);</span><br><span class="line">myReadable.setEncoding(&apos;utf8&apos;);</span><br><span class="line">myReadable.on(&apos;readable&apos;, () =&gt; &#123;</span><br><span class="line">  let chunk;</span><br><span class="line">  while (null !== (chunk = myReadable.read())) &#123;</span><br><span class="line">    console.log(`Received $&#123;chunk.length&#125; bytes of data.`);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>这里需要注意一点，只要数据达到缓存池都会触发一次 readable 事件，有可能出现「消费者正在消费数据的时候，又触发了一次 readable 事件，那么下次回调中 read 到的数据可能为空」的情况。我们可以通过 <code>_readableState.buffer</code> 来查看缓存池到底缓存了多少资源：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">let once = false;</span><br><span class="line">myReadable.on(&apos;readable&apos;, (chunk) =&gt; &#123;</span><br><span class="line">  console.log(myReadable._readableState.buffer.length);</span><br><span class="line">  if (once) return;</span><br><span class="line">  once = true;</span><br><span class="line">  console.log(myReadable.read());</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>上面的代码我们只消费一次缓存池的数据，那么在消费后，缓存池又收到了一次资源池的 push 操作，此时还会触发一次 readable 事件，我们可以看看这次存了多大的 buffer。</p>
+<p>需要注意的是，buffer 大小也是有上限的，默认设置为 16kb，也就是 16384 个字节长度，它最大可设置为 8Mb，没记错的话，这个值好像是 Node 的 new space memory 的大小。</p>
+<p>上面介绍了 Readable Stream 大概的机制，还有很多细节部分没有提到，比如 <code>Flowing Mode</code> 在不同 Node 版本中的 Stream 实现不太一样，实际上，它有三个版本，上面提到的是第 2 和 第 3 个版本的实现；再比如 <code>Mixins Mode</code> 模式，一般我们只推荐（允许）使用 ondata 和 onreadable 的一种来处理 Readable Stream，但是如果要求在 <code>Non-Flowing Mode</code> 的情况下使用 ondata 如何实现呢？那么就可以考虑 <code>Mixins Mode</code> 了。</p>
+<h3 id="Writable-Stream"><a href="#Writable-Stream" class="headerlink" title="Writable Stream"></a>Writable Stream</h3><p>原理与 Readable Stream 是比较相似的，数据流过来的时候，会直接写入到资源池，当写入速度比较缓慢或者写入暂停时，数据流会进入队列池缓存起来，如下图所示：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream03_180706.png" alt=""></p>
+<p>当生产者写入速度过快，把队列池装满了之后，就会出现「背压」，这个时候是需要告诉生产者暂停生产的，当队列释放之后，Writable Stream 会给生产者发送一个 <code>drain</code> 消息，让它恢复生产。下面是一个写入一百万条数据的 Demo：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">function writeOneMillionTimes(writer, data, encoding, callback) &#123;</span><br><span class="line">  let i = 10000;</span><br><span class="line">  write();</span><br><span class="line">  function write() &#123;</span><br><span class="line">    let ok = true;</span><br><span class="line">    while(i-- &gt; 0 &amp;&amp; ok) &#123;</span><br><span class="line">      // 写入结束时回调</span><br><span class="line">      ok = writer.write(data, encoding, i === 0 ? callback : null);</span><br><span class="line">    &#125;</span><br><span class="line">    if (i &gt; 0) &#123;</span><br><span class="line">      // 这里提前停下了，&apos;drain&apos; 事件触发后才可以继续写入  </span><br><span class="line">      console.log(&apos;drain&apos;, i);</span><br><span class="line">      writer.once(&apos;drain&apos;, write);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们构造一个 Writable Stream，在写入到资源池的时候，我们稍作处理，让它效率低一点：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">const Writable = require(&apos;stream&apos;).Writable;</span><br><span class="line">const writer = new Writable(&#123;</span><br><span class="line">  write(chunk, encoding, callback) &#123;</span><br><span class="line">    // 比 process.nextTick() 稍慢</span><br><span class="line">    setTimeout(() =&gt; &#123;</span><br><span class="line">      callback &amp;&amp; callback();</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">writeOneMillionTimes(writer, &apos;simple&apos;, &apos;utf8&apos;, () =&gt; &#123;</span><br><span class="line">  console.log(&apos;end&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>最后执行的结果是：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">drain 7268</span><br><span class="line">drain 4536</span><br><span class="line">drain 1804</span><br><span class="line">end</span><br></pre></td></tr></table></figure>
+<p>说明程序遇到了三次「背压」，如果我们没有在上面绑定 <code>writer.once(&#39;drain&#39;)</code>，那么最后的结果就是 Stream 将第一次获取的数据消耗完变结束了程序。</p>
+<h3 id="pipe"><a href="#pipe" class="headerlink" title="pipe"></a>pipe</h3><p>了解了 Readable 和 Writable，pipe 这个常用的函数应该就很好理解了，</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">readable.pipe(writable);</span><br></pre></td></tr></table></figure>
+<p>这句代码的语意性很强，readable 通过 pipe（管道）传输给 writable，pipe 的实现大致如下（伪代码）：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">Readable.prototype.pipe = function(writable, options) &#123;</span><br><span class="line">  this.on(&apos;data&apos;, (chunk) =&gt; &#123;</span><br><span class="line">    let ok = writable.write(chunk);</span><br><span class="line">	// 背压，暂停</span><br><span class="line">    !ok &amp;&amp; this.pause();</span><br><span class="line">  &#125;);</span><br><span class="line">  writable.on(&apos;drain&apos;, () =&gt; &#123;</span><br><span class="line">    // 恢复</span><br><span class="line">    this.resume();</span><br><span class="line">  &#125;);</span><br><span class="line">  // 告诉 writable 有流要导入</span><br><span class="line">  writable.emit(&apos;pipe&apos;, this);</span><br><span class="line">  // 支持链式调用</span><br><span class="line">  return writable;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>上面做了五件事情：</p>
+<ul>
+<li><code>emit(pipe)</code>，通知写入</li>
+<li><code>.write()</code>，新数据过来，写入</li>
+<li><code>.pause()</code>，消费者消费速度慢，暂停写入</li>
+<li><code>.resume()</code>，消费者完成消费，继续写入</li>
+<li><code>return writable</code>，支持链式调用</li>
+</ul>
+<p>当然，上面只是最简单的逻辑，还有很多异常和临界判断没有加入，具体可以去看看 Node.js 的代码（ <a href="https://github.com/nodejs/node/blob/master/lib/_stream_readable.js#L541-L684" target="_blank" rel="noopener">/lib/_stream_readable.js</a>）。</p>
+<h3 id="Duplex-Stream"><a href="#Duplex-Stream" class="headerlink" title="Duplex Stream"></a>Duplex Stream</h3><p>Duplex，双工的意思，它的输入和输出可以没有任何关系，<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream04_180706.png" alt=""></p>
+<p>Duplex Stream 实现特别简单，不到一百行代码，它继承了 Readable Stream，并拥有 Writable Stream 的方法（<a href="https://github.com/nodejs/node/blob/master/lib/_stream_duplex.js#L31-L42" target="_blank" rel="noopener">源码地址</a>）：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">const util = require(&apos;util&apos;);</span><br><span class="line">const Readable = require(&apos;_stream_readable&apos;);</span><br><span class="line">const Writable = require(&apos;_stream_writable&apos;);</span><br><span class="line"></span><br><span class="line">util.inherits(Duplex, Readable);</span><br><span class="line"></span><br><span class="line">var keys = Object.keys(Writable.prototype);</span><br><span class="line">for (var v = 0; v &lt; keys.length; v++) &#123;</span><br><span class="line">  var method = keys[v];</span><br><span class="line">  if (!Duplex.prototype[method])</span><br><span class="line">    Duplex.prototype[method] = Writable.prototype[method];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们可以通过 options 参数来配置它为只可读、只可写或者半工模式，一个简单的 Demo：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">var Duplex = require(&apos;stream&apos;).Duplex</span><br><span class="line"></span><br><span class="line">const duplex = Duplex();</span><br><span class="line"></span><br><span class="line">// readable</span><br><span class="line">let i = 2;</span><br><span class="line">duplex._read = function () &#123;</span><br><span class="line">  this.push(i-- ? &apos;read &apos; + i : null);</span><br><span class="line">&#125;;</span><br><span class="line">duplex.on(&apos;data&apos;, data =&gt; console.log(data.toString()));</span><br><span class="line"></span><br><span class="line">// writable</span><br><span class="line">duplex._write = function (chunk, encoding, callback) &#123;</span><br><span class="line">  console.log(chunk.toString());</span><br><span class="line">  callback();</span><br><span class="line">&#125;;</span><br><span class="line">duplex.write(&apos;write&apos;);</span><br></pre></td></tr></table></figure>
+<p>输出的结果为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">write</span><br><span class="line">read 1</span><br><span class="line">read 0</span><br></pre></td></tr></table></figure>
+<p>可以看出，两个管道是相互之间不干扰的。</p>
+<h3 id="Transform-Stream"><a href="#Transform-Stream" class="headerlink" title="Transform Stream"></a>Transform Stream</h3><p>Transform Stream 集成了 Duplex Stream，它同样具备 Readable 和 Writable 的能力，只不过它的输入和输出是存在相互关联的，中间做了一次转换处理。常见的处理有 Gzip 压缩、解压等。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream05_180706.png" alt=""></p>
+<p>Transform 的处理就是通过 <code>_transform</code> 函数将 Duplex 的 Readable 连接到 Writable，由于 Readable 的生产效率与 Writable 的消费效率是一样的，所以这里 Transform 内部不存在「背压」问题，背压问题的源头是外部的生产者和消费者速度差造成的。</p>
+<p>关于 Transfrom Stream，我写了一个简单的 Demo：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">const Transform = require(&apos;stream&apos;).Transform;</span><br><span class="line">const MAP = &#123;</span><br><span class="line">  &apos;Barret&apos;: &apos;靖&apos;,</span><br><span class="line">  &apos;Lee&apos;: &apos;李&apos;</span><br><span class="line">&#125;;</span><br><span class="line">  </span><br><span class="line">class Translate extends Transform &#123;</span><br><span class="line">  constructor(dataSource, options) &#123;</span><br><span class="line">    super(options);</span><br><span class="line">  &#125;</span><br><span class="line">  _transform(buf, enc, next) &#123;</span><br><span class="line">    const key = buf.toString();</span><br><span class="line">    const data = MAP[key];</span><br><span class="line">    this.push(data);</span><br><span class="line">    next();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var transform = new Translate();</span><br><span class="line">transform.on(&apos;data&apos;, data =&gt; console.log(data.toString()));</span><br><span class="line">transform.write(&apos;Lee&apos;);</span><br><span class="line">transform.write(&apos;Barret&apos;);</span><br><span class="line">transform.end();</span><br></pre></td></tr></table></figure>
+<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><p>本文主要参考和查阅 Node.js 官网的文档和源码，细节问题都是从源码中找到的答案，如有理解不准确之处，还请斧正。关于 Stream，这篇文章只是讲述了基础的原理，还有很多细节之处没有讲到，要真正理解它，还是需要多读读文档，写写代码。</p>
+<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="http://taobaofed.org/blog/2017/08/31/nodejs-stream/" target="_blank" rel="noopener">http://taobaofed.org/blog/2017/08/31/nodejs-stream/</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2017-08-27T06:45:23.000Z"><a href="/2017/08/27/Docker/当Node.js遇见Docker/">2017-08-27</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2017/08/27/Docker/当Node.js遇见Docker/">当Node.js遇见Docker</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="什么是Docker"><a href="#什么是Docker" class="headerlink" title="什么是Docker?"></a>什么是Docker?</h3><p>Docker是最流行的的容器工具，<strong>没有之一</strong>。本文并不打算深入介绍Docker，不过可以从几个简单的角度来理解Docker。</p>
+<h5 id="从进程的角度理解Docker"><a href="#从进程的角度理解Docker" class="headerlink" title="从进程的角度理解Docker"></a>从进程的角度理解Docker</h5><p>在Linux中，所有的进程构成了一棵树。可以使用<a href="http://man7.org/linux/man-pages/man1/pstree.1.html" target="_blank" rel="noopener">pstree</a>命令进行查看:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">pstree</span><br><span class="line">init─┬─VBoxService───7*[&#123;VBoxService&#125;]</span><br><span class="line">     ├─acpid</span><br><span class="line">     ├─atd</span><br><span class="line">     ├─cron</span><br><span class="line">     ├─dbus-daemon</span><br><span class="line">     ├─dhclient</span><br><span class="line">     ├─dockerd─┬─docker-containe─┬─docker-containe─┬─redis-server───2*[&#123;redis-server&#125;]</span><br><span class="line">     │         │                 │                 └─8*[&#123;docker-containe&#125;]</span><br><span class="line">     │         │                 ├─docker-containe─┬─mongod───16*[&#123;mongod&#125;]</span><br><span class="line">     │         │                 │                 └─8*[&#123;docker-containe&#125;]</span><br><span class="line">     │         │                 └─11*[&#123;docker-containe&#125;]</span><br><span class="line">     │         └─13*[&#123;dockerd&#125;]</span><br><span class="line">     ├─6*[getty]</span><br><span class="line">     ├─influxd───9*[&#123;influxd&#125;]</span><br><span class="line">     ├─irqbalance</span><br><span class="line">     ├─puppet───&#123;puppet&#125;</span><br><span class="line">     ├─rpc.idmapd</span><br><span class="line">     ├─rpc.statd</span><br><span class="line">     ├─rpcbind</span><br><span class="line">     ├─rsyslogd───3*[&#123;rsyslogd&#125;]</span><br><span class="line">     ├─ruby───&#123;ruby&#125;</span><br><span class="line">     ├─sshd─┬─sshd───sshd───zsh───pstree</span><br><span class="line">     │      ├─sshd───sshd───zsh</span><br><span class="line">     │      └─sshd───sshd───zsh───mongo───2*[&#123;mongo&#125;]</span><br><span class="line">     ├─systemd-logind</span><br><span class="line">     ├─systemd-udevd</span><br><span class="line">     ├─upstart-file-br</span><br><span class="line">     ├─upstart-socket-</span><br><span class="line">     └─upstart-udev-br</span><br></pre></td></tr></table></figure>
+<p>可知，init进程为所有进程的根(root)，其PID为1。</p>
+<p>Docker将不同应用的进程隔离了起来，这些被隔离的进程就是一个个容器。隔离是基于两个Linux内核机制实现的，Namesapce和Cgroups。</p>
+<p>Namespace可以从UTD、IPC、PID、Mount，User和Network的角度隔离进程。比如，不同的进程将拥有不同PID空间，这样容器中的进程将看不到主机上的进程，也看不到其他容器中的进程。这与Node.js中模块化以隔离变量的命名空间的思想是异曲同工的。</p>
+<p>通过Cgroups，可以限制进程对CPU，内存等资源的使用。简单地说，我们可以通过Cgroups指定容器只能使用1G内存。</p>
+<p>从进程角度理解Docker，那<strong>每一个Docker容器就是被隔离的进程及其子进程</strong>。上文pstree的输出中可以分辨出2个容器: mongodb和redis。</p>
+<h5 id="从文件的角度理解Docker"><a href="#从文件的角度理解Docker" class="headerlink" title="从文件的角度理解Docker"></a>从文件的角度理解Docker</h5><p>基于Namespace与Cgroups的容器工具其实早已存在，例如<a href="http://linux-vserver.org/Welcome_to_Linux-VServer.org" target="_blank" rel="noopener">Linux-VServer</a>，<a href="https://openvz.org/Main_Page" target="_blank" rel="noopener">OpenVZ</a>，<a href="https://linuxcontainers.org/" target="_blank" rel="noopener">LXC</a>。然而，真正引爆容器技术的却是后来者Docker。为什么呢？个人觉得是因为<strong>Docker镜像</strong>以及<strong>Dockerfile</strong>。</p>
+<p>在Linux中，一切皆文件，进程的运行离不开各种各样的文件。跑一个简单的Node.js程序，传统的做法是手动安装各种依赖然后运行；而Docker则是将所有依赖（包括操作系统，Node，NPM模块，源代码）打包到一个<strong>Docker镜像</strong>中，然后基于这个镜像运行容器。</p>
+<p><strong>Docker镜像</strong>可以通过<strong>Docker仓库</strong>共享给其他人，这样他们只需要下载镜像即可运行程序。想象一下，当我们需要在另一台主机(比如生产服务器，新同事的机器)上运行一个Node.js应用，仅仅需要下载对应的Docker镜像就可以了，是不是很方便呢？</p>
+<p><strong>Docker镜像</strong>可以通过文本文件，即<strong>Dockerfile</strong>进行定义。不妨看一个简单的例子(由于不可抗力，这个Dockerfile构建大概会失败，仅作为参考):</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"># 基于Ubuntu</span><br><span class="line">FROM ubuntu</span><br><span class="line"></span><br><span class="line"># 安装Node.js与NPM</span><br><span class="line">RUN apt-get update &amp;&amp; apt-get -y install nodejs npm</span><br><span class="line"></span><br><span class="line"># 安装NPM模块:Express</span><br><span class="line">RUN npm install express</span><br><span class="line"></span><br><span class="line"># 添加源代码</span><br><span class="line">ADD app.js /</span><br></pre></td></tr></table></figure>
+<p>其中，<strong>FROM</strong>，<strong>RUN</strong>与<strong>ADD</strong>为Dockerfile命令。结合注释，该Dockerfile的含义非常直白。基于这个Dockerfile，使用<strong>docker build</strong>命令就可以构建对应的Docker镜像。基于这个Docker镜像，就可以运行Docker容器来执行app.js:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">var express = require(&quot;express&quot;);</span><br><span class="line">var app = express();</span><br><span class="line"></span><br><span class="line">app.get(&quot;/&quot;, function(req, res)</span><br><span class="line">&#123;</span><br><span class="line">    res.send(&quot;Hello Fundebug!\n&quot;);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">app.listen(3000);</span><br></pre></td></tr></table></figure>
+<p>Dockerfile实际上是将<strong>Docker镜像代码化</strong>了，另一方面也是将<strong>安装依赖的过程代码化</strong>了，于是我们就可以像管理源码一样使用git对Dockerfile进行版本管理。</p>
+<h3 id="为啥用Docker"><a href="#为啥用Docker" class="headerlink" title="为啥用Docker?"></a>为啥用Docker?</h3><p>当你的系统越来越复杂的时候，你会发现Docker的价值。</p>
+<h5 id="从应用架构角度理解Docker"><a href="#从应用架构角度理解Docker" class="headerlink" title="从应用架构角度理解Docker"></a>从应用架构角度理解Docker</h5><p>刚开始，你只需要写一个Node.js程序，挂载一个静态网站；然后，你做了一个用户账号系统，这时需要数据库了，比如说MySQL; 后来，为了提升性能，你引入了Memcached缓存；终于有一天，你决定把前后端分离，这样可以提高开发效率；当用户越来越多，你又不得不使用Nginx做反向代理; 对了，随着功能越来越多，你的应用依赖也会越来越多…总之，你的应用架构只会越来越复杂。不同的组件的安装，配置与运行步骤各不相同，于是你不得不写一个很长的文档给新同事，只为了让他搭建一个<strong>开发环境</strong>。</p>
+<p>使用Docker的话，你可以为不同的组件逐一编写Dockerfile，分别构建镜像，然后运行在各个容器中。这样做，将复杂的架构统一了，所有组件的安装和运行步骤统一为几个简单的命令:</p>
+<ul>
+<li>构建Docker镜像: docker build</li>
+<li>上传Docker镜像: docker push</li>
+<li>下载Docker镜像: docker pull</li>
+<li>运行Docker容器: docker run</li>
+</ul>
+<h5 id="从应用部署角度理解Docker"><a href="#从应用部署角度理解Docker" class="headerlink" title="从应用部署角度理解Docker"></a>从应用部署角度理解Docker</h5><p>通常，你会有<strong>开发</strong>，<strong>测试</strong>和<strong>生产</strong>服务器，对于某些应用，还会需要进行<strong>构建</strong>。不同步骤的依赖会有一些不同，并且在不同的服务器上执行。如果手动地在不同的服务器上安装依赖，是件很麻烦的事情。比如说，当你需要为Node.js应用添加一个新的npm模块，或者升级一下Node.js，是不是得重复操作很多次？友情提示一下，手动敲命令是极易出错的，有些失误会导致致命的后果（参考最近Gitlab误删数据库与AWS的S3故障）。</p>
+<p>如果使用Docker的话，<strong>开发</strong>、<strong>构建</strong>、<strong>测试</strong>、<strong>生产</strong>将全部在Docker容器中执行，你需要为不同步骤编写不同的Dockerfile。当依赖变化时，仅需要稍微修改Dockerfile即可。结合构建工具<a href="https://jenkins.io/" target="_blank" rel="noopener">Jenkins</a>，就可以将整个部署流程自动化。</p>
+<p>另一方面，Dockerfile将Docker镜像描述得非常精准，能够保证很强的一致性。比如，操作系统的版本，Node.js的版本，NPM模块的版本等。这就意味着，在本地开发环境运行成功的镜像，在<strong>构建</strong>、<strong>测试</strong>、<strong>生产</strong>环境中也没有问题。还有，不同的Docker容器是依赖于不同的Docker镜像，这样他们互不干扰。比如，两个Node.js应用可以分别使用不同版本的Node.js。</p>
+<h5 id="从集群管理角度理解Docker"><a href="#从集群管理角度理解Docker" class="headerlink" title="从集群管理角度理解Docker"></a>从集群管理角度理解Docker</h5><p>架构规模越来越大的时候，你有必要引入集群了。这就意味着，服务器由1台变成了多台，同一个应用需要运行多个备份来分担负载。当然，你可以手动对集群的功能进行划分: Nginx服务器，Node.js服务器，MySQL服务器，测试服务器，生产服务器…这样做的好处是简单粗暴；也可以说财大气粗，因为资源闲置会非常严重。还有一点，每次新增节点的时候，你就不得不花大量时间进行安装与配置，这其实是一种低效的重复劳动。</p>
+<p>下载Docker镜像之后，Docker容器可以运行在集群的任何一个节点。一方面，各个组件可以共享主机，且互不干扰；另一方面，也不需要在集群的节点上安装和配置任何组件。至于整个Docker集群的管理，业界有很多成熟的解决方案，例如<a href="http://mesos.apache.org/" target="_blank" rel="noopener">Mesos</a>，<a href="https://kubernetes.io/" target="_blank" rel="noopener">Kubernetes</a>与<a href="https://github.com/docker/swarm" target="_blank" rel="noopener">Docker Swarm</a>。这些集群系统提供了<strong>调度</strong>，<strong>服务发现</strong>，<strong>负载均衡</strong>等功能，让整个集群变成一个整体。</p>
+<h3 id="如何用Docker"><a href="#如何用Docker" class="headerlink" title="如何用Docker?"></a>如何用Docker?</h3><h5 id="编写Dockerfile"><a href="#编写Dockerfile" class="headerlink" title="编写Dockerfile"></a>编写Dockerfile</h5><p>正确的<a href="https://github.com/Fundebug/nodejs-docker/blob/master/Dockerfile" target="_blank" rel="noopener">Dockerfile</a>是这样的:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"># 使用DaoCloud的Ubuntu镜像</span><br><span class="line">FROM daocloud.io/library/ubuntu:14.04</span><br><span class="line"></span><br><span class="line"># 设置镜像作者</span><br><span class="line">MAINTAINER Fundebug &lt;help@fundebug.com&gt;</span><br><span class="line"></span><br><span class="line"># 设置时区</span><br><span class="line">RUN sudo sh -c &quot;echo &apos;Asia/Shanghai&apos; &gt; /etc/timezone&quot; &amp;&amp; \</span><br><span class="line">    sudo dpkg-reconfigure -f noninteractive tzdata</span><br><span class="line"></span><br><span class="line"># 使用阿里云的Ubuntu镜像</span><br><span class="line">RUN echo &apos;\n\</span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ trusty main restricted universe multiverse\n\</span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ trusty-security main restricted universe multiverse\n\</span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ trusty-updates main restricted universe multiverse\n\</span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ trusty-proposed main restricted universe multiverse\n\</span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ trusty-backports main restricted universe multiverse\n\</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ trusty main restricted universe multiverse\n\</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ trusty-security main restricted universe multiverse\n\</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ trusty-updates main restricted universe multiverse\n\</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ trusty-proposed main restricted universe multiverse\n\</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ trusty-backports main restricted universe multiverse\n&apos;\</span><br><span class="line">&gt; /etc/apt/sources.list</span><br><span class="line"></span><br><span class="line"># 安装node v6.10.1</span><br><span class="line">RUN sudo apt-get update &amp;&amp; sudo apt-get install -y wget</span><br><span class="line"></span><br><span class="line"># 使用淘宝镜像安装Node.js v6.10.1</span><br><span class="line">RUN wget https://npm.taobao.org/mirrors/node/v6.10.1/node-v6.10.1-linux-x64.tar.gz &amp;&amp; \</span><br><span class="line">    tar -C /usr/local --strip-components 1 -xzf node-v6.10.1-linux-x64.tar.gz &amp;&amp; \</span><br><span class="line">    rm node-v6.10.1-linux-x64.tar.gz </span><br><span class="line"></span><br><span class="line">WORKDIR /app</span><br><span class="line"></span><br><span class="line"># 安装npm模块</span><br><span class="line">ADD package.json /app/package.json</span><br><span class="line"></span><br><span class="line"># 使用淘宝的npm镜像</span><br><span class="line">RUN npm install --production -d --registry=https://registry.npm.taobao.org</span><br><span class="line"></span><br><span class="line"># 添加源代码</span><br><span class="line">ADD . /app</span><br><span class="line"></span><br><span class="line"># 运行app.js</span><br><span class="line">CMD [&quot;node&quot;, &quot;/app/app.js&quot;]</span><br></pre></td></tr></table></figure>
+<p>有几点值得注意的地方：</p>
+<ul>
+<li>使用国内<a href="https://www.daocloud.io/" target="_blank" rel="noopener">DaoCloud</a>的Docker仓库，阿里云的ubuntu镜像以及淘宝的npm镜像，否则会出事情的;</li>
+<li>将时区设为Asia/Shanghai，否则日志的时间会不大对劲;</li>
+<li>使用.dockerignore忽略不需要添加到Docker镜像的文件和目录，其语法与.gitigore一致;</li>
+</ul>
+<p>更重要的一点是，<strong>package.json需要单独添加</strong>。Docker在构建镜像的时候，是一层一层构建的，仅当这一层有变化时，重新构建对应的层。如果package.json和源代码一起添加到镜像，则每次修改源码都需要重新安装npm模块，这样木有必要。所以，正确的顺序是: 添加package.json；安装npm模块；添加源代码。</p>
+<h5 id="构建Docker镜像"><a href="#构建Docker镜像" class="headerlink" title="构建Docker镜像"></a>构建Docker镜像</h5><p>使用<strong>docker build</strong>命令构建Docker镜像</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo docker build -t fundebug/nodejs .</span><br></pre></td></tr></table></figure>
+<p>其中，-t选项用于指定镜像的名称。</p>
+<p>使用<strong>docker images</strong>命令查看Docker镜像</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">sudo docker images</span><br><span class="line">REPOSITORY                    TAG                 IMAGE ID            CREATED             SIZE</span><br><span class="line">fundebug/nodejs               latest              64530ce811a1        32 minutes ago      266.4 MB</span><br><span class="line">daocloud.io/library/ubuntu    14.04               b969ab9f929b        9 weeks ago         188 MB</span><br></pre></td></tr></table></figure>
+<p>可知，fundebug/nodejs镜像的大小为266.4MB，在ubuntu镜像的基础上增加了80MB左右。</p>
+<h5 id="运行Docker容器"><a href="#运行Docker容器" class="headerlink" title="运行Docker容器"></a>运行Docker容器</h5><p>使用<strong>docker run</strong>命令运行Docker容器</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo docker run -d --net=host --name=hello-fundebug fundebug/nodejs</span><br></pre></td></tr></table></figure>
+<p>其中，-d选项表示容器在后台运行；–net选项指定容器的网络模式，host表示与主机共享网络；–name指定了容器的名称。</p>
+<p>使用<strong>docker ps</strong>命令查看Docker容器</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo docker ps</span><br><span class="line">CONTAINER ID        IMAGE                             COMMAND                  CREATED             STATUS              PORTS               NAMES</span><br><span class="line">e8eb5473970c        fundebug/nodejs                   &quot;node /app/app.js&quot;       37 minutes ago      Up 37 minutes                           hello-</span><br></pre></td></tr></table></figure>
+<p>可知，COMMAND为”node /app/app.js”，表示容器中运行的命令。这是我们再Dockerfile中使用CMD指定的。不妨使用<strong>docker exec</strong>命令在容器内执行ps命令<strong>查看容器内的进程</strong>：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo docker exec hello-fundebug ps -f</span><br><span class="line">UID        PID  PPID  C STIME TTY          TIME CMD</span><br><span class="line">root         1     0  0 15:14 ?        00:00:00 node /app/app.js</span><br></pre></td></tr></table></figure>
+<p>可知，容器内的1号进程即为node进程<strong>node /app/app.js</strong>。在Linux中，PID为1进程按说是唯一的，即init进程。但是，容器使用了内核的Namespace机制，为容器创建了独立的PID空间，因此容器中也有1号进程。</p>
+<h5 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h5><p>使用curl命令访问:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">curl localhost:3000</span><br><span class="line">Hello Fundebug!</span><br></pre></td></tr></table></figure>
+<h3 id="是否用Docker？"><a href="#是否用Docker？" class="headerlink" title="是否用Docker？"></a>是否用Docker？</h3><p>一方面，使用Docker能够带来很大益处；另一方面，引入Docker必然会有很多挑战，需要熟悉Docker才能应对自如。<strong>想必这是一个艰难的决定</strong>。如果从长远的角度来看，Docker正在成为应用开发，部署，发布的标准技术，也许我们不得不用开放的心态对待它。</p>
+<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p> <a href="https://blog.fundebug.com/2017/03/27/nodejs-docker/" target="_blank" rel="noopener">https://blog.fundebug.com/2017/03/27/nodejs-docker/</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2017-08-08T14:16:53.000Z"><a href="/2017/08/08/Node.js_网络/node中的网络通信模块/">2017-08-08</a></time>
       
       
@@ -170,6 +537,156 @@
 <p>http.IncomingMessage有两个地方时被内部创建，一个是作为server端的request，另外一个是作为client请求中的response，同时该类显示地继承了Stream.Readable。</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">IncomingMessage</span>(<span class="params">socket</span>) </span>&#123;</span><br><span class="line">  Stream.Readable.call(<span class="keyword">this</span>);</span><br><span class="line">  <span class="keyword">this</span>.socket = socket;</span><br><span class="line">  <span class="keyword">this</span>.connection = socket;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line">util.inherits(IncomingMessage, Stream.Readable);</span><br></pre></td></tr></table></figure>
 <h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="http://zhenhua-lee.github.io/node/socket.html" target="_blank" rel="noopener">http://zhenhua-lee.github.io/node/socket.html</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2017-06-05T06:45:23.000Z"><a href="/2017/06/05/Node.js_测试/Node.js单元测试、集成测试、基准测试以及代码覆盖率测试/">2017-06-05</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2017/06/05/Node.js_测试/Node.js单元测试、集成测试、基准测试以及代码覆盖率测试/">Node.js单元测试、集成测试、基准测试以及代码覆盖率测试</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="黑盒测试"><a href="#黑盒测试" class="headerlink" title="黑盒测试"></a>黑盒测试</h3><p>黑盒测试 (Black-box Testing), 测试应用程序的功能, 而不是其内部结构或运作. 测试者不需了解代码、内部结构等, 只需知道什么是应用应该做的事, 即当键入特定的输入, 可得到一定的输出. 测试者通过选择<code>有效输入</code>和<code>无效输入</code>来验证是否正确的输出. 此测试方法可适合大部分的软件测试, 例如集成测试 (Integration Testing) 以及系统测试 (System Testing).</p>
+<h3 id="白盒测试"><a href="#白盒测试" class="headerlink" title="白盒测试"></a>白盒测试</h3><p>白盒测试 (White-box Testing) 测试应用程序的内部结构或运作, 而不是测试应用程序的功能 (即黑盒测试). 在白盒测试时, 以编程语言的角度来设计测试案例. 白盒测试可以应用于单元测试 (Unit Testing)、集成测试 (Integration Testing) 和系统的软件测试流程, 可测试在集成过程中每一单元之间的路径, 或者主系统跟子系统中的测试.</p>
+<h2 id="单元测试"><a href="#单元测试" class="headerlink" title="单元测试"></a>单元测试</h2><p>单元测试，又称模块测试，针对程序中的最小执行单元进行正确性测试。常见的开发模式包括 TDD 和 BDD 两类。</p>
+<p>TDD（Test-driven development，测试驱动开发），先编写测试用例，然后针对测试用例开发模块，当测试用例不足时，补充测试用例；当模块无法通过测试时，持续更新模块代码，直到完全通过测试用例。其开发核心围绕测试用例展开，即测试用例的完整性决定了开发模块的健壮性和正确性，这容易由边界条件引发单元测试覆盖度不够的问题。</p>
+<p>BDD（Behavior-driven development，行为驱动开发），用语义化的编程语言开发紧贴业务需求的测试用例，继而驱动相关模块的开发。</p>
+<p><a href="https://github.com/sindresorhus/ava" target="_blank" rel="noopener">AVA</a> 是 JavaScript 生态中最新潮的测试框架，其内置了 Babel，可以直接使用 ES6 语法，具有轻量高效、并发执行、强制隔离等优点，安装方法：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install --save-dev ava</span><br></pre></td></tr></table></figure>
+<p>设置 <code>package.json</code> 中的 <code>scripts</code> 字段：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="string">"scripts"</span>: &#123;</span><br><span class="line">        <span class="string">"test"</span>: <span class="string">"ava"</span>,</span><br><span class="line">        <span class="string">"test:watch"</span>: <span class="string">"ava --watch"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>运行：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">npm test</span><br><span class="line"></span><br><span class="line"># or</span><br><span class="line">npm test:watch</span><br></pre></td></tr></table></figure>
+<p>下面是一个基本的测试代码：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> test <span class="keyword">from</span> <span class="string">'ava'</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> fibonacci = <span class="function">(<span class="params">n</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (n === <span class="number">0</span> || n === <span class="number">1</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> n;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> fibonacci(n - <span class="number">1</span>) + fibonacci(n - <span class="number">2</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">test(<span class="string">'Test Fibonacci(0)'</span>, t =&gt; &#123;</span><br><span class="line">    t.is(fibonacci(<span class="number">0</span>), <span class="number">0</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">test(<span class="string">'Test Fibonacci(1)'</span>, t =&gt; &#123;</span><br><span class="line">    t.is(fibonacci(<span class="number">1</span>), <span class="number">1</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// HOOK CALLS</span></span><br><span class="line">test.before(<span class="string">'Before'</span>, t =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'before'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">test.after(<span class="string">'After'</span>, t =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'after'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">test.beforeEach(<span class="string">'BeforeEach'</span>, t =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'   beforeEach'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">test.afterEach(<span class="string">'AfterEach'</span>, t =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'   afterEach'</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>在上面的代码中，我们首先引入了 AVA 模块，然后创建了待测试的 <code>fibonacci</code> 函数，接下来是两个测试用例，最后是四个钩子方法：before() / after() / beforeEach() / afterEach()。</p>
+<p>AVA 提供了一下修饰方法来指定测试的执行方式：</p>
+<ul>
+<li><p><code>skip()</code>，跳过添加了 <code>skip()</code> 的测试用例</p>
+</li>
+<li><p><code>only()</code>，只执行添加了 <code>only()</code> 的测试用例</p>
+</li>
+<li><p><code>todo()</code>，占位标识符，表示将来需要添加的测试用例</p>
+</li>
+<li><p><code>serial()</code>，串行执行测试用例，默认情况下 AVA 会以并行的方式执行测试用例</p>
+</li>
+</ul>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">test(<span class="string">'Test Fibonacci(0)'</span>, t =&gt; &#123;</span><br><span class="line">    t.is(fibonacci(<span class="number">0</span>), <span class="number">0</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>在上面代码回调函数中的 <code>t</code>，称为断言执行对象，该对象包含以下方法：</p>
+<ul>
+<li><p><code>t.end()</code>，结束测试，只在 <code>test.cb()</code> 中有效</p>
+</li>
+<li><p><code>t.plan(count)</code>，指定执行次数</p>
+</li>
+<li><p><code>t.pass([message])</code>，测试通过</p>
+</li>
+<li><p><code>t.fail([message])</code>，测试失败</p>
+</li>
+<li><p><code>t.ok(value, [message])</code>，断言 <code>value</code> 的值为真值</p>
+</li>
+<li><p><code>t.notOK(value, [message])</code>，断言 <code>value</code> 的值为假值</p>
+</li>
+<li><p><code>t.true(value, [message])</code>，断言 <code>value</code> 的值为 <code>true</code></p>
+</li>
+<li><p><code>t.false(value, [message])</code>，断言 <code>value</code> 的值为 <code>false</code></p>
+</li>
+<li><p><code>t.is(value, expected, [message])</code>，断言 <code>value === expected</code></p>
+</li>
+<li><p><code>t.not(value, expected, [message])</code>，断言 <code>value !== expected</code></p>
+</li>
+<li><p><code>t.same(value, expected, [message])</code>，断言 <code>value</code> 和 <code>expected</code> 深度相等</p>
+</li>
+<li><p><code>t.notSame(value, expected, [message])</code>，断言 <code>value</code> 和 <code>expected</code> 深度不等</p>
+</li>
+<li><p><code>t.throws(function | promise, [error, [message]])</code>，断言 <code>function</code> 抛出异常或 <code>promise</code>reject 错误</p>
+</li>
+<li><p><code>t.notThrows(function | promise, [message])</code>，断言 <code>function</code> 不会异常或 <code>promise</code> resolve</p>
+</li>
+<li><p><code>t.regex(contents, regex, [message])</code>，断言 <code>contents</code> 匹配 <code>regex</code></p>
+</li>
+<li><p><code>t.ifError(error, [message])</code>，断言 <code>error</code> 是假值</p>
+</li>
+</ul>
+<h3 id="Mock"><a href="#Mock" class="headerlink" title="Mock"></a>Mock</h3><p>Mock 主要用于单元测试中. 当一个测试的对象可能依赖其他 (也许复杂/多个) 的对象. 为了确保其行为不受其他对象的影响, 你可以通过模拟其他对象的行为来隔离你要测试的对象.</p>
+<p>当你要测试的单元依赖了一些很难纳入单元测试的情况时 (例如要测试的单元依赖数据库/文件操作/第三方服务 等情况的返回时), 使用 mock 是非常有用的. 简而言之, Mock 是模拟其他依赖的 behaviour.</p>
+<h3 id="常见测试工具"><a href="#常见测试工具" class="headerlink" title="常见测试工具"></a>常见测试工具</h3><ul>
+<li><a href="https://github.com/mochajs/mocha" target="_blank" rel="noopener">Mocha</a></li>
+<li><a href="https://github.com/avajs/ava" target="_blank" rel="noopener">ava</a></li>
+<li><a href="https://github.com/facebook/jest" target="_blank" rel="noopener">Jest</a></li>
+</ul>
+<h2 id="集成测试"><a href="#集成测试" class="headerlink" title="集成测试"></a>集成测试</h2><p>相对于专注微观模块的单元测试，集成测试是从宏观整体的角度发现问题，所以也称为组装测试和联合测试。<a href="https://travis-ci.org/" target="_blank" rel="noopener">Travis CI</a> 是一款优秀的持续集成工具，可以监听 Github 项目的更新，便于开源软件的集成测试。使用 Travis CI 需要在项目的根目录下创建 <code>.travis.yml</code> 配置文件（以 Node.js 为例）：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">language: node_js</span><br><span class="line"></span><br><span class="line">node_js:</span><br><span class="line">    - <span class="string">"6"</span></span><br><span class="line">    - <span class="string">"5"</span></span><br><span class="line"></span><br><span class="line">before_script:</span><br><span class="line"></span><br><span class="line">script:</span><br><span class="line">    - npm test</span><br><span class="line">    - node benchmark/index.js</span><br><span class="line"></span><br><span class="line">after_script:</span><br></pre></td></tr></table></figure>
+<p>默认情况下，Travis CI 会自动安装依赖并执行 <code>npm test</code> 命令，通过 <code>script</code> 字段可以自定义需要执行的命令，其完整的生命周期包括：</p>
+<ol>
+<li>Install <code>apt addons</code></li>
+<li><code>before_install</code></li>
+<li><code>install</code></li>
+<li><code>before_script</code></li>
+<li><code>script</code></li>
+<li><code>after_success</code> or <code>after_failure</code></li>
+<li>OPTIONAL <code>before_deploy</code></li>
+<li>OPTIONAL <code>deploy</code></li>
+<li>OPTIONAL <code>after_deploy</code></li>
+<li><code>after_script</code></li>
+</ol>
+<h2 id="基准测试"><a href="#基准测试" class="headerlink" title="基准测试"></a>基准测试</h2><p>基准测试使用严谨的测试方法、测试工具或测试系统评估目标模块的性能，常用于观测软硬件环境发生变化后的性能表现，其结果具有可复现性。在 Node.js 环境中最常用的基准测试工具是 <a href="https://benchmarkjs.com/docs" target="_blank" rel="noopener">Benchmark.js</a>，安装方式：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install --save-dev benchmark</span><br></pre></td></tr></table></figure></p>
+<p>基本示例：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> Benchmark = <span class="built_in">require</span>(<span class="string">'benchmark'</span>);</span><br><span class="line"><span class="keyword">const</span> suite = <span class="keyword">new</span> Benchmark.Suite;</span><br><span class="line"></span><br><span class="line">suite.add(<span class="string">'RegExp#test'</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    /o/.test(<span class="string">'Hello World!'</span>);</span><br><span class="line">&#125;)</span><br><span class="line">.add(<span class="string">'String#indexOf'</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="string">'Hello World!'</span>.indexOf(<span class="string">'o'</span>) &gt; <span class="number">-1</span>;</span><br><span class="line">&#125;)</span><br><span class="line">.on(<span class="string">'cycle'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">event</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="built_in">String</span>(event.target));</span><br><span class="line">&#125;)</span><br><span class="line">.on(<span class="string">'complete'</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'Fastest is '</span> + <span class="keyword">this</span>.filter(<span class="string">'fastest'</span>).map(<span class="string">'name'</span>));</span><br><span class="line">&#125;)</span><br><span class="line"><span class="comment">// run async</span></span><br><span class="line">.run(&#123; <span class="string">'async'</span>: <span class="literal">true</span> &#125;);</span><br></pre></td></tr></table></figure></p>
+<p>你可以将同一个功能的不同实现基于同一个标准来比较不同实现的速度, 从而得到最优解.</p>
+<p>黑盒级别的基准测试, 则推荐 <a href="https://httpd.apache.org/docs/2.4/programs/ab.html" target="_blank" rel="noopener">Apache ab</a> 以及 <a href="https://github.com/wg/wrk" target="_blank" rel="noopener">wrk</a> 等。:</p>
+<h2 id="代码覆盖率"><a href="#代码覆盖率" class="headerlink" title="代码覆盖率"></a>代码覆盖率</h2><p>  测试覆盖率 (Test Coverage) 是指代码中各项逻辑被测试覆盖到的比率, 比如 90% 的覆盖率, 是指代码中 90% 的情况都被测试覆盖到了.</p>
+<p>  覆盖率通常由四个维度贡献:</p>
+<ul>
+<li><p>行覆盖率 (line coverage) 是否每一行都执行了？</p>
+</li>
+<li><p>函数覆盖率 (function coverage) 是否每个函数都调用了？</p>
+</li>
+<li><p>分支覆盖率 (branch coverage) 是否每个if代码块都执行了？</p>
+</li>
+<li><p>语句覆盖率 (statement coverage) 是否每个语句都执行了？</p>
+</li>
+</ul>
+<p>常用的测试覆盖率框架 <a href="https://github.com/gotwarlost/istanbul" target="_blank" rel="noopener">istanbul</a>.</p>
+<p>覆盖率工具根据测试用例覆盖的代码行数和分支数来判断模块的完整性。AVA 推荐使用 <code>nyc</code> 测试代码覆盖率，安装 nyc：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install nyc --save-dev</span><br></pre></td></tr></table></figure>
+<p>修改 <code>.gitignore</code> 忽略相关文件：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">node_modules</span><br><span class="line">coverage</span><br><span class="line">.nyc_output</span><br></pre></td></tr></table></figure></p>
+<p>修改 <code>package.json</code> 中的 <code>test</code> 字段：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="string">"scripts"</span>: &#123;</span><br><span class="line">        <span class="string">"test"</span>: <span class="string">"nyc ava"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>执行 <code>npm test</code>，得到：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">➜  test-in-action (master) ✔ npm test</span><br><span class="line"></span><br><span class="line">&gt; test-in-action@1.0.0 test /Users/sean/Desktop/test-in-action</span><br><span class="line">&gt; nyc ava</span><br><span class="line"></span><br><span class="line">   2 passed</span><br><span class="line">----------|----------|----------|----------|----------|----------------|</span><br><span class="line">File      |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovered Lines |</span><br><span class="line">----------|----------|----------|----------|----------|----------------|</span><br><span class="line">----------|----------|----------|----------|----------|----------------|</span><br><span class="line">All files |      100 |      100 |      100 |      100 |                |</span><br><span class="line">----------|----------|----------|----------|----------|----------------|</span><br></pre></td></tr></table></figure></p>
+<h2 id="压力测试"><a href="#压力测试" class="headerlink" title="压力测试"></a>压力测试</h2><p>压力测试 (Stress testing), 是保证系统稳定性的一种测试方法. 通过预估系统所需要承载的 QPS, TPS 等指标, 然后通过如 <a href="http://jmeter.apache.org/" target="_blank" rel="noopener">Jmeter</a> 等压测工具模拟相应的请求情况, 来验证当前应能能否达到目标.</p>
+<p>对于比较重要, 流量较高或者后期业务量会持续增长的系统, 进行压力测试是保证项目品质的重要环节. 常见的如负载是否均衡, 带宽是否合理, 以及磁盘 IO 网络 IO 等问题都可以通过比较极限的压力测试暴露出来.</p>
+<h2 id="Assert"><a href="#Assert" class="headerlink" title="Assert"></a>Assert</h2><p>断言 (Assert) 是快速判断并对不符合预期的情况进行报错的模块. 是将:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">if (condition) &#123;</span><br><span class="line">  throw new Error(&apos;Sth wrong&apos;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>写成:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">assert(!condition, &apos;Sth wrong&apos;);</span><br></pre></td></tr></table></figure>
+<p>等等情况的一种简化. 并且提供了丰富了 <code>equal</code> 判断, 对于对象类型也有深度/严格判断等情况支持.</p>
+<p>Node.js 中内置的 <code>assert</code> 模块也是属于断言模块的一种, 但是官方在文档中有注明, 该内置模块主要是用于内置代码编写时的基本断言需求, 并不是一个通用的断言库 (<strong>not intended to be used as a general purpose assertion library</strong>)</p>
+<h3 id="常见断言工具"><a href="#常见断言工具" class="headerlink" title="常见断言工具"></a>常见断言工具</h3><ul>
+<li><a href="https://github.com/chaijs/chai" target="_blank" rel="noopener">Chai</a></li>
+<li><a href="https://github.com/shouldjs/should.js" target="_blank" rel="noopener">should.js</a></li>
+</ul>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="http://ourjs.com/detail/5738493888feaf2d031d24fa" target="_blank" rel="noopener">http://ourjs.com/detail/5738493888feaf2d031d24fa</a><br><a href="https://elemefe.github.io/node-interview/#/sections/zh-cn/test?id=mock" target="_blank" rel="noopener">https://elemefe.github.io/node-interview/#/sections/zh-cn/test?id=mock</a></p>
 
       
     </div>
@@ -359,156 +876,6 @@
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">require</span>(<span class="string">'./ascii-art'</span>)() <span class="comment">// 会显示标头。</span></span><br><span class="line"><span class="built_in">require</span>(<span class="string">'./ascii-art'</span>)() <span class="comment">// 也会显示标头。</span></span><br></pre></td></tr></table></figure>
 <p>以上，就是我这次要说的内容！</p>
 <h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="https://www.oschina.net/translate/requiring-modules-in-node-js-everything-you-need-to-know" target="_blank" rel="noopener">https://www.oschina.net/translate/requiring-modules-in-node-js-everything-you-need-to-know</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2017-06-05T06:45:23.000Z"><a href="/2017/06/05/Node.js_测试/Node.js单元测试、集成测试、基准测试以及代码覆盖率测试/">2017-06-05</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/06/05/Node.js_测试/Node.js单元测试、集成测试、基准测试以及代码覆盖率测试/">Node.js单元测试、集成测试、基准测试以及代码覆盖率测试</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="黑盒测试"><a href="#黑盒测试" class="headerlink" title="黑盒测试"></a>黑盒测试</h3><p>黑盒测试 (Black-box Testing), 测试应用程序的功能, 而不是其内部结构或运作. 测试者不需了解代码、内部结构等, 只需知道什么是应用应该做的事, 即当键入特定的输入, 可得到一定的输出. 测试者通过选择<code>有效输入</code>和<code>无效输入</code>来验证是否正确的输出. 此测试方法可适合大部分的软件测试, 例如集成测试 (Integration Testing) 以及系统测试 (System Testing).</p>
-<h3 id="白盒测试"><a href="#白盒测试" class="headerlink" title="白盒测试"></a>白盒测试</h3><p>白盒测试 (White-box Testing) 测试应用程序的内部结构或运作, 而不是测试应用程序的功能 (即黑盒测试). 在白盒测试时, 以编程语言的角度来设计测试案例. 白盒测试可以应用于单元测试 (Unit Testing)、集成测试 (Integration Testing) 和系统的软件测试流程, 可测试在集成过程中每一单元之间的路径, 或者主系统跟子系统中的测试.</p>
-<h2 id="单元测试"><a href="#单元测试" class="headerlink" title="单元测试"></a>单元测试</h2><p>单元测试，又称模块测试，针对程序中的最小执行单元进行正确性测试。常见的开发模式包括 TDD 和 BDD 两类。</p>
-<p>TDD（Test-driven development，测试驱动开发），先编写测试用例，然后针对测试用例开发模块，当测试用例不足时，补充测试用例；当模块无法通过测试时，持续更新模块代码，直到完全通过测试用例。其开发核心围绕测试用例展开，即测试用例的完整性决定了开发模块的健壮性和正确性，这容易由边界条件引发单元测试覆盖度不够的问题。</p>
-<p>BDD（Behavior-driven development，行为驱动开发），用语义化的编程语言开发紧贴业务需求的测试用例，继而驱动相关模块的开发。</p>
-<p><a href="https://github.com/sindresorhus/ava" target="_blank" rel="noopener">AVA</a> 是 JavaScript 生态中最新潮的测试框架，其内置了 Babel，可以直接使用 ES6 语法，具有轻量高效、并发执行、强制隔离等优点，安装方法：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install --save-dev ava</span><br></pre></td></tr></table></figure>
-<p>设置 <code>package.json</code> 中的 <code>scripts</code> 字段：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="string">"scripts"</span>: &#123;</span><br><span class="line">        <span class="string">"test"</span>: <span class="string">"ava"</span>,</span><br><span class="line">        <span class="string">"test:watch"</span>: <span class="string">"ava --watch"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>运行：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">npm test</span><br><span class="line"></span><br><span class="line"># or</span><br><span class="line">npm test:watch</span><br></pre></td></tr></table></figure>
-<p>下面是一个基本的测试代码：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> test <span class="keyword">from</span> <span class="string">'ava'</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> fibonacci = <span class="function">(<span class="params">n</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (n === <span class="number">0</span> || n === <span class="number">1</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> n;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> fibonacci(n - <span class="number">1</span>) + fibonacci(n - <span class="number">2</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">test(<span class="string">'Test Fibonacci(0)'</span>, t =&gt; &#123;</span><br><span class="line">    t.is(fibonacci(<span class="number">0</span>), <span class="number">0</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">test(<span class="string">'Test Fibonacci(1)'</span>, t =&gt; &#123;</span><br><span class="line">    t.is(fibonacci(<span class="number">1</span>), <span class="number">1</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// HOOK CALLS</span></span><br><span class="line">test.before(<span class="string">'Before'</span>, t =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'before'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">test.after(<span class="string">'After'</span>, t =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'after'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">test.beforeEach(<span class="string">'BeforeEach'</span>, t =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'   beforeEach'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">test.afterEach(<span class="string">'AfterEach'</span>, t =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'   afterEach'</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>在上面的代码中，我们首先引入了 AVA 模块，然后创建了待测试的 <code>fibonacci</code> 函数，接下来是两个测试用例，最后是四个钩子方法：before() / after() / beforeEach() / afterEach()。</p>
-<p>AVA 提供了一下修饰方法来指定测试的执行方式：</p>
-<ul>
-<li><p><code>skip()</code>，跳过添加了 <code>skip()</code> 的测试用例</p>
-</li>
-<li><p><code>only()</code>，只执行添加了 <code>only()</code> 的测试用例</p>
-</li>
-<li><p><code>todo()</code>，占位标识符，表示将来需要添加的测试用例</p>
-</li>
-<li><p><code>serial()</code>，串行执行测试用例，默认情况下 AVA 会以并行的方式执行测试用例</p>
-</li>
-</ul>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">test(<span class="string">'Test Fibonacci(0)'</span>, t =&gt; &#123;</span><br><span class="line">    t.is(fibonacci(<span class="number">0</span>), <span class="number">0</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>在上面代码回调函数中的 <code>t</code>，称为断言执行对象，该对象包含以下方法：</p>
-<ul>
-<li><p><code>t.end()</code>，结束测试，只在 <code>test.cb()</code> 中有效</p>
-</li>
-<li><p><code>t.plan(count)</code>，指定执行次数</p>
-</li>
-<li><p><code>t.pass([message])</code>，测试通过</p>
-</li>
-<li><p><code>t.fail([message])</code>，测试失败</p>
-</li>
-<li><p><code>t.ok(value, [message])</code>，断言 <code>value</code> 的值为真值</p>
-</li>
-<li><p><code>t.notOK(value, [message])</code>，断言 <code>value</code> 的值为假值</p>
-</li>
-<li><p><code>t.true(value, [message])</code>，断言 <code>value</code> 的值为 <code>true</code></p>
-</li>
-<li><p><code>t.false(value, [message])</code>，断言 <code>value</code> 的值为 <code>false</code></p>
-</li>
-<li><p><code>t.is(value, expected, [message])</code>，断言 <code>value === expected</code></p>
-</li>
-<li><p><code>t.not(value, expected, [message])</code>，断言 <code>value !== expected</code></p>
-</li>
-<li><p><code>t.same(value, expected, [message])</code>，断言 <code>value</code> 和 <code>expected</code> 深度相等</p>
-</li>
-<li><p><code>t.notSame(value, expected, [message])</code>，断言 <code>value</code> 和 <code>expected</code> 深度不等</p>
-</li>
-<li><p><code>t.throws(function | promise, [error, [message]])</code>，断言 <code>function</code> 抛出异常或 <code>promise</code>reject 错误</p>
-</li>
-<li><p><code>t.notThrows(function | promise, [message])</code>，断言 <code>function</code> 不会异常或 <code>promise</code> resolve</p>
-</li>
-<li><p><code>t.regex(contents, regex, [message])</code>，断言 <code>contents</code> 匹配 <code>regex</code></p>
-</li>
-<li><p><code>t.ifError(error, [message])</code>，断言 <code>error</code> 是假值</p>
-</li>
-</ul>
-<h3 id="Mock"><a href="#Mock" class="headerlink" title="Mock"></a>Mock</h3><p>Mock 主要用于单元测试中. 当一个测试的对象可能依赖其他 (也许复杂/多个) 的对象. 为了确保其行为不受其他对象的影响, 你可以通过模拟其他对象的行为来隔离你要测试的对象.</p>
-<p>当你要测试的单元依赖了一些很难纳入单元测试的情况时 (例如要测试的单元依赖数据库/文件操作/第三方服务 等情况的返回时), 使用 mock 是非常有用的. 简而言之, Mock 是模拟其他依赖的 behaviour.</p>
-<h3 id="常见测试工具"><a href="#常见测试工具" class="headerlink" title="常见测试工具"></a>常见测试工具</h3><ul>
-<li><a href="https://github.com/mochajs/mocha" target="_blank" rel="noopener">Mocha</a></li>
-<li><a href="https://github.com/avajs/ava" target="_blank" rel="noopener">ava</a></li>
-<li><a href="https://github.com/facebook/jest" target="_blank" rel="noopener">Jest</a></li>
-</ul>
-<h2 id="集成测试"><a href="#集成测试" class="headerlink" title="集成测试"></a>集成测试</h2><p>相对于专注微观模块的单元测试，集成测试是从宏观整体的角度发现问题，所以也称为组装测试和联合测试。<a href="https://travis-ci.org/" target="_blank" rel="noopener">Travis CI</a> 是一款优秀的持续集成工具，可以监听 Github 项目的更新，便于开源软件的集成测试。使用 Travis CI 需要在项目的根目录下创建 <code>.travis.yml</code> 配置文件（以 Node.js 为例）：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">language: node_js</span><br><span class="line"></span><br><span class="line">node_js:</span><br><span class="line">    - <span class="string">"6"</span></span><br><span class="line">    - <span class="string">"5"</span></span><br><span class="line"></span><br><span class="line">before_script:</span><br><span class="line"></span><br><span class="line">script:</span><br><span class="line">    - npm test</span><br><span class="line">    - node benchmark/index.js</span><br><span class="line"></span><br><span class="line">after_script:</span><br></pre></td></tr></table></figure>
-<p>默认情况下，Travis CI 会自动安装依赖并执行 <code>npm test</code> 命令，通过 <code>script</code> 字段可以自定义需要执行的命令，其完整的生命周期包括：</p>
-<ol>
-<li>Install <code>apt addons</code></li>
-<li><code>before_install</code></li>
-<li><code>install</code></li>
-<li><code>before_script</code></li>
-<li><code>script</code></li>
-<li><code>after_success</code> or <code>after_failure</code></li>
-<li>OPTIONAL <code>before_deploy</code></li>
-<li>OPTIONAL <code>deploy</code></li>
-<li>OPTIONAL <code>after_deploy</code></li>
-<li><code>after_script</code></li>
-</ol>
-<h2 id="基准测试"><a href="#基准测试" class="headerlink" title="基准测试"></a>基准测试</h2><p>基准测试使用严谨的测试方法、测试工具或测试系统评估目标模块的性能，常用于观测软硬件环境发生变化后的性能表现，其结果具有可复现性。在 Node.js 环境中最常用的基准测试工具是 <a href="https://benchmarkjs.com/docs" target="_blank" rel="noopener">Benchmark.js</a>，安装方式：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install --save-dev benchmark</span><br></pre></td></tr></table></figure></p>
-<p>基本示例：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> Benchmark = <span class="built_in">require</span>(<span class="string">'benchmark'</span>);</span><br><span class="line"><span class="keyword">const</span> suite = <span class="keyword">new</span> Benchmark.Suite;</span><br><span class="line"></span><br><span class="line">suite.add(<span class="string">'RegExp#test'</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    /o/.test(<span class="string">'Hello World!'</span>);</span><br><span class="line">&#125;)</span><br><span class="line">.add(<span class="string">'String#indexOf'</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="string">'Hello World!'</span>.indexOf(<span class="string">'o'</span>) &gt; <span class="number">-1</span>;</span><br><span class="line">&#125;)</span><br><span class="line">.on(<span class="string">'cycle'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">event</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="built_in">String</span>(event.target));</span><br><span class="line">&#125;)</span><br><span class="line">.on(<span class="string">'complete'</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'Fastest is '</span> + <span class="keyword">this</span>.filter(<span class="string">'fastest'</span>).map(<span class="string">'name'</span>));</span><br><span class="line">&#125;)</span><br><span class="line"><span class="comment">// run async</span></span><br><span class="line">.run(&#123; <span class="string">'async'</span>: <span class="literal">true</span> &#125;);</span><br></pre></td></tr></table></figure></p>
-<p>你可以将同一个功能的不同实现基于同一个标准来比较不同实现的速度, 从而得到最优解.</p>
-<p>黑盒级别的基准测试, 则推荐 <a href="https://httpd.apache.org/docs/2.4/programs/ab.html" target="_blank" rel="noopener">Apache ab</a> 以及 <a href="https://github.com/wg/wrk" target="_blank" rel="noopener">wrk</a> 等。:</p>
-<h2 id="代码覆盖率"><a href="#代码覆盖率" class="headerlink" title="代码覆盖率"></a>代码覆盖率</h2><p>  测试覆盖率 (Test Coverage) 是指代码中各项逻辑被测试覆盖到的比率, 比如 90% 的覆盖率, 是指代码中 90% 的情况都被测试覆盖到了.</p>
-<p>  覆盖率通常由四个维度贡献:</p>
-<ul>
-<li><p>行覆盖率 (line coverage) 是否每一行都执行了？</p>
-</li>
-<li><p>函数覆盖率 (function coverage) 是否每个函数都调用了？</p>
-</li>
-<li><p>分支覆盖率 (branch coverage) 是否每个if代码块都执行了？</p>
-</li>
-<li><p>语句覆盖率 (statement coverage) 是否每个语句都执行了？</p>
-</li>
-</ul>
-<p>常用的测试覆盖率框架 <a href="https://github.com/gotwarlost/istanbul" target="_blank" rel="noopener">istanbul</a>.</p>
-<p>覆盖率工具根据测试用例覆盖的代码行数和分支数来判断模块的完整性。AVA 推荐使用 <code>nyc</code> 测试代码覆盖率，安装 nyc：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install nyc --save-dev</span><br></pre></td></tr></table></figure>
-<p>修改 <code>.gitignore</code> 忽略相关文件：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">node_modules</span><br><span class="line">coverage</span><br><span class="line">.nyc_output</span><br></pre></td></tr></table></figure></p>
-<p>修改 <code>package.json</code> 中的 <code>test</code> 字段：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="string">"scripts"</span>: &#123;</span><br><span class="line">        <span class="string">"test"</span>: <span class="string">"nyc ava"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>执行 <code>npm test</code>，得到：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">➜  test-in-action (master) ✔ npm test</span><br><span class="line"></span><br><span class="line">&gt; test-in-action@1.0.0 test /Users/sean/Desktop/test-in-action</span><br><span class="line">&gt; nyc ava</span><br><span class="line"></span><br><span class="line">   2 passed</span><br><span class="line">----------|----------|----------|----------|----------|----------------|</span><br><span class="line">File      |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovered Lines |</span><br><span class="line">----------|----------|----------|----------|----------|----------------|</span><br><span class="line">----------|----------|----------|----------|----------|----------------|</span><br><span class="line">All files |      100 |      100 |      100 |      100 |                |</span><br><span class="line">----------|----------|----------|----------|----------|----------------|</span><br></pre></td></tr></table></figure></p>
-<h2 id="压力测试"><a href="#压力测试" class="headerlink" title="压力测试"></a>压力测试</h2><p>压力测试 (Stress testing), 是保证系统稳定性的一种测试方法. 通过预估系统所需要承载的 QPS, TPS 等指标, 然后通过如 <a href="http://jmeter.apache.org/" target="_blank" rel="noopener">Jmeter</a> 等压测工具模拟相应的请求情况, 来验证当前应能能否达到目标.</p>
-<p>对于比较重要, 流量较高或者后期业务量会持续增长的系统, 进行压力测试是保证项目品质的重要环节. 常见的如负载是否均衡, 带宽是否合理, 以及磁盘 IO 网络 IO 等问题都可以通过比较极限的压力测试暴露出来.</p>
-<h2 id="Assert"><a href="#Assert" class="headerlink" title="Assert"></a>Assert</h2><p>断言 (Assert) 是快速判断并对不符合预期的情况进行报错的模块. 是将:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">if (condition) &#123;</span><br><span class="line">  throw new Error(&apos;Sth wrong&apos;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>写成:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">assert(!condition, &apos;Sth wrong&apos;);</span><br></pre></td></tr></table></figure>
-<p>等等情况的一种简化. 并且提供了丰富了 <code>equal</code> 判断, 对于对象类型也有深度/严格判断等情况支持.</p>
-<p>Node.js 中内置的 <code>assert</code> 模块也是属于断言模块的一种, 但是官方在文档中有注明, 该内置模块主要是用于内置代码编写时的基本断言需求, 并不是一个通用的断言库 (<strong>not intended to be used as a general purpose assertion library</strong>)</p>
-<h3 id="常见断言工具"><a href="#常见断言工具" class="headerlink" title="常见断言工具"></a>常见断言工具</h3><ul>
-<li><a href="https://github.com/chaijs/chai" target="_blank" rel="noopener">Chai</a></li>
-<li><a href="https://github.com/shouldjs/should.js" target="_blank" rel="noopener">should.js</a></li>
-</ul>
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="http://ourjs.com/detail/5738493888feaf2d031d24fa" target="_blank" rel="noopener">http://ourjs.com/detail/5738493888feaf2d031d24fa</a><br><a href="https://elemefe.github.io/node-interview/#/sections/zh-cn/test?id=mock" target="_blank" rel="noopener">https://elemefe.github.io/node-interview/#/sections/zh-cn/test?id=mock</a></p>
 
       
     </div>
@@ -794,343 +1161,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2017-02-16T06:45:23.000Z"><a href="/2017/02/16/网络安全/CSRF攻击及预防/">2017-02-16</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/02/16/网络安全/CSRF攻击及预防/">CSRF攻击及预防</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h2 id="什么是CSRF？"><a href="#什么是CSRF？" class="headerlink" title="什么是CSRF？"></a>什么是CSRF？</h2><p>CSRF（Cross-Site Request Forgery，跨站点伪造请求，也被称为：one click attack/session riding，缩写为：CSRF/XSRF）是一种网络攻击方式，该攻击可以在受害者毫不知情的情况下以受害者名义伪造请求发送给受攻击站点，从而在未授权的情况下执行在权限保护之下的操作，具有很大的危害性。具体来讲，可以这样理解CSRF攻击：攻击者盗用了你的身份，以你的名义发送恶意请求，对服务器来说这个请求是完全合法的，但是却完成了攻击者所期望的一个操作，比如以你的名义发送邮件、发消息，盗取你的账号，添加系统管理员，甚至于购买商品、虚拟货币转账等。</p>
-<h2 id="CSRF原理"><a href="#CSRF原理" class="headerlink" title="CSRF原理"></a>CSRF原理</h2><p>下图简单阐述了CSRF的原理:</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/csrf.jpg" alt=""></p>
-<p>从上图可以看出，要完成一次CSRF攻击，受害者必须依次完成以下两个步骤：</p>
-<ul>
-<li>登录受信任网站A，并在本地生成Cookie。</li>
-<li>在不登出A的情况下，访问危险网站B。</li>
-</ul>
-<p>看到这里，你也许会问：“如果我不满足以上两个条件中的一个，我就不会受到CSRF攻击”。是滴，确实如此，但是你不能保证以下情况不会发生：</p>
-<ul>
-<li>你不能保证你登录了一个网站之后，不再打开一个tab页面并访问其它的网站。</li>
-<li>你不能保证你关闭浏览器之后，你本地的Cookie立刻过期，你上次的会话已经结束。</li>
-<li>上述中所谓的攻击网站，可能就是一个钓鱼网站。</li>
-</ul>
-<h2 id="CSRF攻击实例"><a href="#CSRF攻击实例" class="headerlink" title="CSRF攻击实例"></a>CSRF攻击实例</h2><p>CSRF 攻击可以在受害者毫不知情的情况下以受害者名义伪造请求发送给受攻击站点，从而在并未授权的情况下执行在权限保护之下的操作。比如说，受害者 Bob 在银行有一笔存款，通过对银行的网站发送请求 <a href="http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=bob2" target="_blank" rel="noopener">http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=bob2</a> 可以使 Bob 把 1000000 的存款转到 bob2 的账号下。通常情况下，该请求发送到网站后，服务器会先验证该请求是否来自一个合法的 session，并且该 session 的用户 Bob 已经成功登陆。黑客 Mallory 自己在该银行也有账户，他知道上文中的 URL 可以把钱进行转帐操作。Mallory 可以自己发送一个请求给银行：<a href="http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory。但是这个请求来自" target="_blank" rel="noopener">http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory。但是这个请求来自</a> Mallory 而非 Bob，他不能通过安全认证，因此该请求不会起作用。这时，Mallory 想到使用 CSRF 的攻击方式，他先自己做一个网站，在网站中放入如下代码： src=”<a href="http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory" target="_blank" rel="noopener">http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory</a> ”，并且通过广告等诱使 Bob 来访问他的网站。当 Bob 访问该网站时，上述 url 就会从 Bob 的浏览器发向银行，而这个请求会附带 Bob 浏览器中的 cookie 一起发向银行服务器。大多数情况下，该请求会失败，因为他要求 Bob 的认证信息。但是，如果 Bob 当时恰巧刚访问他的银行后不久，他的浏览器与银行网站之间的 session 尚未过期，浏览器的 cookie 之中含有 Bob 的认证信息。这时，悲剧发生了，这个 url 请求就会得到响应，钱将从 Bob 的账号转移到 Mallory 的账号，而 Bob 当时毫不知情。等以后 Bob 发现账户钱少了，即使他去银行查询日志，他也只能发现确实有一个来自于他本人的合法请求转移了资金，没有任何被攻击的痕迹。而 Mallory 则可以拿到钱后逍遥法外。</p>
-<h2 id="CSRF如何防御"><a href="#CSRF如何防御" class="headerlink" title="CSRF如何防御"></a>CSRF如何防御</h2><h3 id="验证-HTTP-Referer-字段"><a href="#验证-HTTP-Referer-字段" class="headerlink" title="验证 HTTP Referer 字段"></a>验证 HTTP Referer 字段</h3><p>根据 HTTP 协议，在 HTTP 头中有一个字段叫 Referer，它记录了该 HTTP 请求的来源地址。在通常情况下，访问一个安全受限页面的请求来自于同一个网站，比如需要访问 <a href="http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory，用户必须先登陆" target="_blank" rel="noopener">http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory，用户必须先登陆</a> bank.example，然后通过点击页面上的按钮来触发转账事件。这时，该转帐请求的 Referer 值就会是转账按钮所在的页面的 URL，通常是以 bank.example 域名开头的地址。而如果黑客要对银行网站实施 CSRF 攻击，他只能在他自己的网站构造请求，当用户通过黑客的网站发送请求到银行时，该请求的 Referer 是指向黑客自己的网站。因此，要防御 CSRF 攻击，银行网站只需要对于每一个转账请求验证其 Referer 值，如果是以 bank.example 开头的域名，则说明该请求是来自银行网站自己的请求，是合法的。如果 Referer 是其他网站的话，则有可能是黑客的 CSRF 攻击，拒绝该请求。</p>
-<p>这种方法的显而易见的好处就是简单易行，网站的普通开发人员不需要操心 CSRF 的漏洞，只需要在最后给所有安全敏感的请求统一增加一个拦截器来检查 Referer 的值就可以。特别是对于当前现有的系统，不需要改变当前系统的任何已有代码和逻辑，没有风险，非常便捷。</p>
-<p>然而，这种方法并非万无一失。Referer 的值是由浏览器提供的，虽然 HTTP 协议上有明确的要求，但是每个浏览器对于 Referer 的具体实现可能有差别，并不能保证浏览器自身没有安全漏洞。使用验证 Referer 值的方法，就是把安全性都依赖于第三方（即浏览器）来保障，从理论上来讲，这样并不安全。事实上，对于某些浏览器，比如 IE6 或 FF2，目前已经有一些方法可以篡改 Referer 值。如果 bank.example 网站支持 IE6 浏览器，黑客完全可以把用户浏览器的 Referer 值设为以 bank.example 域名开头的地址，这样就可以通过验证，从而进行 CSRF 攻击。</p>
-<p>即便是使用最新的浏览器，黑客无法篡改 Referer 值，这种方法仍然有问题。因为 Referer 值会记录下用户的访问来源，有些用户认为这样会侵犯到他们自己的隐私权，特别是有些组织担心 Referer 值会把组织内网中的某些信息泄露到外网中。因此，用户自己可以设置浏览器使其在发送请求时不再提供 Referer。当他们正常访问银行网站时，网站会因为请求没有 Referer 值而认为是 CSRF 攻击，拒绝合法用户的访问。</p>
-<h3 id="添加token验证"><a href="#添加token验证" class="headerlink" title="添加token验证"></a>添加token验证</h3><p>CSRF攻击之所以能够成功，是因为攻击者可以完全伪造用户的请求，该请求中所有的用户验证信息都存在cookie中，因此攻击者可以在不知道这些验证信息的情况下直接利用用户自己的cookie来通过安全验证。要防止CSRF，关键在于在请求中放入黑客所不能伪造的信息，并且该信息不存在于cookie之中。可以在HTTP请求中以参数的形式加入一个随机产生的token，并在服务器建立一个拦截器来验证这个token，如果请求中没有token或者token不正确，则认为可能是CSRF攻击而拒绝该请求。<br> 现在业界一致的做法就是使用Anti CSRF Token来防御CSRF。</p>
-<ul>
-<li>用户访问某个表单页面。</li>
-<li>服务端生成一个Token，放在用户的Session中，或者浏览器的Cookie中。</li>
-<li>在页面表单附带上Token参数。</li>
-<li>用户提交请求后，服务端验证表单中的Token是否与用户Session（或Cookies）中的Token一致，一致为合法请求，不是则非法请求。</li>
-</ul>
-<p>这个Token值必须是随机的，不可预测的。由于Token的存在，攻击者无法再构造一个带有合法Token的请求实施CSRF攻击。另外使用Token应注意Token的保密性，尽量把敏感操作由GET改成POST，以form或者AJAX形式提交，避免Token泄露。</p>
-<h3 id="验证码"><a href="#验证码" class="headerlink" title="验证码"></a>验证码</h3><p>验证码，强制用户必须与应用进行交互，才能完成最终请求。通常情况下，验证码能够很好的遏制CSRF攻击。但是出于用户体验考虑，网站不能给所有的操作都加上验证码。因此验证码只能作为一种辅助手段。</p>
-<h3 id="尽量使用POST，限制GET"><a href="#尽量使用POST，限制GET" class="headerlink" title="尽量使用POST，限制GET"></a>尽量使用POST，限制GET</h3><p>GET接口能够直接将请求地址暴露给攻击者，所以要防止CSRF一定最好不要用GET。当然POST并不是万无一失，攻击者只需要构造一个form表单就可以，但需要在第三方页面做，这样就增加了暴露的可能性。</p>
-<h3 id="在HTTP头部添加自定义属性"><a href="#在HTTP头部添加自定义属性" class="headerlink" title="在HTTP头部添加自定义属性"></a>在HTTP头部添加自定义属性</h3><p>这种方法也是使用token并验证，但是它是把token放在HTTP请求头部中。通过使用AJAX我们可以在我们的请求头部中添加我们的自定义属性，但是这种方法要求我们将整个站的请求全部改成AJAX，如果是新站还好，老站的话无疑是需要重写整个站点的，这是很不可取的。</p>
-<h2 id="参考："><a href="#参考：" class="headerlink" title="参考："></a>参考：</h2><p><a href="https://www.cnblogs.com/cxying93/p/6035031.html" target="_blank" rel="noopener">https://www.cnblogs.com/cxying93/p/6035031.html</a><br><a href="https://www.ibm.com/developerworks/cn/web/1102_niugang_csrf/index.html" target="_blank" rel="noopener">https://www.ibm.com/developerworks/cn/web/1102_niugang_csrf/index.html</a><br><a href="https://www.imooc.com/article/18069" target="_blank" rel="noopener">https://www.imooc.com/article/18069</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2017-02-12T06:45:23.000Z"><a href="/2017/02/12/网络安全/Node.js中crypto模块/">2017-02-12</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/02/12/网络安全/Node.js中crypto模块/">Node.js中的crypto模块</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h2 id="一、-概述"><a href="#一、-概述" class="headerlink" title="一、 概述"></a>一、 概述</h2><p>互联网时代，网络上的数据量每天都在以惊人的速度增长。同时，各类网络安全问题层出不穷。在信息安全重要性日益凸显的今天，作为一名开发者，需要加强对安全的认识，并通过技术手段增强服务的安全性。</p>
-<p><code>crypto</code>模块是nodejs的核心模块之一，它提供了安全相关的功能，如摘要运算、加密、电子签名等。很多初学者对着长长的API列表，不知如何上手，因此它背后涉及了大量安全领域的知识。</p>
-<p>本文重点讲解API背后的理论知识，主要包括如下内容：</p>
-<ol>
-<li>摘要（hash）、基于摘要的消息验证码（HMAC）</li>
-<li>对称加密、非对称加密、电子签名</li>
-<li>分组加密模式</li>
-</ol>
-<h2 id="二、摘要（hash）"><a href="#二、摘要（hash）" class="headerlink" title="二、摘要（hash）"></a>二、摘要（hash）</h2><p>摘要（digest）：将长度不固定的消息作为输入，通过运行hash函数，生成固定长度的输出，这段输出就叫做摘要。通常用来验证消息完整、未被篡改。</p>
-<p>摘要运算是不可逆的。也就是说，输入固定的情况下，产生固定的输出。但知道输出的情况下，无法反推出输入。</p>
-<p>伪代码如下。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">digest = Hash(message)</span><br></pre></td></tr></table></figure></p>
-<p>常见的摘要算法 与 对应的输出位数如下：</p>
-<ul>
-<li>MD5：128位</li>
-<li>SHA-1：160位</li>
-<li>SHA256 ：256位</li>
-<li>SHA512：512位</li>
-</ul>
-<p>nodejs中的例子：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> crypto = <span class="built_in">require</span>(<span class="string">'crypto'</span>);</span><br><span class="line"><span class="keyword">var</span> md5 = crypto.createHash(<span class="string">'md5'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> message = <span class="string">'hello'</span>;</span><br><span class="line"><span class="keyword">var</span> digest = md5.update(message, <span class="string">'utf8'</span>).digest(<span class="string">'hex'</span>); </span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(digest);</span><br><span class="line"><span class="comment">// 输出如下：注意这里是16进制</span></span><br><span class="line"><span class="comment">// 5d41402abc4b2a76b9719d911017c592</span></span><br></pre></td></tr></table></figure>
-<p>备注：在各类文章或文献中，摘要、hash、散列 这几个词经常会混用，导致不少初学者看了一脸懵逼，其实大部分时候指的都是一回事，记住上面对摘要的定义就好了。</p>
-<h2 id="三、MAC、HMAC"><a href="#三、MAC、HMAC" class="headerlink" title="三、MAC、HMAC"></a>三、MAC、HMAC</h2><p>MAC（Message Authentication Code）：消息认证码，用以保证数据的完整性。运算结果取决于消息本身、秘钥。</p>
-<p>MAC可以有多种不同的实现方式，比如HMAC。</p>
-<p>HMAC（Hash-based Message Authentication Code）：可以粗略地理解为带秘钥的hash函数。</p>
-<p>nodejs例子如下：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> crypto = <span class="built_in">require</span>(<span class="string">'crypto'</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 参数一：摘要函数</span></span><br><span class="line"><span class="comment">// 参数二：秘钥</span></span><br><span class="line"><span class="keyword">let</span> hmac = crypto.createHmac(<span class="string">'md5'</span>, <span class="string">'123456'</span>);</span><br><span class="line"><span class="keyword">let</span> ret = hmac.update(<span class="string">'hello'</span>).digest(<span class="string">'hex'</span>);</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(ret);</span><br><span class="line"><span class="comment">// 9c699d7af73a49247a239cb0dd2f8139</span></span><br></pre></td></tr></table></figure>
-<h2 id="四、对称加密、非对称加密"><a href="#四、对称加密、非对称加密" class="headerlink" title="四、对称加密、非对称加密"></a>四、对称加密、非对称加密</h2><p><strong>加密/解密</strong>：给定明文，通过一定的算法，产生加密后的密文，这个过程叫加密。反过来就是解密。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">encryptedText = encrypt( plainText )</span><br><span class="line">plainText = decrypt( encryptedText )</span><br></pre></td></tr></table></figure></p>
-<p><strong>秘钥</strong>：为了进一步增强加/解密算法的安全性，在加/解密的过程中引入了秘钥。秘钥可以视为加/解密算法的参数，在已知密文的情况下，如果不知道解密所用的秘钥，则无法将密文解开。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">encryptedText = encrypt(plainText, encryptKey)</span><br><span class="line">plainText = decrypt(encryptedText, decryptKey)</span><br></pre></td></tr></table></figure></p>
-<p>根据加密、解密所用的秘钥是否相同，可以将加密算法分为<strong>对称加密</strong>、<strong>非对称加密</strong>。</p>
-<h3 id="1、对称加密"><a href="#1、对称加密" class="headerlink" title="1、对称加密"></a>1、对称加密</h3><p>加密、解密所用的秘钥是相同的，即<code>encryptKey === decryptKey</code>。</p>
-<p>常见的对称加密算法：DES、3DES、AES、Blowfish、RC5、IDEA。</p>
-<p>加、解密伪代码：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">encryptedText = encrypt(plainText, key); <span class="comment">// 加密</span></span><br><span class="line">plainText = decrypt(encryptedText, key); <span class="comment">// 解密</span></span><br></pre></td></tr></table></figure></p>
-<h3 id="2、非对称加密"><a href="#2、非对称加密" class="headerlink" title="2、非对称加密"></a>2、非对称加密</h3><p>又称公开秘钥加密。加密、解密所用的秘钥是不同的，即<code>encryptKey !== decryptKey</code>。</p>
-<p>加密秘钥公开，称为公钥。解密秘钥保密，称为秘钥。</p>
-<p>常见的非对称加密算法：RSA、DSA、ElGamal。</p>
-<p>加、解密伪代码：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">encryptedText = encrypt(plainText, publicKey);  <span class="comment">// 加密</span></span><br><span class="line">plainText = decrypt(encryptedText, priviteKey); <span class="comment">// 解密</span></span><br></pre></td></tr></table></figure></p>
-<h3 id="3、对比与应用"><a href="#3、对比与应用" class="headerlink" title="3、对比与应用"></a>3、对比与应用</h3><p>除了秘钥的差异，还有运算速度上的差异。通常来说：</p>
-<ol>
-<li>对称加密速度要快于非对称加密。</li>
-<li>非对称加密通常用于加密短文本，对称加密通常用于加密长文本。</li>
-</ol>
-<p>两者可以结合起来使用，比如HTTPS协议，可以在握手阶段，通过RSA来交换生成对称秘钥。在之后的通讯阶段，可以使用对称加密算法对数据进行加密，秘钥则是握手阶段生成的。 </p>
-<p>备注：对称秘钥交换不一定通过RSA，还可以通过类似DH来完成，这里不展开。</p>
-<h2 id="五、数字签名"><a href="#五、数字签名" class="headerlink" title="五、数字签名"></a>五、数字签名</h2><p>从<strong>签名</strong>大致可以猜到<strong>数字签名</strong>的用途。主要作用如下：</p>
-<ol>
-<li>确认信息来源于特定的主体。</li>
-<li>确认信息完整、未被篡改。</li>
-</ol>
-<p>为了达到上述目的，需要有两个过程：</p>
-<ol>
-<li>发送方：生成签名。</li>
-<li>接收方：验证签名。</li>
-</ol>
-<h3 id="1、发送方生成签名"><a href="#1、发送方生成签名" class="headerlink" title="1、发送方生成签名"></a>1、发送方生成签名</h3><ol>
-<li>计算原始信息的摘要。</li>
-<li>通过私钥对摘要进行签名，得到电子签名。</li>
-<li>将原始信息、电子签名，发送给接收方。</li>
-</ol>
-<p>附：签名伪代码<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">digest = hash(message); <span class="comment">// 计算摘要</span></span><br><span class="line">digitalSignature = sign(digest,  priviteKey); <span class="comment">// 计算数字签名</span></span><br></pre></td></tr></table></figure></p>
-<h3 id="2、接收方验证签名"><a href="#2、接收方验证签名" class="headerlink" title="2、接收方验证签名"></a>2、接收方验证签名</h3><ol>
-<li>通过公钥解开电子签名，得到摘要D1。（如果解不开，信息来源主体校验失败）</li>
-<li>计算原始信息的摘要D2。</li>
-<li>对比D1、D2，如果D1等于D2，说明原始信息完整、未被篡改。</li>
-</ol>
-<p>附：签名验证伪代码<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">digest1 = verify(digitalSignature, publicKey); <span class="comment">// 获取摘要</span></span><br><span class="line">digest2 = hash(message); <span class="comment">// 计算原始信息的摘要</span></span><br><span class="line">digest1 === digest2      <span class="comment">// 验证是否相等</span></span><br></pre></td></tr></table></figure></p>
-<h3 id="3、对比非对称加密"><a href="#3、对比非对称加密" class="headerlink" title="3、对比非对称加密"></a>3、对比非对称加密</h3><p>由于RSA算法的特殊性，加密/解密、签名/验证 看上去特别像，很多同学都很容易混淆。先记住下面结论，后面有时间再详细介绍。</p>
-<ol>
-<li>加密/解密：公钥加密，私钥解密。</li>
-<li>签名/验证：私钥签名，公钥验证。</li>
-</ol>
-<h2 id="六、分组加密模式、填充、初始化向量"><a href="#六、分组加密模式、填充、初始化向量" class="headerlink" title="六、分组加密模式、填充、初始化向量"></a>六、分组加密模式、填充、初始化向量</h2><p>常见的对称加密算法，如AES、DES都采用了分组加密模式。这其中，有三个关键的概念需要掌握：模式、填充、初始化向量。</p>
-<p>搞清楚这三点，才会知道crypto模块对称加密API的参数代表什么含义，出了错知道如何去排查。</p>
-<h3 id="1、分组加密模式"><a href="#1、分组加密模式" class="headerlink" title="1、分组加密模式"></a>1、分组加密模式</h3><p>所谓的分组加密，就是将（较长的）明文拆分成固定长度的块，然后对拆分的块按照特定的模式进行加密。</p>
-<p>常见的分组加密模式有：ECB（不安全）、CBC（最常用）、CFB、OFB、CTR等。</p>
-<p>以最简单的ECB为例，先将消息拆分成等分的模块，然后利用秘钥进行加密。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-ECB_encryption.svg.png" alt=""><br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-ECB_decryption.svg.png" alt=""><br>更多关于分组加密模式的介绍可以参考 <a href="https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Common_modes" target="_blank" rel="noopener">wiki</a>。</p>
-<p>后面假设每个块的长度为128位</p>
-<h3 id="2、初始化向量：IV"><a href="#2、初始化向量：IV" class="headerlink" title="2、初始化向量：IV"></a>2、初始化向量：IV</h3><p>为了增强算法的安全性，部分分组加密模式（CFB、OFB、CTR）中引入了初始化向量（IV），使得加密的结果随机化。也就是说，对于同一段明文，IV不同，加密的结果不同。</p>
-<p>以CBC为例，每一个数据块，都与前一个加密块进行亦或运算后，再进行加密。对于第一个数据块，则是与IV进行亦或。</p>
-<p>IV的大小跟数据块的大小有关（128位），跟秘钥的长度无关。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-CBC_encryption.svg.png" alt=""><br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-CBC_decryption.svg.png" alt=""></p>
-<h3 id="3、填充：padding"><a href="#3、填充：padding" class="headerlink" title="3、填充：padding"></a>3、填充：padding</h3><p>分组加密模式需要对长度固定的块进行加密。分组拆分完后，最后一个数据块长度可能小于128位，此时需要进行填充以满足长度要求。</p>
-<p>填充方式有多重。常见的填充方式有<a href="https://tools.ietf.org/html/rfc5652#section-6.3" target="_blank" rel="noopener">PKCS7</a>。</p>
-<p>假设分组长度为k字节，最后一个分组长度为k-last，可以看到：</p>
-<ol>
-<li>不管明文长度是多少，加密之前都会会对明文进行填充 （不然解密函数无法区分最后一个分组是否被填充了，因为存在最后一个分组长度刚好等于k的情况）</li>
-<li>如果最后一个分组长度等于k-last === k，那么填充内容为一个完整的分组 k k k … k （k个字节）</li>
-<li>如果最后一个分组长度小于k-last &lt; k，那么填充内容为 k-last mod k </li>
-</ol>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">         01 -- if lth mod k = k-1</span><br><span class="line">      02 02 -- if lth mod k = k-2</span><br><span class="line">          .</span><br><span class="line">          .</span><br><span class="line">          .</span><br><span class="line">k k ... k k -- if lth mod k = 0</span><br></pre></td></tr></table></figure>
-<h3 id="概括来说"><a href="#概括来说" class="headerlink" title="概括来说"></a>概括来说</h3><ol>
-<li>分组加密：先将明文切分成固定长度的块（128位），再进行加密。</li>
-<li>分组加密的几种模式：ECB（不安全）、CBC（最常用）、CFB、OFB、CTR。</li>
-<li>填充(padding)：部分加密模式，当最后一个块的长度小于128位时，需要通过特定的方式进行填充。（ECB、CBC需要填充，CFB、OFB、CTR不需要填充）</li>
-<li>初始化向量（IV）：部分加密模式（CFB、OFB、CTR）会将 明文块 与 前一个密文块进行亦或操作。对于第一个明文块，不存在前一个密文块，因此需要提供初始化向量IV（把IV当做第一个明文块 之前的 密文块）。此外，IV也可以让加密结果随机化。</li>
-</ol>
-<h2 id="七、相关链接"><a href="#七、相关链接" class="headerlink" title="七、相关链接"></a>七、相关链接</h2><p><a href="https://github.com/chyingp/nodejs-learning-guide" target="_blank" rel="noopener">Nodejs学习笔记</a></p>
-<p><a href="https://en.wikipedia.org/wiki/Cryptographic_hash_function" target="_blank" rel="noopener">Cryptographic hash function</a></p>
-<p><a href="https://en.wikipedia.org/wiki/Hash-based_message_authentication_code" target="_blank" rel="noopener">Hash-based message authentication code</a></p>
-<p><a href="https://crypto.stackexchange.com/questions/2936/hmac-vs-mac-functions" target="_blank" rel="noopener">HMAC vs MAC functions</a></p>
-<p><a href="https://crypto.stackexchange.com/questions/6523/what-is-the-difference-between-mac-and-hmac" target="_blank" rel="noopener">What is the difference between MAC and HMAC?</a></p>
-<p><a href="https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation" target="_blank" rel="noopener">Block cipher mode of operation</a></p>
-<p><a href="https://www.zhihu.com/question/25912483/answer/31653639" target="_blank" rel="noopener">RSA的公钥和私钥到底哪个才是用来加密和哪个用来解密？ - 刘巍然-学酥的回答 - 知乎</a></p>
-<h4 id="原文：https-www-cnblogs-com-chyingp-p-nodejs-learning-crypto-theory-html"><a href="#原文：https-www-cnblogs-com-chyingp-p-nodejs-learning-crypto-theory-html" class="headerlink" title="原文：https://www.cnblogs.com/chyingp/p/nodejs-learning-crypto-theory.html"></a>原文：<a href="https://www.cnblogs.com/chyingp/p/nodejs-learning-crypto-theory.html" target="_blank" rel="noopener">https://www.cnblogs.com/chyingp/p/nodejs-learning-crypto-theory.html</a></h4>
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2017-02-12T06:45:23.000Z"><a href="/2017/02/12/网络安全/数字证书的基础知识/">2017-02-12</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/02/12/网络安全/数字证书的基础知识/">数字证书的基础知识</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>在讲数字证书之前必须要讲<strong>非对称加密算法</strong>和<strong>摘要算法</strong>，因为数字证书的基础就是各种加解密算法（非对称加密、摘要算法），而其中的核心就是非对称加密算法了。目前而言加密方法可以分为两大类。一类是<strong>单钥加密</strong>（private key cryptography）也可以称为对称加密，还有一类叫做<strong>双钥加密</strong>（public key cryptography）也可称为非对称加密。前者的加密和解密过程都用同一套密码，后者的加密和解密过程用的是不同的密码。下面来看看对称加密、非对称加密以及摘要算法，他们是怎样应用在数字证书中的。</p>
-<h3 id="对称加密"><a href="#对称加密" class="headerlink" title="对称加密"></a>对称加密</h3><p>对称加密(也叫私钥加密)指加密和解密使用相同密钥的加密算法。有时又叫传统密码算法，就是加密密钥能够从解密密钥中推算出来，同时解密密钥也可以从加密密钥中推算出来。而在大多数的对称算法中，加密密钥和解密密钥是相同的，所以也称这种加密算法为秘密密钥算法或单密钥算法。</p>
-<p>在应用该算法时，它要求发送方和接收方在安全通信之前，商定一个密钥。对称算法的安全性依赖于密钥，泄漏密钥就意味着任何人都可以对他们发送或接收的消息解密，所以密钥的保密性对通信性至关重要。对称加密算法的特点是算法公开、计算量小、加密速度快、加密效率高。对称加密有很多种算法，由于它效率很高，所以被广泛使用在很多加密协议的核心当中。不足之处是，交易双方都使用同样钥匙，安全性得不到保证。</p>
-<h4 id="常见的对称加密算法"><a href="#常见的对称加密算法" class="headerlink" title="常见的对称加密算法"></a>常见的对称加密算法</h4><ul>
-<li><strong>DES</strong>：数据加密标准（DES，Data Encryption Standard）是一种使用密钥加密的块密码，它基于使用<strong>56位密钥</strong>的对称算法，这个算法因为包含一些机密设计元素，相对短的密钥长度以及被怀疑内含美国国家安全局（NSA）的后门而在开始时是有争议的，DES现在已经不被视为一种安全的加密算法，主要因为它使用的56位密钥过短，导致容易被破解。为了提供实用所需的安全性，可以使用DES的派生算法3DES来进行加密，虽然3DES也存在理论上的攻击方法。</li>
-<li><strong>AES</strong>：高级加密标准（英语：Advanced Encryption Standard，缩写：AES），这个标准用来替代原先的DES，已经被多方分析且广为全世界所使用，2006年，高级加密标准已然成为对称密钥加密中最流行的算法之一。AES的区块长度固定为128比特，<strong>密钥长度则可以是128，192或256比特</strong>。</li>
-<li><strong>RC4</strong>：RC4加密算法是大名鼎鼎的RSA三人组中的头号人物Ronald Rivest在1987年设计的密钥长度可变的流加密算法簇。该算法的速度可以达到DES加密的10倍左右，且具有很高级别的非线性。RC4起初是用于保护商业机密的。但是在1994年9月，它的算法被发布在互联网上，也就不再有什么商业机密了。</li>
-<li><strong>IDEA</strong>：是旅居瑞士中国青年学者来学嘉和著名密码专家J.Massey于1990年提出的。它在1990年正式公布并在以后得到增强。这种算法是在DES算法的基础上发展出来的，类似于三重DES，和DES一样IDEA也是属于对称密钥算法。发展IDEA也是因为感到DES具有密钥太短等缺点，已经过时。<strong>IDEA的密钥为128位</strong>，这么长的密钥在今后若干年内应该是安全的。</li>
-</ul>
-<h3 id="非对称加密"><a href="#非对称加密" class="headerlink" title="非对称加密"></a>非对称加密</h3><p>与对称加密算法不同，非对称加密算法需要两个密钥：公开密钥（publickey）和私有密钥（privatekey）；并且加密密钥和解密密钥是成对出现的。非对称加密算法在加密和解密过程使用了不同的密钥，非对称加密也称为公钥加密，在密钥对中，其中一个密钥是对外公开的，所有人都可以获取到，称为公钥，其中一个密钥是不公开的称为私钥。</p>
-<h4 id="非对称加密的特性"><a href="#非对称加密的特性" class="headerlink" title="非对称加密的特性"></a>非对称加密的特性</h4><ul>
-<li>对于一个公钥，有且只有一个对应的私钥。</li>
-<li>公钥是公开的，并且不能通过公钥反推出私钥。</li>
-<li>通过私钥加密的密文只能通过公钥能解密，通过公钥加密的密文也只能通过私钥能解密。</li>
-</ul>
-<p>通过公钥是极难推算出私钥的，只能通过穷举，所以只要密钥足够长，要想从公钥推算出私钥几乎不可能的。</p>
-<h4 id="非对称加密的主要用途"><a href="#非对称加密的主要用途" class="headerlink" title="非对称加密的主要用途"></a>非对称加密的主要用途</h4><ul>
-<li><strong>对信息保密，防止中间人攻击</strong>：将明文使用公钥加密，传输给接收者，这样确保信息只能被有私钥的拥有者解密，其他人无法获得明文信息，因为没有私钥无法进行解密。该方法一般用于交换<strong>对称密钥</strong>。</li>
-<li><strong>身份验证和防止信息篡改</strong>：私钥拥有者使用私钥加密一段授权明文，并将授权明文和加密后的密文，以及公钥一并发送出来，接收方只需要通过公钥将密文解密后与授权明文对比是否一致，就可以判断明文在中途是否被篡改过。此方法用于<strong>数字签名</strong>。</li>
-</ul>
-<h4 id="常见的非对称加密算法"><a href="#常见的非对称加密算法" class="headerlink" title="常见的非对称加密算法"></a>常见的非对称加密算法</h4><ul>
-<li><strong>RSA</strong>：1977年，三位数学家Rivest、Shamir 和 Adleman 设计了一种算法，可以实现非对称加密。这种算法用他们三个人的名字命名，叫做RSA算法。从那时直到现在，RSA算法一直是最广为使用的”非对称加密算法”。毫不夸张地说，只要有计算机网络的地方，就有RSA算法。这种算法非常可靠，密钥越长，它就越难破解。根据已经披露的文献，目前被破解的最长RSA密钥是768个二进制位。也就是说，长度超过768位的密钥，还无法破解（至少没人公开宣布）。因此可以认为，<strong>1024位的RSA密钥基本安全，2048位的密钥极其安全</strong>。适用于数字签名和密钥交换。 该算法是目前应用最广泛的公钥加密算法，特别适用于通过 Internet 传送的数据。</li>
-<li><strong>DSA</strong>：数字签名算法 (Digital Signature Algorithm, DSA) 由美国国家安全署 (United States National Security Agency, NSA) 发明，已作为数字签名的标准。在DSA数字签名和认证中，发送者使用自己的私钥对文件或消息进行签名，接受者收到消息后使用发送者的公钥来验证签名的真实性。DSA只是一种算法，和RSA不同之处在于它不能用作加密和解密，也不能进行密钥交换，只用于签名，它比RSA要快很多。DSA 算法的安全性取决于自计算离散算法的困难。这种算法，不适用于数据加密，仅适用于数字签名。</li>
-<li><strong>Diffie-Hellman</strong>：一种确保共享KEY安全穿越不安全网络的方法。Whitefield与Martin Hellman在1976年提出了一个奇妙的密钥交换协议，称为Diffie-Hellman密钥交换协议/算法(Diffie-Hellman Key Exchange/Agreement Algorithm)。这个机制的巧妙在于需要安全通信的双方可以用这个方法确定对称密钥。然后可以用这个密钥进行加密和解密。但是注意，这个密钥交换协议/算法只能用于密钥的交换，而不能进行消息的加密和解密。双方确定要用的密钥后，要使用其他对称密钥操作加密算法实际加密和解密消息。该算法仅适用于密钥交换。</li>
-<li><strong>ECC</strong>：椭圆加密算法（ECC）是一种公钥加密体制，最初由Koblitz和Miller两人于1985年提出，与经典的RSA，DSA等公钥密码体制相比，椭圆密码体制有以下优点：160位的椭圆密钥与1024位的RSA密钥安全性相同；在私钥的加密解密速度上，ECC算法比RSA、DSA速度更快；存储空间占用小；带宽要求低；ECC算法的数学理论非常深奥和复杂，在工程应用中比较难于实现，但它的单位安全强度相对较高。</li>
-</ul>
-<p>非对称加密算法可能是世界上最重要的算法，它是当今电子商务等领域的基石。非对称加密算法如此强大可靠，却有一个弊端，就是加解密比较耗时。因此，在实际使用中，往往与对称加密和摘要算法结合使用。列如在实体之间交换对称密钥时，或者在签署一封邮件的散列时（数字签名）。</p>
-<p>散列是通过应用一种单向数学函数获得的一个定长结果，对于数据而言，叫做散列算法。</p>
-<h3 id="摘要算法"><a href="#摘要算法" class="headerlink" title="摘要算法"></a>摘要算法</h3><p>摘要算法是一个神奇的算法，也称为散列或者散列值。是一种与基于密钥（对称密钥或公钥）的加密不同的数据转换类型。散列就是通过把一个叫做散列算法的单向数学函数应用于数据，将任意长度的一块数据转换为一个定长的、不可逆转的数字，其长度通常在128～256位之间。所产生的散列值的长度应足够长，因此使找到两块具有相同散列值的数据的机会很少。</p>
-<h4 id="摘要算法具有以下特性："><a href="#摘要算法具有以下特性：" class="headerlink" title="摘要算法具有以下特性："></a>摘要算法具有以下特性：</h4><ul>
-<li>只要源文本不同，计算得到的结果，必然不同（或者说机会很少）。</li>
-<li>无法从结果反推出源数据（那是当然的，不然就能量不守恒了）。</li>
-</ul>
-<h4 id="常见的摘要算法："><a href="#常见的摘要算法：" class="headerlink" title="常见的摘要算法："></a>常见的摘要算法：</h4><ul>
-<li><strong>MD5</strong>：是RSA数据安全公司开发的一种单向散列算法，MD5被广泛使用，可以用来把不同长度的数据块进行暗码运算成一个固定位位的数值（通常是128位）。</li>
-<li><strong>SHA-1</strong>：与 DSA 公钥算法相似，安全散列算法1（SHA-1）也是由 NSA 设计的，并由 NIST 将其收录到 FIPS 中，作为散列数据的标准。它可产生一个 160 位的散列值。SHA-1 是流行的用于创建数字签名的单向散列算法。</li>
-<li><strong>MAC（Message Authentication Code）</strong>：消息认证代码，是一种使用密钥的单向函数，可以用它们在系统上或用户之间认证文件或消息，常见的是HMAC（用于消息认证的密钥散列算法）。</li>
-<li><strong>CRC（Cyclic Redundancy Check）</strong>：循环冗余校验码，CRC校验由于实现简单，检错能力强，被广泛使用在各种数据校验应用中。占用系统资源少，用软硬件均能实现，是进行数据传输差错检测地一种很好的手段（CRC 并不是严格意义上的散列算法，但它的作用与散列算法大致相同，所以归于此类）。</li>
-</ul>
-<p>摘要算法用于对比信息源是否一致，因为只要源数据发生变化，得到的摘要必然不同。因为通常结果比源数据要短很多，所以称为“摘要”。</p>
-<p>应用场景，如发件人生成邮件的散列值并加密它，然后将它与邮件本身一起发送。而收件人同时解密邮件和散列值，并由接收到的邮件产生另外一个散列值，然后将两个散列值进行比较。如果两者相同，邮件极有可能在传输期间没有发生任何改变。</p>
-<h3 id="数字签名"><a href="#数字签名" class="headerlink" title="数字签名"></a>数字签名</h3><p>数字签名就是对非对称加密和摘要算法的一种应用，能够确保信息在发布后不会被篡改（摘要算法特性），保证数据的完整性和可信性；同时也可以防止数据被他人伪造（非对称加密算法特性）；列如，我们有一段授权文本需要发布时，为了防止中途篡改发布的内容，保证发布文本的完整性，以及文本是由指定的发布者发布的。那么，可以通过摘要算法得到发布内容的摘要，得到摘要之后，发布者使用私钥加密得到密文（签名），这时候将源文本、密文（签名）以及公钥一起发布出去即可。</p>
-<p>验证过程为：首先验证公钥是否是发布者的公钥，然后用公钥对密文进行解密，得到摘要，使用发布者对文本同样的摘要算法得到摘要文本，比对摘要是否一致即可确认信息是否被篡改或者是指定发布者发布的。</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/ditialSig.jpg" alt=""></p>
-<p>数字签名可以快速验证文本的完整性和合法性，已广泛应用于各个领域。</p>
-<p>公钥的验证在后续数字证书的授权链中提到验证方法。</p>
-<h3 id="数字证书"><a href="#数字证书" class="headerlink" title="数字证书"></a>数字证书</h3><h4 id="现实生活中的证书"><a href="#现实生活中的证书" class="headerlink" title="现实生活中的证书"></a>现实生活中的证书</h4><p>在现实生活中，证书顾名思义，就是权限机构颁发的证明。比如英语6级证书，就是教育部门颁发给通过了6级考核的个人的证明，证明这个人的英语能力。我们来看一下这个证书的组成：</p>
-<ul>
-<li>被证明人：老王</li>
-<li>内容：通过了英语六级</li>
-<li>盖章：教育部门的公章或钢印</li>
-</ul>
-<p>当老王用这张证书找工作时，用人单位会通过查看证书的各项内容（尤其是公章），来验证证书的合法性和老王的能力。在现实生活中经常有假的6级证书，这些假证书最重要的就是有一个假公章。现实生活中使用法律法规来约束私刻假公章的行为，但是用人单位可能不能十分准确的判断公章是真是假。而数字签字可以来解决该类问题。</p>
-<h4 id="数字证书-1"><a href="#数字证书-1" class="headerlink" title="数字证书"></a>数字证书</h4><p>数字证书就是通过数字签名实现的数字化的证书，在现实生活中公章可以被伪造，但是在计算数字世界中，数字签名是没办法被伪造的，比如上述证书中，在一个证书文件中写明了证书内容，颁发证书时，教育部门用他们的私钥对文件的摘要信息进行签名，将签名和证书文件一起发布，这样就能确保该证书无法被伪造。验证证书是否合法时，首先用教育部门的公钥（公钥是公开的谁都可以获取到）对签名进行解密得到一个摘要信息，使用教育部门同样的摘要算法得到证书的另一个摘要信息，对比两个摘要信息是否一致就能确定该证书是否合法。在一般的证书组成中部分中，还加入了一些其他信息，比如证书的有效期。</p>
-<p>数字证书也有很多的签发机构，不同的签发机构签发的证书，用途也是不一样的，比如iOS开发中，使用到的ipa文件签名证书，需要到苹果申请。而在Web访问中为了防止Web内容在网络中安全传输，需要用到的SSL证书则需要向几家公认的机构签发。这些签发机构统称为CA（Certificate Authority）。</p>
-<p>Web访问相关的证书可以向国际公认的几个机构：</p>
-<ol>
-<li><a href="http://www.webtrust.net/" target="_blank" rel="noopener"><strong>WebTrust</strong></a></li>
-<li><a href="http://cn.globalsign.com/" target="_blank" rel="noopener"><strong>GlobalSign</strong></a></li>
-<li><a href="http://certificate.fyicenter.com/335_Root_CA_GTE_CyberTrust_Global_Root_GTE_CyberTrust_Solutions.html" target="_blank" rel="noopener"><strong>GTE</strong></a></li>
-<li><a href="http://www.nortel.com/" target="_blank" rel="noopener"><strong>Nortel</strong></a></li>
-<li><a href="http://www.verisign.com/" target="_blank" rel="noopener"><strong>Verisign</strong></a></li>
-</ol>
-<h4 id="数字证书的验证"><a href="#数字证书的验证" class="headerlink" title="数字证书的验证"></a>数字证书的验证</h4><p>申请证书是为了验证，比如Web应用相关的SSL证书验证方是浏览器，iOS各种证书的验证方是iOS设备。因为数字证书是基于数字签名的，所有数字证书的合法性验证就是验证数字证书的签名是否正确，对于签名的验证在是需要签发机构的公钥才能验证；</p>
-<p>对于iOS开发证书来说，申请完签名证书后，还需要安装苹果的公钥证书（XCode安装后会自动安装），这样才能确保我们申请的证书是可以被验证通过的（合法的），可用来进行ipa文件签名的。对于Web相关的证书签名的验证，则是由浏览器来验证，对于国际公认的几个证书签发机构浏览器会内置其公钥证书，用来验证数字证书的可信性。</p>
-<p>当数字证书通过验证后，便可以用数字证书做对应的事情，iOS开发证书可以用来对APP进行签名，SSL证书可以用来做Web内容加密处理相关的事情。所以有了这些证书之后，能保证在数据的传输过程中，数据是不会被篡改的，并且信息来源也是不能不修改的，从而确保信息安全。</p>
-<p>对于iOS，iOS系统已经将这个验证过程固化在系统中了，除非越狱，否则无法绕过</p>
-<h4 id="数字证书的授权链"><a href="#数字证书的授权链" class="headerlink" title="数字证书的授权链"></a>数字证书的授权链</h4><p>数字证书还包含一个授权链信息，举个例子：如果你要申请休假1周，需要你的上司审批，你的上司需要他的上司同意，最终需要大老板同意，那么这一层层的授权，形成了一个授权链，大老板是授权链的根(root)，中间这些环节分别是被更接近root的人授权的。</p>
-<p>比如苹果开发者的APP签名证书，该证书可以用来对APP进行签名，该证书实际上是由苹果的Worldwide Developer Relations Certificate Authority（WDRCA）授权签名的，而它是由Apple Certificate Authority授权签名的。在这个关系链中苹果的CA是根。 苹果CA根证书默认是内置在苹果系统中的，所以WDRCA的可信性可以由苹果内置的CA根证书来验证其可信性。</p>
-<p>Web相关的SSL证书顶部CA根，则就是上述提到的几家公认的签发机构，当我们需要Web做SSL的证书时，便可以向上述机构申请，通常向根机构申请费用都会比较高，也可以向一些二级授权机构进行申请，选择根机构证书签发的好处就是目前大多数的浏览器都会预装内置了这些权威CA的公钥证书，这样，在使用这些权威CA签发过的证书的时候，浏览器一般不会报风险提示。</p>
-<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>数字证书签名的基础是非对称加密算法，利用了非对称加密的身份验证和防止信息篡改的特性来实现的，在一些其他方面比如HTTPS中密钥交换用的就是非对称加密的保密特性来实现的，在非对称加密算法中RSA应用最广。非对称加密虽好，但却有一个弊端，就是加解密比较耗时，所以一般都是配合对称加密一起使用。</p>
-<h4 id="原文：http-www-enkichen-com-2016-02-26-digital-certificate-based"><a href="#原文：http-www-enkichen-com-2016-02-26-digital-certificate-based" class="headerlink" title="原文：http://www.enkichen.com/2016/02/26/digital-certificate-based/"></a>原文：<a href="http://www.enkichen.com/2016/02/26/digital-certificate-based/" target="_blank" rel="noopener">http://www.enkichen.com/2016/02/26/digital-certificate-based/</a></h4>
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2017-02-10T06:45:23.000Z"><a href="/2017/02/10/网络安全/CDN的主要功能/">2017-02-10</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/02/10/网络安全/CDN的主要功能/">CDN的主要功能</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>CDN主要功能是在不同的地点缓存内容，通过负载均衡技术，将用户的请求定向到最合适的缓存服务器上去获取内容，比如说，是北京的用户，我们让他访问北京的节点，深圳的用户，我们让他访问深圳的节点。通过就近访问，加速用户对网站的访问。解决Internet网络拥堵状况，提高用户访问网络的响应速度。</p>
-<p>简单介绍下CDN与传统网站访问的区别：<br><strong>传统访问访问：</strong><br><img src="http://7xq1il.com1.z0.glb.clouddn.com/noCDN.png" alt=""></p>
-<p><strong>使用了CDN的网站访问：</strong><br><img src="http://7xq1il.com1.z0.glb.clouddn.com/haveCDN.png" alt=""></p>
-<p>与传统访问方式不同，CDN网络则是在用户和服务器之间增加缓存层，将用户的访问请求引导到最优的缓存节点而不是服务器源站点，从而加速访问速度。</p>
-<p><strong>完整的CDN工作流程：</strong><br><img src="http://7xq1il.com1.z0.glb.clouddn.com/comCDN.png" alt=""></p>
-<p>总结一下CDN的工作原理：通过权威DNS服务器来实现最优节点的选择，通过缓存来减少源站的压力。<br><strong>CDN应用场景：</strong><br><strong>静态网页</strong>图片小文件、博客<br><strong>大文件下载</strong>软件下载、视频点播或图片存储网站<br><strong>动态加速</strong>直播网站<br><strong>应用加速</strong>手机APP</p>
-<h4 id="原文：https-www-zhihu-com-question-37353035"><a href="#原文：https-www-zhihu-com-question-37353035" class="headerlink" title="原文：https://www.zhihu.com/question/37353035"></a>原文：<a href="https://www.zhihu.com/question/37353035" target="_blank" rel="noopener">https://www.zhihu.com/question/37353035</a></h4>
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -1204,7 +1234,7 @@
   
     <li><a href="/tags/数据库/">数据库</a><small>3</small></li>
   
-    <li><a href="/tags/数据结构与算法/">数据结构与算法</a><small>7</small></li>
+    <li><a href="/tags/数据结构与算法/">数据结构与算法</a><small>11</small></li>
   
     <li><a href="/tags/程序员的数学基础课/">程序员的数学基础课</a><small>4</small></li>
   
