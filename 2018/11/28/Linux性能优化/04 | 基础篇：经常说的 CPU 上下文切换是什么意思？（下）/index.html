@@ -1,0 +1,307 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>04 | 基础篇：经常说的 CPU 上下文切换是什么意思？（下） | shouliang&#39;s blog</title>
+  <meta name="author" content="shouliang">
+  
+  <meta name="description" content="Node">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="04 | 基础篇：经常说的 CPU 上下文切换是什么意思？（下）"/>
+  <meta property="og:site_name" content="shouliang&#39;s blog"/>
+
+  
+    <meta property="og:image" content=""/>
+  
+
+  <link href="/favicon.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="shouliang&#39;s blog" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+
+</head>
+
+
+<body>
+  <header id="header" class="inner"><div class="alignleft">
+  <h1><a href="/">shouliang&#39;s blog</a></h1>
+  <h2><a href="/"></a></h2>
+</div>
+<nav id="main-nav" class="alignright">
+  <ul>
+    
+      <li><a href="/">首页</a></li>
+    
+      <li><a href="/archives">归档</a></li>
+    
+      <li><a href="/about">关于</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+<div class="clearfix"></div></header>
+  <div id="content" class="inner">
+    <div id="main-col" class="alignleft"><div id="wrapper"><article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2018-11-28T06:45:23.000Z"><a href="/2018/11/28/Linux性能优化/04 | 基础篇：经常说的 CPU 上下文切换是什么意思？（下）/">2018-11-28</a></time>
+      
+      
+  
+    <h1 class="title">04 | 基础篇：经常说的 CPU 上下文切换是什么意思？（下）</h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>上一节，我给你讲了 CPU 上下文切换的工作原理。简单回顾一下，CPU 上下文切换是保证 Linux 系统正常工作的一个核心功能，按照不同场景，可以分为进程上下文切换、线程上下文切换和中断上下文切换。具体的概念和区别，你也要在脑海中过一遍，忘了的话及时查看上一篇。</p>
+<p>今天我们就接着来看，究竟怎么分析 CPU 上下文切换的问题。</p>
+<h2 id="怎么查看系统的上下文切换情况"><a href="#怎么查看系统的上下文切换情况" class="headerlink" title="怎么查看系统的上下文切换情况"></a>怎么查看系统的上下文切换情况</h2><p>通过前面学习我们知道，过多的上下文切换，会把 CPU 时间消耗在寄存器、内核栈以及虚拟内存等数据的保存和恢复上，缩短进程真正运行的时间，成了系统性能大幅下降的一个元凶。</p>
+<p>既然上下文切换对系统性能影响那么大，你肯定迫不及待想知道，到底要怎么查看上下文切换呢？在这里，我们可以使用 vmstat 这个工具，来查询系统的上下文切换情况。</p>
+<p>vmstat 是一个常用的系统性能分析工具，主要用来分析系统的内存使用情况，也常用来分析 CPU 上下文切换和中断的次数。</p>
+<p>比如，下面就是一个 vmstat 的使用示例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"># 每隔 5 秒输出 1 组数据</span><br><span class="line">$ vmstat 5</span><br><span class="line">procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----</span><br><span class="line"> r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st</span><br><span class="line"> 0  0      0 7005360  91564 818900    0    0     0     0   25   33  0  0 100  0  0</span><br><span class="line"></span><br><span class="line">复制代码</span><br></pre></td></tr></table></figure>
+<p>我们一起来看这个结果，你可以先试着自己解读每列的含义。在这里，我重点强调下，需要特别关注的四列内容：</p>
+<ul>
+<li>cs（context switch）是每秒上下文切换的次数。</li>
+<li>in（interrupt）则是每秒中断的次数。</li>
+<li>r（Running or Runnable）是就绪队列的长度，也就是正在运行和等待 CPU 的进程数。</li>
+<li>b（Blocked）则是处于不可中断睡眠状态的进程数。</li>
+</ul>
+<p>可以看到，这个例子中的上下文切换次数 cs 是 33 次，而系统中断次数 in 则是 25 次，而就绪队列长度 r 和不可中断状态进程数 b 都是 0。</p>
+<p>vmstat 只给出了系统总体的上下文切换情况，要想查看每个进程的详细情况，就需要使用我们前面提到过的 pidstat 了。给它加上 -w 选项，你就可以查看每个进程上下文切换的情况了。</p>
+<p>比如说：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># 每隔 5 秒输出 1 组数据</span><br><span class="line">$ pidstat -w 5</span><br><span class="line">Linux 4.15.0 (ubuntu)  09/23/18  _x86_64_  (2 CPU)</span><br><span class="line"></span><br><span class="line">08:18:26      UID       PID   cswch/s nvcswch/s  Command</span><br><span class="line">08:18:31        0         1      0.20      0.00  systemd</span><br><span class="line">08:18:31        0         8      5.40      0.00  rcu_sched</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>这个结果中有两列内容是我们的重点关注对象。一个是 cswch ，表示每秒自愿上下文切换（voluntary context switches）的次数，另一个则是 nvcswch ，表示每秒非自愿上下文切换（non voluntary context switches）的次数。</p>
+<p>这两个概念你一定要牢牢记住，因为它们意味着不同的性能问题：</p>
+<ul>
+<li>所谓<strong>自愿上下文切换，是指进程无法获取所需资源，导致的上下文切换</strong>。比如说， I/O、内存等系统资源不足时，就会发生自愿上下文切换。</li>
+<li>而<strong>非自愿上下文切换，则是指进程由于时间片已到等原因，被系统强制调度，进而发生的上下文切换</strong>。比如说，大量进程都在争抢 CPU 时，就容易发生非自愿上下文切换。</li>
+</ul>
+<h2 id="案例分析"><a href="#案例分析" class="headerlink" title="案例分析"></a>案例分析</h2><p>知道了怎么查看这些指标，另一个问题又来了，上下文切换频率是多少次才算正常呢？别急着要答案，同样的，我们先来看一个上下文切换的案例。通过案例实战演练，你自己就可以分析并找出这个标准了。</p>
+<h3 id="你的准备"><a href="#你的准备" class="headerlink" title="你的准备"></a>你的准备</h3><p>今天的案例，我们将使用 sysbench 来模拟系统多线程调度切换的情况。</p>
+<p>sysbench 是一个多线程的基准测试工具，一般用来评估不同系统参数下的数据库负载情况。当然，在这次案例中，我们只把它当成一个异常进程来看，作用是模拟上下文切换过多的问题。</p>
+<p>下面的案例基于 Ubuntu 18.04，当然，其他的 Linux 系统同样适用。我使用的案例环境如下所示：</p>
+<ul>
+<li>机器配置：2 CPU，8GB 内存</li>
+<li>预先安装 sysbench 和 sysstat 包，如 apt install sysbench sysstat</li>
+</ul>
+<p>正式操作开始前，你需要打开三个终端，登录到同一台 Linux 机器中，并安装好上面提到的两个软件包。包的安装，可以先 Google 一下自行解决，如果仍然有问题的，在留言区写下你的情况。</p>
+<p>另外注意，下面所有命令，都<strong>默认以 root 用户运行</strong>。所以，如果你是用普通用户登陆的系统，记住先运行 sudo su root 命令切换到 root 用户。</p>
+<p>安装完成后，你可以先用 vmstat 看一下空闲系统的上下文切换次数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># 间隔 1 秒后输出 1 组数据</span><br><span class="line">$ vmstat 1 1</span><br><span class="line">procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----</span><br><span class="line"> r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st</span><br><span class="line"> 0  0      0 6984064  92668 830896    0    0     2    19   19   35  1  0 99  0  0</span><br></pre></td></tr></table></figure>
+<p>这里你可以看到，现在的上下文切换次数 cs 是 35，而中断次数 in 是 19，r 和 b 都是 0。因为这会儿我并没有运行其他任务，所以它们就是空闲系统的上下文切换次数。</p>
+<h3 id="操作和分析"><a href="#操作和分析" class="headerlink" title="操作和分析"></a>操作和分析</h3><p>接下来，我们正式进入实战操作。</p>
+<p>首先，在第一个终端里运行 sysbench ，模拟系统多线程调度的瓶颈：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># 以 10 个线程运行 5 分钟的基准测试，模拟多线程切换的问题</span><br><span class="line">$ sysbench --threads=10 --max-time=300 threads run</span><br></pre></td></tr></table></figure>
+<p>接着，在第二个终端运行 vmstat ，观察上下文切换情况：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># 每隔 1 秒输出 1 组数据（需要 Ctrl+C 才结束）</span><br><span class="line">$ vmstat 1</span><br><span class="line">procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----</span><br><span class="line"> r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st</span><br><span class="line"> 6  0      0 6487428 118240 1292772    0    0     0     0 9019 1398830 16 84  0  0  0</span><br><span class="line"> 8  0      0 6487428 118240 1292772    0    0     0     0 10191 1392312 16 84  0  0  0</span><br></pre></td></tr></table></figure>
+<p>你应该可以发现，cs 列的上下文切换次数从之前的 35 骤然上升到了 139 万。同时，注意观察其他几个指标：</p>
+<ul>
+<li>r 列：就绪队列的长度已经到了 8，远远超过了系统 CPU 的个数 2，所以肯定会有大量的 CPU 竞争。</li>
+<li>us（user）和 sy（system）列：这两列的 CPU 使用率加起来上升到了 100%，其中系统 CPU 使用率，也就是 sy 列高达 84%，说明 CPU 主要是被内核占用了。</li>
+<li>in 列：中断次数也上升到了 1 万左右，说明中断处理也是个潜在的问题。</li>
+</ul>
+<p>综合这几个指标，我们可以知道，系统的就绪队列过长，也就是正在运行和等待 CPU 的进程数过多，导致了大量的上下文切换，而上下文切换又导致了系统 CPU 的占用率升高。</p>
+<p>那么到底是什么进程导致了这些问题呢？</p>
+<p>我们继续分析，在第三个终端再用 pidstat 来看一下， CPU 和进程上下文切换的情况：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"># 每隔 1 秒输出 1 组数据（需要 Ctrl+C 才结束）</span><br><span class="line"># -w 参数表示输出进程切换指标，而 -u 参数则表示输出 CPU 使用指标</span><br><span class="line">$ pidstat -w -u 1</span><br><span class="line">08:06:33      UID       PID    %usr %system  %guest   %wait    %CPU   CPU  Command</span><br><span class="line">08:06:34        0     10488   30.00  100.00    0.00    0.00  100.00     0  sysbench</span><br><span class="line">08:06:34        0     26326    0.00    1.00    0.00    0.00    1.00     0  kworker/u4:2</span><br><span class="line"></span><br><span class="line">08:06:33      UID       PID   cswch/s nvcswch/s  Command</span><br><span class="line">08:06:34        0         8     11.00      0.00  rcu_sched</span><br><span class="line">08:06:34        0        16      1.00      0.00  ksoftirqd/1</span><br><span class="line">08:06:34        0       471      1.00      0.00  hv_balloon</span><br><span class="line">08:06:34        0      1230      1.00      0.00  iscsid</span><br><span class="line">08:06:34        0      4089      1.00      0.00  kworker/1:5</span><br><span class="line">08:06:34        0      4333      1.00      0.00  kworker/0:3</span><br><span class="line">08:06:34        0     10499      1.00    224.00  pidstat</span><br><span class="line">08:06:34        0     26326    236.00      0.00  kworker/u4:2</span><br><span class="line">08:06:34     1000     26784    223.00      0.00  sshd</span><br></pre></td></tr></table></figure>
+<p>从 pidstat 的输出你可以发现，CPU 使用率的升高果然是 sysbench 导致的，它的 CPU 使用率已经达到了 100%。但上下文切换则是来自其他进程，包括非自愿上下文切换频率最高的 pidstat ，以及自愿上下文切换频率最高的内核线程 kworker 和 sshd。</p>
+<p>不过，细心的你肯定也发现了一个怪异的事儿：pidstat 输出的上下文切换次数，加起来也就几百，比 vmstat 的 139 万明显小了太多。这是怎么回事呢？难道是工具本身出了错吗？</p>
+<p>别着急，在怀疑工具之前，我们再来回想一下，前面讲到的几种上下文切换场景。其中有一点提到， Linux 调度的基本单位实际上是线程，而我们的场景 sysbench 模拟的也是线程的调度问题，那么，是不是 pidstat 忽略了线程的数据呢？</p>
+<p>通过运行 man pidstat ，你会发现，pidstat 默认显示进程的指标数据，加上 -t 参数后，才会输出线程的指标。</p>
+<p>所以，我们可以在第三个终端里， Ctrl+C 停止刚才的 pidstat 命令，再加上 -t 参数，重试一下看看：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"># 每隔 1 秒输出一组数据（需要 Ctrl+C 才结束）</span><br><span class="line"># -wt 参数表示输出线程的上下文切换指标</span><br><span class="line">$ pidstat -wt 1</span><br><span class="line">08:14:05      UID      TGID       TID   cswch/s nvcswch/s  Command</span><br><span class="line">...</span><br><span class="line">08:14:05        0     10551         -      6.00      0.00  sysbench</span><br><span class="line">08:14:05        0         -     10551      6.00      0.00  |__sysbench</span><br><span class="line">08:14:05        0         -     10552  18911.00 103740.00  |__sysbench</span><br><span class="line">08:14:05        0         -     10553  18915.00 100955.00  |__sysbench</span><br><span class="line">08:14:05        0         -     10554  18827.00 103954.00  |__sysbench</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>现在你就能看到了，虽然 sysbench 进程（也就是主线程）的上下文切换次数看起来并不多，但它的子线程的上下文切换次数却有很多。看来，上下文切换罪魁祸首，还是过多的 sysbench 线程。</p>
+<p>我们已经找到了上下文切换次数增多的根源，那是不是到这儿就可以结束了呢？</p>
+<p>当然不是。不知道你还记不记得，前面在观察系统指标时，除了上下文切换频率骤然升高，还有一个指标也有很大的变化。是的，正是中断次数。中断次数也上升到了 1 万，但到底是什么类型的中断上升了，现在还不清楚。我们接下来继续抽丝剥茧找源头。</p>
+<p>既然是中断，我们都知道，它只发生在内核态，而 pidstat 只是一个进程的性能分析工具，并不提供任何关于中断的详细信息，怎样才能知道中断发生的类型呢？</p>
+<p>没错，那就是从 /proc/interrupts 这个只读文件中读取。/proc 实际上是 Linux 的一个虚拟文件系统，用于内核空间与用户空间之间的通信。/proc/interrupts 就是这种通信机制的一部分，提供了一个只读的中断使用情况。</p>
+<p>我们还是在第三个终端里， Ctrl+C 停止刚才的 pidstat 命令，然后运行下面的命令，观察中断的变化情况：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># -d 参数表示高亮显示变化的区域</span><br><span class="line">$ watch -d cat /proc/interrupts</span><br><span class="line">           CPU0       CPU1</span><br><span class="line">...</span><br><span class="line">RES:    2450431    5279697   Rescheduling interrupts</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>观察一段时间，你可以发现，变化速度最快的是<strong>重调度中断</strong>（RES），这个中断类型表示，唤醒空闲状态的 CPU 来调度新的任务运行。这是多处理器系统（SMP）中，调度器用来分散任务到不同 CPU 的机制，通常也被称为<strong>处理器间中断</strong>（Inter-Processor Interrupts，IPI）。</p>
+<p>所以，这里的中断升高还是因为过多任务的调度问题，跟前面上下文切换次数的分析结果是一致的。</p>
+<p>通过这个案例，你应该也发现了多工具、多方面指标对比观测的好处。如果最开始时，我们只用了 pidstat 观测，这些很严重的上下文切换线程，压根儿就发现不了了。</p>
+<p>现在再回到最初的问题，每秒上下文切换多少次才算正常呢？</p>
+<p><strong>这个数值其实取决于系统本身的 CPU 性能</strong>。在我看来，如果系统的上下文切换次数比较稳定，那么从数百到一万以内，都应该算是正常的。但当上下文切换次数超过一万次，或者切换次数出现数量级的增长时，就很可能已经出现了性能问题。</p>
+<p>这时，你还需要根据上下文切换的类型，再做具体分析。比方说：</p>
+<ul>
+<li>自愿上下文切换变多了，说明进程都在等待资源，有可能发生了 I/O 等其他问题；</li>
+<li>非自愿上下文切换变多了，说明进程都在被强制调度，也就是都在争抢 CPU，说明 CPU 的确成了瓶颈；</li>
+<li>中断次数变多了，说明 CPU 被中断处理程序占用，还需要通过查看 /proc/interrupts 文件来分析具体的中断类型。</li>
+</ul>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>今天，我通过一个 sysbench 的案例，给你讲了上下文切换问题的分析思路。碰到上下文切换次数过多的问题时，<strong>我们可以借助 vmstat 、 pidstat 和 /proc/interrupts 等工具</strong>，来辅助排查性能问题的根源。</p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+  
+  <div class="tags">
+    <a href="/tags/Linux性能优化/">Linux性能优化</a>
+  </div>
+
+        
+  <div class="addthis addthis_toolbox addthis_default_style">
+    
+      <a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+    
+    
+      <a class="addthis_button_tweet"></a>
+    
+    
+      <a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+    
+    
+      <a class="addthis_button_pinterest_pinit" pi:pinit:layout="horizontal"></a>
+    
+    <a class="addthis_counter addthis_pill_style"></a>
+  </div>
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js"></script>
+
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">留言</h1>
+
+  
+      <div id="fb-root"></div>
+<script>
+  (function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=shouliang0816";
+    fjs.parentNode.insertBefore(js, fjs);
+  }(document, 'script', 'facebook-jssdk'));
+</script>
+
+<div class="fb-comments" data-href="https://shouliang.github.io/2018/11/28/Linux性能优化/04 | 基础篇：经常说的 CPU 上下文切换是什么意思？（下）/index.html" data-num-posts="5" data-width="840" data-colorscheme="light"></div>
+      
+  
+</section>
+
+</div></div>
+    <aside id="sidebar" class="alignright">
+  <div class="search">
+  <form action="//google.com/search" method="get" accept-charset="utf-8">
+    <input type="search" name="q" results="0" placeholder="搜索">
+    <input type="hidden" name="q" value="site:shouliang.github.io">
+  </form>
+</div>
+
+  
+
+  
+<div class="widget tag">
+  <h3 class="title">标签</h3>
+  <ul class="entry">
+  
+    <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
+  
+    <li><a href="/tags/Docker/">Docker</a><small>3</small></li>
+  
+    <li><a href="/tags/ES6/">ES6</a><small>4</small></li>
+  
+    <li><a href="/tags/Express/">Express</a><small>2</small></li>
+  
+    <li><a href="/tags/Git/">Git</a><small>7</small></li>
+  
+    <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
+  
+    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>2</small></li>
+  
+    <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
+  
+    <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
+  
+    <li><a href="/tags/MySQL实战/">MySQL实战</a><small>3</small></li>
+  
+    <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>4</small></li>
+  
+    <li><a href="/tags/Node-js-事件/">Node.js_事件</a><small>4</small></li>
+  
+    <li><a href="/tags/Node-js-入门/">Node.js_入门</a><small>9</small></li>
+  
+    <li><a href="/tags/Node-js-基础/">Node.js_基础</a><small>6</small></li>
+  
+    <li><a href="/tags/Node-js-异步/">Node.js_异步</a><small>3</small></li>
+  
+    <li><a href="/tags/Node-js-模块/">Node.js_模块</a><small>5</small></li>
+  
+    <li><a href="/tags/Node-js-测试/">Node.js_测试</a><small>5</small></li>
+  
+    <li><a href="/tags/Node-js-网络/">Node.js_网络</a><small>1</small></li>
+  
+    <li><a href="/tags/Node-js-进程/">Node.js_进程</a><small>2</small></li>
+  
+    <li><a href="/tags/Node-js-错误处理和调试/">Node.js_错误处理和调试</a><small>5</small></li>
+  
+    <li><a href="/tags/Redis/">Redis</a><small>2</small></li>
+  
+    <li><a href="/tags/Shell/">Shell</a><small>1</small></li>
+  
+    <li><a href="/tags/Unix/">Unix</a><small>3</small></li>
+  
+    <li><a href="/tags/从0开始学大数据/">从0开始学大数据</a><small>2</small></li>
+  
+    <li><a href="/tags/区块链/">区块链</a><small>1</small></li>
+  
+    <li><a href="/tags/数据分析实战/">数据分析实战</a><small>3</small></li>
+  
+    <li><a href="/tags/数据库/">数据库</a><small>2</small></li>
+  
+    <li><a href="/tags/数据结构与算法/">数据结构与算法</a><small>12</small></li>
+  
+    <li><a href="/tags/程序员的数学基础课/">程序员的数学基础课</a><small>4</small></li>
+  
+    <li><a href="/tags/网络安全/">网络安全</a><small>8</small></li>
+  
+    <li><a href="/tags/计算机网络/">计算机网络</a><small>1</small></li>
+  
+    <li><a href="/tags/趣谈网络协议/">趣谈网络协议</a><small>3</small></li>
+  
+  </ul>
+</div>
+
+</aside>
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div class="alignleft">
+  
+  &copy; 2019 shouliang
+  
+</div>
+<div class="clearfix"></div></footer>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+</body>
+</html>
