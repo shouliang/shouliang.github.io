@@ -53,6 +53,223 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2015-05-09T06:45:23.000Z"><a href="/2015/05/09/Redis/Node.js与Redis/">2015-05-09</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2015/05/09/Redis/Node.js与Redis/">Node.js与Redis</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-简介"><a href="#1-简介" class="headerlink" title="1.简介"></a>1.简介</h3><hr>
+<p>Redis官方推荐的Node.js的Redis客户端可以选择的有node_redis[7] 和ioredis[8] ，相比而言前者发布时间较早，而后者的功能则更加丰富一些。从接口来看两者的使用方法大同小异。</p>
+<h3 id="2-安装"><a href="#2-安装" class="headerlink" title="2.安装"></a>2.安装</h3><hr>
+<p>使用npm install ioredis命令安装最新版本的ioredis。</p>
+<h3 id="3-使用方法"><a href="#3-使用方法" class="headerlink" title="3.使用方法"></a>3.使用方法</h3><hr>
+<p>首先加载ioredis模块：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var Redis = require(&apos;ioredis&apos;);</span><br></pre></td></tr></table></figure></p>
+<p>下面的代码将创建一个默认连接到地址127.0.0.1，端口6379的Redis连接：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var redis = new Redis();</span><br></pre></td></tr></table></figure></p>
+<p>也可以显式地指定需要连接的地址：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var redis = new Redis(6379, &apos;127.0.0.1&apos;);</span><br></pre></td></tr></table></figure></p>
+<p>由于Node.js的异步特性，在处理返回值的时候与其他客户端差别较大。还是以GET/SET命令为例：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">redis.set(&apos;foo&apos;, &apos;bar&apos;, function () &#123;</span><br><span class="line">    //此时 SET 命令执行完并返回结果，</span><br><span class="line">    //因为这里并不关心 SET命令的结果，所以我们省略了回调函数的形参。</span><br><span class="line">    redis.get(&apos;foo&apos;, function (error, fooValue) &#123;</span><br><span class="line">        //error 参数存储了命令执行时返回的错误信息，如果没有错误则返回 null。</span><br><span class="line">        //回调函数的第二个参数存储的是命令执行的结果</span><br><span class="line">        console.log(fooValue); // &apos;bar&apos;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>  使用ioredis执行命令时需要传入回调函数（callback function）来获得返回值，当命令执行完返回结果后ioredis会调用该函数，并将命令的错误信息作为第一个参数、返回值作为第二个参数传递给该函数。同时ioredis还支持Promise形式的异步处理方式，如果省略最后一个回调函数，命令语句会返回一个Promise值，如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">redis.get(&apos;foo&apos;).then(function (fooValue) &#123;</span><br><span class="line">    //fooValue 即为键值</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>  Node.js的异步模型使得通过ioredis调用Redis命令的表现与Redis的底层管道协议十分相似：调用命令函数时（如redis.set()）并不会等待Redis返回命令执行结果，而是直接继续执行下一条语句，所以在Node.js中通过异步模型就能实现与管道类似的效果。上面的例子中我们并不需要SET命令的返回值，只要保证SET命令在GET命令前发出即可，所以完全不用等待SET命令返回结果后再执行GET命令。因此上面的代码可以改写成：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">//不需要返回值时可以省略回调函数</span><br><span class="line">redis.set(&apos;foo&apos;, &apos;bar&apos;);</span><br><span class="line">redis.get(&apos;foo&apos;, function (error, fooValue) &#123;</span><br><span class="line">    console.log(fooValue); // &apos;bar&apos;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>  不过由于SET和GET并未真正使用Redis的管道协议发送，所以当有多个客户端同时向 Redis 发送命令时，上例中的两个命令之间可能会被插入其他命令，换句话说，GET命令得到的值未必是“bar”。<br>  虽然Node.js的异步特性给我们带来了相对更高的性能，然而另一方面使用Redis实现某个功能时我们经常需要读写若干个键，而且很多情况下都会依赖之前命令的返回结果。这时就会出现嵌套多重回调函数的情况，影响代码可读性。就像这样：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">redis.get(&apos;people:2:home&apos;, function (error, home) &#123;</span><br><span class="line">    redis.hget(&apos;locations&apos;, home, function (error, address) &#123;</span><br><span class="line">        redis.exists(&apos;address:&apos; + address, function (error, addressExists) &#123;</span><br><span class="line">            if (addressExists) &#123;</span><br><span class="line">                console.log(&apos;地址存在。&apos;);</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                redis.exists(&apos;backup.address:&apos; + address, function (error, backupAddressExists) &#123;</span><br><span class="line">                    if (backupAddressExists) &#123;</span><br><span class="line">                        console.log(&apos;备用地址存在。&apos;);</span><br><span class="line">                    &#125; else &#123;</span><br><span class="line">                        console.log(&apos;地址不存在。&apos;);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>上面的代码并不是极端的情况，相反在实际开发中经常会遇到这种多层嵌套。为了减少嵌套，可以考虑使用 Async 、Step等第三方模块。如上面的代码可以稍微修改后使用Async重写为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">async.waterfall([</span><br><span class="line">    function (callback) &#123;</span><br><span class="line">        redis.get(&apos;people:2:home&apos;, callback);</span><br><span class="line">    &#125;,</span><br><span class="line">    function (home, callback) &#123;</span><br><span class="line">        redis.hget(&apos;locations&apos;, home, callback);</span><br><span class="line">    &#125;,</span><br><span class="line">    function (address, callback) &#123;</span><br><span class="line">        async.parallel([</span><br><span class="line">            function (callback) &#123;</span><br><span class="line">                redis.exists(&apos;address:&apos; + address, callback);</span><br><span class="line">            &#125;,</span><br><span class="line">            function (callback) &#123;</span><br><span class="line">               redis.exists(&apos;backup.address:&apos; + address, callback);</span><br><span class="line">            &#125;], function (err, results) &#123;</span><br><span class="line">            if (results[0]) &#123;</span><br><span class="line">                console.log(&apos;地址存在。&apos;);</span><br><span class="line">            &#125; else if (results[1]) &#123;</span><br><span class="line">                console.log(&apos;备用地址存在。&apos;);</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                console.log(&apos;地址不存在。&apos;);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line">]);</span><br></pre></td></tr></table></figure></p>
+<p>另外，可以使用co模块借助ES6的Generator特性来将ioredis的返回结果“串行化”：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var co = require(&apos;co&apos;);</span><br><span class="line">co(function* () &#123;</span><br><span class="line">    var result = yield redis.get(&apos;foo&apos;);</span><br><span class="line">    return result;</span><br><span class="line">&#125;).then(function (fooValue) &#123;</span><br><span class="line">    console.log(fooValue);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="4-简便用法"><a href="#4-简便用法" class="headerlink" title="4.简便用法"></a>4.简便用法</h3><hr>
+<p>1．HMSET/HGETALL<br>  ioredis同样支持在HMSET命令中使用对象作参数（对象的属性值只能是字符串），相应的HGETALL命令会返回一个对象。<br>2．事务<br>  事务的用法如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var multi = redis.multi();</span><br><span class="line">multi.set(&apos;foo&apos;, &apos;bar&apos;);</span><br><span class="line">multi.sadd(&apos;set&apos;, &apos;a&apos;);</span><br><span class="line">mulit.exec(function (err, replies) &#123;</span><br><span class="line">    //replies 是一个数组，依次存放事务队列中命令的结果</span><br><span class="line">    console.log(replies);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>或者使用链式调用：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">redis.multi()</span><br><span class="line">    .set(&apos;foo&apos;, &apos;bar&apos;)</span><br><span class="line">    .sadd(&apos;set&apos;, &apos;a&apos;)</span><br><span class="line">    .exec(function (err, replies) &#123;</span><br><span class="line">        console.log(replies);</span><br><span class="line">    &#125;);</span><br></pre></td></tr></table></figure></p>
+<p>3．“发布/订阅”模式<br>  Node.js 使用事件的方式实现“发布/订阅”模式。现在创建两个连接分别充当发布者和订阅者：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">var pub = new Redis();</span><br><span class="line">var sub = new Redis();</span><br></pre></td></tr></table></figure></p>
+<p>然后让sub订阅chat频道并在订阅成功后发送一条消息：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sub.subscribe(&apos;chat&apos;, function () &#123;</span><br><span class="line">    pub.publish(&apos;chat&apos;, &apos;hi!&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>定义当接收到消息时要执行的回调函数：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sub.on(&apos;message&apos;, function (channel, message) &#123;</span><br><span class="line">    console.log(&apos;收到&apos; + channel + &apos;频道的消息：&apos; + message);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>运行后可以看到打印的结果：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ node testpubsub.js</span><br></pre></td></tr></table></figure></p>
+<p>收到chat频道的消息：’hi!’<br>补充知识 在 ioredis 中建立连接的过程也是异步的，执行 redis = new Redis()后连接并没有立即建立完成。在连接建立完成前执行的命令会被加入到离线任务队列中，当连接建立成功后ioredis会按照加入的顺序依次执行离线任务队列中的命令。</p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2015-05-07T06:45:23.000Z"><a href="/2015/05/07/Redis/什么是redis/">2015-05-07</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2015/05/07/Redis/什么是redis/">一.什么是redis</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-什么是redis"><a href="#1-什么是redis" class="headerlink" title="1.什么是redis"></a>1.什么是redis</h3><hr>
+<p>随着互联网的普及，用户数量的快速增长，产生的数据也越来越多，这也对我们的产品提出了新的考验，如何才能构建出高性能，而且扩展性高的应用程序呢？听说Redis是一个不错的选择，那么问题来了，什么是Redis呢？</p>
+<p>Redis—— Remote Dictionary Server，它是一个开源的使用ANSI C语言编写、支持网络、可基于内存亦可持久化的日志型、Key-Value数据库，并提供多种语言的API，我们可使用它构建高性能，可扩展的Web应用程序。</p>
+<p>Redis是目前最流行的键值对存储数据库，从2010年3月15日起，Redis的开发工作由VMware主持。从2013年5月开始，Redis的开发由Pivotal赞助。</p>
+<p>如果你想了解Redis最新的资讯，可以访问 [官方网站]:<a href="http://redis.io/" target="_blank" rel="noopener">http://redis.io/</a></p>
+<h3 id="2-什么时候使用redis"><a href="#2-什么时候使用redis" class="headerlink" title="2.什么时候使用redis"></a>2.什么时候使用redis</h3><hr>
+<p>在实际生产环境中，很多公司都曾经使用过这样的架构，使用MySQL进行海量数据存储的，通过Memcached将热点数据加载到cache，加速访问，但随着业务数据量的不断增加，和访问量的持续增长，我们遇到了很多问题：
+　　</p>
+<ul>
+<li>MySQL需要不断进行拆库拆表，Memcached也需不断跟着扩容，扩容和维护工作占据大量开发时间。</li>
+<li>Memcached与MySQL数据库数据一致性问题。</li>
+<li>Memcached数据命中率低或down机，大量访问直接穿透到DB，MySQL无法支撑。</li>
+<li>跨机房cache同步问题。</li>
+</ul>
+<p>以上问题都是非常的棘手，不过现在不用担心了，因为我们可以使用redis来完美解决，下面我们来了解下redis的特点，看看redis是如何解决以上问题的。</p>
+<h3 id="3-Redis特点"><a href="#3-Redis特点" class="headerlink" title="3.Redis特点"></a>3.Redis特点</h3><hr>
+<p>有那么多相同类型的数据库，为什么要选择redis？</p>
+<p>相对于其他的同类型数据库而言，Redis支持更多的数据类型，除了和string外，还支持lists（列表）、sets（集合）和zsets（有序集合）几种数据类型。</p>
+<p>这些数据类型都支持push/pop、add/remove及取交集、并集和差集及更丰富的操作，而且这些操作都是原子性的。Redis具备以下特点：</p>
+<ul>
+<li>异常快速: Redis数据库完全在内存中，因此处理速度非常快，每秒能执行约11万集合，每秒约81000+条记录。</li>
+<li>数据持久化： redis支持数据持久化，可以将内存中的数据存储到磁盘上，方便在宕机等突发情况下快速恢复。</li>
+<li>支持丰富的数据类型: 相比许多其他的键值对存储数据库，Redis拥有一套较为丰富的数据类型。</li>
+<li>数据一致性： 所有Redis操作是原子的，这保证了如果两个客户端同时访问的Redis服务器将获得更新后的值。</li>
+<li>多功能实用工具： Redis是一个多实用的工具，可以在多个用例如缓存，消息，队列使用(Redis原生支持发布/订阅)，任何短暂的数据，应用程序，如 Web应用程序会话，网页命中计数等。</li>
+</ul>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2015-04-12T11:45:23.000Z"><a href="/2015/04/12/Gulp/Gulp(4)写自己的gulp/">2015-04-12</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2015/04/12/Gulp/Gulp(4)写自己的gulp/">四.写自己的gulp</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-项目需求"><a href="#1-项目需求" class="headerlink" title="1.项目需求"></a>1.项目需求</h3><hr>
+<p>我们将创建一个自己的gulp，具体的需求是通过gulp把我们自己所编写的JS文件合并压缩、CSS文件进行压缩后，并且生成新的文件。我们所需要的插件为：gulp-minify-css gulp-concat gulp-uglify gulp-rename del 如下图所示，完成后的项目目录结构：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgulp_project.gif" alt=""></p>
+<h3 id="2-创建项目"><a href="#2-创建项目" class="headerlink" title="2.创建项目"></a>2.创建项目</h3><hr>
+<p>首先我们先来创建一个名为project的目录，然后进入到该目录下面，再将gulp安装到我们项目的目录中，然后在该目录下新建一个名称为gulpfile.js的文件。安装好后的目录结构为：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgulp_project_create.gif" alt=""><br>在该目录下再创建一个src目录，来存放源JS与CSS文件。建立完成后，再src目录分别建立两个js文件与一个CSS文件。完成后的目录结构为：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgulp_project_create1.gif" alt=""></p>
+<h3 id="3-安装插件"><a href="#3-安装插件" class="headerlink" title="3.安装插件"></a>3.安装插件</h3><hr>
+<p>　　根据我们项目的需求，安装所需要的插件，可以通过”npm install 插件名” 来安装插件。安装完成后的目录结构如图所示。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgulp_project_plugin.gif" alt=""><br>然后打开gulpfile.js，将我们所用到的插件引用到我们项目中，代码如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    minifycss = require(&apos;gulp-minify-css&apos;),  //CSS压缩</span><br><span class="line">    concat = require(&apos;gulp-concat&apos;),         // 文件合并</span><br><span class="line">    uglify = require(&apos;gulp-uglify&apos;),         //js压缩插件</span><br><span class="line">    rename = require(&apos;gulp-rename&apos;),         // 重命名</span><br><span class="line">    del = require(&apos;del&apos;);                    // 文件删除</span><br></pre></td></tr></table></figure></p>
+<h3 id="4-编写代码"><a href="#4-编写代码" class="headerlink" title="4.编写代码"></a>4.编写代码</h3><hr>
+<p>上一节中已经完成了对插件的引用，下面就开始我们的代码编写，可以通过gulp.start()方法来开始执行我们的任务。</p>
+<p>1.gulp默认的执行任务是 “default”，当然你也可以指定别的名称，然后通过”gulp 任务名称” 来运行。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;default&apos;,  function() &#123;</span><br><span class="line">    gulp.start(&apos;clean&apos;,&apos;minifycss&apos;, &apos;minifyjs&apos;);  // 要执行的任务</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>2.CSS压缩<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;minifycss&apos;, function() &#123;</span><br><span class="line">    return gulp.src(&apos;src/*.css&apos;)                  //压缩的文件</span><br><span class="line">         .pipe(minifycss())                       //执行压缩</span><br><span class="line">         .pipe(gulp.dest(&apos;minified/css&apos;));        //输出文件夹</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>3.JS 合并压缩<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;minifyjs&apos;, function() &#123;</span><br><span class="line">    return gulp.src(&apos;src/*.js&apos;)</span><br><span class="line">        .pipe(concat(&apos;main.js&apos;))                  //合并所有js到main.js</span><br><span class="line">        .pipe(gulp.dest(&apos;minified/js&apos;))           //输出main.js到文件夹</span><br><span class="line">        .pipe(rename(&#123;suffix: &apos;.min&apos;&#125;))           //rename压缩后的文件名</span><br><span class="line">        .pipe(uglify())                           //压缩</span><br><span class="line">        .pipe(gulp.dest(&apos;minified/js&apos;));          //输出</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>4.执行压缩前，先删除目录里的内容<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;clean&apos;, function(cb) &#123;</span><br><span class="line">    del([&apos;minified/css&apos;, &apos;minified/js&apos;], cb)</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>好了，这样我们的代码就完成了。</p>
+<h3 id="5-运行项目"><a href="#5-运行项目" class="headerlink" title="5.运行项目"></a>5.运行项目</h3><hr>
+<p>前面我们已经编写完成了代码，在命令行中先转到project目录下，就可以输入gulp命令来运行本项目了，刷新project目录看看会出现什么结果呢。运行完成后的目录如下图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgulp_project1.gif" alt=""></p>
+<p>运行过程中的消息如下图所示：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgulp_task_process.gif" alt=""></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2015-04-09T07:45:23.000Z"><a href="/2015/04/09/Gulp/Gulp(3)gulp常用插件介绍/">2015-04-09</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2015/04/09/Gulp/Gulp(3)gulp常用插件介绍/">三.gulp 常用插件</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-插件安装"><a href="#1-插件安装" class="headerlink" title="1.插件安装"></a>1.插件安装</h3><hr>
+<p>在我们编写gulp代码时候，需要用到一些gulp的插件，可以通过npm install –save-dev 插件名称 来安装。如下代码来安装自动加载插件：</p>
+<p>npm install –save-dev gulp-load-plugins<br>　　要使用gulp的插件，首先得用require来把插件加载进来。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">var gulp=require(&apos;gulp&apos;),</span><br><span class="line">    plugins=require(&apos;gulp-load-plugins&apos;)(),</span><br><span class="line">    uglify = require(&apos;gulp-uglify&apos;),</span><br><span class="line">    minifyHtml = require(&apos;gulp-minify-html&apos;),</span><br><span class="line">    rename = require(&apos;gulp-rename&apos;);</span><br></pre></td></tr></table></figure></p>
+<p>　　gulp的插件有很多种，后面介绍几个插件的用法。如还想了解更多插件，请查阅相关资料。</p>
+<h3 id="2-自动加载"><a href="#2-自动加载" class="headerlink" title="2.自动加载"></a>2.自动加载</h3><hr>
+<p>ulp-load-plugins这个插件能自动帮你加载package.json文件里的gulp插件。例如假设你的package.json文件里的依赖是这样的:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;devDependencies&quot;: &#123;</span><br><span class="line">    &quot;gulp&quot;: &quot;~3.6.0&quot;,</span><br><span class="line">    &quot;gulp-rename&quot;: &quot;~1.2.0&quot;,</span><br><span class="line">    &quot;gulp-ruby-sass&quot;: &quot;~0.4.3&quot;,</span><br><span class="line">    &quot;gulp-load-plugins&quot;: &quot;~0.5.1&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>然后我们可以在gulpfile.js中使用gulp-load-plugins来帮我们加载插件：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;);</span><br><span class="line">//加载gulp-load-plugins插件，并马上运行它</span><br><span class="line">var plugins = require(&apos;gulp-load-plugins&apos;)();</span><br></pre></td></tr></table></figure></p>
+<p>　　然后我们要使用gulp-rename和gulp-ruby-sass这两个插件的时候，就可以使用plugins.rename和plugins.rubySass来代替了,也就是原始插件名去掉gulp-前缀，之后再转换为驼峰命名。</p>
+<h3 id="3-重命名"><a href="#3-重命名" class="headerlink" title="3.重命名"></a>3.重命名</h3><hr>
+<p>gulp-rename插件用来重命名文件流中的文件。用gulp.dest()方法写入文件时，文件名使用的是文件流中的文件名，如果要想改变文件名，那可以在之前用gulp-rename插件来改变文件流中的文件名。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    rename = require(&apos;gulp-rename&apos;),</span><br><span class="line">    uglify = require(&quot;gulp-uglify&quot;); </span><br><span class="line">gulp.task(&apos;rename&apos;, function () &#123;</span><br><span class="line">    gulp.src(&apos;src/1.js&apos;)</span><br><span class="line">    .pipe(uglify())           //压缩</span><br><span class="line">    .pipe(rename(&apos;1.min.js&apos;)) //会将1.js重命名为1.min.js</span><br><span class="line">    .pipe(gulp.dest(&apos;js&apos;));</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="4-js文件压缩"><a href="#4-js文件压缩" class="headerlink" title="4.js文件压缩"></a>4.js文件压缩</h3><hr>
+<p>gulp-uglify插件用来压缩js文件。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    uglify = require(&quot;gulp-uglify&quot;); </span><br><span class="line">gulp.task(&apos;minify-js&apos;, function () &#123;</span><br><span class="line">    gulp.src(&apos;src/*.js&apos;)          // 要压缩的js文件</span><br><span class="line">    .pipe(uglify())              //使用uglify进行压缩</span><br><span class="line">    .pipe(gulp.dest(&apos;dist/js&apos;)); //压缩后的路径</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="5-css文件压缩"><a href="#5-css文件压缩" class="headerlink" title="5.css文件压缩"></a>5.css文件压缩</h3><hr>
+<p>gulp-minify-css插件用来压缩css文件。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    minifyCss = require(&quot;gulp-minify-css&quot;);</span><br><span class="line">gulp.task(&apos;minify-css&apos;, function () &#123;</span><br><span class="line">    gulp.src(&apos;src/*.css&apos;) // 要压缩的css文件</span><br><span class="line">    .pipe(minifyCss())    //压缩css</span><br><span class="line">    .pipe(gulp.dest(&apos;dist/css&apos;));</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="6-html文件压缩"><a href="#6-html文件压缩" class="headerlink" title="6.html文件压缩"></a>6.html文件压缩</h3><hr>
+<p>gulp-minify-html插件用来压缩html文件。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    minifyHtml = require(&quot;gulp-minify-html&quot;); </span><br><span class="line">gulp.task(&apos;minify-html&apos;, function () &#123;</span><br><span class="line">    gulp.src(&apos;src/*.html&apos;) // 要压缩的html文件</span><br><span class="line">    .pipe(minifyHtml())    //压缩</span><br><span class="line">    .pipe(gulp.dest(&apos;dist/html&apos;));</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="7-js代码检查"><a href="#7-js代码检查" class="headerlink" title="7.js代码检查"></a>7.js代码检查</h3><hr>
+<p>使用gulp-jshint插件，用来检查js代码。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    jshint = require(&quot;gulp-jshint&quot;);</span><br><span class="line">gulp.task(&apos;jsLint&apos;, function () &#123;</span><br><span class="line">    gulp.src(&apos;src/*.js&apos;)</span><br><span class="line">    .pipe(jshint())</span><br><span class="line">    .pipe(jshint.reporter()); // 输出检查结果</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="8-文件合并"><a href="#8-文件合并" class="headerlink" title="8.文件合并"></a>8.文件合并</h3><hr>
+<p>使用gulp-concat插件，用来把多个文件合并为一个文件,我们可以用它来合并js或css文件等。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    concat = require(&quot;gulp-concat&quot;);</span><br><span class="line">gulp.task(&apos;concat&apos;, function () &#123;</span><br><span class="line">    gulp.src(&apos;src/*.js&apos;)     //要合并的文件</span><br><span class="line">    .pipe(concat(&apos;all.js&apos;))  // 合并匹配到的js文件并命名为 &quot;all.js&quot;</span><br><span class="line">    .pipe(gulp.dest(&apos;dist/js&apos;));</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="9-图片压缩"><a href="#9-图片压缩" class="headerlink" title="9.图片压缩"></a>9.图片压缩</h3><hr>
+<p>可以使用gulp-imagemin插件来压缩jpg、png、gif等图片。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;);</span><br><span class="line">var imagemin = require(&apos;gulp-imagemin&apos;);</span><br><span class="line">var pngquant = require(&apos;imagemin-pngquant&apos;); //png图片压缩插件</span><br><span class="line">gulp.task(&apos;default&apos;, function () &#123;</span><br><span class="line">    return gulp.src(&apos;src/images/*&apos;)</span><br><span class="line">        .pipe(imagemin(&#123;</span><br><span class="line">            progressive: true,</span><br><span class="line">            use: [pngquant()] //使用pngquant来压缩png图片</span><br><span class="line">        &#125;))</span><br><span class="line">        .pipe(gulp.dest(&apos;dist&apos;));</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="10-自动刷新"><a href="#10-自动刷新" class="headerlink" title="10.自动刷新"></a>10.自动刷新</h3><hr>
+<p>使用gulp-livereload插件，当代码变化时，它可以帮我们自动刷新页面。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    less = require(&apos;gulp-less&apos;),</span><br><span class="line">    livereload = require(&apos;gulp-livereload&apos;);</span><br><span class="line">gulp.task(&apos;less&apos;, function() &#123;</span><br><span class="line">  gulp.src(&apos;less/\*.less&apos;)</span><br><span class="line">    .pipe(less())</span><br><span class="line">    .pipe(gulp.dest(&apos;css&apos;))</span><br><span class="line">    .pipe(livereload());</span><br><span class="line">&#125;);</span><br><span class="line">gulp.task(&apos;watch&apos;, function() &#123;</span><br><span class="line">  livereload.listen(); //要在这里调用listen()方法</span><br><span class="line">  gulp.watch(&apos;less/*.less&apos;, [&apos;less&apos;]);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2015-04-07T07:45:23.000Z"><a href="/2015/04/07/Gulp/Gulp(2)gulp api/">2015-04-07</a></time>
       
       
@@ -491,388 +708,6 @@ warning: You appear to have cloned an empty repository.
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2014-06-24T09:45:23.000Z"><a href="/2014/06/24/Git/Git(5)分支管理/">2014-06-24</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2014/06/24/Git/Git(5)分支管理/">五.分支管理</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-分支管理图文详解一"><a href="#1-分支管理图文详解一" class="headerlink" title="1.分支管理图文详解一"></a>1.分支管理图文详解一</h3><hr>
-<p>在版本回退里，你已经知道，每次提交，Git都把它们串成一条时间线，这条时间线就是一个分支。截止到目前，只有一条时间线，在Git里，这个分支叫主分支，即master分支。HEAD严格来说不是指向提交，而是指向master，master才是指向提交的，所以，HEAD指向的就是当前分支。</p>
-<p>　　一开始的时候，master分支是一条线，Git用master指向最新的提交，再用HEAD指向master，就能确定当前分支，以及当前分支的提交点：<br>　　<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbranch01.png" alt=""></p>
-<p>每次提交，master分支都会向前移动一步，这样，随着你不断提交，master分支的线也越来越长，当我们创建新的分支，例如dev时，Git新建了一个指针叫dev，指向master相同的提交，再把HEAD指向dev，就表示当前分支在dev上：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbranch02.png" alt=""></p>
-<p>你看，Git创建一个分支很快，因为除了增加一个dev指针，改改HEAD的指向，工作区的文件都没有任何变化！</p>
-<h3 id="2-分支管理图文详解二"><a href="#2-分支管理图文详解二" class="headerlink" title="2.分支管理图文详解二"></a>2.分支管理图文详解二</h3><hr>
-<p>接着分支管理图文详解一，现在对工作区的修改和提交就是针对dev分支了，比如新提交一次后，dev指针往前移动一步，而master指针不变：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbranch03.png" alt=""></p>
-<p>假如我们在dev上的工作完成了，就可以把dev合并到master上。Git怎么合并呢？最简单的方法，就是直接把master指向dev的当前提交，就完成了合并：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbranch04.png" alt=""></p>
-<p>所以Git合并分支也很快！就改改指针，工作区内容也不变！</p>
-<p>合并完分支后，甚至可以删除dev分支。删除dev分支就是把dev指针给删掉，删掉后，我们就剩下了一条master分支：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbranch05.png" alt=""></p>
-<h3 id="3-创建分支"><a href="#3-创建分支" class="headerlink" title="3.创建分支"></a>3.创建分支</h3><hr>
-<p>首先，我们创建dev分支，然后切换到dev分支：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout -b dev</span><br><span class="line">Switched to a new branch &apos;dev&apos;</span><br></pre></td></tr></table></figure></p>
-<p>git checkout命令加上-b参数表示创建并切换，相当于以下两条命令：</p>
-<p>$ git branch dev<br>$ git checkout dev<br>Switched to branch ‘dev’</p>
-<p>然后，用git branch命令查看当前分支：</p>
-<p>$ git branch<br>*dev<br>  master</p>
-<p>git branch命令会列出所有分支，当前分支前面会标一个*号。</p>
-<p>然后，我们就可以在dev分支上正常提交，比如对readme.txt做个修改，加上一行：</p>
-<p>Creating a new branch is quick.</p>
-<p>然后提交：</p>
-<p>$ git add readme.txt<br>$ git commit -m “branch test”<br>[dev fec145a] branch test<br>1 file changed, 1 insertion(+)</p>
-<p>现在，dev分支的工作完成，我们就可以切换回master分支：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout master</span><br><span class="line">Switched to branch &apos;master&apos;</span><br></pre></td></tr></table></figure>
-<p>切换回master分支后，再查看一个readme.txt文件，刚才添加的内容不见了！因为那个提交是在dev分支上，而master分支此刻的提交点并没有变：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkdev.png" alt=""></p>
-<h3 id="4-合并分支"><a href="#4-合并分支" class="headerlink" title="4.合并分支"></a>4.合并分支</h3><hr>
-<p>我们把前面dev分支的工作成果合并到master分支上：</p>
-<p>$ git merge dev<br>Updating d17efd8..fec145a<br>Fast-forward<br> readme.txt |    1 +<br> 1 file changed, 1 insertion(+)</p>
-<p>　　git merge命令用于合并指定分支到当前分支。合并后，再查看readme.txt的内容，就可以看到，和dev分支的最新提交是完全一样的。</p>
-<p>　　注意到上面的Fast-forward信息，Git告诉我们，这次合并是“快进模式”，也就是直接把master指向dev的当前提交，所以合并速度非常快。</p>
-<p>　　当然，也不是每次合并都能Fast-forward，我们后面会将其他方式的合并。</p>
-<h3 id="5-删除分支"><a href="#5-删除分支" class="headerlink" title="5.删除分支"></a>5.删除分支</h3><hr>
-<p>合并完成后，就可以放心地删除dev分支了：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git branch -d dev</span><br><span class="line">Deleted branch dev (was 5659891).</span><br></pre></td></tr></table></figure></p>
-<p>删除后，查看branch，就只剩下master分支了：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git branch</span><br><span class="line">* master</span><br></pre></td></tr></table></figure></p>
-<p>因为创建、合并和删除分支非常快，所以Git鼓励你使用分支完成某个任务，合并后再删掉分支，这和直接在master分支上工作效果是一样的，但过程更安全。</p>
-<p>前面所讲知识：汇总下这些使用命令：</p>
-<p>查看分支：git branch</p>
-<p>创建分支：git branch <name></name></p>
-<p>切换分支：git checkout <name></name></p>
-<p>创建+切换分支：git checkout -b <name></name></p>
-<p>合并某分支到当前分支：git merge <name></name></p>
-<p>删除分支：git branch -d <name></name></p>
-<h3 id="6-产生冲突"><a href="#6-产生冲突" class="headerlink" title="6.产生冲突"></a>6.产生冲突</h3><hr>
-<p>当我们进行合并分支往往会产生冲突。</p>
-<p>在准备新的feature1分支，继续我们的新分支开发<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout -b feature1</span><br></pre></td></tr></table></figure></p>
-<p>修改readme.txt最后一行，改为Creating a new branch is quick AND simple.</p>
-<p>在feature1分支上提交<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git add readme.txt </span><br><span class="line">$ git commit -m &quot;AND simple&quot;</span><br></pre></td></tr></table></figure></p>
-<p>切换到master分支<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout master</span><br><span class="line">Switched to branch &apos;master&apos;</span><br><span class="line">Your branch is ahead of &apos;origin/master&apos; by 1 commit.</span><br></pre></td></tr></table></figure></p>
-<p>Git还会自动提示我们当前master分支比远程的master分支要超前1个提交。</p>
-<p>在master分支上把readme.txt文件的最后一行改为Creating a new branch is quick &amp; simple.提交：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git add readme.txt </span><br><span class="line">$ git commit -m &quot;&amp; simple&quot;</span><br></pre></td></tr></table></figure></p>
-<h3 id="7-解决冲突"><a href="#7-解决冲突" class="headerlink" title="7.解决冲突"></a>7.解决冲突</h3><hr>
-<p>在上节中master分支和feature1分支各自都分别有新的提交，变成了这样：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkresolve01.png" alt=""></p>
-<p>这种情况下，Git无法执行“快速合并”，只能试图把各自的修改合并起来，但这种合并就可能会有冲突，执行git merge feature1,在看readme.txt：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span><br><span class="line">Creating a new branch is quick &amp; simple.</span><br><span class="line">=======</span><br><span class="line">Creating a new branch is quick AND simple.</span><br><span class="line">&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature1</span><br></pre></td></tr></table></figure></p>
-<p>我们把冲突的内容修改为Creating a new branch is quick and simple.，提交：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git add readme.txt </span><br><span class="line">$ git commit -m &quot;conflict fixed&quot;</span><br></pre></td></tr></table></figure></p>
-<p>现在，master分支和feature1分支变成了下图所示：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkresolve02.png" alt=""></p>
-<p>用带参数的git log也可以看到分支的合并情况：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git log --graph --pretty=oneline --abbrev-commit</span><br></pre></td></tr></table></figure></p>
-<p>最后，删除feature1分支：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git branch -d feature1</span><br><span class="line">Deleted branch feature1.</span><br></pre></td></tr></table></figure></p>
-<p>冲突解决，最后，删除feature1分支 git branch -d feature1。当Git无法自动合并分支时，就必须首先解决冲突。解决冲突后，再提交，合并完成。</p>
-<p>用git log –graph命令可以看到分支合并图。</p>
-<h3 id="8-Bug分支"><a href="#8-Bug分支" class="headerlink" title="8.Bug分支"></a>8.Bug分支</h3><hr>
-<p>如果你有一个bug任务，你想创建一个分支issue-101来修复它，但是你当前正在dev上进行的工作还没有完成而不能提交，bug需要现在修复，所以现在你需要暂停dev上工作，Git提供了一个stash功能，可以把当前工作现场“储藏”起来，等以后恢复现场后继续工作：$ git stash。</p>
-<p>　　假定需要在master分支上修复，就从master创建临时分支：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout master</span><br><span class="line">Switched to branch &apos;master&apos;</span><br><span class="line">$ git checkout -b issue-101</span><br><span class="line">Switched to a new branch &apos;issue-101&apos;</span><br></pre></td></tr></table></figure></p>
-<p>　　现在修复bug，需要把“Git is free software …”改为“Git is a free software …”，然后提交：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git add readme.txt </span><br><span class="line">$ git commit -m &quot;fix bug 101&quot;</span><br></pre></td></tr></table></figure></p>
-<p>　　修复完成后，切换到master分支，并完成合并，最后删除issue-101分支：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout master</span><br><span class="line">...</span><br><span class="line">$ git merge --no-ff -m &quot;merged bug fix 101&quot; issue-101</span><br><span class="line">...</span><br><span class="line">$ git branch -d issue-101</span><br><span class="line">Deleted branch issue-101 (...).</span><br></pre></td></tr></table></figure></p>
-<p>　　Git把stash内容存在某个地方了，但是需要恢复一下，有两个办法：</p>
-<ul>
-<li>一是用git stash apply恢复，但是恢复后，stash内容并不删除，你需要用git stash drop来删除；</li>
-<li>另一种方式是用git stash pop，恢复的同时把stash内容也删了：</li>
-</ul>
-<h3 id="9-Feature分支"><a href="#9-Feature分支" class="headerlink" title="9.Feature分支"></a>9.Feature分支</h3><hr>
-<p>　在软件开发中，总会添加一个新功能时，你肯定不希望因为一些实验性质的代码，把主分支搞乱了，所以每添加一个新功能，最好新建一个feature分支，在上面开发，完成后，合并，最后，删除该feature分支。</p>
-<p>　　现在新功能开发代号为Vulcan:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout -b feature-vulcan</span><br><span class="line">Switched to a new branch &apos;feature-vulcan&apos;</span><br></pre></td></tr></table></figure></p>
-<p>　　开发完毕，添加并提交：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git add vulcan.py</span><br><span class="line">$ git commit -m &quot;add feature vulcan&quot;</span><br></pre></td></tr></table></figure></p>
-<p>切回dev，准备合并：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout dev</span><br></pre></td></tr></table></figure></p>
-<p>　　一切顺利的话，feature分支和bug分支是类似的，合并，然后删除。</p>
-<p>　　由于种种原因，此功能又不需要了，现在这个分支需要就地销毁：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git branch -d feature-vulcan</span><br><span class="line">error: The branch &apos;feature-vulcan&apos; is not fully merged.</span><br><span class="line">If you are sure you want to delete it, run &apos;git branch -D feature-vulcan&apos;.</span><br></pre></td></tr></table></figure></p>
-<p>　　销毁失败。Git友情提醒，feature-vulcan分支还没有被合并，如果删除，将丢失掉修改，如果要强行删除，需要使用命令git branch -D feature-vulcan。</p>
-<p>　　现在我们强行删除：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git branch -D feature-vulcan</span><br><span class="line">Deleted branch feature-vulcan (was 756d4af).</span><br></pre></td></tr></table></figure></p>
-<p>　　注意：开发一个新feature，最好新建一个分支；如果要丢弃一个没有被合并过的分支，可以通过git branch -D <name>强行删除。</name></p>
-<h3 id="10-推送分支"><a href="#10-推送分支" class="headerlink" title="10.推送分支"></a>10.推送分支</h3><hr>
-<p>当你从远程仓库克隆时，实际上Git自动把本地的master分支和远程的master分支对应起来了，并且远程仓库的默认名称是origin。</p>
-<p>　　要查看远程库的信息，用git remote<br> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git remote</span><br><span class="line">origin</span><br></pre></td></tr></table></figure></p>
-<p>　　或者，用git remote -v显示更详细的信息：<br> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git remote -v</span><br></pre></td></tr></table></figure></p>
-<p>推送分支<br>　　推送分支，就是把该分支上的所有本地提交推送到远程库。推送时，要指定本地分支，这样，Git就会把该分支推送到远程库对应的远程分支上：<br> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git push origin master</span><br></pre></td></tr></table></figure></p>
-<p>　　如果要推送其他分支，比如dev，就改成<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git push origin dev</span><br></pre></td></tr></table></figure></p>
-<ul>
-<li>master分支是主分支，因此要时刻与远程同步；</li>
-<li>dev分支是开发分支，团队所有成员都需要在上面工作，所以也需要与远程同步；</li>
-<li>bug分支只用于在本地修复bug，就没必要推到远程了，除非老板要看看你每周到底修复了几个bug；</li>
-<li>feature分支是否推到远程，取决于你是否和你的小伙伴合作在上面开发。
-　　<h3 id="11-多人协助"><a href="#11-多人协助" class="headerlink" title="11.多人协助"></a>11.多人协助</h3></li>
-</ul>
-<hr>
-<p>多人协作时，大家都会往master和dev分支上推送各自的修改。当你的同事也克隆一份此项目从远程库，默认情况下，只能看到本地的master分支。现在，你的同事要在dev分支上开发，就必须创建远程origin的dev分支到本地，于是他用这个命令创建本地dev分支：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout -b dev origin/dev</span><br></pre></td></tr></table></figure></p>
-<p>　　现在，他就可以在dev上继续修改，然后，时不时地把dev分支push到远程，并且已经向origin/dev分支推送了他的提交，这时你也对同样的文件作了修改，并试图推送，推送失败，因为你的同事的最新提交和你试图推送的提交有冲突，解决办法也很简单，Git已经提示我们，先用git pull把最新的提交从origin/dev抓下来，然后，在本地合并，解决冲突，再推送，git pull也失败了，原因是没有指定本地dev分支与远程origin/dev分支的链接，根据提示，设置dev和origin/dev的链接。</p>
-<p>　　这回git pull成功，但是是合并有冲突，需要手动解决，解决的方法和分支管理中的解决冲突完全一样。解决后，提交，再push：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git commit -m &quot;merge &amp; fix hello.py&quot;</span><br><span class="line">[dev adca45d] merge &amp; fix hello.py</span><br><span class="line">$ git push origin dev</span><br></pre></td></tr></table></figure></p>
-<p>　　因此，多人协作的工作模式通常是这样：</p>
-<ul>
-<li>首先，可以试图用git push origin branch-name推送自己的修改；</li>
-<li>如果推送失败，则因为远程分支比你的本地更新，需要先用git pull试图合并；</li>
-<li>如果合并有冲突，则解决冲突，并在本地提交；</li>
-<li>没有冲突或者解决掉冲突后，再用git push origin branch-name推送就能成功！<br>　　如果git pull提示“no tracking information”，则说明本地分支和远程分支的链接关系没有创建，用命令git branch –set-upstream branch-name origin/branch-name。</li>
-</ul>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2014-06-23T09:45:23.000Z"><a href="/2014/06/23/Git/Git(4)远程仓库/">2014-06-23</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2014/06/23/Git/Git(4)远程仓库/">四.远程仓库</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-远程仓库简介"><a href="#1-远程仓库简介" class="headerlink" title="1.远程仓库简介"></a>1.远程仓库简介</h3><hr>
-<p>到目前为止，我们已经掌握了如何在Git仓库里对一个文件进行时光穿梭，你再也不用担心文件备份或者丢失的问题了。</p>
-<p>　　开始介绍Git的远程仓库功能。我们现在借用GitHub神奇的网站，这个网站就是提供Git仓库托管服务的，所以只要注册一个GitHub账号，就可以免费获得Git远程仓库。</p>
-<p>　　由于你的本地Git仓库和GitHub仓库之间的传输是通过SSH加密的，所以，需要一点设置：</p>
-<p>　　第1步：创建SSH Key。在当前目录下，看看有没有.ssh目录，如果有，再看看这个目录下有没有id_rsa和id_rsa.pub这两个文件，如果已经有了，可直接跳到下一步。如果没有，打开Shell（Windows下打开Git Bash），创建SSH Key：</p>
-<p>$ ssh-keygen -t rsa -C “<a href="mailto:youremail@example.com" target="_blank" rel="noopener">youremail@example.com</a>“<br>　　你需要把邮件地址换成你自己的邮件地址，然后一路回车，使用默认值即可，可以在用户主目录里找到.ssh目录，里面有id_rsa和id_rsa.pub两个文件，这两个就是SSH Key的秘钥对，id_rsa是私钥，不能泄露出去，id_rsa.pub是公钥，可以放心地告诉任何人。</p>
-<p>　　第2步：登陆GitHub，打开“Account settings”，“SSH Keys”页面：</p>
-<p>　　然后，点“Add SSH Key”，填上任意Title，在Key文本框里粘贴id_rsa.pub文件的内容：<br>　　<img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgitsshkey.png" alt=""></p>
-<h3 id="2-GitHub创建新仓库"><a href="#2-GitHub创建新仓库" class="headerlink" title="2.GitHub创建新仓库"></a>2.GitHub创建新仓库</h3><hr>
-<p>GitHub创建一个Git仓库,并且本地仓库与此仓库进行远程同步，此仓库既可以作为备份，又可以让其他人通过该仓库来协作。</p>
-<p>　　首先，登陆GitHub，然后，在右上角找到“Create a new repo”按钮，创建一个新的仓库：<br>　　<br>　　<img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgithub1.png" alt=""><br>　　<br>　在Repository name填入learngit，其他保持默认设置，点击“Create repository”按钮，就成功地创建了一个新的Git仓库。</p>
-<p>　　目前，在GitHub上的这个learngit仓库还是空的，GitHub告诉我们，可以从这个仓库克隆出新的仓库，也可以把一个已有的本地仓库与之关联，然后，把本地仓库的内容推送到GitHub仓库。</p>
-<p>　　现在，我们根据GitHub的提示，在本地的learngit仓库下运行命令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git remote add origin git@github.com:onlyone/learngit.git</span><br></pre></td></tr></table></figure></p>
-<p>　　请千万注意，把上面的onlyone替换成你自己的GitHub账户名，否则，你在本地关联的就是我的远程库，关联没有问题，但是你以后推送是推不上去的，因为你的SSH Key公钥不在我的账户列表中。</p>
-<p>　　添加后，远程库的名字就是origin，这是Git默认的叫法，也可以改成别的，但是origin这个名字一看就知道是远程库。</p>
-<p>　　注意：要关联一个远程库，使用命令git remote add origin git@server-name:path/repo-name.git。　
-　　</p>
-<h3 id="3-本地库推送到远程库"><a href="#3-本地库推送到远程库" class="headerlink" title="3.本地库推送到远程库"></a>3.本地库推送到远程库</h3><hr>
-<p>本地库的所有内容推送到远程库上：</p>
-<p>$ git push -u origin master<br>　　把本地库的内容推送到远程，用git push命令，实际上是把当前分支master推送到远程。</p>
-<p>　　由于远程库是空的，我们第一次推送master分支时，加上了-u参数，Git不但会把本地的master分支内容推送的远程新的master分支，还会把本地的master分支和远程的master分支关联起来，在以后的推送或者拉取时就可以简化命令。</p>
-<p>　　推送成功，github内容与当前目录中readme.txt一致：<br>　　<br>　　<img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgithubremote.png" alt=""><br>　　<br>从现在起，只要本地作了提交，就可以通过命令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git push origin master</span><br></pre></td></tr></table></figure></p>
-<p>　　把本地master分支的最新修改推送至GitHub，现在，你就拥有了真正的分布式版本库！</p>
-<p>　　注意：要关联一个远程库，使用命令git remote add origin git@server-name:path/repo-name.git；关联后，使用命令git push -u origin master第一次推送master分支的所有内容；此后，每次本地提交后，只要有必要，就可以使用命令git push origin master推送最新修改；
-　　</p>
-<h3 id="4-SSH警告"><a href="#4-SSH警告" class="headerlink" title="4.SSH警告"></a>4.SSH警告</h3><hr>
-<p>当你第一次使用Git的clone或者push命令连接GitHub时，会得到一个警告：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">The authenticity of host &apos;github.com (xx.xx.xx.xx)&apos; can&apos;t be established.</span><br><span class="line">RSA key fingerprint is xx.xx.xx.xx.xx.</span><br><span class="line">Are you sure you want to continue connecting (yes/no)?</span><br></pre></td></tr></table></figure></p>
-<p>　　这是因为Git使用SSH连接，而SSH连接在第一次验证GitHub服务器的Key时，需要你确认GitHub的Key的指纹信息是否真的来自GitHub的服务器，输入yes回车即可。</p>
-<p>　　Git会输出一个警告，告诉你已经把GitHub的Key添加到本机的一个信任列表里了：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Warning: Permanently added &apos;github.com&apos; (RSA) to the list of known hosts.</span><br></pre></td></tr></table></figure></p>
-<p>　　这个警告只会出现一次，后面的操作就不会有任何警告了。</p>
-<p>　　如果你实在担心有人冒充GitHub服务器，输入yes前可以对照GitHub的RSA Key的指纹信息是否与SSH连接给出的一致。</p>
-<h3 id="5-从远程库克隆"><a href="#5-从远程库克隆" class="headerlink" title="5.从远程库克隆"></a>5.从远程库克隆</h3><hr>
-<p>从远程库克隆,就需要我们先创建远程库，在github创建一个新的gitskills仓库，我们勾选Initialize this repository with a README，这样GitHub会自动为我们创建一个README.md文件。创建完毕后，可以看到README.md文件：</p>
-<p>　　现在，远程库已经准备好了，下一步是用命令git clone克隆一个本地库：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ git clone git@github.com:michaelliao/gitskills.git</span><br><span class="line"> </span><br><span class="line">$ cd gitskills</span><br><span class="line">$ ls</span><br><span class="line">README.md</span><br></pre></td></tr></table></figure></p>
-<p>　　注意把Git库的地址换成你自己的，然后进入gitskills目录看看，已经有README.md文件了。</p>
-<p>　　你也许还注意到，GitHub给出的地址不止一个，还可以用github.com/onlyone/gitskills.git这样的地址。实际上，Git支持多种协议，默认的git://使用ssh，但也可以使用https等其他协议。</p>
-<p>　　注意：要克隆一个仓库，首先必须知道仓库的地址，然后使用git clone命令克隆。</p>
-<p>　　Git支持多种协议，包括https，但通过ssh支持的原生git协议速度最快。</p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2014-06-20T06:45:23.000Z"><a href="/2014/06/20/Git/Git(3)操作Git/">2014-06-20</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2014/06/20/Git/Git(3)操作Git/">三.操作Git</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-status命令与diff命令"><a href="#1-status命令与diff命令" class="headerlink" title="1.status命令与diff命令"></a>1.status命令与diff命令</h3><hr>
-<p>前面我们已经成功地添加并提交了一个readme.txt文件，修改readme.txt如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">echo &quot;Git is a distributed version control system. &quot; &gt; readme.txt</span><br><span class="line">echo &quot;Git is free software.&quot; &gt;&gt; readme.txt</span><br></pre></td></tr></table></figure></p>
-<p>　　运行git status命令看看结果：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git status</span><br><span class="line">...</span><br><span class="line">no changes added to commit (use &quot;git add&quot; and/or &quot;git commit -a&quot;)</span><br></pre></td></tr></table></figure></p>
-<p>　　git status命令可以让我们时刻掌握仓库当前的状态，上面显示，readme.txt被修改过了，但还没有准备提交的修改。</p>
-<p>　　git diff这个命令看看：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ git diff readme.txt </span><br><span class="line">...</span><br><span class="line">-Git is version control system.                                             </span><br><span class="line">+Git is a distributed version control system.</span><br><span class="line"> Git is free software</span><br></pre></td></tr></table></figure></p>
-<p>　　git diff顾名思义就是查看difference，显示的格式正是Unix通用的diff格式，可以从上面的命令输出看到，我们在第一行添加了一个“distributed”单词。</p>
-<p>　　readme.txt作了什么修改后，再把它提交到仓库，提交修改和提交新文件是一样的两步，git add和git commit：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git add readme.txt</span><br><span class="line">$ git commit -m &quot;add distributed&quot;</span><br></pre></td></tr></table></figure></p>
-<p>注意</p>
-<ul>
-<li>要随时掌握工作区的状态，使用git status命令。</li>
-<li>如果git status告诉你有文件被修改过，用git diff可以查看修改内容。</li>
-</ul>
-<h3 id="2-版本回退"><a href="#2-版本回退" class="headerlink" title="2.版本回退"></a>2.版本回退</h3><hr>
-<p>现在，再练习一次，修改readme.txt文件如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">echo &quot;Git is a distributed version control system.&quot; &gt; readme.txt</span><br><span class="line">echo &quot;Git is free software distributed under the GPL.&quot; &gt;&gt; readme.txt</span><br></pre></td></tr></table></figure></p>
-<p>　　我们再次提交一次readme.txt<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git add readme.txt</span><br><span class="line">$ git commit -m &quot;append GPL&quot;</span><br></pre></td></tr></table></figure></p>
-<p>　　我们现在已经提交多次文件，想看看有那些？版本控制系统肯定有某个命令可以告诉我们历史记录，在Git中，我们用git log命令查看：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$ git log</span><br><span class="line">commit 3628164fb26d48395383f8f31179f24e0882e1e0</span><br><span class="line">Date:   Tue Oct 25 15:11:49 2015 +0000</span><br><span class="line">    append GPL</span><br><span class="line">commit ea34578d5496d7dd233c827ed32a8cd576c5ee85</span><br><span class="line">Date:   Tue Oct 25 14:53:12 2015 +0000</span><br><span class="line">    add distributed</span><br><span class="line">commit cb926e7ea50ad11b8f9e909c05226233bf755030</span><br><span class="line">Date:   Mon Oct 24 17:51:55 2015 +0000</span><br><span class="line">    wrote a readme file</span><br></pre></td></tr></table></figure></p>
-<p>　　git log命令显示从最近到最远的提交日志，我们可以看到3次提交，最近的一次是append GPL，上一次是add distributed，最早的一次是wrote a readme file。commit 36281**2e1e0是commit id（版本号）。如果嫌输出信息太多，可以使用$ git log –pretty=oneline，此时你看到的一大串类似3628164…882e1e0的是commit id（版本号）。</p>
-<p>　　每提交一个新版本，实际上Git就会把它们自动串成一条时间线。现在准备把readme.txt回退到上一个版本，也就是“add distributed”的那个版本，怎么做呢？</p>
-<p>　　首先，Git必须知道当前版本是哪个版本，在Git中，用HEAD表示当前版本，也就是最新的提交3628164…882e1e0（注意我的提交ID和你的肯定不一样），上一个版本就是HEAD^，上上一个版本就是HEAD^^，当然往上100个版本写100个^比较容易数不过来，所以写成HEAD~100。</p>
-<p>　　现在，我们要把当前版本“append GPL”回退到上一个版本“add distributed”，就可以使用git reset命令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git reset --hard HEAD^</span><br><span class="line">HEAD is now at ea34578 add distributed</span><br></pre></td></tr></table></figure></p>
-<h3 id="3-重新恢复到新版本"><a href="#3-重新恢复到新版本" class="headerlink" title="3.重新恢复到新版本"></a>3.重新恢复到新版本</h3><hr>
-<p>接着上节版本回退，还可以继续回退到上一个版本wrote a readme file，不过我们现在看看版本库的状态git log：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git log</span><br></pre></td></tr></table></figure></p>
-<p>　　最新的那个版本append GPL已经看不到了！好比你从21世纪坐时光穿梭机来到了19世纪，想再回去已经回不去了，肿么办？</p>
-<p>　　只要之前的命令行结果还在，就可以找到那个append GPL的commit id是3628164…，于是就可以指定回到未来的某个版本：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git reset --hard 3628164</span><br><span class="line">HEAD is now at 3628164 append GPL</span><br></pre></td></tr></table></figure></p>
-<p>　　版本号没必要写全，前几位就可以了，Git会自动去找。当然也不能只写前一两位，因为Git可能会找到多个版本号，就无法确定是哪一个了。</p>
-<p>　　可以查看readme.txt的内容$ cat readme.txt.</p>
-<p>　　Git的版本回退速度非常快，因为Git在内部有个指向当前版本的HEAD指针，当你回退版本的时候，Git仅仅是把HEAD从指向append GPL：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkback01.jpg" alt=""><br>改为指向add distributed：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkback02.jpg" alt=""></p>
-<h3 id="4-git-reflog命令"><a href="#4-git-reflog命令" class="headerlink" title="4.git reflog命令"></a>4.git reflog命令</h3><hr>
-<p>现在，你回退到了某个版本，当想恢复到新版本怎么办？找不到新版本的commit id怎么办？</p>
-<p>　　在Git中可以放心下。当你用$ git reset –hard HEAD^回退到add distributed版本时，再想恢复到append GPL，就必须找到append GPL的commit id。Git提供了一个命令git reflog用来记录你的每一次命令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ git reflog</span><br><span class="line">ea34578 HEAD@&#123;0&#125;: reset: moving to HEAD^</span><br><span class="line">3628164 HEAD@&#123;1&#125;: commit: append GPL</span><br><span class="line">ea34578 HEAD@&#123;2&#125;: commit: add distributed</span><br><span class="line">cb926e7 HEAD@&#123;3&#125;: commit (initial): wrote a readme file</span><br></pre></td></tr></table></figure></p>
-<p>　　这样可以看到，第二行显示append GPL的commit id是3628164，这样我们就可以重新找到了。</p>
-<p>　　注意，我们从这两节中可以了解到：</p>
-<p>HEAD指向的版本就是当前版本，因此，Git允许我们在版本的历史之间穿梭，使用命令git reset –hard commit_id。<br>穿梭前，用git log可以查看提交历史，以便确定要回退到哪个版本。<br>要重返未来，用git reflog查看命令历史，以便确定要回到未来的哪个版本。</p>
-<h3 id="5-工作区"><a href="#5-工作区" class="headerlink" title="5.工作区"></a>5.工作区</h3><hr>
-<p><strong>工作区</strong>：就是你在电脑里能看到的目录,learngit文件夹就是一个工作区，比如我们环境中当前的目录。</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkworkArea.png" alt=""></p>
-<h3 id="6-暂存区"><a href="#6-暂存区" class="headerlink" title="6.暂存区"></a>6.暂存区</h3><hr>
-<p><strong>版本库:</strong>工作区有一个隐藏目录.git 这个不算工作区，而是Git的版本库。</p>
-<p><strong>暂存区:</strong>英文叫stage,或index。一般存放在git 目录下的index文件(.git/index)中，所以我们把暂存区时也叫作索引(index).</p>
-<p>Git的版本库里存了很多东西，其中最重要的就是称为stage（或者叫index）的暂存区，还有Git为我们自动创建的第一个分支master，以及指向master的一个指针叫HEAD。</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkstage.jpg" alt=""></p>
-<h3 id="7-暂存区实践"><a href="#7-暂存区实践" class="headerlink" title="7.暂存区实践"></a>7.暂存区实践</h3><hr>
-<p>现在我们对readme.txt做个修改，比如追加一行内容：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">echo &quot;Git has a mutable index called stage.&quot; &gt;&gt; readme.txt</span><br></pre></td></tr></table></figure></p>
-<p>然后，在工作区新增一个LICENSE文本文件<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">echo &quot;LICENSE is a new file.&quot; &gt; LICENSE</span><br></pre></td></tr></table></figure></p>
-<p>用git status查看一下状态，Git显示结果，readme.txt被修改了，而LICENSE还从来没有被添加过，所以它的状态是Untracked。</p>
-<p>现在，使用两次命令git add，把readme.txt和LICENSE都添加后，用git status再查看一下，通过图可以理解为</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkstorageArea01.jpg" alt=""><br>所以，git add命令实际上就是把要提交的所有修改放到暂存区（Stage），然后，执行git commit就可以一次性把暂存区的所有修改提交到分支。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git commit -m &quot;understand how stage works&quot;</span><br></pre></td></tr></table></figure></p>
-<p>一旦提交后，如果你又没有对工作区做任何修改，用git status查看下，没有任何内容，现在版本库变成了这样，暂存区就没有任何内容了：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkstorageArea02.jpg" alt=""></p>
-<h3 id="8-管理修改"><a href="#8-管理修改" class="headerlink" title="8.管理修改"></a>8.管理修改</h3><hr>
-<p>Git与其他版本控制系统相比，Git跟踪并管理的是修改，而非文件。</p>
-<p>　　为什么说Git管理的是修改，而不是文件。接下来做测试，我们对readme.txt修改，追加一行内容：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">echo &quot;Git tracks changes.&quot; &gt;&gt; readme.txt</span><br></pre></td></tr></table></figure></p>
-<p>　　然后通过git add添加<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git add readme.txt</span><br><span class="line">$ git status</span><br></pre></td></tr></table></figure></p>
-<p>　　接下来，我们再次修改readme.txt内容，把最后一行内容修改为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Git tracks changes of files.</span><br></pre></td></tr></table></figure></p>
-<p>　　git commit提交<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git commit -m &quot;git tracks changes&quot;</span><br><span class="line">[master d4f25b6] git tracks changes</span><br><span class="line"> 1 file changed, 1 insertion(+)</span><br></pre></td></tr></table></figure></p>
-<p>　　通过git status查看每次操作的状态，可以看出第二次修改 -&gt; git commit，没有被提交。</p>
-<p>　　Git管理的是修改，当你用git add命令后，在工作区的第一次修改被放入暂存区，准备提交，但是，在工作区的第二次修改并没有放入暂存区，所以，git commit只负责把暂存区的修改提交了，也就是第一次的修改被提交了，第二次的修改不会被提交。</p>
-<p>Git是如何跟踪修改的，每次修改，如果不add到暂存区，那就不会加入到commit中。</p>
-<h3 id="9-撤销修改"><a href="#9-撤销修改" class="headerlink" title="9.撤销修改"></a>9.撤销修改</h3><hr>
-<p>如果你在readme.txt中加入了一行文件，又感觉不好，你可以删除新加的，恢复到原来的。</p>
-<p>Git会告诉你，git checkout – file可以丢弃工作区的修改：<br> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout -- readme.txt</span><br></pre></td></tr></table></figure></p>
-<p>命令git checkout – readme.txt意思就是，把readme.txt文件在工作区的修改全部撤销，这里有两种情况：</p>
-<ul>
-<li>一种是readme.txt自修改后还没有被放到暂存区，现在，撤销修改就回到和版本库一模一样的状态；</li>
-<li>一种是readme.txt已经添加到暂存区后，又作了修改，现在，撤销修改就回到添加到暂存区后的状态。<br>总之，就是让这个文件回到最近一次git commit或git add时的状态。</li>
-</ul>
-<p>现在，看看readme.txt的文件内容：<br> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ cat readme.txt</span><br><span class="line">Git is a distributed version control system.</span><br><span class="line">Git is free software distributed under the GPL.</span><br><span class="line">Git has a mutable index called stage.</span><br><span class="line">Git tracks changes of files.</span><br></pre></td></tr></table></figure></p>
-<p>现在来看几种情况，如何撤销修改</p>
-<p>1：当你改乱了工作区某个文件的内容，想直接丢弃工作区的修改时，用命令git checkout – file。</p>
-<p>2：当你不但改乱了工作区某个文件的内容，还添加到了暂存区时，想丢弃修改，分两步：</p>
-<p>第一步用命令git reset HEAD file，就回到了1；<br>第二步按1操作。<br>3：已经提交了不合适的修改到版本库时，想要撤销本次提交，参考版本回退一节，不过前提是没有推送到远程库。</p>
-<h3 id="10-删除文件"><a href="#10-删除文件" class="headerlink" title="10.删除文件"></a>10.删除文件</h3><hr>
-<p>在Git中，删除也是一个修改操作，先添加一个新文件test.txt到Git并且提交：<br> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ git add test.txt</span><br><span class="line">$ git commit -m &quot;add test.txt&quot;</span><br><span class="line">[master 94cdc44] add test.txt</span><br><span class="line"> 1 file changed, 1 insertion(+)</span><br><span class="line"> create mode 100644 test.txt</span><br></pre></td></tr></table></figure></p>
-<p>一般情况下，你通常直接在文件管理器中把没用的文件删了，或者用rm命令删了：<br> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ rm test.txt</span><br></pre></td></tr></table></figure></p>
-<p>这个时候，Git知道你删除了文件，因此，工作区和版本库就不一致了，git status命令会立刻告诉你哪些文件被删除了：<br> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git status</span><br><span class="line">...</span><br><span class="line">no changes added to commit (use &quot;git add&quot; and/or &quot;git commit -a&quot;)</span><br></pre></td></tr></table></figure></p>
-<p>现在你有两个选择，一是确实要从版本库中删除该文件，那就用命令git rm删掉，并且git commit：<br> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git rm test.txt</span><br><span class="line">rm &apos;test.txt&apos;</span><br><span class="line">$ git commit -m &quot;remove test.txt&quot;</span><br></pre></td></tr></table></figure></p>
-<p>现在，文件就从版本库中被删除了。</p>
-<p>另一种情况是删错了，因为版本库里还有呢，所以可以很轻松地把误删的文件恢复到最新版本：<br> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout -- test.txt</span><br></pre></td></tr></table></figure></p>
-<p>git checkout其实是用版本库里的版本替换工作区的版本，无论工作区是修改还是删除，都可以“一键还原”。</p>
-<p>　　命令git rm用于删除一个文件。如果一个文件已经被提交到版本库，那么你永远不用担心误删，但是要小心，你只能恢复文件到最新版本，你会丢失最近一次提交后你修改的内容。</p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2014-06-18T07:45:23.000Z"><a href="/2014/06/18/Git/Git(2)创建版本库/">2014-06-18</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2014/06/18/Git/Git(2)创建版本库/">二.创建版本库</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-什么是版本库"><a href="#1-什么是版本库" class="headerlink" title="1.什么是版本库"></a>1.什么是版本库</h3><hr>
-<p>　版本库又名仓库，英文名repository，你可以简单理解成一个目录，这个目录里面的所有文件都可以被Git管理起来，每个文件的修改、删除，Git都能跟踪，以便任何时刻都可以追踪历史，或者在将来某个时刻可以“还原”。</p>
-<p>所以，创建一个版本库非常简单，首先，选择一个合适的地方，创建一个空目录：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ mkdir learngit</span><br><span class="line">$ cd learngit</span><br><span class="line">$ pwd</span><br><span class="line">/home/shouliang/learngit</span><br></pre></td></tr></table></figure></p>
-<p>pwd命令用于显示当前目录。在环境中这个仓库位于/home/shouliang/learngit。</p>
-<p>通过git init命令把这个目录变成Git可以管理的仓库：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git init</span><br><span class="line">Initialized empty Git repository in /home/shouliang/learngit/.git/</span><br></pre></td></tr></table></figure></p>
-<p>　　瞬间Git就把仓库建好了，而且告诉你是一个空的仓库（empty Git repository），细心的读者可以发现当前目录下多了一个.git的目录，这个目录是Git来跟踪管理版本库的，没事千万不要手动修改这个目录里面的文件，不然改乱了，就把Git仓库给破坏了。</p>
-<p>　　如果你没有看到.git目录，那是因为这个目录默认是隐藏的，用ls -ah命令就可以看见。</p>
-<h3 id="2-添加文件"><a href="#2-添加文件" class="headerlink" title="2.添加文件"></a>2.添加文件</h3><hr>
-<p>我们了解下版本控制系统，其实只能跟踪文本文件的改动，比如TXT文件，网页，所有的程序代码等等，Git也不例外。版本控制系统可以告诉你每次的改动，比如在第5行加了一个单词“Linux”，在第8行删了一个单词“Windows”。而图片、视频这些二进制文件，虽然也能由版本控制系统理，但没法跟踪文件的变化，只能把二进制文件每次改动串起来，也就是只知道图片从100KB改成了120KB，但到底改了啥，版本控制系统不知道，也没法知道。</p>
-<p>为了简明起见，我们创建一个readme.txt作为练习：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">echo &quot;Git is a version control system.&quot; &gt; readme.txt</span><br><span class="line">// 输入这句话保存到创建的readme.txt文件中</span><br><span class="line">echo &quot; Git is free software.&quot; &gt;&gt; readme.txt</span><br><span class="line">// 输入此内容追加到readme.txt中</span><br></pre></td></tr></table></figure></p>
-<p>一定要放到learngit目录下（子目录也行），因为这是一个Git仓库，放到其他地方Git再厉害也找不到这个文件。</p>
-<p>用命令git add告诉Git，把文件添加到仓库：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git add readme.txt</span><br></pre></td></tr></table></figure></p>
-<p>git add 实际上是个脚本命令，没有任何显示，说明添加成功。</p>
-<h3 id="3-提交文件"><a href="#3-提交文件" class="headerlink" title="3.提交文件"></a>3.提交文件</h3><hr>
-<p>用命令git commit告诉Git，把文件提交到仓库：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ git commit -m &quot;wrote a readme file&quot;</span><br><span class="line">[master (root-commit) cb926e7] wrote a readme file</span><br><span class="line"> 1 file changed, 2 insertions(+)</span><br><span class="line"> create mode 100644 readme.txt</span><br></pre></td></tr></table></figure></p>
-<p>　　简单解释一下git commit命令，-m后面输入的是本次提交的说明，可以输入任意内容，当然最好是有意义的，这样你就能从历史记录里方便地找到改动记录。</p>
-<p>　　git commit命令执行成功后会告诉你，1个文件被改动（我们新添加的readme.txt文件），插入了两行内容（readme.txt有两行内容）。</p>
-<p>　　为什么Git添加文件需要add，commit一共两步呢？因为commit可以一次提交很多文件，所以你可以多次add不同的文件，比如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git add file1.txt</span><br><span class="line">$ git add file2.txt file3.txt</span><br><span class="line">$ git commit -m &quot;add 3 files.&quot;</span><br></pre></td></tr></table></figure></p>
-<h3 id="4-小结"><a href="#4-小结" class="headerlink" title="4.小结"></a>4.小结</h3><hr>
-<p>此节知识点我们所学习的内容：</p>
-<p>初始化一个Git仓库，使用git init命令。</p>
-<p>添加文件到Git仓库，分两步：</p>
-<ul>
-<li>第一步，使用命令git add <file>，注意，可反复多次使用，添加多个文件；</file></li>
-<li>第二步，使用命令git commit，完成。　　</li>
-</ul>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -960,7 +795,7 @@ warning: You appear to have cloned an empty repository.
   
     <li><a href="/tags/计算机网络/">计算机网络</a><small>1</small></li>
   
-    <li><a href="/tags/趣谈网络协议/">趣谈网络协议</a><small>3</small></li>
+    <li><a href="/tags/趣谈网络协议/">趣谈网络协议</a><small>7</small></li>
   
   </ul>
 </div>

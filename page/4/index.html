@@ -53,6 +53,441 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2018-05-23T06:45:23.000Z"><a href="/2018/05/23/趣谈网络协议/第3讲 | ifconfig：最熟悉又陌生的命令行/">2018-05-23</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/05/23/趣谈网络协议/第3讲 | ifconfig：最熟悉又陌生的命令行/">第3讲 | ifconfig：最熟悉又陌生的命令行</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>上一节结尾给你留的一个思考题是，你知道怎么查看 IP 地址吗？</p>
+<p>当面试听到这个问题的时候，面试者常常会觉得走错了房间。我面试的是技术岗位啊，怎么问这么简单的问题？</p>
+<p>的确，即便没有专业学过计算机的人，只要倒腾过电脑，重装过系统，大多也会知道这个问题的答案：在 Windows 上是 ipconfig，在 Linux 上是 ifconfig。</p>
+<p>那你知道在 Linux 上还有什么其他命令可以查看 IP 地址吗？答案是 ip addr。如果回答不上来这个问题，那你可能没怎么用过 Linux。</p>
+<p>那你知道 ifconfig 和 ip addr 的区别吗？这是一个有关 net-tools 和 iproute2 的“历史”故事，你刚来到第三节，暂时不用了解这么细，但这也是一个常考的知识点。</p>
+<p>想象一下，你登录进入一个被裁剪过的非常小的 Linux 系统中，发现既没有 ifconfig 命令，也没有 ip addr 命令，你是不是感觉这个系统压根儿没法用？这个时候，你可以自行安装 net-tools 和 iproute2 这两个工具。当然，大多数时候这两个命令是系统自带的。</p>
+<p>安装好后，我们来运行一下 ip addr。不出意外，应该会输出下面的内容。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">root@test:~# ip addr</span><br><span class="line">1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN group default </span><br><span class="line">    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00</span><br><span class="line">    inet 127.0.0.1/8 scope host lo</span><br><span class="line">       valid_lft forever preferred_lft forever</span><br><span class="line">    inet6 ::1/128 scope host </span><br><span class="line">       valid_lft forever preferred_lft forever</span><br><span class="line">2: eth0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UP group default qlen 1000</span><br><span class="line">    link/ether fa:16:3e:c7:79:75 brd ff:ff:ff:ff:ff:ff</span><br><span class="line">    inet 10.100.122.2/24 brd 10.100.122.255 scope global eth0</span><br><span class="line">       valid_lft forever preferred_lft forever</span><br><span class="line">    inet6 fe80::f816:3eff:fec7:7975/64 scope link </span><br><span class="line">       valid_lft forever preferred_lft forever</span><br></pre></td></tr></table></figure>
+<p>这个命令显示了这台机器上所有的网卡。大部分的网卡都会有一个 IP 地址，当然，这不是必须的。在后面的分享中，我们会遇到没有 IP 地址的情况。</p>
+<p>IP 地址是一个网卡在网络世界的通讯地址，相当于我们现实世界的门牌号码。既然是门牌号码，不能大家都一样，不然就会起冲突。比方说，假如大家都叫六单元 1001 号，那快递就找不到地方了。所以，有时候咱们的电脑弹出网络地址冲突，出现上不去网的情况，多半是 IP 地址冲突了。</p>
+<p>如上输出的结果，10.100.122.2 就是一个 IP 地址。这个地址被点分隔为四个部分，每个部分 8 个 bit，所以 IP 地址总共是 32 位。这样产生的 IP 地址的数量很快就不够用了。因为当时设计 IP 地址的时候，哪知道今天会有这么多的计算机啊！因为不够用，于是就有了 IPv6，也就是上面输出结果里面 inet6 fe80::f816:3eff:fec7:7975/64。这个有 128 位，现在看来是够了，但是未来的事情谁知道呢？</p>
+<p>本来 32 位的 IP 地址就不够，还被分成了 5 类。现在想想，当时分配地址的时候，真是太奢侈了。</p>
+<p><img src="https://static001.geekbang.org/resource/image/0b/9e/0b32d6e35ff0bbc5d46cfb87f6669d9e.jpg" alt="img"></p>
+<p>在网络地址中，至少在当时设计的时候，对于 A、B、 C 类主要分两部分，前面一部分是网络号，后面一部分是主机号。这很好理解，大家都是六单元 1001 号，我是小区 A 的六单元 1001 号，而你是小区 B 的六单元 1001 号。</p>
+<p>下面这个表格，详细地展示了 A、B、C 三类地址所能包含的主机的数量。在后文中，我也会多次借助这个表格来讲解。</p>
+<p><img src="https://static001.geekbang.org/resource/image/e9/be/e9c59a4b2f0b804356759b10440ea7be.jpg" alt="img"></p>
+<p>这里面有个尴尬的事情，就是 C 类地址能包含的最大主机数量实在太少了，只有 254 个。当时设计的时候恐怕没想到，现在估计一个网吧都不够用吧。而 B 类地址能包含的最大主机数量又太多了。6 万多台机器放在一个网络下面，一般的企业基本达不到这个规模，闲着的地址就是浪费。</p>
+<h2 id="无类型域间选路（CIDR）"><a href="#无类型域间选路（CIDR）" class="headerlink" title="无类型域间选路（CIDR）"></a>无类型域间选路（CIDR）</h2><p>于是有了一个折中的方式叫作<strong>无类型域间选路</strong>，简称<strong>CIDR</strong>。这种方式打破了原来设计的几类地址的做法，将 32 位的 IP 地址一分为二，前面是<strong>网络号</strong>，后面是<strong>主机号</strong>。从哪里分呢？你如果注意观察的话可以看到，10.100.122.2/24，这个 IP 地址中有一个斜杠，斜杠后面有个数字 24。这种地址表示形式，就是 CIDR。后面 24 的意思是，32 位中，前 24 位是网络号，后 8 位是主机号。</p>
+<p>伴随着 CIDR 存在的，一个是<strong>广播地址</strong>，10.100.122.255。如果发送这个地址，所有 10.100.122 网络里面的机器都可以收到。另一个是<strong>子网掩码</strong>，255.255.255.0。</p>
+<p>将子网掩码和 IP 地址进行 AND 计算。前面三个 255，转成二进制都是 1。1 和任何数值取 AND，都是原来数值，因而前三个数不变，为 10.100.122。后面一个 0，转换成二进制是 0，0 和任何数值取 AND，都是 0，因而最后一个数变为 0，合起来就是 10.100.122.0。这就是<strong>网络号</strong>。<strong>将子网掩码和 IP 地址按位计算 AND，就可得到网络号。</strong></p>
+<h2 id="公有-IP-地址和私有-IP-地址"><a href="#公有-IP-地址和私有-IP-地址" class="headerlink" title="公有 IP 地址和私有 IP 地址"></a>公有 IP 地址和私有 IP 地址</h2><p>在日常的工作中，几乎不用划分 A 类、B 类或者 C 类，所以时间长了，很多人就忘记了这个分类，而只记得 CIDR。但是有一点还是要注意的，就是公有 IP 地址和私有 IP 地址。</p>
+<p><img src="https://static001.geekbang.org/resource/image/90/93/901778433f2d6e27b916e9e53c232d93.jpg" alt="img"></p>
+<p>我们继续看上面的表格。表格最右列是私有 IP 地址段。平时我们看到的数据中心里，办公室、家里或学校的 IP 地址，一般都是私有 IP 地址段。因为这些地址允许组织内部的 IT 人员自己管理、自己分配，而且可以重复。因此，你学校的某个私有 IP 地址段和我学校的可以是一样的。</p>
+<p>这就像每个小区有自己的楼编号和门牌号，你们小区可以叫 6 栋，我们小区也叫 6 栋，没有任何问题。但是一旦出了小区，就需要使用公有 IP 地址。就像人民路 888 号，是国家统一分配的，不能两个小区都叫人民路 888 号。</p>
+<p>公有 IP 地址有个组织统一分配，你需要去买。如果你搭建一个网站，给你学校的人使用，让你们学校的 IT 人员给你一个 IP 地址就行。但是假如你要做一个类似网易 163 这样的网站，就需要有公有 IP 地址，这样全世界的人才能访问。</p>
+<p>表格中的 192.168.0.x 是最常用的私有 IP 地址。你家里有 Wi-Fi，对应就会有一个 IP 地址。一般你家里地上网设备不会超过 256 个，所以 /24 基本就够了。有时候我们也能见到 /16 的 CIDR，这两种是最常见的，也是最容易理解的。</p>
+<p>不需要将十进制转换为二进制 32 位，就能明显看出 192.168.0 是网络号，后面是主机号。而整个网络里面的第一个地址 192.168.0.1，往往就是你这个私有网络的出口地址。例如，你家里的电脑连接 Wi-Fi，Wi-Fi 路由器的地址就是 192.168.0.1，而 192.168.0.255 就是广播地址。一旦发送这个地址，整个 192.168.0 网络里面的所有机器都能收到。</p>
+<p>但是也不总都是这样的情况。因此，其他情况往往就会很难理解，还容易出错。</p>
+<h2 id="举例：一个容易“犯错”的-CIDR"><a href="#举例：一个容易“犯错”的-CIDR" class="headerlink" title="举例：一个容易“犯错”的 CIDR"></a>举例：一个容易“犯错”的 CIDR</h2><p>我们来看 16.158.165.91/22 这个 CIDR。求一下这个网络的第一个地址、子网掩码和广播地址。</p>
+<p>你要是上来就写 16.158.165.1，那就大错特错了。</p>
+<p>/22 不是 8 的整数倍，不好办，只能先变成二进制来看。16.158 的部分不会动，它占了前 16 位。中间的 165，变为二进制为‭10100101‬。除了前面的 16 位，还剩 6 位。所以，这 8 位中前 6 位是网络号，16.158.<101001>，而 <01>.91 是机器号。</01></101001></p>
+<p>第一个地址是 16.158.<101001><00>.1，即 16.158.164.1。子网掩码是 255.255.<111111><00>.0，即 255.255.252.0。广播地址为 16.158.<101001><11>.255，即 16.158.167.255。</11></101001></00></111111></00></101001></p>
+<p>这五类地址中，还有一类 D 类是<strong>组播地址</strong>。使用这一类地址，属于某个组的机器都能收到。这有点类似在公司里面大家都加入了一个邮件组。发送邮件，加入这个组的都能收到。组播地址在后面讲述 VXLAN 协议的时候会提到。</p>
+<p>讲了这么多，才讲了上面的输出结果中很小的一部分，是不是觉得原来并没有真的理解 ip addr 呢？我们接着来分析。</p>
+<p>在 IP 地址的后面有个 scope，对于 eth0 这张网卡来讲，是 global，说明这张网卡是可以对外的，可以接收来自各个地方的包。对于 lo 来讲，是 host，说明这张网卡仅仅可以供本机相互通信。</p>
+<p>lo 全称是<strong>loopback</strong>，又称<strong>环回接口</strong>，往往会被分配到 127.0.0.1 这个地址。这个地址用于本机通信，经过内核处理后直接返回，不会在任何网络中出现。</p>
+<h2 id="MAC-地址"><a href="#MAC-地址" class="headerlink" title="MAC 地址"></a>MAC 地址</h2><p>在 IP 地址的上一行是 link/ether fa:16:3e:c7:79:75 brd ff:ff:ff:ff:ff:ff，这个被称为<strong>MAC 地址</strong>，是一个网卡的物理地址，用十六进制，6 个 byte 表示。</p>
+<p>MAC 地址是一个很容易让人“误解”的地址。因为 MAC 地址号称全局唯一，不会有两个网卡有相同的 MAC 地址，而且网卡自生产出来，就带着这个地址。很多人看到这里就会想，既然这样，整个互联网的通信，全部用 MAC 地址好了，只要知道了对方的 MAC 地址，就可以把信息传过去。</p>
+<p>这样当然是不行的。 <strong>一个网络包要从一个地方传到另一个地方，除了要有确定的地址，还需要有定位功能。</strong> 而有门牌号码属性的 IP 地址，才是有远程定位功能的。</p>
+<p>例如，你去杭州市网商路 599 号 B 楼 6 层找刘超，你在路上问路，可能被问的人不知道 B 楼是哪个，但是可以给你指网商路怎么去。但是如果你问一个人，你知道这个身份证号的人在哪里吗？可想而知，没有人知道。</p>
+<p>MAC 地址更像是身份证，是一个唯一的标识。它的唯一性设计是为了组网的时候，不同的网卡放在一个网络里面的时候，可以不用担心冲突。从硬件角度，保证不同的网卡有不同的标识。</p>
+<p>MAC 地址是有一定定位功能的，只不过范围非常有限。你可以根据 IP 地址，找到杭州市网商路 599 号 B 楼 6 层，但是依然找不到我，你就可以靠吼了，大声喊身份证 XXXX 的是哪位？我听到了，我就会站起来说，是我啊。但是如果你在上海，到处喊身份证 XXXX 的是哪位，我不在现场，当然不会回答，因为我在杭州不在上海。</p>
+<p>所以，MAC 地址的通信范围比较小，局限在一个子网里面。例如，从 192.168.0.2/24 访问 192.168.0.3/24 是可以用 MAC 地址的。一旦跨子网，即从 192.168.0.2/24 到 192.168.1.2/24，MAC 地址就不行了，需要 IP 地址起作用了。</p>
+<h2 id="网络设备的状态标识"><a href="#网络设备的状态标识" class="headerlink" title="网络设备的状态标识"></a>网络设备的状态标识</h2><p>解析完了 MAC 地址，我们再来看 &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; 是干什么的？这个叫作<strong>net_device flags</strong>，<strong>网络设备的状态标识</strong>。</p>
+<p>UP 表示网卡处于启动的状态；BROADCAST 表示这个网卡有广播地址，可以发送广播包；MULTICAST 表示网卡可以发送多播包；LOWER_UP 表示 L1 是启动的，也即网线插着呢。MTU1500 是指什么意思呢？是哪一层的概念呢？最大传输单元 MTU 为 1500，这是以太网的默认值。</p>
+<p>上一节，我们讲过网络包是层层封装的。MTU 是二层 MAC 层的概念。MAC 层有 MAC 的头，以太网规定连 MAC 头带正文合起来，不允许超过 1500 个字节。正文里面有 IP 的头、TCP 的头、HTTP 的头。如果放不下，就需要分片来传输。</p>
+<p>qdisc pfifo_fast 是什么意思呢？qdisc 全称是<strong>queueing discipline</strong>，中文叫<strong>排队规则</strong>。内核如果需要通过某个网络接口发送数据包，它都需要按照为这个接口配置的 qdisc（排队规则）把数据包加入队列。</p>
+<p>最简单的 qdisc 是 pfifo，它不对进入的数据包做任何的处理，数据包采用先入先出的方式通过队列。pfifo_fast 稍微复杂一些，它的队列包括三个波段（band）。在每个波段里面，使用先进先出规则。</p>
+<p>三个波段（band）的优先级也不相同。band 0 的优先级最高，band 2 的最低。如果 band 0 里面有数据包，系统就不会处理 band 1 里面的数据包，band 1 和 band 2 之间也是一样。</p>
+<p>数据包是按照服务类型（<strong>Type of Service，TOS</strong>）被分配多三个波段（band）里面的。TOS 是 IP 头里面的一个字段，代表了当前的包是高优先级的，还是低优先级的。</p>
+<p>队列是个好东西，后面我们讲云计算中的网络的时候，会有很多用户共享一个网络出口的情况，这个时候如何排队，每个队列有多粗，队列处理速度应该怎么提升，我都会详细为你讲解。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>怎么样，看起来很简单的一个命令，里面学问很大吧？通过这一节，希望你能记住以下的知识点，后面都能用得上：</p>
+<ul>
+<li>IP 是地址，有定位功能；MAC 是身份证，无定位功能；</li>
+<li>CIDR 可以用来判断是不是本地人；</li>
+<li>IP 分公有的 IP 和私有的 IP。后面的章节中我会谈到“出国门”，就与这个有关。</li>
+</ul>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2018-05-21T06:45:23.000Z"><a href="/2018/05/21/趣谈网络协议/第2讲 | 网络分层的真实含义是什么？/">2018-05-21</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/05/21/趣谈网络协议/第2讲 | 网络分层的真实含义是什么？/">第2讲 | 网络分层的真实含义是什么？</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>长时间从事计算机网络相关的工作，我发现，计算机网络有一个显著的特点，就是这是一个不仅需要背诵，而且特别需要将原理烂熟于胸的学科。很多问题看起来懂了，但是就怕往细里问，一问就发现你懂得没有那么透彻。</p>
+<p>我们上一节列了之后要讲的网络协议。这些协议本来没什么稀奇，每一本教科书都会讲，并且都要求你背下来。因为考试会考，面试会问。可以这么说，毕业了去找工作还答不出这类题目的，那你的笔试基本上也就挂了。</p>
+<p>当你听到什么二层设备、三层设备、四层 LB 和七层 LB 中层的时候，是否有点一头雾水，不知道这些所谓的层，对应的各种协议具体要做什么“工作”？</p>
+<h2 id="这四个问题你真的懂了吗？"><a href="#这四个问题你真的懂了吗？" class="headerlink" title="这四个问题你真的懂了吗？"></a>这四个问题你真的懂了吗？</h2><p>因为教科书或者老师往往会打一个十分不恰当的比喻：为什么网络要分层呀？因为不同的层次之间有不同的沟通方式，这个叫作协议。例如，一家公司也是分“层次”的，分总经理、经理、组长、员工。总经理之间有他们的沟通方式，经理和经理之间也有沟通方式，同理组长和员工。有没有听过类似的比喻？</p>
+<p>那么<strong>第一个问题</strong>来了。请问经理在握手的时候，员工在干什么？很多人听过 TCP 建立连接的<strong>三次握手协议</strong>，也会把它当知识点背诵。同理问你，TCP 在进行三次握手的时候，IP 层和 MAC 层对应都有什么操作呢？</p>
+<p>除了上面这个不恰当的比喻，教科书还会列出每个层次所包含的协议，然后开始逐层地去讲这些协议。但是这些协议之间的关系呢？却很少有教科书会讲。</p>
+<p>学习第三层的时候会提到，IP 协议里面包含<strong>目标地址</strong>和<strong>源地址。</strong>第三层里往往还会学习<strong>路由协议</strong>。路由就像中转站，我们从原始地址 A 到目标地址 D，中间经过两个中转站 A-&gt;B-&gt;C-&gt;D，是通过路由转发的。</p>
+<p>那么<strong>第二个问题</strong>来了。A 知道自己的下一个中转站是 B，那从 A 发出来的包，应该把 B 的 IP 地址放在哪里呢？B 知道自己的下一个中转站是 C，从 B 发出来的包，应该把 C 的 IP 地址放在哪里呢？如果放在 IP 协议中的目标地址，那包到了中转站，怎么知道最终的目的地址是 D 呢？</p>
+<p>教科书不会通过场景化的例子，将网络包的生命周期讲出来，所以你就会很困惑，不知道这些协议实际的应用场景是什么。</p>
+<p>我<strong>再问你一个问题</strong>。你一定经常听说二层设备、三层设备。二层设备处理的通常是 MAC 层的东西。那我发送一个 HTTP 的包，是在第七层工作的，那是不是不需要经过二层设备？或者即便经过了，二层设备也不处理呢？或者换一种问法，二层设备处理的包里，有没有 HTTP 层的内容呢？</p>
+<p>最终，我想问你<strong>一个综合的问题</strong>。从你的电脑，通过 SSH 登录到公有云主机里面，都需要经历哪些过程？或者说你打开一个电商网站，都需要经历哪些过程？说得越详细越好。</p>
+<p>实际情况可能是，很多人会答不上来。尽管对每一层都很熟悉，但是知识点却串不起来。</p>
+<p>上面的这些问题，有的在这一节就会有一个解释，有的则会贯穿我们整个课程。好在后面一节中我会举一个贯穿的例子，将很多层的细节讲过后，你很容易就能把这些知识点串起来。</p>
+<h2 id="网络为什么要分层？"><a href="#网络为什么要分层？" class="headerlink" title="网络为什么要分层？"></a>网络为什么要分层？</h2><p>这里我们先探讨第一个问题，网络为什么要分层？因为，是个复杂的程序都要分层。</p>
+<p>理解计算机网络中的概念，一个很好的角度是，想象网络包就是一段 Buffer，或者一块内存，是有格式的。同时，想象自己是一个处理网络包的程序，而且这个程序可以跑在电脑上，可以跑在服务器上，可以跑在交换机上，也可以跑在路由器上。你想象自己有很多的网口，从某个口拿进一个网络包来，用自己的程序处理一下，再从另一个网口发送出去。</p>
+<p>当然网络包的格式很复杂，这个程序也很复杂。<strong>复杂的程序都要分层，这是程序设计的要求。</strong>比如，复杂的电商还会分数据库层、缓存层、Compose 层、Controller 层和接入层，每一层专注做本层的事情。</p>
+<h2 id="程序是如何工作的？"><a href="#程序是如何工作的？" class="headerlink" title="程序是如何工作的？"></a>程序是如何工作的？</h2><p>我们可以简单地想象“你”这个程序的工作过程。</p>
+<p><img src="https://static001.geekbang.org/resource/image/06/ea/06b355394f525c54f200d8a1af63ddea.jpg" alt="img"></p>
+<p>当一个网络包从一个网口经过的时候，你看到了，首先先看看要不要请进来，处理一把。有的网口配置了混杂模式，凡是经过的，全部拿进来。</p>
+<p>拿进来以后，就要交给一段程序来处理。于是，你调用<strong>process_layer2(buffer)</strong>。当然，这是一个假的函数。但是你明白其中的意思，知道肯定是有这么个函数的。那这个函数是干什么的呢？从 Buffer 中，摘掉二层的头，看一看，应该根据头里面的内容做什么操作。</p>
+<p>假设你发现这个包的 MAC 地址和你的相符，那说明就是发给你的，于是需要调用<strong>process_layer3(buffer)</strong>。这个时候，Buffer 里面往往就没有二层的头了，因为已经在上一个函数的处理过程中拿掉了，或者将开始的偏移量移动了一下。在这个函数里面，摘掉三层的头，看看到底是发送给自己的，还是希望自己转发出去的。</p>
+<p>如何判断呢？如果 IP 地址不是自己的，那就应该转发出去；如果 IP 地址是自己的，那就是发给自己的。根据 IP 头里面的标示，拿掉三层的头，进行下一层的处理，到底是调用 process_tcp(buffer) 呢，还是调用 process_udp(buffer) 呢？</p>
+<p>假设这个地址是 TCP 的，则会调用<strong>process_tcp(buffer)</strong>。这时候，Buffer 里面没有三层的头，就需要查看四层的头，看这是一个发起，还是一个应答，又或者是一个正常的数据包，然后分别由不同的逻辑进行处理。如果是发起或者应答，接下来可能要发送一个回复包；如果是一个正常的数据包，就需要交给上层了。交给谁呢？是不是有 process_http(buffer) 函数呢？</p>
+<p>没有的，如果你是一个网络包处理程序，你不需要有 process_http(buffer)，而是应该交给应用去处理。交给哪个应用呢？在四层的头里面有端口号，不同的应用监听不同的端口号。如果发现浏览器应用在监听这个端口，那你发给浏览器就行了。至于浏览器怎么处理，和你没有关系。</p>
+<p>浏览器自然是解析 HTML，显示出页面来。电脑的主人看到页面很开心，就点了鼠标。点击鼠标的动作被浏览器捕获。浏览器知道，又要发起另一个 HTTP 请求了，于是使用端口号，将请求发给了你。</p>
+<p>你应该调用<strong>send_tcp(buffer)</strong>。不用说，Buffer 里面就是 HTTP 请求的内容。这个函数里面加一个 TCP 的头，记录下源端口号。浏览器会给你目的端口号，一般为 80 端口。</p>
+<p>然后调用<strong>send_layer3(buffer)</strong>。Buffer 里面已经有了 HTTP 的头和内容，以及 TCP 的头。在这个函数里面加一个 IP 的头，记录下源 IP 的地址和目标 IP 的地址。</p>
+<p>然后调用<strong>send_layer2(buffer)</strong>。Buffer 里面已经有了 HTTP 的头和内容、TCP 的头，以及 IP 的头。这个函数里面要加一下 MAC 的头，记录下源 MAC 地址，得到的就是本机器的 MAC 地址和目标的 MAC 地址。不过，这个还要看当前知道不知道，知道就直接加上；不知道的话，就要通过一定的协议处理过程，找到 MAC 地址。反正要填一个，不能空着。</p>
+<p>万事俱备，只要 Buffer 里面的内容完整，就可以从网口发出去了，你作为一个程序的任务就算告一段落了。</p>
+<h2 id="揭秘层与层之间的关系"><a href="#揭秘层与层之间的关系" class="headerlink" title="揭秘层与层之间的关系"></a>揭秘层与层之间的关系</h2><p>知道了这个过程之后，我们再来看一下原来困惑的问题。</p>
+<p>首先是分层的比喻。<strong>所有不能表示出层层封装含义的比喻，都是不恰当的。</strong>总经理握手，不需要员工在吧，总经理之间谈什么，不需要员工参与吧，但是网络世界不是这样的。正确的应该是，总经理之间沟通的时候，经理将总经理放在自己兜里，然后组长把经理放自己兜里，员工把组长放自己兜里，像套娃娃一样。那员工直接沟通，不带上总经理，就不恰当了。</p>
+<p>现实生活中，往往是员工说一句，组长补充两句，然后经理补充两句，最后总经理再补充两句。但是在网络世界，应该是总经理说话，经理补充两句，组长补充两句，员工再补充两句。</p>
+<p>那 TCP 在三次握手的时候，IP 层和 MAC 层在做什么呢？当然是 TCP 发送每一个消息，都会带着 IP 层和 MAC 层了。因为，TCP 每发送一个消息，IP 层和 MAC 层的所有机制都要运行一遍。而你只看到 TCP 三次握手了，其实，IP 层和 MAC 层为此也忙活好久了。</p>
+<p>这里要记住一点：<strong>只要是在网络上跑的包，都是完整的。可以有下层没上层，绝对不可能有上层没下层。</strong></p>
+<p>所以，<strong>对 TCP 协议来说，三次握手也好，重试也好，只要想发出去包，就要有 IP 层和 MAC 层，不然是发不出去的。</strong></p>
+<p>经常有人会问这样一个问题，我都知道那台机器的 IP 地址了，直接发给他消息呗，要 MAC 地址干啥？这里的关键就是，没有 MAC 地址消息是发不出去的。</p>
+<p>所以如果一个 HTTP 协议的包跑在网络上，它一定是完整的。无论这个包经过哪些设备，它都是完整的。</p>
+<p>所谓的二层设备、三层设备，都是这些设备上跑的程序不同而已。一个 HTTP 协议的包经过一个二层设备，二层设备收进去的是整个网络包。这里面 HTTP、TCP、 IP、 MAC 都有。什么叫二层设备呀，就是只把 MAC 头摘下来，看看到底是丢弃、转发，还是自己留着。那什么叫三层设备呢？就是把 MAC 头摘下来之后，再把 IP 头摘下来，看看到底是丢弃、转发，还是自己留着。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>总结一下今天的内容，理解网络协议的工作模式，有两个小窍门：</p>
+<ul>
+<li>始终想象自己是一个处理网络包的程序：如何拿到网络包，如何根据规则进行处理，如何发出去；</li>
+<li>始终牢记一个原则：只要是在网络上跑的包，都是完整的。可以有下层没上层，绝对不可能有上层没下层。</li>
+</ul>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2018-05-18T06:45:23.000Z"><a href="/2018/05/18/趣谈网络协议/第1讲 | 为什么要学习网络协议？/">2018-05-18</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/05/18/趣谈网络协议/第1讲 | 为什么要学习网络协议？/">第1讲 | 为什么要学习网络协议？</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>《圣经》中有一个通天塔的故事，大致是说，上帝为了阻止人类联合起来，就让人类说不同的语言。人类没法儿沟通，达不成“协议”，通天塔的计划就失败了。</p>
+<p>但是千年以后，有一种叫“程序猿”的物种，敲着一种这个群体通用的语言，连接着全世界所有的人，打造这互联网世界的通天塔。如今的世界，正是因为互联网，才连接在一起。</p>
+<p>当 “Hello World!” 从显示器打印出来的时候，还记得你激动的心情吗？</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">public class HelloWorld &#123;</span><br><span class="line">  public static void main(String[] args)&#123;</span><br><span class="line">    System.out.println(&quot;Hello World!&quot;);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果你是程序员，一定看得懂上面这一段文字。这是每一个程序员向计算机世界说“你好，世界”的方式。但是，你不一定知道，这段文字也是一种协议，是人类和计算机沟通的协议，<strong>只有通过这种协议，计算机才知道我们想让它做什么。</strong></p>
+<h2 id="协议三要素"><a href="#协议三要素" class="headerlink" title="协议三要素"></a>协议三要素</h2><p>当然，这种协议还是更接近人类语言，机器不能直接读懂，需要进行翻译，翻译的工作教给编译器，也就是程序员常说的 compile。这个过程比较复杂，其中的编译原理非常复杂，我在这里不进行详述。</p>
+<p><img src="https://static001.geekbang.org/resource/image/47/7a/47f340b2d76fd29bb937006f19dd3e7a.png" alt="img"></p>
+<p>但是可以看得出，计算机语言作为程序员控制一台计算机工作的协议，具备了协议的三要素。</p>
+<ul>
+<li><strong>语法</strong>，就是这一段内容要符合一定的规则和格式。例如，括号要成对，结束要使用分号等。</li>
+<li><strong>语义</strong>，就是这一段内容要代表某种意义。例如数字减去数字是有意义的，数字减去文本一般来说就没有意义。</li>
+<li><strong>顺序</strong>，就是先干啥，后干啥。例如，可以先加上某个数值，然后再减去某个数值。</li>
+</ul>
+<p>会了计算机语言，你就能够教给一台计算机完成你的工作了。恭喜你，入门了！</p>
+<p>但是，要想打造互联网世界的通天塔，只教给一台机器做什么是不够的，你需要学会教给一大片机器做什么。这就需要网络协议。<strong>只有通过网络协议，才能使一大片机器互相协作、共同完成一件事。</strong></p>
+<p>这个时候，你可能会问，网络协议长啥样，这么神奇，能干成啥事？我先拿一个简单的例子，让你尝尝鲜，然后再讲一个大事。</p>
+<p>当你想要买一个商品，常规的做法就是打开浏览器，输入购物网站的地址。浏览器就会给你显示一个缤纷多彩的页面。</p>
+<p>那你有没有深入思考过，浏览器是如何做到这件事情的？它之所以能够显示缤纷多彩的页面，是因为它收到了一段来自 HTTP 协议的“东西”。我拿网易考拉来举例，格式就像下面这样：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">HTTP/1.1 200 OK</span><br><span class="line">Date: Tue, 27 Mar 2018 16:50:26 GMT</span><br><span class="line">Content-Type: text/html;charset=UTF-8</span><br><span class="line">Content-Language: zh-CN</span><br><span class="line"></span><br><span class="line">&lt;!DOCTYPE html&gt;</span><br><span class="line">&lt;html&gt;</span><br><span class="line">&lt;head&gt;</span><br><span class="line">&lt;base href=&quot;https://pages.kaola.com/&quot; /&gt;</span><br><span class="line">&lt;meta charset=&quot;utf-8&quot;/&gt; &lt;title&gt; 网易考拉 3 周年主会场 &lt;/title&gt;</span><br></pre></td></tr></table></figure>
+<p>这符合协议的三要素吗？我带你来看一下。</p>
+<p>首先，符合语法，也就是说，只有按照上面那个格式来，浏览器才认。例如，上来是<strong>状态</strong>，然后是<strong>首部</strong>，然后是<strong>内容</strong>。</p>
+<p>第二，符合语义，就是要按照约定的意思来。例如，状态 200，表述的意思是网页成功返回。如果不成功，就是我们常见的“404”。</p>
+<p>第三，符合顺序，你一点浏览器，就是发送出一个 HTTP 请求，然后才有上面那一串 HTTP 返回的东西。</p>
+<p>浏览器显然按照协议商定好的做了，最后一个五彩缤纷的页面就出现在你面前了。</p>
+<h2 id="我们常用的网络协议有哪些？"><a href="#我们常用的网络协议有哪些？" class="headerlink" title="我们常用的网络协议有哪些？"></a>我们常用的网络协议有哪些？</h2><p>接下来揭秘我要说的大事情，“双十一”。这和我们要讲的网络协议有什么关系呢？</p>
+<p>在经济学领域，有个伦纳德·里德（Leonard E. Read）创作的《铅笔的故事》。这个故事通过一个铅笔的诞生过程，来讲述复杂的经济学理论。这里，我也用一个下单的过程，看看互联网世界的运行过程中，都使用了哪些网络协议。</p>
+<p>你先在浏览器里面输入 <a href="https://www.kaola.com/" target="_blank" rel="noopener">https://www.kaola.com</a> ，这是一个<strong>URL</strong>。浏览器只知道名字是“<a href="http://www.kaola.com”，但是不知道具体的地点，所以不知道应该如何访问。于是，它打开地址簿去查找。可以使用一般的地址簿协议**DNS**去查找，还可以使用另一种更加精准的地址簿查找协议**HTTPDNS**。" target="_blank" rel="noopener">www.kaola.com”，但是不知道具体的地点，所以不知道应该如何访问。于是，它打开地址簿去查找。可以使用一般的地址簿协议**DNS**去查找，还可以使用另一种更加精准的地址簿查找协议**HTTPDNS**。</a></p>
+<p>无论用哪一种方法查找，最终都会得到这个地址：106.114.138.24。这个是<strong>IP</strong>地址，是互联网世界的“门牌号”。</p>
+<p>知道了目标地址，浏览器就开始打包它的请求。对于普通的浏览请求，往往会使用<strong>HTTP</strong>协议；但是对于购物的请求，往往需要进行加密传输，因而会使用<strong>HTTPS</strong>协议。无论是什么协议，里面都会写明“你要买什么和买多少”。</p>
+<p><img src="https://static001.geekbang.org/resource/image/d8/c6/d8a65ca347ad26acc9f1de49b10320c6.png" alt="img"></p>
+<p>DNS、HTTP、HTTPS 所在的层我们称为<strong>应用层</strong>。经过应用层封装后，浏览器会将应用层的包交给下一层去完成，通过 socket 编程来实现。下一层是<strong>传输层</strong>。传输层有两种协议，一种是无连接的协议<strong>UDP</strong>，一种是面向连接的协议<strong>TCP</strong>。对于支付来讲，往往使用 TCP 协议。所谓的面向连接就是，TCP 会保证这个包能够到达目的地。如果不能到达，就会重新发送，直至到达。</p>
+<p>TCP 协议里面会有两个端口，一个是浏览器监听的端口，一个是电商的服务器监听的端口。操作系统往往通过端口来判断，它得到的包应该给哪个进程。</p>
+<p><img src="https://static001.geekbang.org/resource/image/53/ee/53c753a7d49c9dfe3cfeb26497e47eee.png" alt="img"></p>
+<p>传输层封装完毕后，浏览器会将包交给操作系统的<strong>网络层</strong>。网络层的协议是 IP 协议。在 IP 协议里面会有源 IP 地址，即浏览器所在机器的 IP 地址和目标 IP 地址，也即电商网站所在服务器的 IP 地址。</p>
+<p><img src="https://static001.geekbang.org/resource/image/45/1b/459a421975b27f6187d2aa4673171f1b.png" alt="img"></p>
+<p>操作系统既然知道了目标 IP 地址，就开始想如何根据这个门牌号找到目标机器。操作系统往往会判断，这个目标 IP 地址是本地人，还是外地人。如果是本地人，从门牌号就能看出来，但是显然电商网站不在本地，而在遥远的地方。</p>
+<p>操作系统知道要离开本地去远方。虽然不知道远方在何处，但是可以这样类比一下：如果去国外要去海关，去外地就要去<strong>网关</strong>。而操作系统启动的时候，就会被 DHCP 协议配置 IP 地址，以及默认的网关的 IP 地址 192.168.1.1。</p>
+<p>操作系统如何将 IP 地址发给网关呢？在本地通信基本靠吼，于是操作系统大吼一声，谁是 192.168.1.1 啊？网关会回答它，我就是，我的本地地址在村东头。这个本地地址就是<strong>MAC</strong>地址，而大吼的那一声是<strong>ARP</strong>协议。</p>
+<p><img src="https://static001.geekbang.org/resource/image/cc/4f/cc02190ac57af7fb6c3839534f2b674f.png" alt="img"></p>
+<p>于是操作系统将 IP 包交给了下一层，也就是<strong>MAC 层</strong>。网卡再将包发出去。由于这个包里面是有 MAC 地址的，因而它能够到达网关。</p>
+<p>网关收到包之后，会根据自己的知识，判断下一步应该怎么走。网关往往是一个路由器，到某个 IP 地址应该怎么走，这个叫作路由表。</p>
+<p>路由器有点像玄奘西行路过的一个个国家的一个个城关。每个城关都连着两个国家，每个国家相当于一个局域网，在每个国家内部，都可以使用本地的地址 MAC 进行通信。</p>
+<p>一旦跨越城关，就需要拿出 IP 头来，里面写着贫僧来自东土大唐（就是源 IP 地址），欲往西天拜佛求经（指的是目标 IP 地址）。路过宝地，借宿一晚，明日启行，请问接下来该怎么走啊？</p>
+<p><img src="https://static001.geekbang.org/resource/image/f7/e2/f7ea602aec91c67b35e710fb72a975e2.png" alt="img"></p>
+<p>城关往往是知道这些“知识”的，因为城关和临近的城关也会经常沟通。到哪里应该怎么走，这种沟通的协议称为<strong>路由协议</strong>，常用的有<strong>OSPF</strong>和<strong>BGP</strong>。</p>
+<p><img src="https://static001.geekbang.org/resource/image/b2/d4/b25ad7afba7b79331d95875dd0f451d4.png" alt="img"></p>
+<p>城关与城关之间是一个国家，当网络包知道了下一步去哪个城关，还是要使用国家内部的 MAC 地址，通过下一个城关的 MAC 地址，找到下一个城关，然后再问下一步的路怎么走，一直到走出最后一个城关。</p>
+<p>最后一个城关知道这个网络包要去的地方。于是，对着这个国家吼一声，谁是目标 IP 啊？目标服务器就会回复一个 MAC 地址。网络包过关后，通过这个 MAC 地址就能找到目标服务器。</p>
+<p>目标服务器发现 MAC 地址对上了，取下 MAC 头来，发送给操作系统的网络层。发现 IP 也对上了，就取下 IP 头。IP 头里会写上一层封装的是 TCP 协议，然后将其交给传输层，即<strong>TCP 层</strong>。</p>
+<p>在这一层里，对于收到的每个包，都会有一个回复的包说明收到了。这个回复的包绝非这次下单请求的结果，例如购物是否成功，扣了多少钱等，而仅仅是 TCP 层的一个说明，即收到之后的回复。当然这个回复，会沿着刚才来的方向走回去，报个平安。</p>
+<p>因为一旦出了国门，西行路上千难万险，如果在这个过程中，网络包走丢了，例如进了大沙漠，或者被强盗抢劫杀害怎么办呢？因而到了要报个平安。</p>
+<p>如果过一段时间还是没到，发送端的 TCP 层会重新发送这个包，还是上面的过程，直到有一天收到平安到达的回复。<strong>这个重试绝非你的浏览器重新将下单这个动作重新请求一次</strong>。对于浏览器来讲，就发送了一次下单请求，TCP 层不断自己闷头重试。除非 TCP 这一层出了问题，例如连接断了，才轮到浏览器的应用层重新发送下单请求。</p>
+<p>当网络包平安到达 TCP 层之后，TCP 头中有目标端口号，通过这个端口号，可以找到电商网站的进程正在监听这个端口号，假设一个 Tomcat，将这个包发给电商网站。</p>
+<p><img src="https://static001.geekbang.org/resource/image/b4/3f/b465ccfafe333bfdfb9daf78f96e123f.png" alt="img"></p>
+<p>电商网站的进程得到 HTTP 请求的内容，知道了要买东西，买多少。往往一个电商网站最初接待请求的这个 Tomcat 只是个接待员，负责统筹处理这个请求，而不是所有的事情都自己做。例如，这个接待员要告诉专门管理订单的进程，登记要买某个商品，买多少，要告诉管理库存的进程，库存要减少多少，要告诉支付的进程，应该付多少钱，等等。</p>
+<p>如何告诉相关的进程呢？往往通过 RPC 调用，即远程过程调用的方式来实现。远程过程调用就是当告诉管理订单进程的时候，接待员不用关心中间的网络互连问题，会由 RPC 框架统一处理。RPC 框架有很多种，有基于 HTTP 协议放在 HTTP 的报文里面的，有直接封装在 TCP 报文里面的。</p>
+<p>当接待员发现相应的部门都处理完毕，就回复一个 HTTPS 的包，告知下单成功。这个 HTTPS 的包，会像来的时候一样，经过千难万险到达你的个人电脑，最终进入浏览器，显示支付成功。</p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2018-04-27T06:45:23.000Z"><a href="/2018/04/27/Docker/Docker入门/">2018-04-27</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/04/27/Docker/Docker入门/">Docker入门</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>2013年发布至今， <a href="https://www.docker.com/" target="_blank" rel="noopener">Docker</a> 一直广受瞩目，被认为可能会改变软件行业。</p>
+<p>但是，许多人并不清楚 Docker 到底是什么，要解决什么问题，好处又在哪里？本文就来详细解释，帮助大家理解它，还带有简单易懂的实例，教你如何将它用于日常开发。</p>
+<h2 id="一、环境配置的难题"><a href="#一、环境配置的难题" class="headerlink" title="一、环境配置的难题"></a>一、环境配置的难题</h2><p>软件开发最大的麻烦事之一，就是环境配置。用户计算机的环境都不相同，你怎么知道自家的软件，能在那些机器跑起来？</p>
+<p>用户必须保证两件事：操作系统的设置，各种库和组件的安装。只有它们都正确，软件才能运行。举例来说，安装一个 Python 应用，计算机必须有 Python 引擎，还必须有各种依赖，可能还要配置环境变量。</p>
+<p>如果某些老旧的模块与当前环境不兼容，那就麻烦了。开发者常常会说：”它在我的机器可以跑了”（It works on my machine），言下之意就是，其他机器很可能跑不了。</p>
+<p>环境配置如此麻烦，换一台机器，就要重来一次，旷日费时。很多人想到，能不能从根本上解决问题，软件可以带环境安装？也就是说，安装的时候，把原始环境一模一样地复制过来。</p>
+<h2 id="二、虚拟机"><a href="#二、虚拟机" class="headerlink" title="二、虚拟机"></a>二、虚拟机</h2><p>虚拟机（virtual machine）就是带环境安装的一种解决方案。它可以在一种操作系统里面运行另一种操作系统，比如在 Windows 系统里面运行 Linux 系统。应用程序对此毫无感知，因为虚拟机看上去跟真实系统一模一样，而对于底层系统来说，虚拟机就是一个普通文件，不需要了就删掉，对其他部分毫无影响。</p>
+<p>虽然用户可以通过虚拟机还原软件的原始环境。但是，这个方案有几个缺点。</p>
+<p><strong>（1）资源占用多</strong></p>
+<p>虚拟机会独占一部分内存和硬盘空间。它运行的时候，其他程序就不能使用这些资源了。哪怕虚拟机里面的应用程序，真正使用的内存只有 1MB，虚拟机依然需要几百 MB 的内存才能运行。</p>
+<p><strong>（2）冗余步骤多</strong></p>
+<p>虚拟机是完整的操作系统，一些系统级别的操作步骤，往往无法跳过，比如用户登录。</p>
+<p><strong>（3）启动慢</strong></p>
+<p>启动操作系统需要多久，启动虚拟机就需要多久。可能要等几分钟，应用程序才能真正运行。</p>
+<h2 id="三、Linux-容器"><a href="#三、Linux-容器" class="headerlink" title="三、Linux 容器"></a>三、Linux 容器</h2><p>由于虚拟机存在这些缺点，Linux 发展出了另一种虚拟化技术：Linux 容器（Linux Containers，缩写为 LXC）。</p>
+<p><strong>Linux 容器不是模拟一个完整的操作系统，而是对进程进行隔离。</strong>或者说，在正常进程的外面套了一个<a href="https://opensource.com/article/18/1/history-low-level-container-runtimes" target="_blank" rel="noopener">保护层</a>。对于容器里面的进程来说，它接触到的各种资源都是虚拟的，从而实现与底层系统的隔离。</p>
+<p>由于容器是进程级别的，相比虚拟机有很多优势。</p>
+<p><strong>（1）启动快</strong></p>
+<p>容器里面的应用，直接就是底层系统的一个进程，而不是虚拟机内部的进程。所以，启动容器相当于启动本机的一个进程，而不是启动一个操作系统，速度就快很多。</p>
+<p><strong>（2）资源占用少</strong></p>
+<p>容器只占用需要的资源，不占用那些没有用到的资源；虚拟机由于是完整的操作系统，不可避免要占用所有资源。另外，多个容器可以共享资源，虚拟机都是独享资源。</p>
+<p><strong>（3）体积小</strong></p>
+<p>容器只要包含用到的组件即可，而虚拟机是整个操作系统的打包，所以容器文件比虚拟机文件要小很多。</p>
+<p>总之，容器有点像轻量级的虚拟机，能够提供虚拟化的环境，但是成本开销小得多。</p>
+<h2 id="四、Docker-是什么？"><a href="#四、Docker-是什么？" class="headerlink" title="四、Docker 是什么？"></a>四、Docker 是什么？</h2><p><strong>Docker 属于 Linux 容器的一种封装，提供简单易用的容器使用接口。</strong>它是目前最流行的 Linux 容器解决方案。</p>
+<p>Docker 将应用程序与该程序的依赖，打包在一个文件里面。运行这个文件，就会生成一个虚拟容器。程序在这个虚拟容器里运行，就好像在真实的物理机上运行一样。有了 Docker，就不用担心环境问题。</p>
+<p>总体来说，Docker 的接口相当简单，用户可以方便地创建和使用容器，把自己的应用放入容器。容器还可以进行版本管理、复制、分享、修改，就像管理普通的代码一样。</p>
+<h2 id="五、Docker-的用途"><a href="#五、Docker-的用途" class="headerlink" title="五、Docker 的用途"></a>五、Docker 的用途</h2><p>Docker 的主要用途，目前有三大类。</p>
+<p><strong>（1）提供一次性的环境。</strong>比如，本地测试他人的软件、持续集成的时候提供单元测试和构建的环境。</p>
+<p><strong>（2）提供弹性的云服务。</strong>因为 Docker 容器可以随开随关，很适合动态扩容和缩容。</p>
+<p><strong>（3）组建微服务架构。</strong>通过多个容器，一台机器可以跑多个服务，因此在本机就可以模拟出微服务架构。</p>
+<h2 id="六、Docker-的安装"><a href="#六、Docker-的安装" class="headerlink" title="六、Docker 的安装"></a>六、Docker 的安装</h2><p>Docker 是一个开源的商业产品，有两个版本：社区版（Community Edition，缩写为 CE）和企业版（Enterprise Edition，缩写为 EE）。企业版包含了一些收费服务，个人开发者一般用不到。下面的介绍都针对社区版。</p>
+<p>Docker CE 的安装请参考官方文档。</p>
+<p><a href="https://docs.docker.com/docker-for-mac/install/" target="_blank" rel="noopener">Mac</a><br><a href="https://docs.docker.com/docker-for-windows/install/" target="_blank" rel="noopener">Windows</a><br><a href="https://docs.docker.com/install/linux/docker-ce/ubuntu/" target="_blank" rel="noopener">Ubuntu</a><br><a href="https://docs.docker.com/install/linux/docker-ce/debian/" target="_blank" rel="noopener">Debian</a><br><a href="https://docs.docker.com/install/linux/docker-ce/centos/" target="_blank" rel="noopener">CentOS</a><br><a href="https://docs.docker.com/install/linux/docker-ce/fedora/" target="_blank" rel="noopener">Fedora</a><br><a href="https://docs.docker.com/install/linux/docker-ce/binaries/" target="_blank" rel="noopener">其他 Linux 发行版</a></p>
+<p>安装完成后，运行下面的命令，验证是否安装成功。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span>docker version</span><br><span class="line"><span class="meta"> #</span> 或者</span><br><span class="line"><span class="meta">$</span>docker info</span><br></pre></td></tr></table></figure>
+<p>Docker 需要用户具有 sudo 权限，为了避免每次命令都输入<code>sudo</code>，可以把用户加入 Docker 用户组（<a href="https://docs.docker.com/install/linux/linux-postinstall/#manage-docker-as-a-non-root-user" target="_blank" rel="noopener">官方文档</a>）。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span>sudo usermod -aG docker $USER</span><br></pre></td></tr></table></figure>
+<p>Docker 是服务器—-客户端架构。命令行运行<code>docker</code>命令的时候，需要本机有 Docker 服务。如果这项服务没有启动，可以用下面的命令启动（<a href="https://docs.docker.com/config/daemon/systemd/" target="_blank" rel="noopener">官方文档</a>）。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span> service 命令的用法</span><br><span class="line"><span class="meta">$</span>sudo service docker start</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span> systemctl 命令的用法</span><br><span class="line"><span class="meta">$</span>sudo systemctl start docker</span><br></pre></td></tr></table></figure>
+<h2 id="六、image-文件"><a href="#六、image-文件" class="headerlink" title="六、image 文件"></a>六、image 文件</h2><p><strong>Docker 把应用程序及其依赖，打包在 image 文件里面。</strong>只有通过这个文件，才能生成 Docker 容器。image 文件可以看作是容器的模板。Docker 根据 image 文件生成容器的实例。同一个 image 文件，可以生成多个同时运行的容器实例。</p>
+<p>image 是二进制文件。实际开发中，一个 image 文件往往通过继承另一个 image 文件，加上一些个性化设置而生成。举例来说，你可以在 Ubuntu 的 image 基础上，往里面加入 Apache 服务器，形成你的 image。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span> 列出本机的所有 image 文件。</span><br><span class="line"><span class="meta">$</span>docker image ls</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span> 删除 image 文件</span><br><span class="line"><span class="meta">$</span>docker image rm [imageName]</span><br></pre></td></tr></table></figure>
+<p>image 文件是通用的，一台机器的 image 文件拷贝到另一台机器，照样可以使用。一般来说，为了节省时间，我们应该尽量使用别人制作好的 image 文件，而不是自己制作。即使要定制，也应该基于别人的 image 文件进行加工，而不是从零开始制作。</p>
+<p>为了方便共享，image 文件制作完成后，可以上传到网上的仓库。Docker 的官方仓库 <a href="https://hub.docker.com/" target="_blank" rel="noopener">Docker Hub</a> 是最重要、最常用的 image 仓库。此外，出售自己制作的 image 文件也是可以的。</p>
+<h2 id="七、实例：hello-world"><a href="#七、实例：hello-world" class="headerlink" title="七、实例：hello world"></a>七、实例：hello world</h2><p>下面，我们通过最简单的 image 文件”<a href="https://hub.docker.com/r/library/hello-world/" target="_blank" rel="noopener">hello world”</a>，感受一下 Docker。</p>
+<p>首先，运行下面的命令，将 image 文件从仓库抓取到本地。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker image pull library/hello-world</span><br></pre></td></tr></table></figure>
+<p>上面代码中，<code>docker image pull</code>是抓取 image 文件的命令。<code>library/hello-world</code>是 image 文件在仓库里面的位置，其中<code>library</code>是 image 文件所在的组，<code>hello-world</code>是 image 文件的名字。</p>
+<p>由于 Docker 官方提供的 image 文件，都放在<a href="https://hub.docker.com/r/library/" target="_blank" rel="noopener"><code>library</code></a>组里面，所以它的是默认组，可以省略。因此，上面的命令可以写成下面这样。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker image pull hello-world</span><br></pre></td></tr></table></figure>
+<p>抓取成功以后，就可以在本机看到这个 image 文件了。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker image ls</span><br></pre></td></tr></table></figure>
+<p>现在，运行这个 image 文件。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container run hello-world</span><br></pre></td></tr></table></figure>
+<p><code>docker container run</code>命令会从 image 文件，生成一个正在运行的容器实例。</p>
+<p>注意，<code>docker container run</code>命令具有自动抓取 image 文件的功能。如果发现本地没有指定的 image 文件，就会从仓库自动抓取。因此，前面的<code>docker image pull</code>命令并不是必需的步骤。</p>
+<p>如果运行成功，你会在屏幕上读到下面的输出。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container run hello-world</span><br><span class="line"></span><br><span class="line">Hello from Docker!</span><br><span class="line">This message shows that your installation appears to be working correctly.</span><br><span class="line"></span><br><span class="line">... ...</span><br></pre></td></tr></table></figure>
+<p>输出这段提示以后，<code>hello world</code>就会停止运行，容器自动终止。</p>
+<p>有些容器不会自动终止，因为提供的是服务。比如，安装运行 Ubuntu 的 image，就可以在命令行体验 Ubuntu 系统。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container run -it ubuntu bash</span><br></pre></td></tr></table></figure>
+<p>对于那些不会自动终止的容器，必须使用<a href="https://docs.docker.com/engine/reference/commandline/container_kill/" target="_blank" rel="noopener"><code>docker container kill</code></a> 命令手动终止。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container kill [containID]</span><br></pre></td></tr></table></figure>
+<h2 id="八、容器文件"><a href="#八、容器文件" class="headerlink" title="八、容器文件"></a>八、容器文件</h2><p><strong>image 文件生成的容器实例，本身也是一个文件，称为容器文件。</strong>也就是说，一旦容器生成，就会同时存在两个文件： image 文件和容器文件。而且关闭容器并不会删除容器文件，只是容器停止运行而已。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span> 列出本机正在运行的容器</span><br><span class="line"><span class="meta">$</span> docker container ls</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span> 列出本机所有容器，包括终止运行的容器</span><br><span class="line"><span class="meta">$</span> docker container ls --all</span><br></pre></td></tr></table></figure>
+<p>上面命令的输出结果之中，包括容器的 ID。很多地方都需要提供这个 ID，比如上一节终止容器运行的<code>docker container kill</code>命令。</p>
+<p>终止运行的容器文件，依然会占据硬盘空间，可以使用<a href="https://docs.docker.com/engine/reference/commandline/container_rm/" target="_blank" rel="noopener"><code>docker container rm</code></a>命令删除。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container rm [containerID]</span><br></pre></td></tr></table></figure>
+<p>运行上面的命令之后，再使用<code>docker container ls --all</code>命令，就会发现被删除的容器文件已经消失了。</p>
+<h2 id="九、Dockerfile-文件"><a href="#九、Dockerfile-文件" class="headerlink" title="九、Dockerfile 文件"></a>九、Dockerfile 文件</h2><p>学会使用 image 文件以后，接下来的问题就是，如何可以生成 image 文件？如果你要推广自己的软件，势必要自己制作 image 文件。</p>
+<p>这就需要用到 Dockerfile 文件。它是一个文本文件，用来配置 image。Docker 根据 该文件生成二进制的 image 文件。</p>
+<p>下面通过一个实例，演示如何编写 Dockerfile 文件。</p>
+<h2 id="十、实例：制作自己的-Docker-容器"><a href="#十、实例：制作自己的-Docker-容器" class="headerlink" title="十、实例：制作自己的 Docker 容器"></a>十、实例：制作自己的 Docker 容器</h2><p>下面我以 <a href="http://www.ruanyifeng.com/blog/2017/08/koa.html" target="_blank" rel="noopener">koa-demos</a> 项目为例，介绍怎么写 Dockerfile 文件，实现让用户在 Docker 容器里面运行 Koa 框架。</p>
+<p>作为准备工作，请先<a href="https://github.com/ruanyf/koa-demos/archive/master.zip" target="_blank" rel="noopener">下载源码</a>。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> git clone https://github.com/ruanyf/koa-demos.git</span><br><span class="line"><span class="meta">$</span> cd koa-demos</span><br></pre></td></tr></table></figure>
+<h3 id="10-1-编写-Dockerfile-文件"><a href="#10-1-编写-Dockerfile-文件" class="headerlink" title="10.1 编写 Dockerfile 文件"></a>10.1 编写 Dockerfile 文件</h3><p>首先，在项目的根目录下，新建一个文本文件<code>.dockerignore</code>，写入下面的<a href="https://github.com/ruanyf/koa-demos/blob/master/.dockerignore" target="_blank" rel="noopener">内容</a>。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">.git</span><br><span class="line">node_modules</span><br><span class="line">npm-debug.log</span><br></pre></td></tr></table></figure>
+<p>上面代码表示，这三个路径要排除，不要打包进入 image 文件。如果你没有路径要排除，这个文件可以不新建。</p>
+<p>然后，在项目的根目录下，新建一个文本文件 Dockerfile，写入下面的<a href="https://github.com/ruanyf/koa-demos/blob/master/Dockerfile" target="_blank" rel="noopener">内容</a>。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">FROM node:8.4</span><br><span class="line">COPY . /app</span><br><span class="line">WORKDIR /app</span><br><span class="line">RUN npm install --registry=https://registry.npm.taobao.org</span><br><span class="line">EXPOSE 3000</span><br></pre></td></tr></table></figure>
+<p>上面代码一共五行，含义如下。</p>
+<ul>
+<li><code>FROM node:8.4</code>：该 image 文件继承官方的 node image，冒号表示标签，这里标签是<code>8.4</code>，即8.4版本的 node。</li>
+<li><code>COPY . /app</code>：将当前目录下的所有文件（除了<code>.dockerignore</code>排除的路径），都拷贝进入 image 文件的<code>/app</code>目录。</li>
+<li><code>WORKDIR /app</code>：指定接下来的工作路径为<code>/app</code>。</li>
+<li><code>RUN npm install</code>：在<code>/app</code>目录下，运行<code>npm install</code>命令安装依赖。注意，安装后所有的依赖，都将打包进入 image 文件。</li>
+<li><code>EXPOSE 3000</code>：将容器 3000 端口暴露出来， 允许外部连接这个端口。</li>
+</ul>
+<h3 id="10-2-创建-image-文件"><a href="#10-2-创建-image-文件" class="headerlink" title="10.2 创建 image 文件"></a>10.2 创建 image 文件</h3><p>有了 Dockerfile 文件以后，就可以使用<code>docker image build</code>命令创建 image 文件了。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker image build -t koa-demo .</span><br><span class="line"><span class="meta">#</span> 或者</span><br><span class="line"><span class="meta">$</span> docker image build -t koa-demo:0.0.1 .</span><br></pre></td></tr></table></figure>
+<p>上面代码中，<code>-t</code>参数用来指定 image 文件的名字，后面还可以用冒号指定标签。如果不指定，默认的标签就是<code>latest</code>。最后的那个点表示 Dockerfile 文件所在的路径，上例是当前路径，所以是一个点。</p>
+<p>如果运行成功，就可以看到新生成的 image 文件<code>koa-demo</code>了。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker image ls</span><br></pre></td></tr></table></figure>
+<h3 id="10-3-生成容器"><a href="#10-3-生成容器" class="headerlink" title="10.3 生成容器"></a>10.3 生成容器</h3><p><code>docker container run</code>命令会从 image 文件生成容器。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container run -p 8000:3000 -it koa-demo /bin/bash</span><br><span class="line"><span class="meta">#</span> 或者</span><br><span class="line"><span class="meta">$</span> docker container run -p 8000:3000 -it koa-demo:0.0.1 /bin/bash</span><br></pre></td></tr></table></figure>
+<p>上面命令的各个参数含义如下：</p>
+<ul>
+<li><code>-p</code>参数：容器的 3000 端口映射到本机的 8000 端口。</li>
+<li><code>-it</code>参数：容器的 Shell 映射到当前的 Shell，然后你在本机窗口输入的命令，就会传入容器。</li>
+<li><code>koa-demo:0.0.1</code>：image 文件的名字（如果有标签，还需要提供标签，默认是 latest 标签）。</li>
+<li><code>/bin/bash</code>：容器启动以后，内部第一个执行的命令。这里是启动 Bash，保证用户可以使用 Shell。</li>
+</ul>
+<p>如果一切正常，运行上面的命令以后，就会返回一个命令行提示符。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">root@66d80f4aaf1e:/app#</span><br></pre></td></tr></table></figure>
+<p>这表示你已经在容器里面了，返回的提示符就是容器内部的 Shell 提示符。执行下面的命令。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">root@66d80f4aaf1e:/app# node demos/01.js</span><br></pre></td></tr></table></figure>
+<p>这时，Koa 框架已经运行起来了。打开本机的浏览器，访问 <a href="http://127.0.0.1:8000，网页显示&quot;Not" target="_blank" rel="noopener">http://127.0.0.1:8000，网页显示&quot;Not</a> Found”，这是因为这个 <a href="https://github.com/ruanyf/koa-demos/blob/master/demos/01.js" target="_blank" rel="noopener">demo</a>没有写路由。</p>
+<p>这个例子中，Node 进程运行在 Docker 容器的虚拟环境里面，进程接触到的文件系统和网络接口都是虚拟的，与本机的文件系统和网络接口是隔离的，因此需要定义容器与物理机的端口映射（map）。</p>
+<p>现在，在容器的命令行，按下 Ctrl + c 停止 Node 进程，然后按下 Ctrl + d （或者输入 exit）退出容器。此外，也可以用<code>docker container kill</code>终止容器运行。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span> 在本机的另一个终端窗口，查出容器的 ID</span><br><span class="line"><span class="meta">$</span> docker container ls</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span> 停止指定的容器运行</span><br><span class="line"><span class="meta">$</span> docker container kill [containerID]</span><br></pre></td></tr></table></figure>
+<p>容器停止运行之后，并不会消失，用下面的命令删除容器文件。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span> 查出容器的 ID</span><br><span class="line"><span class="meta">$</span> docker container ls --all</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span> 删除指定的容器文件</span><br><span class="line"><span class="meta">$</span> docker container rm [containerID]</span><br></pre></td></tr></table></figure>
+<p>也可以使用<code>docker container run</code>命令的<code>--rm</code>参数，在容器终止运行后自动删除容器文件。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container run --rm -p 8000:3000 -it koa-demo /bin/bash</span><br></pre></td></tr></table></figure>
+<h3 id="10-4-CMD-命令"><a href="#10-4-CMD-命令" class="headerlink" title="10.4 CMD 命令"></a>10.4 CMD 命令</h3><p>上一节的例子里面，容器启动以后，需要手动输入命令<code>node demos/01.js</code>。我们可以把这个命令写在 Dockerfile 里面，这样容器启动以后，这个命令就已经执行了，不用再手动输入了。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">FROM node:8.4</span><br><span class="line">COPY . /app</span><br><span class="line">WORKDIR /app</span><br><span class="line">RUN npm install --registry=https://registry.npm.taobao.org</span><br><span class="line">EXPOSE 3000</span><br><span class="line">CMD node demos/01.js</span><br></pre></td></tr></table></figure>
+<p>上面的 Dockerfile 里面，多了最后一行<code>CMD node demos/01.js</code>，它表示容器启动后自动执行<code>node demos/01.js</code>。</p>
+<p>你可能会问，<code>RUN</code>命令与<code>CMD</code>命令的区别在哪里？简单说，<code>RUN</code>命令在 image 文件的构建阶段执行，执行结果都会打包进入 image 文件；<code>CMD</code>命令则是在容器启动后执行。另外，一个 Dockerfile 可以包含多个<code>RUN</code>命令，但是只能有一个<code>CMD</code>命令。</p>
+<p>注意，指定了<code>CMD</code>命令以后，<code>docker container run</code>命令就不能附加命令了（比如前面的<code>/bin/bash</code>），否则它会覆盖<code>CMD</code>命令。现在，启动容器可以使用下面的命令。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container run --rm -p 8000:3000 -it koa-demo:0.0.1</span><br></pre></td></tr></table></figure>
+<h3 id="10-5-发布-image-文件"><a href="#10-5-发布-image-文件" class="headerlink" title="10.5 发布 image 文件"></a>10.5 发布 image 文件</h3><p>容器运行成功后，就确认了 image 文件的有效性。这时，我们就可以考虑把 image 文件分享到网上，让其他人使用。</p>
+<p>首先，去 <a href="https://hub.docker.com/" target="_blank" rel="noopener">hub.docker.com</a> 或 <a href="https://cloud.docker.com/" target="_blank" rel="noopener">cloud.docker.com</a> 注册一个账户。然后，用下面的命令登录。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker login</span><br></pre></td></tr></table></figure>
+<p>接着，为本地的 image 标注用户名和版本。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker image tag [imageName] [username]/[repository]:[tag]</span><br><span class="line"><span class="meta">#</span> 实例</span><br><span class="line"><span class="meta">$</span> docker image tag koa-demos:0.0.1 ruanyf/koa-demos:0.0.1</span><br></pre></td></tr></table></figure>
+<p>也可以不标注用户名，重新构建一下 image 文件。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker image build -t [username]/[repository]:[tag] .</span><br></pre></td></tr></table></figure>
+<p>最后，发布 image 文件。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker image push [username]/[repository]:[tag]</span><br></pre></td></tr></table></figure>
+<p>发布成功以后，登录 hub.docker.com，就可以看到已经发布的 image 文件。</p>
+<h2 id="十一、其他有用的命令"><a href="#十一、其他有用的命令" class="headerlink" title="十一、其他有用的命令"></a>十一、其他有用的命令</h2><p>docker 的主要用法就是上面这些，此外还有几个命令，也非常有用。</p>
+<p><strong>（1）docker container start</strong></p>
+<p>前面的<code>docker container run</code>命令是新建容器，每运行一次，就会新建一个容器。同样的命令运行两次，就会生成两个一模一样的容器文件。如果希望重复使用容器，就要使用<code>docker container start</code>命令，它用来启动已经生成、已经停止运行的容器文件。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container start [containerID]</span><br></pre></td></tr></table></figure>
+<p><strong>（2）docker container stop</strong></p>
+<p>前面的<code>docker container kill</code>命令终止容器运行，相当于向容器里面的主进程发出 SIGKILL 信号。而<code>docker container stop</code>命令也是用来终止容器运行，相当于向容器里面的主进程发出 SIGTERM 信号，然后过一段时间再发出 SIGKILL 信号。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> bash container stop [containerID]</span><br></pre></td></tr></table></figure>
+<p>这两个信号的差别是，应用程序收到 SIGTERM 信号以后，可以自行进行收尾清理工作，但也可以不理会这个信号。如果收到 SIGKILL 信号，就会强行立即终止，那些正在进行中的操作会全部丢失。</p>
+<p><strong>（3）docker container logs</strong></p>
+<p><code>docker container logs</code>命令用来查看 docker 容器的输出，即容器里面 Shell 的标准输出。如果<code>docker run</code>命令运行容器的时候，没有使用<code>-it</code>参数，就要用这个命令查看输出。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container logs [containerID]</span><br></pre></td></tr></table></figure>
+<p><strong>（4）docker container exec</strong></p>
+<p><code>docker container exec</code>命令用于进入一个正在运行的 docker 容器。如果<code>docker run</code>命令运行容器的时候，没有使用<code>-it</code>参数，就要用这个命令进入容器。一旦进入了容器，就可以在容器的 Shell 执行命令了。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container exec -it [containerID] /bin/bash</span><br></pre></td></tr></table></figure>
+<p><strong>（5）docker container cp</strong></p>
+<p><code>docker container cp</code>命令用于从正在运行的 Docker 容器里面，将文件拷贝到本机。下面是拷贝到当前目录的写法。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> docker container cp [containID]:[/path/to/file] .</span><br></pre></td></tr></table></figure>
+<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="http://www.ruanyifeng.com/blog/2018/02/docker-tutorial.html" target="_blank" rel="noopener">http://www.ruanyifeng.com/blog/2018/02/docker-tutorial.html</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2018-04-20T06:45:23.000Z"><a href="/2018/04/20/Docker/Dockerizing a Node.js web app/">2018-04-20</a></time>
       
       
@@ -520,529 +955,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2017-09-11T14:16:53.000Z"><a href="/2017/09/11/Node.js_IO/深入理解Node.js中Stream内部机制/">2017-09-11</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/09/11/Node.js_IO/深入理解Node.js中Stream内部机制/">深入理解Node.js Stream内部机制</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>相信很多人对 Node.js 的 Stream 已经不陌生了，不论是请求流、响应流、文件流还是 socket 流，这些流的底层都是使用 <code>stream</code> 模块封装的，甚至我们平时用的最多的 <code>console.log</code> 打印日志也使用了它，不信你打开 Node.js runtime 的源码，看看 <a href="https://github.com/nodejs/node/blob/master/lib/console.js#L82-L109" target="_blank" rel="noopener"><code>lib/console.js</code></a>：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">function write(ignoreErrors, stream, string, errorhandler) &#123;</span><br><span class="line">  // ...</span><br><span class="line">  stream.once(&apos;error&apos;, noop);</span><br><span class="line">  stream.write(string, errorhandler);</span><br><span class="line">  //...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Console.prototype.log = function log(...args) &#123;</span><br><span class="line">  write(this._ignoreErrors,</span><br><span class="line">        this._stdout,</span><br><span class="line">        `$&#123;util.format.apply(null, args)&#125;\n`,</span><br><span class="line">        this._stdoutErrorHandler);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>Stream 模块做了很多事情，了解了 Stream，那么 Node.js 中其他很多模块理解起来就顺畅多了。</p>
-<h3 id="stream-模块"><a href="#stream-模块" class="headerlink" title="stream 模块"></a>stream 模块</h3><p>如果你了解 <a href="https://zh.wikipedia.org/zh-hans/%E7%94%9F%E4%BA%A7%E8%80%85%E6%B6%88%E8%B4%B9%E8%80%85%E9%97%AE%E9%A2%98" target="_blank" rel="noopener">生产者和消费者问题</a> 的解法，那理解 stream 就基本没有压力了，它不仅仅是资料的起点和落点，还包含了一系列状态控制，可以说一个 stream 就是一个状态管理单元。了解内部机制的最佳方式除了看 <a href="https://nodejs.org/api/stream.html" target="_blank" rel="noopener">Node.js 官方文档</a>，还可以去看看 Node.js 的 <a href="https://github.com/nodejs/node/blob/master/lib/" target="_blank" rel="noopener">源码</a>：</p>
-<ul>
-<li><code>lib/module.js</code></li>
-<li><code>lib/_stream_readable.js</code></li>
-<li><code>lib/_stream_writable.js</code></li>
-<li><code>lib/_stream_tranform.js</code></li>
-<li><code>lib/_stream_duplex.js</code></li>
-</ul>
-<p>把 <code>Readable</code> 和 <code>Writable</code> 看明白，Tranform 和 Duplex 就不难理解了。</p>
-<h3 id="Readable-Stream"><a href="#Readable-Stream" class="headerlink" title="Readable Stream"></a>Readable Stream</h3><p>Readable Stream 存在两种模式，一种是叫做 <code>Flowing Mode</code>，流动模式，在 Stream 上绑定 ondata 方法就会自动触发这个模式，比如：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">const readable = getReadableStreamSomehow();</span><br><span class="line">readable.on(&apos;data&apos;, (chunk) =&gt; &#123;</span><br><span class="line">  console.log(`Received $&#123;chunk.length&#125; bytes of data.`);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>这个模式的流程图如下：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream01_180706.png" alt=""></p>
-<p>资源的数据流并不是直接流向消费者，而是先 push 到缓存池，缓存池有一个水位标记 <code>highWatermark</code>，超过这个标记阈值，push 的时候会返回 <code>false</code>，什么场景下会出现这种情况呢？</p>
-<ul>
-<li>消费者主动执行了 <code>.pause()</code></li>
-<li>消费速度比数据 push 到缓存池的生产速度慢</li>
-</ul>
-<p>有个专有名词来形成这种情况，叫做「背压」，Writable Stream 也存在类似的情况。</p>
-<p>流动模式，这个名词还是很形象的，缓存池就像一个水桶，消费者通过管口接水，同时，资源池就像一个水泵，不断地往水桶中泵水，而 highWaterMark 是水桶的浮标，达到阈值就停止蓄水。<br>下面是一个简单的 Demo：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">const Readable = require(&apos;stream&apos;).Readable;</span><br><span class="line"></span><br><span class="line">// Stream 实现</span><br><span class="line">class MyReadable extends Readable &#123;</span><br><span class="line">  constructor(dataSource, options) &#123;</span><br><span class="line">    super(options);</span><br><span class="line">    this.dataSource = dataSource;</span><br><span class="line">  &#125;</span><br><span class="line">  // 继承了 Readable 的类必须实现这个函数</span><br><span class="line">  // 触发系统底层对流的读取</span><br><span class="line">  _read() &#123;</span><br><span class="line">    const data = this.dataSource.makeData();</span><br><span class="line">    this.push(data);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 模拟资源池</span><br><span class="line">const dataSource = &#123;</span><br><span class="line">  data: new Array(10).fill(&apos;-&apos;),</span><br><span class="line">  // 每次读取时 pop 一个数据</span><br><span class="line">  makeData() &#123;</span><br><span class="line">    if (!dataSource.data.length) return null;</span><br><span class="line">    return dataSource.data.pop();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">const myReadable = new MyReadable(dataSource);</span><br><span class="line">myReadable.setEncoding(&apos;utf8&apos;);</span><br><span class="line">myReadable.on(&apos;data&apos;, (chunk) =&gt; &#123;</span><br><span class="line">  console.log(chunk);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>另外一种模式是 <code>Non-Flowing Mode</code>，没流动，也就是暂停模式，这是 Stream 的预设模式，Stream 实例的 <code>_readableState.flow</code> 有三个状态，分别是：</p>
-<ul>
-<li><code>_readableState.flow = null</code>，暂时没有消费者过来</li>
-<li><code>_readableState.flow = false</code>，主动触发了 <code>.pause()</code></li>
-<li><code>_readableState.flow = true</code>，流动模式</li>
-</ul>
-<p>当我们监听了 onreadable 事件后，会进入这种模式，比如：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">const myReadable = new MyReadable(dataSource);</span><br><span class="line">myReadable.setEncoding(&apos;utf8&apos;);</span><br><span class="line">myReadable.on(&apos;readable&apos;, () =&gt; &#123;&#125;);</span><br></pre></td></tr></table></figure>
-<p>监听 <code>readable</code> 的回调函数第一个参数不会传递内容，需要我们通过 <code>myReadable.read()</code> 主动读取，为啥呢，可以看看下面这张图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream02_180706.png" alt=""></p>
-<p>资源池会不断地往缓存池输送数据，直到 highWaterMark 阈值，消费者监听了 readable 事件并不会消费数据，需要主动调用 <code>.read([size])</code> 函数才会从缓存池取出，并且可以带上 size 参数，用多少就取多少：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">const myReadable = new MyReadable(dataSource);</span><br><span class="line">myReadable.setEncoding(&apos;utf8&apos;);</span><br><span class="line">myReadable.on(&apos;readable&apos;, () =&gt; &#123;</span><br><span class="line">  let chunk;</span><br><span class="line">  while (null !== (chunk = myReadable.read())) &#123;</span><br><span class="line">    console.log(`Received $&#123;chunk.length&#125; bytes of data.`);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>这里需要注意一点，只要数据达到缓存池都会触发一次 readable 事件，有可能出现「消费者正在消费数据的时候，又触发了一次 readable 事件，那么下次回调中 read 到的数据可能为空」的情况。我们可以通过 <code>_readableState.buffer</code> 来查看缓存池到底缓存了多少资源：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">let once = false;</span><br><span class="line">myReadable.on(&apos;readable&apos;, (chunk) =&gt; &#123;</span><br><span class="line">  console.log(myReadable._readableState.buffer.length);</span><br><span class="line">  if (once) return;</span><br><span class="line">  once = true;</span><br><span class="line">  console.log(myReadable.read());</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>上面的代码我们只消费一次缓存池的数据，那么在消费后，缓存池又收到了一次资源池的 push 操作，此时还会触发一次 readable 事件，我们可以看看这次存了多大的 buffer。</p>
-<p>需要注意的是，buffer 大小也是有上限的，默认设置为 16kb，也就是 16384 个字节长度，它最大可设置为 8Mb，没记错的话，这个值好像是 Node 的 new space memory 的大小。</p>
-<p>上面介绍了 Readable Stream 大概的机制，还有很多细节部分没有提到，比如 <code>Flowing Mode</code> 在不同 Node 版本中的 Stream 实现不太一样，实际上，它有三个版本，上面提到的是第 2 和 第 3 个版本的实现；再比如 <code>Mixins Mode</code> 模式，一般我们只推荐（允许）使用 ondata 和 onreadable 的一种来处理 Readable Stream，但是如果要求在 <code>Non-Flowing Mode</code> 的情况下使用 ondata 如何实现呢？那么就可以考虑 <code>Mixins Mode</code> 了。</p>
-<h3 id="Writable-Stream"><a href="#Writable-Stream" class="headerlink" title="Writable Stream"></a>Writable Stream</h3><p>原理与 Readable Stream 是比较相似的，数据流过来的时候，会直接写入到资源池，当写入速度比较缓慢或者写入暂停时，数据流会进入队列池缓存起来，如下图所示：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream03_180706.png" alt=""></p>
-<p>当生产者写入速度过快，把队列池装满了之后，就会出现「背压」，这个时候是需要告诉生产者暂停生产的，当队列释放之后，Writable Stream 会给生产者发送一个 <code>drain</code> 消息，让它恢复生产。下面是一个写入一百万条数据的 Demo：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">function writeOneMillionTimes(writer, data, encoding, callback) &#123;</span><br><span class="line">  let i = 10000;</span><br><span class="line">  write();</span><br><span class="line">  function write() &#123;</span><br><span class="line">    let ok = true;</span><br><span class="line">    while(i-- &gt; 0 &amp;&amp; ok) &#123;</span><br><span class="line">      // 写入结束时回调</span><br><span class="line">      ok = writer.write(data, encoding, i === 0 ? callback : null);</span><br><span class="line">    &#125;</span><br><span class="line">    if (i &gt; 0) &#123;</span><br><span class="line">      // 这里提前停下了，&apos;drain&apos; 事件触发后才可以继续写入  </span><br><span class="line">      console.log(&apos;drain&apos;, i);</span><br><span class="line">      writer.once(&apos;drain&apos;, write);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>我们构造一个 Writable Stream，在写入到资源池的时候，我们稍作处理，让它效率低一点：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">const Writable = require(&apos;stream&apos;).Writable;</span><br><span class="line">const writer = new Writable(&#123;</span><br><span class="line">  write(chunk, encoding, callback) &#123;</span><br><span class="line">    // 比 process.nextTick() 稍慢</span><br><span class="line">    setTimeout(() =&gt; &#123;</span><br><span class="line">      callback &amp;&amp; callback();</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">writeOneMillionTimes(writer, &apos;simple&apos;, &apos;utf8&apos;, () =&gt; &#123;</span><br><span class="line">  console.log(&apos;end&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>最后执行的结果是：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">drain 7268</span><br><span class="line">drain 4536</span><br><span class="line">drain 1804</span><br><span class="line">end</span><br></pre></td></tr></table></figure>
-<p>说明程序遇到了三次「背压」，如果我们没有在上面绑定 <code>writer.once(&#39;drain&#39;)</code>，那么最后的结果就是 Stream 将第一次获取的数据消耗完变结束了程序。</p>
-<h3 id="pipe"><a href="#pipe" class="headerlink" title="pipe"></a>pipe</h3><p>了解了 Readable 和 Writable，pipe 这个常用的函数应该就很好理解了，</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">readable.pipe(writable);</span><br></pre></td></tr></table></figure>
-<p>这句代码的语意性很强，readable 通过 pipe（管道）传输给 writable，pipe 的实现大致如下（伪代码）：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">Readable.prototype.pipe = function(writable, options) &#123;</span><br><span class="line">  this.on(&apos;data&apos;, (chunk) =&gt; &#123;</span><br><span class="line">    let ok = writable.write(chunk);</span><br><span class="line">	// 背压，暂停</span><br><span class="line">    !ok &amp;&amp; this.pause();</span><br><span class="line">  &#125;);</span><br><span class="line">  writable.on(&apos;drain&apos;, () =&gt; &#123;</span><br><span class="line">    // 恢复</span><br><span class="line">    this.resume();</span><br><span class="line">  &#125;);</span><br><span class="line">  // 告诉 writable 有流要导入</span><br><span class="line">  writable.emit(&apos;pipe&apos;, this);</span><br><span class="line">  // 支持链式调用</span><br><span class="line">  return writable;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>上面做了五件事情：</p>
-<ul>
-<li><code>emit(pipe)</code>，通知写入</li>
-<li><code>.write()</code>，新数据过来，写入</li>
-<li><code>.pause()</code>，消费者消费速度慢，暂停写入</li>
-<li><code>.resume()</code>，消费者完成消费，继续写入</li>
-<li><code>return writable</code>，支持链式调用</li>
-</ul>
-<p>当然，上面只是最简单的逻辑，还有很多异常和临界判断没有加入，具体可以去看看 Node.js 的代码（ <a href="https://github.com/nodejs/node/blob/master/lib/_stream_readable.js#L541-L684" target="_blank" rel="noopener">/lib/_stream_readable.js</a>）。</p>
-<h3 id="Duplex-Stream"><a href="#Duplex-Stream" class="headerlink" title="Duplex Stream"></a>Duplex Stream</h3><p>Duplex，双工的意思，它的输入和输出可以没有任何关系，<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream04_180706.png" alt=""></p>
-<p>Duplex Stream 实现特别简单，不到一百行代码，它继承了 Readable Stream，并拥有 Writable Stream 的方法（<a href="https://github.com/nodejs/node/blob/master/lib/_stream_duplex.js#L31-L42" target="_blank" rel="noopener">源码地址</a>）：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">const util = require(&apos;util&apos;);</span><br><span class="line">const Readable = require(&apos;_stream_readable&apos;);</span><br><span class="line">const Writable = require(&apos;_stream_writable&apos;);</span><br><span class="line"></span><br><span class="line">util.inherits(Duplex, Readable);</span><br><span class="line"></span><br><span class="line">var keys = Object.keys(Writable.prototype);</span><br><span class="line">for (var v = 0; v &lt; keys.length; v++) &#123;</span><br><span class="line">  var method = keys[v];</span><br><span class="line">  if (!Duplex.prototype[method])</span><br><span class="line">    Duplex.prototype[method] = Writable.prototype[method];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>我们可以通过 options 参数来配置它为只可读、只可写或者半工模式，一个简单的 Demo：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">var Duplex = require(&apos;stream&apos;).Duplex</span><br><span class="line"></span><br><span class="line">const duplex = Duplex();</span><br><span class="line"></span><br><span class="line">// readable</span><br><span class="line">let i = 2;</span><br><span class="line">duplex._read = function () &#123;</span><br><span class="line">  this.push(i-- ? &apos;read &apos; + i : null);</span><br><span class="line">&#125;;</span><br><span class="line">duplex.on(&apos;data&apos;, data =&gt; console.log(data.toString()));</span><br><span class="line"></span><br><span class="line">// writable</span><br><span class="line">duplex._write = function (chunk, encoding, callback) &#123;</span><br><span class="line">  console.log(chunk.toString());</span><br><span class="line">  callback();</span><br><span class="line">&#125;;</span><br><span class="line">duplex.write(&apos;write&apos;);</span><br></pre></td></tr></table></figure>
-<p>输出的结果为：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">write</span><br><span class="line">read 1</span><br><span class="line">read 0</span><br></pre></td></tr></table></figure>
-<p>可以看出，两个管道是相互之间不干扰的。</p>
-<h3 id="Transform-Stream"><a href="#Transform-Stream" class="headerlink" title="Transform Stream"></a>Transform Stream</h3><p>Transform Stream 集成了 Duplex Stream，它同样具备 Readable 和 Writable 的能力，只不过它的输入和输出是存在相互关联的，中间做了一次转换处理。常见的处理有 Gzip 压缩、解压等。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream05_180706.png" alt=""></p>
-<p>Transform 的处理就是通过 <code>_transform</code> 函数将 Duplex 的 Readable 连接到 Writable，由于 Readable 的生产效率与 Writable 的消费效率是一样的，所以这里 Transform 内部不存在「背压」问题，背压问题的源头是外部的生产者和消费者速度差造成的。</p>
-<p>关于 Transfrom Stream，我写了一个简单的 Demo：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">const Transform = require(&apos;stream&apos;).Transform;</span><br><span class="line">const MAP = &#123;</span><br><span class="line">  &apos;Barret&apos;: &apos;靖&apos;,</span><br><span class="line">  &apos;Lee&apos;: &apos;李&apos;</span><br><span class="line">&#125;;</span><br><span class="line">  </span><br><span class="line">class Translate extends Transform &#123;</span><br><span class="line">  constructor(dataSource, options) &#123;</span><br><span class="line">    super(options);</span><br><span class="line">  &#125;</span><br><span class="line">  _transform(buf, enc, next) &#123;</span><br><span class="line">    const key = buf.toString();</span><br><span class="line">    const data = MAP[key];</span><br><span class="line">    this.push(data);</span><br><span class="line">    next();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var transform = new Translate();</span><br><span class="line">transform.on(&apos;data&apos;, data =&gt; console.log(data.toString()));</span><br><span class="line">transform.write(&apos;Lee&apos;);</span><br><span class="line">transform.write(&apos;Barret&apos;);</span><br><span class="line">transform.end();</span><br></pre></td></tr></table></figure>
-<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><p>本文主要参考和查阅 Node.js 官网的文档和源码，细节问题都是从源码中找到的答案，如有理解不准确之处，还请斧正。关于 Stream，这篇文章只是讲述了基础的原理，还有很多细节之处没有讲到，要真正理解它，还是需要多读读文档，写写代码。</p>
-<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="http://taobaofed.org/blog/2017/08/31/nodejs-stream/" target="_blank" rel="noopener">http://taobaofed.org/blog/2017/08/31/nodejs-stream/</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2017-08-27T06:45:23.000Z"><a href="/2017/08/27/Docker/当Node.js遇见Docker/">2017-08-27</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/08/27/Docker/当Node.js遇见Docker/">当Node.js遇见Docker</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="什么是Docker"><a href="#什么是Docker" class="headerlink" title="什么是Docker?"></a>什么是Docker?</h3><p>Docker是最流行的的容器工具，<strong>没有之一</strong>。本文并不打算深入介绍Docker，不过可以从几个简单的角度来理解Docker。</p>
-<h5 id="从进程的角度理解Docker"><a href="#从进程的角度理解Docker" class="headerlink" title="从进程的角度理解Docker"></a>从进程的角度理解Docker</h5><p>在Linux中，所有的进程构成了一棵树。可以使用<a href="http://man7.org/linux/man-pages/man1/pstree.1.html" target="_blank" rel="noopener">pstree</a>命令进行查看:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">pstree</span><br><span class="line">init─┬─VBoxService───7*[&#123;VBoxService&#125;]</span><br><span class="line">     ├─acpid</span><br><span class="line">     ├─atd</span><br><span class="line">     ├─cron</span><br><span class="line">     ├─dbus-daemon</span><br><span class="line">     ├─dhclient</span><br><span class="line">     ├─dockerd─┬─docker-containe─┬─docker-containe─┬─redis-server───2*[&#123;redis-server&#125;]</span><br><span class="line">     │         │                 │                 └─8*[&#123;docker-containe&#125;]</span><br><span class="line">     │         │                 ├─docker-containe─┬─mongod───16*[&#123;mongod&#125;]</span><br><span class="line">     │         │                 │                 └─8*[&#123;docker-containe&#125;]</span><br><span class="line">     │         │                 └─11*[&#123;docker-containe&#125;]</span><br><span class="line">     │         └─13*[&#123;dockerd&#125;]</span><br><span class="line">     ├─6*[getty]</span><br><span class="line">     ├─influxd───9*[&#123;influxd&#125;]</span><br><span class="line">     ├─irqbalance</span><br><span class="line">     ├─puppet───&#123;puppet&#125;</span><br><span class="line">     ├─rpc.idmapd</span><br><span class="line">     ├─rpc.statd</span><br><span class="line">     ├─rpcbind</span><br><span class="line">     ├─rsyslogd───3*[&#123;rsyslogd&#125;]</span><br><span class="line">     ├─ruby───&#123;ruby&#125;</span><br><span class="line">     ├─sshd─┬─sshd───sshd───zsh───pstree</span><br><span class="line">     │      ├─sshd───sshd───zsh</span><br><span class="line">     │      └─sshd───sshd───zsh───mongo───2*[&#123;mongo&#125;]</span><br><span class="line">     ├─systemd-logind</span><br><span class="line">     ├─systemd-udevd</span><br><span class="line">     ├─upstart-file-br</span><br><span class="line">     ├─upstart-socket-</span><br><span class="line">     └─upstart-udev-br</span><br></pre></td></tr></table></figure>
-<p>可知，init进程为所有进程的根(root)，其PID为1。</p>
-<p>Docker将不同应用的进程隔离了起来，这些被隔离的进程就是一个个容器。隔离是基于两个Linux内核机制实现的，Namesapce和Cgroups。</p>
-<p>Namespace可以从UTD、IPC、PID、Mount，User和Network的角度隔离进程。比如，不同的进程将拥有不同PID空间，这样容器中的进程将看不到主机上的进程，也看不到其他容器中的进程。这与Node.js中模块化以隔离变量的命名空间的思想是异曲同工的。</p>
-<p>通过Cgroups，可以限制进程对CPU，内存等资源的使用。简单地说，我们可以通过Cgroups指定容器只能使用1G内存。</p>
-<p>从进程角度理解Docker，那<strong>每一个Docker容器就是被隔离的进程及其子进程</strong>。上文pstree的输出中可以分辨出2个容器: mongodb和redis。</p>
-<h5 id="从文件的角度理解Docker"><a href="#从文件的角度理解Docker" class="headerlink" title="从文件的角度理解Docker"></a>从文件的角度理解Docker</h5><p>基于Namespace与Cgroups的容器工具其实早已存在，例如<a href="http://linux-vserver.org/Welcome_to_Linux-VServer.org" target="_blank" rel="noopener">Linux-VServer</a>，<a href="https://openvz.org/Main_Page" target="_blank" rel="noopener">OpenVZ</a>，<a href="https://linuxcontainers.org/" target="_blank" rel="noopener">LXC</a>。然而，真正引爆容器技术的却是后来者Docker。为什么呢？个人觉得是因为<strong>Docker镜像</strong>以及<strong>Dockerfile</strong>。</p>
-<p>在Linux中，一切皆文件，进程的运行离不开各种各样的文件。跑一个简单的Node.js程序，传统的做法是手动安装各种依赖然后运行；而Docker则是将所有依赖（包括操作系统，Node，NPM模块，源代码）打包到一个<strong>Docker镜像</strong>中，然后基于这个镜像运行容器。</p>
-<p><strong>Docker镜像</strong>可以通过<strong>Docker仓库</strong>共享给其他人，这样他们只需要下载镜像即可运行程序。想象一下，当我们需要在另一台主机(比如生产服务器，新同事的机器)上运行一个Node.js应用，仅仅需要下载对应的Docker镜像就可以了，是不是很方便呢？</p>
-<p><strong>Docker镜像</strong>可以通过文本文件，即<strong>Dockerfile</strong>进行定义。不妨看一个简单的例子(由于不可抗力，这个Dockerfile构建大概会失败，仅作为参考):</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"># 基于Ubuntu</span><br><span class="line">FROM ubuntu</span><br><span class="line"></span><br><span class="line"># 安装Node.js与NPM</span><br><span class="line">RUN apt-get update &amp;&amp; apt-get -y install nodejs npm</span><br><span class="line"></span><br><span class="line"># 安装NPM模块:Express</span><br><span class="line">RUN npm install express</span><br><span class="line"></span><br><span class="line"># 添加源代码</span><br><span class="line">ADD app.js /</span><br></pre></td></tr></table></figure>
-<p>其中，<strong>FROM</strong>，<strong>RUN</strong>与<strong>ADD</strong>为Dockerfile命令。结合注释，该Dockerfile的含义非常直白。基于这个Dockerfile，使用<strong>docker build</strong>命令就可以构建对应的Docker镜像。基于这个Docker镜像，就可以运行Docker容器来执行app.js:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">var express = require(&quot;express&quot;);</span><br><span class="line">var app = express();</span><br><span class="line"></span><br><span class="line">app.get(&quot;/&quot;, function(req, res)</span><br><span class="line">&#123;</span><br><span class="line">    res.send(&quot;Hello Fundebug!\n&quot;);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">app.listen(3000);</span><br></pre></td></tr></table></figure>
-<p>Dockerfile实际上是将<strong>Docker镜像代码化</strong>了，另一方面也是将<strong>安装依赖的过程代码化</strong>了，于是我们就可以像管理源码一样使用git对Dockerfile进行版本管理。</p>
-<h3 id="为啥用Docker"><a href="#为啥用Docker" class="headerlink" title="为啥用Docker?"></a>为啥用Docker?</h3><p>当你的系统越来越复杂的时候，你会发现Docker的价值。</p>
-<h5 id="从应用架构角度理解Docker"><a href="#从应用架构角度理解Docker" class="headerlink" title="从应用架构角度理解Docker"></a>从应用架构角度理解Docker</h5><p>刚开始，你只需要写一个Node.js程序，挂载一个静态网站；然后，你做了一个用户账号系统，这时需要数据库了，比如说MySQL; 后来，为了提升性能，你引入了Memcached缓存；终于有一天，你决定把前后端分离，这样可以提高开发效率；当用户越来越多，你又不得不使用Nginx做反向代理; 对了，随着功能越来越多，你的应用依赖也会越来越多…总之，你的应用架构只会越来越复杂。不同的组件的安装，配置与运行步骤各不相同，于是你不得不写一个很长的文档给新同事，只为了让他搭建一个<strong>开发环境</strong>。</p>
-<p>使用Docker的话，你可以为不同的组件逐一编写Dockerfile，分别构建镜像，然后运行在各个容器中。这样做，将复杂的架构统一了，所有组件的安装和运行步骤统一为几个简单的命令:</p>
-<ul>
-<li>构建Docker镜像: docker build</li>
-<li>上传Docker镜像: docker push</li>
-<li>下载Docker镜像: docker pull</li>
-<li>运行Docker容器: docker run</li>
-</ul>
-<h5 id="从应用部署角度理解Docker"><a href="#从应用部署角度理解Docker" class="headerlink" title="从应用部署角度理解Docker"></a>从应用部署角度理解Docker</h5><p>通常，你会有<strong>开发</strong>，<strong>测试</strong>和<strong>生产</strong>服务器，对于某些应用，还会需要进行<strong>构建</strong>。不同步骤的依赖会有一些不同，并且在不同的服务器上执行。如果手动地在不同的服务器上安装依赖，是件很麻烦的事情。比如说，当你需要为Node.js应用添加一个新的npm模块，或者升级一下Node.js，是不是得重复操作很多次？友情提示一下，手动敲命令是极易出错的，有些失误会导致致命的后果（参考最近Gitlab误删数据库与AWS的S3故障）。</p>
-<p>如果使用Docker的话，<strong>开发</strong>、<strong>构建</strong>、<strong>测试</strong>、<strong>生产</strong>将全部在Docker容器中执行，你需要为不同步骤编写不同的Dockerfile。当依赖变化时，仅需要稍微修改Dockerfile即可。结合构建工具<a href="https://jenkins.io/" target="_blank" rel="noopener">Jenkins</a>，就可以将整个部署流程自动化。</p>
-<p>另一方面，Dockerfile将Docker镜像描述得非常精准，能够保证很强的一致性。比如，操作系统的版本，Node.js的版本，NPM模块的版本等。这就意味着，在本地开发环境运行成功的镜像，在<strong>构建</strong>、<strong>测试</strong>、<strong>生产</strong>环境中也没有问题。还有，不同的Docker容器是依赖于不同的Docker镜像，这样他们互不干扰。比如，两个Node.js应用可以分别使用不同版本的Node.js。</p>
-<h5 id="从集群管理角度理解Docker"><a href="#从集群管理角度理解Docker" class="headerlink" title="从集群管理角度理解Docker"></a>从集群管理角度理解Docker</h5><p>架构规模越来越大的时候，你有必要引入集群了。这就意味着，服务器由1台变成了多台，同一个应用需要运行多个备份来分担负载。当然，你可以手动对集群的功能进行划分: Nginx服务器，Node.js服务器，MySQL服务器，测试服务器，生产服务器…这样做的好处是简单粗暴；也可以说财大气粗，因为资源闲置会非常严重。还有一点，每次新增节点的时候，你就不得不花大量时间进行安装与配置，这其实是一种低效的重复劳动。</p>
-<p>下载Docker镜像之后，Docker容器可以运行在集群的任何一个节点。一方面，各个组件可以共享主机，且互不干扰；另一方面，也不需要在集群的节点上安装和配置任何组件。至于整个Docker集群的管理，业界有很多成熟的解决方案，例如<a href="http://mesos.apache.org/" target="_blank" rel="noopener">Mesos</a>，<a href="https://kubernetes.io/" target="_blank" rel="noopener">Kubernetes</a>与<a href="https://github.com/docker/swarm" target="_blank" rel="noopener">Docker Swarm</a>。这些集群系统提供了<strong>调度</strong>，<strong>服务发现</strong>，<strong>负载均衡</strong>等功能，让整个集群变成一个整体。</p>
-<h3 id="如何用Docker"><a href="#如何用Docker" class="headerlink" title="如何用Docker?"></a>如何用Docker?</h3><h5 id="编写Dockerfile"><a href="#编写Dockerfile" class="headerlink" title="编写Dockerfile"></a>编写Dockerfile</h5><p>正确的<a href="https://github.com/Fundebug/nodejs-docker/blob/master/Dockerfile" target="_blank" rel="noopener">Dockerfile</a>是这样的:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"># 使用DaoCloud的Ubuntu镜像</span><br><span class="line">FROM daocloud.io/library/ubuntu:14.04</span><br><span class="line"></span><br><span class="line"># 设置镜像作者</span><br><span class="line">MAINTAINER Fundebug &lt;help@fundebug.com&gt;</span><br><span class="line"></span><br><span class="line"># 设置时区</span><br><span class="line">RUN sudo sh -c &quot;echo &apos;Asia/Shanghai&apos; &gt; /etc/timezone&quot; &amp;&amp; \</span><br><span class="line">    sudo dpkg-reconfigure -f noninteractive tzdata</span><br><span class="line"></span><br><span class="line"># 使用阿里云的Ubuntu镜像</span><br><span class="line">RUN echo &apos;\n\</span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ trusty main restricted universe multiverse\n\</span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ trusty-security main restricted universe multiverse\n\</span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ trusty-updates main restricted universe multiverse\n\</span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ trusty-proposed main restricted universe multiverse\n\</span><br><span class="line">deb http://mirrors.aliyun.com/ubuntu/ trusty-backports main restricted universe multiverse\n\</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ trusty main restricted universe multiverse\n\</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ trusty-security main restricted universe multiverse\n\</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ trusty-updates main restricted universe multiverse\n\</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ trusty-proposed main restricted universe multiverse\n\</span><br><span class="line">deb-src http://mirrors.aliyun.com/ubuntu/ trusty-backports main restricted universe multiverse\n&apos;\</span><br><span class="line">&gt; /etc/apt/sources.list</span><br><span class="line"></span><br><span class="line"># 安装node v6.10.1</span><br><span class="line">RUN sudo apt-get update &amp;&amp; sudo apt-get install -y wget</span><br><span class="line"></span><br><span class="line"># 使用淘宝镜像安装Node.js v6.10.1</span><br><span class="line">RUN wget https://npm.taobao.org/mirrors/node/v6.10.1/node-v6.10.1-linux-x64.tar.gz &amp;&amp; \</span><br><span class="line">    tar -C /usr/local --strip-components 1 -xzf node-v6.10.1-linux-x64.tar.gz &amp;&amp; \</span><br><span class="line">    rm node-v6.10.1-linux-x64.tar.gz </span><br><span class="line"></span><br><span class="line">WORKDIR /app</span><br><span class="line"></span><br><span class="line"># 安装npm模块</span><br><span class="line">ADD package.json /app/package.json</span><br><span class="line"></span><br><span class="line"># 使用淘宝的npm镜像</span><br><span class="line">RUN npm install --production -d --registry=https://registry.npm.taobao.org</span><br><span class="line"></span><br><span class="line"># 添加源代码</span><br><span class="line">ADD . /app</span><br><span class="line"></span><br><span class="line"># 运行app.js</span><br><span class="line">CMD [&quot;node&quot;, &quot;/app/app.js&quot;]</span><br></pre></td></tr></table></figure>
-<p>有几点值得注意的地方：</p>
-<ul>
-<li>使用国内<a href="https://www.daocloud.io/" target="_blank" rel="noopener">DaoCloud</a>的Docker仓库，阿里云的ubuntu镜像以及淘宝的npm镜像，否则会出事情的;</li>
-<li>将时区设为Asia/Shanghai，否则日志的时间会不大对劲;</li>
-<li>使用.dockerignore忽略不需要添加到Docker镜像的文件和目录，其语法与.gitigore一致;</li>
-</ul>
-<p>更重要的一点是，<strong>package.json需要单独添加</strong>。Docker在构建镜像的时候，是一层一层构建的，仅当这一层有变化时，重新构建对应的层。如果package.json和源代码一起添加到镜像，则每次修改源码都需要重新安装npm模块，这样木有必要。所以，正确的顺序是: 添加package.json；安装npm模块；添加源代码。</p>
-<h5 id="构建Docker镜像"><a href="#构建Docker镜像" class="headerlink" title="构建Docker镜像"></a>构建Docker镜像</h5><p>使用<strong>docker build</strong>命令构建Docker镜像</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo docker build -t fundebug/nodejs .</span><br></pre></td></tr></table></figure>
-<p>其中，-t选项用于指定镜像的名称。</p>
-<p>使用<strong>docker images</strong>命令查看Docker镜像</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">sudo docker images</span><br><span class="line">REPOSITORY                    TAG                 IMAGE ID            CREATED             SIZE</span><br><span class="line">fundebug/nodejs               latest              64530ce811a1        32 minutes ago      266.4 MB</span><br><span class="line">daocloud.io/library/ubuntu    14.04               b969ab9f929b        9 weeks ago         188 MB</span><br></pre></td></tr></table></figure>
-<p>可知，fundebug/nodejs镜像的大小为266.4MB，在ubuntu镜像的基础上增加了80MB左右。</p>
-<h5 id="运行Docker容器"><a href="#运行Docker容器" class="headerlink" title="运行Docker容器"></a>运行Docker容器</h5><p>使用<strong>docker run</strong>命令运行Docker容器</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo docker run -d --net=host --name=hello-fundebug fundebug/nodejs</span><br></pre></td></tr></table></figure>
-<p>其中，-d选项表示容器在后台运行；–net选项指定容器的网络模式，host表示与主机共享网络；–name指定了容器的名称。</p>
-<p>使用<strong>docker ps</strong>命令查看Docker容器</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo docker ps</span><br><span class="line">CONTAINER ID        IMAGE                             COMMAND                  CREATED             STATUS              PORTS               NAMES</span><br><span class="line">e8eb5473970c        fundebug/nodejs                   &quot;node /app/app.js&quot;       37 minutes ago      Up 37 minutes                           hello-</span><br></pre></td></tr></table></figure>
-<p>可知，COMMAND为”node /app/app.js”，表示容器中运行的命令。这是我们再Dockerfile中使用CMD指定的。不妨使用<strong>docker exec</strong>命令在容器内执行ps命令<strong>查看容器内的进程</strong>：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo docker exec hello-fundebug ps -f</span><br><span class="line">UID        PID  PPID  C STIME TTY          TIME CMD</span><br><span class="line">root         1     0  0 15:14 ?        00:00:00 node /app/app.js</span><br></pre></td></tr></table></figure>
-<p>可知，容器内的1号进程即为node进程<strong>node /app/app.js</strong>。在Linux中，PID为1进程按说是唯一的，即init进程。但是，容器使用了内核的Namespace机制，为容器创建了独立的PID空间，因此容器中也有1号进程。</p>
-<h5 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h5><p>使用curl命令访问:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">curl localhost:3000</span><br><span class="line">Hello Fundebug!</span><br></pre></td></tr></table></figure>
-<h3 id="是否用Docker？"><a href="#是否用Docker？" class="headerlink" title="是否用Docker？"></a>是否用Docker？</h3><p>一方面，使用Docker能够带来很大益处；另一方面，引入Docker必然会有很多挑战，需要熟悉Docker才能应对自如。<strong>想必这是一个艰难的决定</strong>。如果从长远的角度来看，Docker正在成为应用开发，部署，发布的标准技术，也许我们不得不用开放的心态对待它。</p>
-<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p> <a href="https://blog.fundebug.com/2017/03/27/nodejs-docker/" target="_blank" rel="noopener">https://blog.fundebug.com/2017/03/27/nodejs-docker/</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2017-08-08T14:16:53.000Z"><a href="/2017/08/08/Node.js_网络/node中的网络通信模块/">2017-08-08</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/08/08/Node.js_网络/node中的网络通信模块/">node中网络通信模块</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>目前，我们处于互联网时代，互联网产品百花齐放。例如，当打开浏览器，可以看到各种信息，浏览器是如何跟服务器进行通信的？当打开微信跟朋友聊天时，你是如何跟朋友进行消息传递的？这些都得靠网络进程之间的通信，都得依赖于socket。那什么是socket？node中有哪些跟网络通信有关的模块？这些问题是本文研究的重点。</p>
-<h2 id="1-Socket"><a href="#1-Socket" class="headerlink" title="1. Socket"></a>1. Socket</h2><p>Socket源于Unix，而Unix的基本哲学是『一些皆文件』，都可以用『打开open ==&gt; 读/写(read/write) ==&gt; 关闭(close)』模式来操作，Socket也可以采用这种方法进行理解。关于Socket，可以总结如下几点:</p>
-<ul>
-<li>可以实现底层通信，几乎所有的应用层都是通过socket进行通信的，因此『一切且socket』</li>
-<li>对TCP/IP协议进行封装，便于应用层协议调用，属于二者之间的中间抽象层</li>
-<li>各个语言都与相关实现，例如C、C++、node</li>
-<li>TCP/IP协议族中，传输层存在两种通用协议: TCP、UDP，两种协议不同，因为不同参数的socket实现过程也不一样</li>
-</ul>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/ipc_180717.jpg" alt=""></p>
-<h2 id="2-node中网络通信的架构实现"><a href="#2-node中网络通信的架构实现" class="headerlink" title="2. node中网络通信的架构实现"></a>2. node中网络通信的架构实现</h2><p>node中的模块，从两种语言实现角度来说，存在javscript、c++两部分，通过<code>process.binding</code>来建立关系。具体分析如下:</p>
-<ul>
-<li>标准的node模块有net、udp、dns、http、tls、https等</li>
-<li>V8是chrome的内核，提供了javascript解释运行功能，里面包含tcp_wrap.h、udp_wrap.h、tls_wrap.h等</li>
-<li>OpenSSL是基本的密码库，包括了MD5、SHA1、RSA等加密算法，构成了node标准模块中的<code>crypto</code></li>
-<li>cares模块用于DNS的解析</li>
-<li>libuv实现了跨平台的异步编程</li>
-<li>http_parser用于http的解析</li>
-</ul>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/socket_180717.png" alt=""></p>
-<h2 id="3-net使用"><a href="#3-net使用" class="headerlink" title="3. net使用"></a>3. net使用</h2><p><a href="https://nodejs.org/api/net.html" target="_blank" rel="noopener">net模块</a>是基于TCP协议的socket网路编程模块，http模块就是建立在该模块的基础上实现的，先来看看基本使用方法:</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 创建socket服务器 server.js</span></span><br><span class="line"><span class="keyword">const</span> net = <span class="built_in">require</span>(<span class="string">'net'</span>)</span><br><span class="line"><span class="keyword">const</span> server = net.createServer();</span><br><span class="line">server.on(<span class="string">'connection'</span>, (socket) =&gt; &#123;</span><br><span class="line">  socket.pipe(process.stdout);</span><br><span class="line">  socket.write(<span class="string">'data from server'</span>);</span><br><span class="line">&#125;);</span><br><span class="line">server.listen(<span class="number">3000</span>, () =&gt; &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">`server is on <span class="subst">$&#123;<span class="built_in">JSON</span>.stringify(server.address())&#125;</span>`</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 创建socket客户端 client.js</span></span><br><span class="line"><span class="keyword">const</span> net = <span class="built_in">require</span>(<span class="string">'net'</span>);</span><br><span class="line"><span class="keyword">const</span> client = net.connect(&#123;<span class="attr">port</span>: <span class="number">3000</span>&#125;);</span><br><span class="line">client.on(<span class="string">'connect'</span>, () =&gt; &#123;</span><br><span class="line">  client.write(<span class="string">'data from client'</span>);</span><br><span class="line">&#125;);</span><br><span class="line">client.on(<span class="string">'data'</span>, (chunk) =&gt; &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(chunk.toString());</span><br><span class="line">  client.end();</span><br><span class="line">&#125;);</span><br><span class="line"><span class="comment">// 打开两个终端，分别执行`node server.js`、`node client.js`，可以看到客户端与服务器进行了数据通信。</span></span><br></pre></td></tr></table></figure>
-<p>使用<code>const server = net.createServer();</code>创建了server对象，那server对象有哪些特点:</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// net.js</span></span><br><span class="line">exports.createServer = function(options, connectionListener) &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> Server(options, connectionListener);</span><br><span class="line">&#125;;</span><br><span class="line"><span class="function">function <span class="title">Server</span><span class="params">(options, connectionListener)</span> </span>&#123;</span><br><span class="line">  EventEmitter.call(<span class="keyword">this</span>);</span><br><span class="line">  ...</span><br><span class="line">  if (typeof connectionListener === 'function') &#123;</span><br><span class="line">    this.on('connection', connectionListener);</span><br><span class="line">  &#125;</span><br><span class="line">  ...</span><br><span class="line">  <span class="keyword">this</span>._handle = null;</span><br><span class="line">&#125;</span><br><span class="line">util.inherits(Server, EventEmitter);</span><br></pre></td></tr></table></figure>
-<p>上述代码可以分为几个点:</p>
-<ul>
-<li><code>createServer</code>就是一个语法糖，帮助new生成server对象</li>
-<li>server对象继承了EventEmitter，具有事件的相关方法</li>
-<li>_handle是server处理的句柄，属性值最终由c++部分的<code>TCP</code>、<code>Pipe</code>类创建</li>
-<li>connectionListener也是语法糖，作为connection事件的回调函数</li>
-</ul>
-<p>再来看看connectionListener事件的回调函数，里面包含一个<code>socket</code>对象，该对象是一个连接套接字，是个五元组(server_host、server_ip、protocol、client_host、client_ip)，相关实现如下:</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">onconnection</span>(<span class="params">err, clientHandle</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  <span class="keyword">var</span> socket = <span class="keyword">new</span> Socket(&#123;</span><br><span class="line">    ...</span><br><span class="line">  &#125;);</span><br><span class="line">  ...</span><br><span class="line">  self.emit(<span class="string">'connection'</span>, socket);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>因为Socket是继承了<code>stream.Duplex</code>，所以Socket也是一个可读可写流，可以使用流的方法进行数据的处理。</p>
-<p>接下来就是很关键的端口监听(port)，这是server与client的主要区别，代码:</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">Server.prototype.listen = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  listen(self, ip, port, addressType, backlog, fd, exclusive);</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">listen</span>(<span class="params">self, address, port, addressType, backlog, fd, exclusive</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  <span class="keyword">if</span> (!cluster) cluster = <span class="built_in">require</span>(<span class="string">'cluster'</span>);</span><br><span class="line">  <span class="keyword">if</span> (cluster.isMaster || exclusive) &#123;</span><br><span class="line">    self._listen2(address, port, addressType, backlog, fd);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  cluster._getServer(self, &#123;</span><br><span class="line">    ...</span><br><span class="line">  &#125;, cb);</span><br><span class="line">  <span class="function"><span class="keyword">function</span> <span class="title">cb</span>(<span class="params">err, handle</span>) </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    self._handle = handle;</span><br><span class="line">    self._listen2(address, port, addressType, backlog, fd);</span><br><span class="line">    ...</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">Server.prototype._listen2 = <span class="function"><span class="keyword">function</span>(<span class="params">address, port, addressType, backlog, fd</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">this</span>._handle) &#123;</span><br><span class="line">    ...</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    ...</span><br><span class="line">    rval = createServerHandle(address, port, addressType, fd);</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">this</span>._handle = rval;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">this</span>._handle.onconnection = onconnection;</span><br><span class="line">  <span class="keyword">var</span> err = _listen(<span class="keyword">this</span>._handle, backlog);</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">_listen</span>(<span class="params">handle, backlog</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> handle.listen(backlog || <span class="number">511</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>上述代码有几个点需要注意:</p>
-<ul>
-<li>监听的对象可以是端口、路径、定义好的server句柄、文件描述符</li>
-<li>当通过cluster创建工作进程(worker)时，exclusive判断是否进行socket连接的共享</li>
-<li>事件监听最终还是通过TCP/Pipe的listen来实现</li>
-<li>backlog规定了socket连接的限制，默认最多为511</li>
-</ul>
-<p>接下来分析下listen中最重要的<code>_handle</code>了，_handle决定了server的功能:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">function createServerHandle(address, port, addressType, fd) &#123;</span><br><span class="line">  ...</span><br><span class="line">  if (typeof fd === &apos;number&apos; &amp;&amp; fd &gt;= 0) &#123;</span><br><span class="line">    ...</span><br><span class="line">    handle = createHandle(fd);</span><br><span class="line">    ...</span><br><span class="line">  &#125; else if(port === -1 &amp;&amp; addressType === -1)&#123;</span><br><span class="line">    handle = new Pipe();</span><br><span class="line">  &#125; else &#123;</span><br><span class="line">    handle = new TCP();</span><br><span class="line">  &#125;</span><br><span class="line">  ...</span><br><span class="line">  return handle;</span><br><span class="line">&#125;</span><br><span class="line">function createHandle(fd) &#123;</span><br><span class="line">  var type = TTYWrap.guessHandleType(fd);</span><br><span class="line">  if (type === &apos;PIPE&apos;) return new Pipe();</span><br><span class="line">  if (type === &apos;TCP&apos;) return new TCP();</span><br><span class="line">  throw new TypeError(&apos;Unsupported fd type: &apos; + type);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><code>_handle</code>由C++中的Pipe、TCP实现，因而要想完全搞清楚node中的网络通信，必须深入到V8的源码里面。</p>
-<h2 id="4-UDP-dgram使用"><a href="#4-UDP-dgram使用" class="headerlink" title="4. UDP/dgram使用"></a>4. UDP/dgram使用</h2><p>跟net模块相比，基于UDP通信的dgram模块就简单了很多，因为不需要通过三次握手建立连接，所以整个通信的过程就简单了很多，对于数据准确性要求不太高的业务场景，可以使用该模块完成数据的通信。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// server端实现</span></span><br><span class="line"><span class="keyword">const</span> dgram = <span class="built_in">require</span>(<span class="string">'dgram'</span>);</span><br><span class="line"><span class="keyword">const</span> server = dgram.createSocket(<span class="string">'udp4'</span>);</span><br><span class="line">server.on(<span class="string">'message'</span>, (msg, addressInfo) =&gt; &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(addressInfo);</span><br><span class="line">  <span class="built_in">console</span>.log(msg.toString());</span><br><span class="line">  <span class="keyword">const</span> data = Buffer.from(<span class="string">'from server'</span>);</span><br><span class="line">  server.send(data, addressInfo.port);</span><br><span class="line">&#125;);</span><br><span class="line">server.bind(<span class="number">3000</span>, () =&gt; &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'server is on '</span>, server.address());</span><br><span class="line">&#125;);</span><br><span class="line"><span class="comment">// client端实现</span></span><br><span class="line"><span class="keyword">const</span> dgram = <span class="built_in">require</span>(<span class="string">'dgram'</span>);</span><br><span class="line"><span class="keyword">const</span> client = dgram.createSocket(<span class="string">'udp4'</span>);</span><br><span class="line"><span class="keyword">const</span> data = Buffer.from(<span class="string">'from client'</span>);</span><br><span class="line">client.send(data, <span class="number">3000</span>);</span><br><span class="line">client.on(<span class="string">'message'</span>, (msg, addressInfo) =&gt; &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(addressInfo);</span><br><span class="line">  <span class="built_in">console</span>.log(msg.toString());</span><br><span class="line">  client.close();</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>从源码层面分析上述代码的原理实现:</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line">exports.createSocket = function(type, listener) &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> Socket(type, listener);</span><br><span class="line">&#125;;</span><br><span class="line"><span class="function">function <span class="title">Socket</span><span class="params">(type, listener)</span> </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  var handle = newHandle(type);</span><br><span class="line">  <span class="keyword">this</span>._handle = handle;</span><br><span class="line">  ...</span><br><span class="line">  this.on('message', listener);</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line">util.inherits(Socket, EventEmitter);</span><br><span class="line">const UDP = process.binding('udp_wrap').UDP;</span><br><span class="line"><span class="function">function <span class="title">newHandle</span><span class="params">(type)</span> </span>&#123;</span><br><span class="line">  if (type == 'udp4') &#123;</span><br><span class="line">    <span class="keyword">const</span> handle = <span class="keyword">new</span> UDP();</span><br><span class="line">    handle.lookup = lookup4;</span><br><span class="line">    <span class="keyword">return</span> handle;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  if (type == 'udp6') &#123;</span><br><span class="line">    <span class="keyword">const</span> handle = <span class="keyword">new</span> UDP();</span><br><span class="line">    handle.lookup = lookup6;</span><br><span class="line">    handle.bind = handle.bind6;</span><br><span class="line">    handle.send = handle.send6;</span><br><span class="line">    <span class="keyword">return</span> handle;</span><br><span class="line">  &#125;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line">Socket.prototype.bind = function(port_ <span class="comment">/*, address, callback*/</span>) &#123;</span><br><span class="line">  ...</span><br><span class="line">  startListening(self);</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line"><span class="function">function <span class="title">startListening</span><span class="params">(socket)</span> </span>&#123;</span><br><span class="line">  socket._handle.onmessage = onMessage;</span><br><span class="line">  socket._handle.recvStart();</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line"><span class="function">function <span class="title">onMessage</span><span class="params">(nread, handle, buf, rinfo)</span> </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  self.emit('message', buf, rinfo);</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line">Socket.prototype.send = function(buffer, offset, length, port, address, callback) &#123;</span><br><span class="line">  ...</span><br><span class="line">  self._handle.lookup(address, function afterDns(ex, ip) &#123;</span><br><span class="line">    doSend(ex, self, ip, <span class="built_in">list</span>, address, port, callback);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br><span class="line">const SendWrap = process.binding('udp_wrap').SendWrap;</span><br><span class="line"><span class="function">function <span class="title">doSend</span><span class="params">(ex, self, ip, <span class="built_in">list</span>, address, port, callback)</span> </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  var req = <span class="keyword">new</span> SendWrap();</span><br><span class="line">  ...</span><br><span class="line">  var err = self._handle.send(req, <span class="built_in">list</span>, <span class="built_in">list</span>.length, port, ip, !!callback);</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>上述代码存在几个点需要注意:</p>
-<ul>
-<li>UDP模块没有继承stream，仅仅继承了EventEmit，后续的所有操作都是基于事件的方式</li>
-<li>UDP在创建的时候需要注意ipv4和ipv6</li>
-<li>UDP的_handle是由UDP类创建的</li>
-<li>通信过程中可能需要进行DNS查询，解析出ip地址，然后再进行其他操作</li>
-</ul>
-<h2 id="5-DNS使用"><a href="#5-DNS使用" class="headerlink" title="5. DNS使用"></a>5. DNS使用</h2><p>DNS(Domain Name System)用于域名解析，也就是找到host对应的ip地址，在计算机网络中，这个工作是由网络层的ARP协议实现。在node中存在<code>net</code>模块来完成相应功能，其中dns里面的函数分为两类:</p>
-<ul>
-<li>依赖底层操作系统实现域名解析，也就是我们日常开发中，域名的解析规则，可以回使用浏览器缓存、本地缓存、路由器缓存、dns服务器，该类仅有<code>dns.lookup</code></li>
-<li>该类的dns解析，直接到nds服务器执行域名解析</li>
-</ul>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> dns = <span class="built_in">require</span>(<span class="string">'dns'</span>);</span><br><span class="line"><span class="keyword">const</span> host = <span class="string">'bj.meituan.com'</span>;</span><br><span class="line">dns.lookup(host, (err, address, family) =&gt; &#123;</span><br><span class="line">  <span class="keyword">if</span> (err) &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(err);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'by net.lookup, address is: %s, family is: %s'</span>, address, family);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">dns.resolve(host, (err, address) =&gt; &#123;</span><br><span class="line">  <span class="keyword">if</span> (err) &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(err);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'by net.resolve, address is: %s'</span>, address);</span><br><span class="line">&#125;)</span><br><span class="line"><span class="comment">// by net.resolve, address is: 103.37.152.41</span></span><br><span class="line"><span class="comment">// by net.lookup, address is: 103.37.152.41, family is: 4</span></span><br></pre></td></tr></table></figure>
-<p>在这种情况下，二者解析的结果是一样的，但是假如我们修改本地的/etc/hosts文件呢</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在/etc/host文件中，增加:</span></span><br><span class="line"><span class="number">10.10</span><span class="number">.10</span><span class="number">.0</span> bj.meituan.com</span><br><span class="line"></span><br><span class="line"><span class="comment">// 然后再执行上述文件，结果是:</span></span><br><span class="line">by net.resolve, address is: <span class="number">103.37</span><span class="number">.152</span><span class="number">.41</span></span><br><span class="line">by net.lookup, address is: <span class="number">10.10</span><span class="number">.10</span><span class="number">.0</span>, family is: <span class="number">4</span></span><br></pre></td></tr></table></figure>
-<p>接下来分析下dns的内部实现:</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">const cares = process.binding('cares_wrap');</span><br><span class="line"><span class="keyword">const</span> GetAddrInfoReqWrap = cares.GetAddrInfoReqWrap;</span><br><span class="line">exports.lookup = function lookup(hostname, options, callback) &#123;</span><br><span class="line">  ...</span><br><span class="line">  callback = makeAsync(callback);</span><br><span class="line">  ...</span><br><span class="line">  var req = <span class="keyword">new</span> GetAddrInfoReqWrap();</span><br><span class="line">  req.callback = callback;</span><br><span class="line">  var err = cares.getaddrinfo(req, hostname, family, hints);</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">function <span class="title">resolver</span><span class="params">(bindingName)</span> </span>&#123;</span><br><span class="line">  var binding = cares[bindingName];</span><br><span class="line">  <span class="keyword">return</span> function query(name, callback) &#123;</span><br><span class="line">    ...</span><br><span class="line">    callback = makeAsync(callback);</span><br><span class="line">    var req = <span class="keyword">new</span> QueryReqWrap();</span><br><span class="line">    req.callback = callback;</span><br><span class="line">    var err = binding(req, name);</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">return</span> req;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">var resolveMap = Object.create(null);</span><br><span class="line">exports.resolve4 = resolveMap.A = resolver('queryA');</span><br><span class="line">exports.resolve6 = resolveMap.AAAA = resolver('queryAaaa');</span><br><span class="line">...</span><br><span class="line">exports.resolve = function(hostname, type_, callback_) &#123;</span><br><span class="line">  ...</span><br><span class="line">  resolver = resolveMap[type_];</span><br><span class="line">  <span class="keyword">return</span> resolver(hostname, callback);</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>上面的源码有几个点需要关注:</p>
-<ul>
-<li>lookup与resolve存在差异，使用的时候需要注意</li>
-<li>不管是lookup还是resolve，均依赖于cares库</li>
-<li>域名解析的type很多: resolve4、resolve6、resolveCname、resolveMx、resolveNs、resolveTxt、resolveSrv、resolvePtr、resolveNaptr、resolveSoa、reverse</li>
-</ul>
-<h2 id="6-HTTP使用"><a href="#6-HTTP使用" class="headerlink" title="6. HTTP使用"></a>6. HTTP使用</h2><p>在WEB开发中，HTTP作为最流行、最重要的应用层，是每个开发人员应该熟知的基础知识，我面试的时候必问的一块内容。同时，大多数同学接触node时，首先使用的恐怕就是http模块。先来一个简单的demo看看:</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> http = <span class="built_in">require</span>(<span class="string">'http'</span>);</span><br><span class="line"><span class="keyword">const</span> server = http.createServer();</span><br><span class="line">server.on(<span class="string">'request'</span>, (req, res) =&gt; &#123;</span><br><span class="line">  res.setHeader(<span class="string">'foo'</span>, <span class="string">'test'</span>);</span><br><span class="line">  res.writeHead(<span class="number">200</span>, &#123;</span><br><span class="line">    <span class="string">'Content-Type'</span>: <span class="string">'text/html'</span>,</span><br><span class="line">  &#125;);</span><br><span class="line">  res.write(<span class="string">'&lt;!doctype&gt;'</span>);</span><br><span class="line">  res.end(<span class="string">`&lt;html&gt;&lt;/html&gt;`</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">server.listen(<span class="number">3000</span>, () =&gt; &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'server is on '</span>, server.address());</span><br><span class="line">  <span class="keyword">var</span> req = http.request(&#123; <span class="attr">host</span>: <span class="string">'127.0.0.1'</span>, <span class="attr">port</span>: <span class="number">3000</span>&#125;);</span><br><span class="line">  req.on(<span class="string">'response'</span>, (res) =&gt; &#123;</span><br><span class="line">    res.on(<span class="string">'data'</span>, (chunk) =&gt; <span class="built_in">console</span>.log(<span class="string">'data from server '</span>, chunk.toString()) );</span><br><span class="line">    res.on(<span class="string">'end'</span>, () =&gt; server.close() );</span><br><span class="line">  &#125;);</span><br><span class="line">  req.end();</span><br><span class="line">&#125;);</span><br><span class="line"><span class="comment">// 输出结果如下:</span></span><br><span class="line"><span class="comment">// server is on  &#123; address: '::', family: 'IPv6', port: 3000 &#125;</span></span><br><span class="line"><span class="comment">// data from server  &lt;!doctype&gt;</span></span><br><span class="line"><span class="comment">// data from server  &lt;html&gt;&lt;/html&gt;</span></span><br></pre></td></tr></table></figure>
-<p>针对上述demo，有很多值得深究的地方，一不注意服务就挂掉了，下面根据node的<a href="https://nodejs.org/api/http.html" target="_blank" rel="noopener">官方文档</a>，逐个进行研究。</p>
-<h3 id="6-1-http-Agent"><a href="#6-1-http-Agent" class="headerlink" title="6.1 http.Agent"></a>6.1 http.Agent</h3><p>因为HTTP协议是无状态协议，每个请求均需通过三次握手建立连接进行通信，众所周知三次握手、慢启动算法、四次挥手等过程很消耗时间，因此HTTP1.1协议引入了keep-alive来避免频繁的连接。那么对于tcp连接该如何管理呢？http.Agent就是做这个工作的。先看看源码中的关键部分:</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Agent</span>(<span class="params">options</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  EventEmitter.call(<span class="keyword">this</span>);</span><br><span class="line">  ...</span><br><span class="line">  self.maxSockets = self.options.maxSockets || Agent.defaultMaxSockets;</span><br><span class="line">  self.maxFreeSockets = self.options.maxFreeSockets || <span class="number">256</span>;</span><br><span class="line">  ...</span><br><span class="line">  self.requests = &#123;&#125;; <span class="comment">// 请求队列</span></span><br><span class="line">  self.sockets = &#123;&#125;; <span class="comment">// 正在使用的tcp连接池</span></span><br><span class="line">  self.freeSockets = &#123;&#125;; <span class="comment">// 空闲的连接池</span></span><br><span class="line">  self.on(<span class="string">'free'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">socket, options</span>) </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// requests、sockets、freeSockets的读写操作</span></span><br><span class="line">    self.requests[name].shift().onSocket(socket);</span><br><span class="line">    freeSockets.push(socket);</span><br><span class="line">    ...</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">Agent.defaultMaxSockets = <span class="literal">Infinity</span>;</span><br><span class="line">util.inherits(Agent, EventEmitter);</span><br><span class="line"><span class="comment">// 关于socket的相关增删改查操作</span></span><br><span class="line">Agent.prototype.addRequest = <span class="function"><span class="keyword">function</span>(<span class="params">req, options</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  <span class="keyword">if</span> (freeLen) &#123;</span><br><span class="line">    <span class="keyword">var</span> socket = <span class="keyword">this</span>.freeSockets[name].shift();</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">this</span>.sockets[name].push(socket);</span><br><span class="line">    ...</span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span> (sockLen &lt; <span class="keyword">this</span>.maxSockets) &#123;</span><br><span class="line">    ...</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="keyword">this</span>.requests[name].push(req);</span><br><span class="line">  &#125;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line">Agent.prototype.createSocket = <span class="function"><span class="keyword">function</span>(<span class="params">req, options, cb</span>) </span>&#123; ... &#125;</span><br><span class="line">Agent.prototype.removeSocket = <span class="function"><span class="keyword">function</span>(<span class="params">s, options</span>) </span>&#123; ... &#125;</span><br><span class="line">exports.globalAgent = <span class="keyword">new</span> Agent();</span><br></pre></td></tr></table></figure>
-<p>上述代码有几个点需要注意:</p>
-<ul>
-<li>maxSockets默认情况下，没有tcp连接数量的上限(Infinity)</li>
-<li>连接池管理的核心是对<code>sockets</code>、<code>freeSockets</code>的增删查</li>
-<li>globalAgent会作为http.ClientRequest的默认agent</li>
-</ul>
-<p>下面可以测试下agent对请求本身的限制:</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// req.js</span></span><br><span class="line"><span class="keyword">const</span> http = <span class="built_in">require</span>(<span class="string">'http'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> server = http.createServer();</span><br><span class="line">server.on(<span class="string">'request'</span>, (req, res) =&gt; &#123;</span><br><span class="line">  <span class="keyword">var</span> i=<span class="number">1</span>;</span><br><span class="line">  setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">    res.end(<span class="string">'ok '</span>, i++);</span><br><span class="line">  &#125;, <span class="number">1000</span>)</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">server.listen(<span class="number">3000</span>, () =&gt; &#123;</span><br><span class="line">  <span class="keyword">var</span> max = <span class="number">20</span>;</span><br><span class="line">  <span class="keyword">for</span>(<span class="keyword">var</span> i=<span class="number">0</span>; i&lt;max; i++) &#123;</span><br><span class="line">    <span class="keyword">var</span> req = http.request(&#123; <span class="attr">host</span>: <span class="string">'127.0.0.1'</span>, <span class="attr">port</span>: <span class="number">3000</span>&#125;);</span><br><span class="line">    req.on(<span class="string">'response'</span>, (res) =&gt; &#123;</span><br><span class="line">      res.on(<span class="string">'data'</span>, (chunk) =&gt; <span class="built_in">console</span>.log(<span class="string">'data from server '</span>, chunk.toString()) );</span><br><span class="line">      res.on(<span class="string">'end'</span>, () =&gt; server.close() );</span><br><span class="line">    &#125;);</span><br><span class="line">    req.end();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br><span class="line"><span class="comment">// 在终端中执行time node ./req.js，结果为:</span></span><br><span class="line"><span class="comment">// real  0m1.123s</span></span><br><span class="line"><span class="comment">// user  0m0.102s</span></span><br><span class="line"><span class="comment">// sys 0m0.024s</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 在req.js中添加下面代码</span></span><br><span class="line">http.globalAgent.maxSockets = <span class="number">5</span>;</span><br><span class="line"><span class="comment">// 然后同样time node ./req.js，结果为:</span></span><br><span class="line">real  <span class="number">0</span>m4<span class="number">.141</span>s</span><br><span class="line">user  <span class="number">0</span>m0<span class="number">.103</span>s</span><br><span class="line">sys <span class="number">0</span>m0<span class="number">.024</span>s</span><br></pre></td></tr></table></figure>
-<p>当设置maxSockets为某个值时，tcp的连接就会被限制在某个值，剩余的请求就会进入<code>requests</code>队列里面，等有空余的socket连接后，从request队列中出栈，发送请求。</p>
-<h3 id="6-2-http-ClientRequest"><a href="#6-2-http-ClientRequest" class="headerlink" title="6.2 http.ClientRequest"></a>6.2 http.ClientRequest</h3><p>当执行http.request时，会生成ClientRequest对象，该对象虽然没有直接继承Stream.Writable，但是继承了http.OutgoingMessage，而http.OutgoingMessage实现了write、end方法，因为可以当跟stream.Writable一样的使用。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> req = http.request(&#123; <span class="attr">host</span>: <span class="string">'127.0.0.1'</span>, <span class="attr">port</span>: <span class="number">3000</span>, <span class="attr">method</span>: <span class="string">'post'</span>&#125;);</span><br><span class="line">req.on(<span class="string">'response'</span>, (res) =&gt; &#123;</span><br><span class="line">  res.on(<span class="string">'data'</span>, (chunk) =&gt; <span class="built_in">console</span>.log(<span class="string">'data from server '</span>, chunk.toString()) );</span><br><span class="line">  res.on(<span class="string">'end'</span>, () =&gt; server.close() );</span><br><span class="line">&#125;);</span><br><span class="line"><span class="comment">// 直接使用pipe，在request请求中添加数据</span></span><br><span class="line">fs.createReadStream(<span class="string">'./data.json'</span>).pipe(req);</span><br></pre></td></tr></table></figure>
-<p>接下来，看看http.ClientRequest的实现, ClientRequest继承了OutgoingMessage:</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> OutgoingMessage = <span class="built_in">require</span>(<span class="string">'_http_outgoing'</span>).OutgoingMessage;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">ClientRequest</span>(<span class="params">options, cb</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  OutgoingMessage.call(self);</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line">util.inherits(ClientRequest, OutgoingMessage);</span><br></pre></td></tr></table></figure>
-<h3 id="6-3-http-Server"><a href="#6-3-http-Server" class="headerlink" title="6.3 http.Server"></a>6.3 http.Server</h3><p>http.createServer其实就是创建了一个http.Server对象，关键源码如下:</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">exports.createServer = <span class="function"><span class="keyword">function</span>(<span class="params">requestListener</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> Server(requestListener);</span><br><span class="line">&#125;;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Server</span>(<span class="params">requestListener</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  net.Server.call(<span class="keyword">this</span>, &#123; <span class="attr">allowHalfOpen</span>: <span class="literal">true</span> &#125;);</span><br><span class="line">  <span class="keyword">if</span> (requestListener) &#123;</span><br><span class="line">    <span class="keyword">this</span>.addListener(<span class="string">'request'</span>, requestListener);</span><br><span class="line">  &#125;</span><br><span class="line">  ...</span><br><span class="line">  <span class="keyword">this</span>.addListener(<span class="string">'connection'</span>, connectionListener);</span><br><span class="line">  <span class="keyword">this</span>.timeout = <span class="number">2</span> * <span class="number">60</span> * <span class="number">1000</span>;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line">util.inherits(Server, net.Server);</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">connectionListener</span>(<span class="params">socket</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  socket.on(<span class="string">'end'</span>, socketOnEnd);</span><br><span class="line">  socket.on(<span class="string">'data'</span>, socketOnData)</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>有几个需要要关注的点:</p>
-<ul>
-<li>服务的创建依赖于net.server，通过net.server在底层实现服务的创建</li>
-<li>默认情况下，服务的超时时间为2分钟</li>
-<li>connectionListener处理tcp连接后的行为，跟net保持一致</li>
-</ul>
-<h3 id="6-4-http-ServerResponse"><a href="#6-4-http-ServerResponse" class="headerlink" title="6.4 http.ServerResponse"></a>6.4 http.ServerResponse</h3><p>看node.org官方是如何介绍server端的response对象的:</p>
-<p>This object is created internally by an HTTP server–not by the user. It is passed as the second parameter to the ‘request’ event.</p>
-<p>The response implements, but does not inherit from, the Writable Stream interface.</p>
-<p>跟http.ClientRequest很像，继承了OutgoingMessage，没有继承Stream.Writable，但是实现了Stream的功能，可以跟Stream.Writable一样灵活使用:</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">ServerResponse</span>(<span class="params">req</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  OutgoingMessage.call(<span class="keyword">this</span>);</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line">util.inherits(ServerResponse, OutgoingMessage);</span><br></pre></td></tr></table></figure>
-<h3 id="6-5-http-IncomingMessage"><a href="#6-5-http-IncomingMessage" class="headerlink" title="6.5 http.IncomingMessage"></a>6.5 http.IncomingMessage</h3><p>An IncomingMessage object is created by http.Server or http.ClientRequest and passed as the first argument to the ‘request’ and ‘response’ event respectively. It may be used to access response status, headers and data.</p>
-<p>http.IncomingMessage有两个地方时被内部创建，一个是作为server端的request，另外一个是作为client请求中的response，同时该类显示地继承了Stream.Readable。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">IncomingMessage</span>(<span class="params">socket</span>) </span>&#123;</span><br><span class="line">  Stream.Readable.call(<span class="keyword">this</span>);</span><br><span class="line">  <span class="keyword">this</span>.socket = socket;</span><br><span class="line">  <span class="keyword">this</span>.connection = socket;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line">util.inherits(IncomingMessage, Stream.Readable);</span><br></pre></td></tr></table></figure>
-<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="http://zhenhua-lee.github.io/node/socket.html" target="_blank" rel="noopener">http://zhenhua-lee.github.io/node/socket.html</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2017-06-05T06:45:23.000Z"><a href="/2017/06/05/Node.js_模块/你需要了解的Node.js模块/">2017-06-05</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/06/05/Node.js_模块/你需要了解的Node.js模块/">你需要了解的Node.js 模块</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>Node 使用两个核心模块来管理模块依赖：</p>
-<ul>
-<li>require 模块，在全局范围可用——无需 require(‘require’)。</li>
-<li>module 模块，在全局范围可用——无需 require(‘module’)。</li>
-</ul>
-<p>你可以将 require 模块视为命令，将 module 模块视为所有必需模块的组织者。<br>在 Node 中获取一个模块并不复杂。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> config = <span class="built_in">require</span>(<span class="string">'/path/to/file'</span>);</span><br></pre></td></tr></table></figure>
-<p>由 require 模块导出的主要对象是一个函数（如上例所用）。 当 Node 使用本地文件路径作为函数的唯一参数调用该 require() 函数时，Node 将执行以下步骤：</p>
-<ul>
-<li><strong>解析</strong>：找到文件的绝对路径。</li>
-<li><strong>加载</strong>：确定文件内容的类型.</li>
-<li><strong>封装</strong>：给文件其私有作用域。 这使得 require 和 module 对象两者都可以下载我们需要的每个文件。</li>
-<li><strong>评估</strong>：这是 VM 对加载的代码最后需要做的。</li>
-<li><strong>缓存</strong>：当我们再次需要这个文件时，不再重复所有的步骤。</li>
-</ul>
-<p>在本文中，我将尝试用示例解释这些不同的阶段，以及它们是如何影响我们在 Node 中编写模块的方式的。</p>
-<p>先在终端创建一个目录来保存所有示例：<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mkdir ~/learn-node &amp;&amp; cd ~/learn-node</span><br></pre></td></tr></table></figure></p>
-<p>本文之后所有命令都在 ~/learn-node 下运行。</p>
-<h4 id="解析本地路径"><a href="#解析本地路径" class="headerlink" title="解析本地路径"></a>解析本地路径</h4><p>我现在向你介绍 module 对象。你可以在一个的 REPL(译者注：Read-Eval-Print-Loop，就是一般控制台干的事情)会话中很容易地看到它：<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ node</span><br><span class="line"><span class="meta">&gt;</span> module</span><br><span class="line">Module &#123;</span><br><span class="line">  id: '&lt;repl&gt;',</span><br><span class="line">  exports: &#123;&#125;,</span><br><span class="line">  parent: undefined,</span><br><span class="line">  filename: null,</span><br><span class="line">  loaded: false,</span><br><span class="line">  children: [],</span><br><span class="line">  paths: [ ... ] &#125;</span><br></pre></td></tr></table></figure></p>
-<p>每个模块对象都有一个 id 属性作为标识。这个 id 通常是文件的完整路径，不过在 REPL 会话中，它只是 <repl>。</repl></p>
-<p>Node 模块与文件系统有着一对一的关系。请求模块就是把文件内容加载到内存中。</p>
-<p>不过，因为 Node 中有很多方法用于请求文件(比如，使用相对路径，或预定义的路径)，在我们把文件内容加载到内存之前，我们需要找到文件的绝对位置。<br>现在请求 ‘find-me’ 模块，但不指定路径：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">require</span>(<span class="string">'find-me'</span>);</span><br></pre></td></tr></table></figure></p>
-<p>Node 会按顺序在 module.paths 指定的路径中去寻找 find-me.js。<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ node</span><br><span class="line"><span class="meta">&gt;</span> module.paths</span><br><span class="line">[ '/Users/samer/learn-node/repl/node_modules',</span><br><span class="line">  '/Users/samer/learn-node/node_modules',</span><br><span class="line">  '/Users/samer/node_modules',</span><br><span class="line">  '/Users/node_modules',</span><br><span class="line">  '/node_modules',</span><br><span class="line">  '/Users/samer/.node_modules',</span><br><span class="line">  '/Users/samer/.node_libraries',</span><br><span class="line">  '/usr/local/Cellar/node/7.7.1/lib/node' ]</span><br></pre></td></tr></table></figure></p>
-<p>路径列表基本上会是从当前目录到根目录下的每一个 node_modules 目录。它也会包含一些不推荐使用的遗留目录。</p>
-<p>如果 Node 在这些目录下仍然找不到 find-me.js，它会抛出 “cannot find module error.(不能找到模块)” 这个错误消息。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ node</span><br><span class="line"><span class="meta">&gt;</span> require('find-me')</span><br><span class="line">Error: Cannot find module 'find-me'</span><br><span class="line">    at Function.Module._resolveFilename (module.js:470:15)</span><br><span class="line">    at Function.Module._load (module.js:418:25)</span><br><span class="line">    at Module.require (module.js:498:17)</span><br><span class="line">    at require (internal/module.js:20:19)</span><br><span class="line">    at repl:1:1</span><br><span class="line">    at ContextifyScript.Script.runInThisContext (vm.js:23:33)</span><br><span class="line">    at REPLServer.defaultEval (repl.js:336:29)</span><br><span class="line">    at bound (domain.js:280:14)</span><br><span class="line">    at REPLServer.runBound [as eval] (domain.js:293:12)</span><br><span class="line">    at REPLServer.onLine (repl.js:533:10)</span><br></pre></td></tr></table></figure>
-<p>现在创建一个局部的 node_modules 目录，放入一个 find-me.js，require(‘find-me’) 就能找到它。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ mkdir node_modules </span><br><span class="line">~/learn-node $ echo "console.log('I am not lost');" &gt; node_modules/find-me.js</span><br><span class="line">~/learn-node $ node</span><br><span class="line"><span class="meta">&gt;</span> require('find-me');</span><br><span class="line">I am not lost</span><br><span class="line">&#123;&#125;</span><br><span class="line"><span class="meta">&gt;</span></span><br></pre></td></tr></table></figure>
-<p>如果别的路径下存在另一个 find-me.js 文件，例如在 home 目录下存在 node_modules 目录，其中有一个不同的 find-me.js：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> mkdir ~/node_modules</span><br><span class="line"><span class="meta">$</span> echo "console.log('I am the root of all problems');" &gt; ~/node_modules/find-me.js</span><br></pre></td></tr></table></figure>
-<p>现在 learn-node 目录也包含 node_modules/find-me.js —— 在这个目录下 require(‘find-me’)，那么 home 目录下的 find-me.js 根本不会被加载：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ node</span><br><span class="line"><span class="meta">&gt;</span> require('find-me')</span><br><span class="line">I am not lost</span><br><span class="line">&#123;&#125;</span><br><span class="line"><span class="meta">&gt;</span></span><br></pre></td></tr></table></figure>
-<p>如果删除了~/learn-node 目录下的的 node_modules 目录，再次尝试请求 find-me.js，就会使用 home 目录下 node_modules 目录中的 find-me.js 了：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ rm -r node_modules/</span><br><span class="line">~/learn-node $ node</span><br><span class="line"><span class="meta">&gt;</span> require('find-me')</span><br><span class="line">I am the root of all problems</span><br><span class="line">&#123;&#125;</span><br><span class="line"><span class="meta">&gt;</span></span><br></pre></td></tr></table></figure>
-<h4 id="请求一个目录"><a href="#请求一个目录" class="headerlink" title="请求一个目录"></a>请求一个目录</h4><p>模块不一定是文件。我们也可以在 node_modules 目录下创建一个 find-me 目录，并在其中放一个 index.js 文件。同样的 require(‘find-me’) 会使用这个目录下的 index.js 文件：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ mkdir -p node_modules/find-me</span><br><span class="line">~/learn-node $ echo "console.log('Found again.');" &gt; node_modules/find-me/index.js</span><br><span class="line">~/learn-node $ node</span><br><span class="line"><span class="meta">&gt;</span> require('find-me');</span><br><span class="line">Found again.</span><br><span class="line">&#123;&#125;</span><br><span class="line"><span class="meta">&gt;</span></span><br></pre></td></tr></table></figure>
-<p>注意如果存在局部模块，home 下 node_modules 路径中的相应模块仍然会被忽略。</p>
-<p>在请求一个目录的时候，默认会使用 index.js，不过我们可以通过 package.json 中的 main 选项来改变起始文件。比如，希望 require(‘find-me’) 在 find-me 目录下去使用另一个文件，只需要在那个目录下添加  package.json 文件来完成这个事情：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ echo "console.log('I rule');" &gt; node_modules/find-me/start.js</span><br><span class="line">~/learn-node $ echo '&#123; "name": "find-me-folder", "main": "start.js" &#125;' &gt; node_modules/find-me/package.json</span><br><span class="line">~/learn-node $ node</span><br><span class="line"><span class="meta">&gt;</span> require('find-me');</span><br><span class="line">I rule</span><br><span class="line">&#123;&#125;</span><br><span class="line"><span class="meta">&gt;</span></span><br></pre></td></tr></table></figure>
-<h4 id="require-resolve"><a href="#require-resolve" class="headerlink" title="require.resolve"></a>require.resolve</h4><p>如果你只是想找到模块，并不想执行它，你可以使用 require.resolve 函数。除了不加载文件，它的行为与主函数 require 完全相同。如果文件不存在它会抛出错误，如果找到了指定的文件，它会返回完整路径。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;</span> require.resolve('find-me');</span><br><span class="line">'/Users/samer/learn-node/node_modules/find-me/start.js'</span><br><span class="line"><span class="meta">&gt;</span> require.resolve('not-there');</span><br><span class="line">Error: Cannot find module 'not-there'</span><br><span class="line">    at Function.Module._resolveFilename (module.js:470:15)</span><br><span class="line">    at Function.resolve (internal/module.js:27:19)</span><br><span class="line">    at repl:1:9</span><br><span class="line">    at ContextifyScript.Script.runInThisContext (vm.js:23:33)</span><br><span class="line">    at REPLServer.defaultEval (repl.js:336:29)</span><br><span class="line">    at bound (domain.js:280:14)</span><br><span class="line">    at REPLServer.runBound [as eval] (domain.js:293:12)</span><br><span class="line">    at REPLServer.onLine (repl.js:533:10)</span><br><span class="line">    at emitOne (events.js:101:20)</span><br><span class="line">    at REPLServer.emit (events.js:191:7)</span><br><span class="line"><span class="meta">&gt;</span></span><br></pre></td></tr></table></figure>
-<p>这很有用，比如，检查一个可选的包是否安装并在它已安装的情况下使用它。</p>
-<h4 id="相对路径和绝对路径"><a href="#相对路径和绝对路径" class="headerlink" title="相对路径和绝对路径"></a>相对路径和绝对路径</h4><p>除了在 node_modules 目录中查找模块之外，我们也可以把模块放置于任何位置，然后通过相对路径(./ 和 ../)请求，也可以通过以 / 开始的绝对路径请求。</p>
-<p>比如，如果 find-me.js 是放在 lib 目录而不是 node_modules 目录下，可以这样请求：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">require</span>(<span class="string">'./lib/find-me'</span>);</span><br></pre></td></tr></table></figure>
-<h4 id="文件中的父子关系"><a href="#文件中的父子关系" class="headerlink" title="文件中的父子关系"></a>文件中的父子关系</h4><p>创建 lib/util.js 文件并添加一行 console.log 代码来识别它。console.log 会输出模块自身的 module 对象：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ mkdir lib</span><br><span class="line">~/learn-node $ echo "console.log('In util', module);" &gt; lib/util.js</span><br></pre></td></tr></table></figure>
-<p>在 index.js 文件中干同样的事情，稍后我们会通过 node 命令执行这个文件。让 index.js 文件请求 lib/util.js： </p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ echo "console.log('In index', module); require('./lib/util');" &gt; index.js</span><br></pre></td></tr></table></figure>
-<p>现在用 node 执行 index.js：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ node index.js</span><br><span class="line">In index Module &#123;</span><br><span class="line">  id: '.',</span><br><span class="line">  exports: &#123;&#125;,</span><br><span class="line">  parent: null,</span><br><span class="line">  filename: '/Users/samer/learn-node/index.js',</span><br><span class="line">  loaded: false,</span><br><span class="line">  children: [],</span><br><span class="line">  paths: [ ... ] &#125;</span><br><span class="line">In util Module &#123;</span><br><span class="line">  id: '/Users/samer/learn-node/lib/util.js',</span><br><span class="line">  exports: &#123;&#125;,</span><br><span class="line">  parent:</span><br><span class="line">   Module &#123;</span><br><span class="line">     id: '.',</span><br><span class="line">     exports: &#123;&#125;,</span><br><span class="line">     parent: null,</span><br><span class="line">     filename: '/Users/samer/learn-node/index.js',</span><br><span class="line">     loaded: false,</span><br><span class="line">     children: [ [Circular] ],</span><br><span class="line">     paths: [...] &#125;,</span><br><span class="line">  filename: '/Users/samer/learn-node/lib/util.js',</span><br><span class="line">  loaded: false,</span><br><span class="line">  children: [],</span><br><span class="line">  paths: [...] &#125;</span><br></pre></td></tr></table></figure>
-<p>注意到现在的列表中主模块 index (id: ‘.’) 是 lib/util 模块的父模块。不过 lib/util 模块并未作为 index 的子模块列出来。不过那里有个 [Circular] 值因为那里存在循环引用。如果 Node 打印 lib/util 模块对象，它就会陷入一个无限循环。因此这里用 [Circular] 代替了 lib/util 引用。</p>
-<p>现在更重要的问题是，如果 lib/util 模块又请求了 index 模块，会发生什么事情？这就是我们需要了解的循环依赖，Node 允许这种情况存在。</p>
-<p>在理解它之前，我们先来搞明白 module 对象中的另外一些概念。</p>
-<h4 id="exports、module-exports-以及同步加载模块"><a href="#exports、module-exports-以及同步加载模块" class="headerlink" title="exports、module.exports 以及同步加载模块"></a>exports、module.exports 以及同步加载模块</h4><p>exports 是每个模块都有的一个特殊对象。如果你观察仔细，会发现上面示例中每次打印的模块对象中都存在一个 exports 属性，到目前为止它只是个空对象。我们可以给这个特殊的 exports 对象任意添加属性。例如，我们为 index.js 和 lib/util.js 导出 id 属性：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Add the following line at the top of lib/util.js</span></span><br><span class="line">exports.id = <span class="string">'lib/util'</span>;</span><br><span class="line"><span class="comment">// Add the following line at the top of index.js</span></span><br><span class="line">exports.id = <span class="string">'index'</span>;</span><br></pre></td></tr></table></figure>
-<p>现在执行 index.js，我们会看到这些属性受到 module 对象管理：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ node index.js</span><br><span class="line">In index Module &#123;</span><br><span class="line">  id: '.',</span><br><span class="line">  exports: &#123; id: 'index' &#125;,</span><br><span class="line">  loaded: false,</span><br><span class="line">  ... &#125;</span><br><span class="line">In util Module &#123;</span><br><span class="line">  id: '/Users/samer/learn-node/lib/util.js',</span><br><span class="line">  exports: &#123; id: 'lib/util' &#125;,</span><br><span class="line">  parent:</span><br><span class="line">   Module &#123;</span><br><span class="line">     id: '.',</span><br><span class="line">     exports: &#123; id: 'index' &#125;,</span><br><span class="line">     loaded: false,</span><br><span class="line">     ... &#125;,</span><br><span class="line">  loaded: false,</span><br><span class="line">  ... &#125;</span><br></pre></td></tr></table></figure>
-<p>上面的输出中我去掉了一些属性，这样看起来比较简洁，不过请注意 exports 对象已经包含了我们在每个模块中定义的属性。你可以在 exports 对象中任意添加属性，也可以直接把 exports 整个替换成另一个对象。比如，可以把 exports 对象变成一个函数，我们会这样做：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Add the following line in index.js before the console.log </span></span><br><span class="line"><span class="built_in">module</span>.exports = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;&#125;;</span><br></pre></td></tr></table></figure>
-<p>现在运行 index.js，你会看到 exports 对象是一个函数：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ node index.js</span><br><span class="line">In index Module &#123;</span><br><span class="line">  id: '.',</span><br><span class="line">  exports: [Function],</span><br><span class="line">  loaded: false,</span><br><span class="line">  ... &#125;</span><br></pre></td></tr></table></figure>
-<p>注意，我没有通过 exports = function() {} 来将 exports 对象改变为函数。这样做是不行的，因为模块中的 exports 变量只是 module.exports 的引用，它用于管理导出属性。如果我们重新给 exports 变量赋值，就会丢失对 module.exports 的引用，实际会产生一个新的变量，而不是改变了 module.exports。</p>
-<p>每个模块中的 module.exports 对象就是通过 require 函数请求那个模块返回的。比如，把 index.js 中的 require(‘./lib/util’) 改为：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> UTIL = <span class="built_in">require</span>(<span class="string">'./lib/util'</span>);</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'UTIL:'</span>, UTIL);</span><br></pre></td></tr></table></figure>
-<p>这段代码会输出 lib/util 导出到 UTIL 常量中的属性。现在运行 index.js，输出如下：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UTIL: &#123; <span class="attr">id</span>: <span class="string">'lib/util'</span> &#125;</span><br></pre></td></tr></table></figure>
-<p>再来谈谈每个模块的 loaded 属性。到目前为止，每次我们打印一个模块对象的时候，都会看到这个对象的 loaded 属性值为 false。</p>
-<p>module 模块使用 loaded 属性来跟踪哪些模块是加载过的(true值)，以及哪些模块还在加载中(false 值)。比如我们可以通过调用 setImmediate 来打印 modules 对象，在下一事件循环中看看完成加载的 index.js 模块：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// In index.js</span></span><br><span class="line">setImmediate(<span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'The index.js module object is now loaded!'</span>, <span class="built_in">module</span>)</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>输出是这样的：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">The index.js <span class="built_in">module</span> object is now loaded! Module &#123;</span><br><span class="line">  id: <span class="string">'.'</span>,</span><br><span class="line">  exports: [<span class="built_in">Function</span>],</span><br><span class="line">  parent: <span class="literal">null</span>,</span><br><span class="line">  filename: <span class="string">'/Users/samer/learn-node/index.js'</span>,</span><br><span class="line">  loaded: <span class="literal">true</span>,</span><br><span class="line">  children:</span><br><span class="line">   [ Module &#123;</span><br><span class="line">       id: <span class="string">'/Users/samer/learn-node/lib/util.js'</span>,</span><br><span class="line">       exports: [<span class="built_in">Object</span>],</span><br><span class="line">       parent: [Circular],</span><br><span class="line">       filename: <span class="string">'/Users/samer/learn-node/lib/util.js'</span>,</span><br><span class="line">       loaded: <span class="literal">true</span>,</span><br><span class="line">       children: [],</span><br><span class="line">       paths: [<span class="built_in">Object</span>] &#125; ],</span><br><span class="line">  paths:</span><br><span class="line">   [ <span class="string">'/Users/samer/learn-node/node_modules'</span>,</span><br><span class="line">     <span class="string">'/Users/samer/node_modules'</span>,</span><br><span class="line">     <span class="string">'/Users/node_modules'</span>,</span><br><span class="line">     <span class="string">'/node_modules'</span> ] &#125;</span><br></pre></td></tr></table></figure>
-<p>注意理解它是如何推迟 console.log，使其在 lib/util.js 和 index.js 加载完成之后再产生输出的。</p>
-<p>Node 完成加载模块(并标记)之后 exports 对象就完成了。整个请求/加载某个模块的过程是<em>同步</em>的。因此我们可以在一个事件循环周期过后看到模块已经完成加载。</p>
-<p>这也就是说，我们不能异步改变 exports 对象。比如在某个模块中干这样的事情：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">fs.readFile(&apos;/etc/passwd&apos;, (err, data) =&gt; &#123;</span><br><span class="line">  if (err) throw err;</span><br><span class="line">  exports.data = data; // Will not work.</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<h4 id="循环依赖模块"><a href="#循环依赖模块" class="headerlink" title="循环依赖模块"></a>循环依赖模块</h4><p>现在来回答关于 Node 循环依赖模块这个重要的问题：如果模块1需要模块2，模块2也需要模块1，会发生什么事情？</p>
-<p>为了观察结果，我们在 lib/ 下创建两个文件，module1.js 和 module2.js，它们相互请求对象：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// lib/module1.js</span></span><br><span class="line">exports.a = <span class="number">1</span>;</span><br><span class="line"><span class="built_in">require</span>(<span class="string">'./module2'</span>);</span><br><span class="line">exports.b = <span class="number">2</span>;</span><br><span class="line">exports.c = <span class="number">3</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// lib/module2.js</span></span><br><span class="line"><span class="keyword">const</span> Module1 = <span class="built_in">require</span>(<span class="string">'./module1'</span>);</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'Module1 is partially loaded here'</span>, Module1);</span><br></pre></td></tr></table></figure>
-<p>运行 module1.js 可以看到：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ node lib/module1.js</span><br><span class="line">Module1 is partially loaded here &#123; a: 1 &#125;</span><br></pre></td></tr></table></figure>
-<p>我们在 module1 完全加载前请求了 module2，而 module2 在未完全加载时又请求了 module1，那么，在那一时刻，能得到的是在循环依赖之前导出的属性。只有 a 属性打印出来了，因为 b 和 c 是在请求了module2 并打印了 module1 之后才导出的。</p>
-<p>Node 让这件事变得简单。在加载某个模块的时候，它会创建 exports 对象。你可以在一个模块加载完成之前请求它，但只会得到部分导出的对象，它只包含到目前为止已经定义的项。</p>
-<h4 id="JSON-和-C-C-addon"><a href="#JSON-和-C-C-addon" class="headerlink" title="JSON 和 C/C++ addon"></a>JSON 和 C/C++ addon</h4><p>我们可以利用 require 函数在本地引入 JSON 文件和 C++ addon 文件。这么做不需要指定文件扩展名。</p>
-<p>如果没有指定文件扩展名，Node 首先要处理 .js 文件。如果找不到 .js 文件，就会尝试寻找 .json 文件，如果发现为 JSON 文本文件，便将其解析为 .json 文件。 之后，它将尝试找到一个二进制 .node 文件。为了消除歧义，当需要使用 .js 文件以外的其他格式后缀时，你需要制定一个文件扩展名。</p>
-<p>引入 JSON 文件在某些情况下是很有用的，例如，当你在该文件中需要管理的所有内容都是些静态配置值时，或者你需要定期从某个外部源读入值时。假设我们有以下 config.json 文件：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="string">"host"</span>: <span class="string">"localhost"</span>,</span><br><span class="line">  <span class="string">"port"</span>: <span class="number">8080</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>我们可以像这样直接请求：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> &#123; host, port &#125; = <span class="built_in">require</span>(<span class="string">'./config'</span>);</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">`Server will run at http://<span class="subst">$&#123;host&#125;</span>:<span class="subst">$&#123;port&#125;</span>`</span>);</span><br></pre></td></tr></table></figure></p>
-<p>运行上面的代码，输出如下：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Server will run at http:<span class="comment">//localhost:8080</span></span><br></pre></td></tr></table></figure></p>
-<p>如果 Node 不能找到 .js 或 .json 文件，它会寻找 .node 文件，它会被认为是编译好的插件模块。</p>
-<p>Node 文档中有一个<a href="https://nodejs.org/api/addons.html#addons_hello_world" target="_blank" rel="noopener">插件文件示例</a>，它是用 C++ 写的。它只是一个导出了 hello() 函数的简单模块，这个 hello 函数输出 “world”。</p>
-<p>你可以使用 node-gyp 包来编译和构建 .cc 文件，生成 .addon 文件。只需要配置一个 <a href="https://nodejs.org/api/addons.html#addons_building" target="_blank" rel="noopener">binding.gyp</a> 文件来告诉 node-gyp 做什么。</p>
-<p>得到 addon.node (或其它在 binding.gyp 中指定的名称)文件后，你可以像请求其它模块一样请求它：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> addon = <span class="built_in">require</span>(<span class="string">'./addon'</span>);</span><br><span class="line"><span class="built_in">console</span>.log(addon.hello());</span><br></pre></td></tr></table></figure>
-<p>我们可以在 require.extensions 中看到实际支持的三个扩展名：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/require_180724.png" alt="img"></p>
-<p>看看每个扩展名对应的函数，你就清楚 Node 在怎么使用它们。它使用 module._compile 处理 .js 文件，使用 JSON.parse 处理 .json 文件，以及使用 process.dlopen 处理 .node 文件。</p>
-<h4 id="在-Node-编写的所有代码将封装到函数中"><a href="#在-Node-编写的所有代码将封装到函数中" class="headerlink" title="在 Node 编写的所有代码将封装到函数中"></a>在 Node 编写的所有代码将封装到函数中</h4><p>有人经常误解 Node 的封装模块的用途。让我们通过 exports/module.exports 之间的关系来了解它。</p>
-<p>我们可以使用 exports 对象导出属性，但是我们不能直接替换 exports 对象，因为它仅是对 module.exports 的引用</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">exports.id = <span class="number">42</span>; <span class="comment">// This is ok.</span></span><br><span class="line">exports = &#123; <span class="attr">id</span>: <span class="number">42</span> &#125;; <span class="comment">// This will not work.</span></span><br><span class="line"><span class="built_in">module</span>.exports = &#123; <span class="attr">id</span>: <span class="number">42</span> &#125;; <span class="comment">// This is ok.</span></span><br></pre></td></tr></table></figure>
-<p>对于每个模块而言这个 exports 对象看似是全局的，这和将其定义为 module 对象的引用，那到底什么是 exports 对象呢？</p>
-<p>在解释 Node 的封装过程之前，让我再问一个问题。</p>
-<p>在浏览器中，当我们在脚本中如下所示地声明一个变量：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> answer = <span class="number">42</span>;</span><br></pre></td></tr></table></figure>
-<p>在定义 answer 变量的脚本之后，该变量将在所有脚本中全局可见。</p>
-<p>这在 Node 中根本不是问题。我们在某个模块中定义的变量，其它模块是访问不到的。那么为什么 Node 中变量的作用域这么神奇？</p>
-<p>答案很简单。在编译模块之前，Node 会把模块代码封装在一个函数中，我们可以通过 module 模块的 wrapper 属性看出来。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">~ $ node</span><br><span class="line">&gt; <span class="built_in">require</span>(<span class="string">'module'</span>).wrapper</span><br><span class="line">[ <span class="string">'(function (exports, require, module, __filename, __dirname) &#123; '</span>,</span><br><span class="line">  <span class="string">'\n&#125;);'</span> ]</span><br><span class="line">&gt;</span><br></pre></td></tr></table></figure>
-<p>Node 不会直接执行你写在文件中的代码。它执行这个包装函数，你写的代码只是它的函数体。因此所有定义在模块中的顶层变量都受限于模块的作用域。</p>
-<p>这个包装函数有5个参数：exports, require, module, <strong>filename 和 </strong>dirname。它们看起来像是全局的，但实际它们在每个模块内部。</p>
-<p>所有这些参数都会在 Node 执行包装函数的时候获得值。exports 是 module.exports 的引用。require 和 module 都有特定的功能。<strong>filename/</strong>dirname 变量包含了模块文件名及其所有目录的绝对路径。</p>
-<p>如果你的脚本在第一行出现错误，你就会看到它是如何包装的：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ echo "euaohseu" &gt; bad.js</span><br><span class="line">~/learn-node $ node bad.js</span><br><span class="line">~/bad.js:1</span><br><span class="line">(function (exports, require, module, __filename, __dirname) &#123; </span><br><span class="line">euaohseu</span><br><span class="line">                                                              ^</span><br><span class="line">ReferenceError: euaohseu is not defined</span><br></pre></td></tr></table></figure>
-<p>注意上例中的第一行并非是真的错误引用，而是为了在错误报告中输出包装函数。</p>
-<p>此外，既然每个模块都封装在函数中，我们可以通过 arguments 关键字来使用函数的参数：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ echo "console.log(arguments)" &gt; index.js</span><br><span class="line">~/learn-node $ node index.js</span><br><span class="line">&#123; '0': &#123;&#125;,</span><br><span class="line">  '1':</span><br><span class="line">   &#123; [Function: require]</span><br><span class="line">     resolve: [Function: resolve],</span><br><span class="line">     main:</span><br><span class="line">      Module &#123;</span><br><span class="line">        id: '.',</span><br><span class="line">        exports: &#123;&#125;,</span><br><span class="line">        parent: null,</span><br><span class="line">        filename: '/Users/samer/index.js',</span><br><span class="line">        loaded: false,</span><br><span class="line">        children: [],</span><br><span class="line">        paths: [Object] &#125;,</span><br><span class="line">     extensions: &#123; ... &#125;,</span><br><span class="line">     cache: &#123; '/Users/samer/index.js': [Object] &#125; &#125;,</span><br><span class="line">  '2':</span><br><span class="line">   Module &#123;</span><br><span class="line">     id: '.',</span><br><span class="line">     exports: &#123;&#125;,</span><br><span class="line">     parent: null,</span><br><span class="line">     filename: '/Users/samer/index.js',</span><br><span class="line">     loaded: false,</span><br><span class="line">     children: [],</span><br><span class="line">     paths: [ ... ] &#125;,</span><br><span class="line">  '3': '/Users/samer/index.js',</span><br><span class="line">  '4': '/Users/samer' &#125;</span><br></pre></td></tr></table></figure>
-<p>第一个参数是 exports 对象，它一开始是空的。然后是 require/module 对象，它们与在执行的 index.js 文件的实例关联，并非全局变量。最后 2 个参数是文件的路径及其所在目录的路径。</p>
-<p>包装函数的返回值是 module.exports。在包装函数的内部我们可以通过改变 module.exports 属性来改变 exports 对象，但不能直接对 exports 赋值，因为它只是一个引用。</p>
-<p>这个事情大致像这样：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> (<span class="params">require, module, __filename, __dirname</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">let</span> exports = <span class="built_in">module</span>.exports;  <span class="comment">// Your Code...</span></span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">module</span>.exports;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>如果我们直接改变 exports 对象，它就不再是 module.exports 的引用。JavaScript 在任何地方都是这样引用对象，并非只是在这个环境中。</p>
-<h4 id="require-对象"><a href="#require-对象" class="headerlink" title="require 对象"></a>require 对象</h4><p>require 没什么特别，它主要是作为一个函数来使用，接受模块名称或路径作为参数，返回 module.exports 对象。如果我们想改变 require 对象的逻辑，也很容易。</p>
-<p>比如，为了进行测试，我们想让每个 require 调用都被模拟为返回一个假对象来代替模块导出的对象。这个简单的调整就像这样：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">require</span> = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> &#123; <span class="attr">mocked</span>: <span class="literal">true</span> &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>在上面重新对 require 赋值之后，调用 require(‘something’) 就会返回模拟的对象。</p>
-<p>require 对象也有自己的属性。我们已经看到了 resolve 属性，它也是一个函数，是 require 处理过程中解析路径的步骤。上面我们还看到了 require.extensions。</p>
-<p>还有一个 require.main 可用于检查代码是通过请求来运行的还是直接运行的。</p>
-<p>再来看个例子，定义在 print-in-frame.js 中的 printInFrame 函数：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// In print-in-frame.js</span></span><br><span class="line"><span class="keyword">const</span> printInFrame = <span class="function">(<span class="params">size, header</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'*'</span>.repeat(size));</span><br><span class="line">  <span class="built_in">console</span>.log(header);</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'*'</span>.repeat(size));</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>这个函数需要一个数值型的参数 size 和一个字符串型的参数 header，它会在打印一个由指定数量的星号生成的框架，并在其中打印 header。</p>
-<p>我们希望通过两种方式来使用这个文件：</p>
-<ol>
-<li>从命令行直接运行：</li>
-</ol>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">~/learn-node $ node print-in-frame 8 Hello</span><br></pre></td></tr></table></figure>
-<p>在命令行传入 8 和 Hello 作为参数，它会打印出由 8 个星号组成的框架中的 “Hello”。</p>
-<ol start="2">
-<li>通过 require 来使用。假设所需要的模块会导出 printInFrame 函数，然后就可以这样做：</li>
-</ol>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> print = <span class="built_in">require</span>(<span class="string">'./print-in-frame'</span>);</span><br><span class="line">print(<span class="number">5</span>, <span class="string">'Hey'</span>);</span><br></pre></td></tr></table></figure>
-<p>它在由 5 个星号组成的框架中打印 “Hey”。</p>
-<p>这是两种不同的使用方式。我们得想办法检测文件是独立运行的还是由其它脚本请求的。</p>
-<p>这里用一个简单的 if 语句来解决：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="built_in">require</span>.main === <span class="built_in">module</span>) &#123;</span><br><span class="line">  <span class="comment">// The file is being executed directly (not with require)</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>我们可以使用这个条件，以不同的方式调用 printInFrame 来满足需求：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// In print-in-frame.js</span></span><br><span class="line"><span class="keyword">const</span> printInFrame = <span class="function">(<span class="params">size, header</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'*'</span>.repeat(size));</span><br><span class="line">  <span class="built_in">console</span>.log(header);</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'*'</span>.repeat(size));</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (<span class="built_in">require</span>.main === <span class="built_in">module</span>) &#123;</span><br><span class="line">  printInFrame(process.argv[<span class="number">2</span>], process.argv[<span class="number">3</span>]);</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">  <span class="built_in">module</span>.exports = printInFrame;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>如果文件不是被请求的，我们使用 process.argv 来调用 printInFrame。否则，我们将 module.exports 修改为 printInFrame 引用。</p>
-<h4 id="所有模块都会被缓存"><a href="#所有模块都会被缓存" class="headerlink" title="所有模块都会被缓存"></a>所有模块都会被缓存</h4><p>理解缓存很重要。我们用一个简单的示例来说明缓存。</p>
-<p>假设有一个 ascii-art.js，可以打印炫酷的标头：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/module01_180712.png" alt=""></p>
-<p>我们想每次<em>请**求</em>这个文件的时候都能看到这些标头，那么如果我们请求这个文件两次，期望会看到两次标头输出。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">require</span>(<span class="string">'./ascii-art'</span>) <span class="comment">// 会显示标头。</span></span><br><span class="line"><span class="built_in">require</span>(<span class="string">'./ascii-art'</span>) <span class="comment">// 不会显示标头。</span></span><br></pre></td></tr></table></figure>
-<p>因为模块缓存，第二次请求不会显示标头。Node 会在第一次调用的时候缓存文件，所以第二次调用的时候就不会重新加载了。</p>
-<p>我们可以在第一次请求之后通过打印 require.cache 来看缓存的内容。缓存注册表只是一个简单的对象，它的每个属性对应着每次请求的模块。那些属性值是每个模块中的 module 对象。只需要从 require.cache 里删除某个属性就可以使对应的缓存失效。如果这样做，Node 会再次加载模块并再加将它加入缓存。</p>
-<p>不过在现在这个情况下，这样做并不是一个高效的解决办法。简单的办法是在 ascii-art.js 中把输出语句包装为一个函数，然后导出它。用这个办法，我们请求 ascii-art.js 文件的时候会得到一个函数，然后每次执行这个函数都可以看到输出：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">require</span>(<span class="string">'./ascii-art'</span>)() <span class="comment">// 会显示标头。</span></span><br><span class="line"><span class="built_in">require</span>(<span class="string">'./ascii-art'</span>)() <span class="comment">// 也会显示标头。</span></span><br></pre></td></tr></table></figure>
-<p>以上，就是我这次要说的内容！</p>
-<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="https://www.oschina.net/translate/requiring-modules-in-node-js-everything-you-need-to-know" target="_blank" rel="noopener">https://www.oschina.net/translate/requiring-modules-in-node-js-everything-you-need-to-know</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -1130,7 +1042,7 @@
   
     <li><a href="/tags/计算机网络/">计算机网络</a><small>1</small></li>
   
-    <li><a href="/tags/趣谈网络协议/">趣谈网络协议</a><small>3</small></li>
+    <li><a href="/tags/趣谈网络协议/">趣谈网络协议</a><small>7</small></li>
   
   </ul>
 </div>
