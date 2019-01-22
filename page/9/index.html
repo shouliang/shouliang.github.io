@@ -53,6 +53,380 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2015-11-08T14:16:53.000Z"><a href="/2015/11/08/Node.js_进程/当我们谈论cluster时我们在谈论什么/">2015-11-08</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2015/11/08/Node.js_进程/当我们谈论cluster时我们在谈论什么/">当我们谈论 cluster 时我们在谈论什么</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>Node.js 诞生之初就遭到不少这样的吐槽，当然这些都早已不是问题了。</p>
+<ol>
+<li>可靠性低。</li>
+<li>单进程，单线程，只支持单核 CPU，不能充分的利用多核 CPU 服务器。一旦这个进程崩掉，那么整个 web 服务就崩掉了。</li>
+</ol>
+<p>回想以前用 php 开发 web 服务器的时候，每个 request 都在单独的线程中处理，即使某一个请求发生很严重的错误也不会影响到其它请求。Node.js 会在一个线程中处理大量请求，如果处理某个请求时产生一个没有被捕获到的异常将导致整个进程的退出，已经接收到的其它连接全部都无法处理，对一个 web 服务器来说，这绝对是致命的灾难。</p>
+<p>应用部署到多核服务器时，为了充分利用多核 CPU 资源一般启动多个 Node.js 进程提供服务，这时就会使用到 Node.js 内置的 cluster 模块了。相信大多数的 Node.js 开发者可能都没有直接使用到 cluster，cluster 模块对 child_process 模块提供了一层封装，可以说是为了发挥服务器多核优势而量身定做的。简单的一个 fork，不需要开发者修改任何的应用代码便能够实现多进程部署。当下最热门的带有负载均衡功能的 Node.js 应用进程管理器 pm2 便是最好的一个例子，开发的时候完全不需要关注多进程场景，剩余的一切都交给 pm2 处理，与开发者的应用代码完美分离。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pm2 start app.js</span><br></pre></td></tr></table></figure>
+<p>pm2 确实非常强大，但本文并不讲解 pm2 的工作原理，而是从更底层的进程通信讲起，为大家揭秘使用 Node.js 开发 web 应用时，使用 cluster 模块实现多进程部署的原理。</p>
+<h2 id="fork"><a href="#fork" class="headerlink" title="fork"></a>fork</h2><p>说到多进程当然少不了 fork ,在 un*x 系统中，fork 函数为用户提供最底层的多进程实现。</p>
+<p>fork() creates a new process by duplicating the calling process. The new process is referred to as the child process. The calling process is referred to as the parent process.</p>
+<p>The child process and the parent process run in separate memory spaces. At the time of fork() both memory spaces have the same content. Memory writes, file mappings (mmap(2)), and unmappings (munmap(2)) performed by one of the processes do not affect the other.</p>
+<p>本文中要讲解的 fork 是 cluster 模块中非常重要的一个方法，当然了，底层也是依赖上面提到的 fork 函数实现。 多个子进程便是通过在master进程中不断的调用 cluster.fork 方法构造出来。下面的结构图大家应该非常熟悉了。</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/cluster01_180703.png" alt=""></p>
+<p>上面的图非常粗糙， 并没有告诉我们 master 与 worker 到底是如何分工协作的。Node.js 在这块做过比较大的改动，下面就细细的剖析开来。</p>
+<h3 id="多进程监听同一端口"><a href="#多进程监听同一端口" class="headerlink" title="多进程监听同一端口"></a>多进程监听同一端口</h3><p>最初的 Node.js 多进程模型就是这样实现的，master 进程创建 socket，绑定到某个地址以及端口后，自身不调用 listen 来监听连接以及 accept 连接，而是将该 socket 的 fd 传递到 fork 出来的 worker 进程，worker 接收到 fd 后再调用 listen，accept 新的连接。但实际一个新到来的连接最终只能被某一个 worker 进程 accpet 再做处理，至于是哪个 worker 能够 accept 到，开发者完全无法预知以及干预。这势必就导致了当一个新连接到来时，多个 worker 进程会产生竞争，最终由胜出的 worker 获取连接。</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/cluster02_180703.png" alt=""><br>为了进一步加深对这种模型的理解，我编写了一个非常简单的 demo。</p>
+<p>master 进程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">const net = require(&apos;net&apos;);</span><br><span class="line">const fork = require(&apos;child_process&apos;).fork;</span><br><span class="line"></span><br><span class="line">var handle = net._createServerHandle(&apos;0.0.0.0&apos;, 3000);</span><br><span class="line"></span><br><span class="line">for(var i=0;i&lt;4;i++) &#123;</span><br><span class="line">   fork(&apos;./worker&apos;).send(&#123;&#125;, handle);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>worker 进程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">const net = require(&apos;net&apos;);</span><br><span class="line">process.on(&apos;message&apos;, function(m, handle) &#123;</span><br><span class="line">  start(handle);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">var buf = &apos;hello nodejs&apos;;</span><br><span class="line">var res = [&apos;HTTP/1.1 200 OK&apos;,&apos;content-length:&apos;+buf.length].join(&apos;\r\n&apos;)+&apos;\r\n\r\n&apos;+buf;</span><br><span class="line"></span><br><span class="line">function start(server) &#123;</span><br><span class="line">    server.listen();</span><br><span class="line">    server.onconnection = function(err,handle) &#123;</span><br><span class="line">        console.log(&apos;got a connection on worker, pid = %d&apos;, process.pid);</span><br><span class="line">        var socket = new net.Socket(&#123;</span><br><span class="line">            handle: handle</span><br><span class="line">        &#125;);</span><br><span class="line">        socket.readable = socket.writable = true;</span><br><span class="line">        socket.end(res);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>保存后直接运行 <code>node master.js</code> 启动服务器，在另一个终端多次运行 <code>ab -n10000 -c100 http://127.0.0.1:3000/</code></p>
+<p>各个 worker 进程统计到的请求数分别为</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">worker 63999  got 14561 connections</span><br><span class="line">worker 64000  got 8329  connections</span><br><span class="line">worker 64001  got 2356  connections</span><br><span class="line">worker 64002  got 4885  connections</span><br></pre></td></tr></table></figure>
+<p>相信到这里大家也应该知道这种多进程模型比较明显的问题了</p>
+<ul>
+<li>多个进程之间会竞争 accpet 一个连接，产生惊群现象，效率比较低。</li>
+<li>由于无法控制一个新的连接由哪个进程来处理，必然导致各 worker 进程之间的负载非常不均衡。</li>
+</ul>
+<p>这其实就是著名的”惊群”现象。</p>
+<p>简单说来，多线程/多进程等待同一个 socket 事件，当这个事件发生时，这些线程/进程被同时唤醒，就是惊群。可以想见，效率很低下，许多进程被内核重新调度唤醒，同时去响应这一个事件，当然只有一个进程能处理事件成功，其他的进程在处理该事件失败后重新休眠（也有其他选择）。这种性能浪费现象就是惊群。</p>
+<p>惊群通常发生在 server 上，当父进程绑定一个端口监听 socket，然后 fork 出多个子进程，子进程们开始循环处理（比如 accept）这个 socket。每当用户发起一个 TCP 连接时，多个子进程同时被唤醒，然后其中一个子进程 accept 新连接成功，余者皆失败，重新休眠。</p>
+<h3 id="nginx-proxy"><a href="#nginx-proxy" class="headerlink" title="nginx proxy"></a>nginx proxy</h3><p>现代的 web 服务器一般都会在应用服务器外面再添加一层负载均衡，比如目前使用最广泛的 nginx。<br>利用 nginx 强大的反向代理功能，可以启动多个独立的 node 进程，分别绑定不同的端口，最后由nginx 接收请求然后进行分配。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">http &#123; </span><br><span class="line">  upstream cluster &#123; </span><br><span class="line">      server 127.0.0.1:3000; </span><br><span class="line">      server 127.0.0.1:3001; </span><br><span class="line">      server 127.0.0.1:3002; </span><br><span class="line">      server 127.0.0.1:3003; </span><br><span class="line">  &#125; </span><br><span class="line">  server &#123; </span><br><span class="line">       listen 80; </span><br><span class="line">       server_name www.domain.com; </span><br><span class="line">       location / &#123; </span><br><span class="line">            proxy_pass http://cluster;</span><br><span class="line">       &#125; </span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这种方式就将负载均衡的任务完全交给了 nginx 处理，并且 nginx 本身也相当擅长。再加一个守护进程负责各个 node 进程的稳定性，这种方案也勉强行得通。但也有比较大的局限性，比如想增加或者减少一个进程时还得再去改下 nginx 的配置。该方案与 nginx 耦合度太高，实际项目中并不经常使用。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>说了这么多，一直在讲解 Node.js 多进程部署时遇到的各种问题。小伙伴们肯定会有非常多的疑问。实际的 Node.js 项目中我们到底是如何利用多进程的呢，并且如何保障各个 worker 进程的稳定性。如何利用 cluster 模块 fork 子进程，父子进程间又是如何实现通信的呢？</p>
+<p>下篇将为大家一一揭晓，敬请期待！</p>
+<p><a href="http://taobaofed.org/blog/2015/11/03/nodejs-cluster/" target="_blank" rel="noopener">上篇文章</a>讲解了 Node.js 中多进程部署时遇到的各种问题，那么实际的线上项目中到底是如何利用多进程，如何保障各个 worker 进程稳定性的呢，又是如何利用 cluster 模块 fork 子进程，父子进程间又是如何实现通信的呢？本篇就来一一揭晓。</p>
+<h2 id="负载均衡"><a href="#负载均衡" class="headerlink" title="负载均衡"></a>负载均衡</h2><p>回忆一下上篇中提到的最初 Node.js 多进程模型，多个进程绑定同一端口，相互竞争 accpet 新到来的连接。由于无法控制一个新的连接由哪个进程来处理，导致各 worker 进程之间的负载非常不均衡。</p>
+<p>于是后面就出现了基于 round-robin 算法的另一种模型。主要思路是 master 进程创建 socket，绑定地址以及端口后再进行监听。该 socket 的 fd 不传递到各个 worker 进程。当 master 进程获取到新的连接时，再决定将 accept 到的客户端连接分发给指定的 worker 处理。这里使用了<strong>指定</strong>, 所以如何传递以及传递给哪个 worker 完全是可控的。round-robin 只是其中的某种算法而已，当然可以换成其他的。</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/cluster03_180703.png" alt=""></p>
+<p>同样基于这种模型也给出一个简单的 demo。</p>
+<p>master 进程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">const net = require(&apos;net&apos;);</span><br><span class="line">const fork = require(&apos;child_process&apos;).fork;</span><br><span class="line"></span><br><span class="line">var workers = [];</span><br><span class="line">for (var i = 0; i &lt; 4; i++) &#123;</span><br><span class="line">   workers.push(fork(&apos;./worker&apos;));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var handle = net._createServerHandle(&apos;0.0.0.0&apos;, 3000);</span><br><span class="line">handle.listen();</span><br><span class="line">handle.onconnection = function (err,handle) &#123;</span><br><span class="line">    var worker = workers.pop();</span><br><span class="line">    worker.send(&#123;&#125;,handle);</span><br><span class="line">    workers.unshift(worker);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>woker 进程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">const net = require(&apos;net&apos;);</span><br><span class="line">process.on(&apos;message&apos;, function (m, handle) &#123;</span><br><span class="line">  start(handle);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">var buf = &apos;hello Node.js&apos;;</span><br><span class="line">var res = [&apos;HTTP/1.1 200 OK&apos;,&apos;content-length:&apos;+buf.length].join(&apos;\r\n&apos;)+&apos;\r\n\r\n&apos;+buf;</span><br><span class="line"></span><br><span class="line">function start(handle) &#123;</span><br><span class="line">    console.log(&apos;got a connection on worker, pid = %d&apos;, process.pid);</span><br><span class="line">    var socket = new net.Socket(&#123;</span><br><span class="line">        handle: handle</span><br><span class="line">    &#125;);</span><br><span class="line">    socket.readable = socket.writable = true;</span><br><span class="line">    socket.end(res);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>由于只有 master 进程接收客户端连接，并且能够按照特定的算法进行分发， 很好的解决了上篇中提到的由于竞争导致各 worker 进程负载不均衡的硬伤。</p>
+<h2 id="优雅退出"><a href="#优雅退出" class="headerlink" title="优雅退出"></a>优雅退出</h2><p>上篇文章开头提到 Node.js 被吐槽稳定性差，进程发生未捕获到的异常就会退出。实际项目中由于各种原因，不可避免最后上线时还是存在各种 bug 以及异常，最终进程退出。</p>
+<p>当进程异常退出时，有可能该进程上还有很多未处理完的请求，简单粗暴的使进程直接退出必然导致所有的请求都会丢失，给用户带来非常糟的体验，这就非常需要一个进程优雅退出的方案。</p>
+<p>给 process 对象添加 uncaughtException 事件绑定能够避免发生异常时进程直接退出。在回调函数里调用当前运行 server 对象的 close 方法，停止接收新的连接。同时告知 master 进程该 worker 进程即将退出，可以 fork 新的 worker 了。</p>
+<p>接着在几秒中之后差不多所有请求都已经处理完毕后，该进程主动退出，其中 timeout 可以根据实际业务场景进行设置。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">setTimeout(function () &#123;</span><br><span class="line">  process.exit(1);</span><br><span class="line">&#125;, timeout)</span><br></pre></td></tr></table></figure>
+<p>这里面有一个小的细节处理，在关闭服务器之前，后续新接收的 request 全部关闭 keep-alive 特性，通知客户端不需要与该服务器保持 socket 连接了。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">server.on(&apos;request&apos;, function (req, res) &#123;</span><br><span class="line">    req.shouldKeepAlive = false;</span><br><span class="line">    res.shouldKeepAlive = false;</span><br><span class="line">    if (!res._header) &#123;</span><br><span class="line">        res.setHeader(&apos;Connection&apos;, &apos;close&apos;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>第三方 <code>graceful</code> 模块专门来处理这种场景的，感兴趣的同学可以阅读下源码。</p>
+<h2 id="进程守护"><a href="#进程守护" class="headerlink" title="进程守护"></a>进程守护</h2><p>master 进程除了负责接收新的连接，分发给各 worker 进程处理之外，还得像天使一样默默地守护着这些 worker 进程，保障整个应用的稳定性。一旦某个 worker 进程异常退出就 fork 一个新的子进程顶替上去。</p>
+<p>这一切 cluster 模块都已经好处理了，当某个 worker 进程发生异常退出或者与 master 进程失去联系（disconnected）时，master 进程都会收到相应的事件通知。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">cluster.on(&apos;exit&apos;, function () &#123;</span><br><span class="line">    clsuter.fork();</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">cluster.on(&apos;disconnect&apos;, function () &#123;</span><br><span class="line">    clsuter.fork();</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>推荐使用第三方模块 recluster 和 cfork，已经处理的很成熟了。</p>
+<p>这样一来整个应用的稳定性重任就落在 master 进程上了，所以一定不要给 master 太多其它的任务，百分百保证它的健壮性，一旦 master 进程挂掉你的应用也就玩完了。</p>
+<h2 id="IPC"><a href="#IPC" class="headerlink" title="IPC"></a>IPC</h2><p>master 进程能够接收连接进行分发，同时守护 worker 进程，这一切都离不开进程间的通信。<br>讲了这么多，终于到最核心的地方了，要用多进程模型就一定会涉及到 IPC（进程间通信）了。Node.js 中 IPC 都是在父子进程之间进行，按有无发送 fd 分为 2 种方式。</p>
+<h3 id="发送-fd"><a href="#发送-fd" class="headerlink" title="发送 fd"></a>发送 fd</h3><p>当进程间需要发生文件描述符 fd 时，libuv 底层采用消息队列来实现 IPC。master 进程接收到客户端连接分发给 worker 进程处理时就用到了进程间 fd 的传递。</p>
+<h3 id="不发送-fd"><a href="#不发送-fd" class="headerlink" title="不发送 fd"></a>不发送 fd</h3><p>这种情况父子进程之间只是发送简单的字符串，并且它们之间的通信是双向的。master 与 worker 间的消息传递便是这种方式。虽然 pipe 能够满足父子进程间的消息传递，但由于 pipe 是半双工的，也就是说必须得创建 2 个 pipe 才可以实现双向的通信，这无疑使得程序逻辑更复杂。</p>
+<p>libuv 底层采用 socketpair 来实现全双工的进程通信，父进程 fork 子进程之前会调用 socketpair 创建 2 个 fd，下面是一个最简单的也最原始的利用 socketpair 来实现父子进程间双向通信的 demo。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">#include &lt;string.h&gt;</span><br><span class="line">#include &lt;unistd.h&gt;</span><br><span class="line">#include &lt;sys/types.h&gt;</span><br><span class="line">#include &lt;errno.h&gt;</span><br><span class="line">#include &lt;sys/socket.h&gt;</span><br><span class="line">#include &lt;stdlib.h&gt;</span><br><span class="line">#define BUF_SIZE 100</span><br><span class="line"></span><br><span class="line">int main () &#123;</span><br><span class="line">    int s[2];</span><br><span class="line">    int w,r;</span><br><span class="line">    char * buf = (char*)calloc(1 , BUF_SIZE);</span><br><span class="line">    pid_t pid;</span><br><span class="line">    </span><br><span class="line">    if (socketpair(AF_UNIX,SOCK_STREAM,0,s) == -1 ) &#123;</span><br><span class="line">        printf(&quot;create unnamed socket pair failed:%s\n&quot;, strerror(errno));</span><br><span class="line">        exit(-1);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    if ((pid = fork()) &gt; 0) &#123;</span><br><span class="line">        printf(&quot;Parent process&apos;s pid is %d\n&quot;,getpid());</span><br><span class="line">        close(s[1]);</span><br><span class="line">        char *messageToChild = &quot;a message to child  process!&quot;;</span><br><span class="line">        if ((w = write(s[0] , messageToChild , strlen(messageToChild) ) ) == -1) &#123;</span><br><span class="line">            printf(&quot;Write socket error:%s\n&quot;,strerror(errno));</span><br><span class="line">            exit(-1);</span><br><span class="line">        &#125;</span><br><span class="line">        sleep(1);</span><br><span class="line">        if ( (r = read(s[0], buf , BUF_SIZE )) == -1) &#123;</span><br><span class="line">          printf(&quot;Pid %d read from socket error:%s\n&quot;,getpid() , strerror(errno) );</span><br><span class="line">          exit(-1);</span><br><span class="line">        &#125;</span><br><span class="line">        printf(&quot;Pid %d read string : %s \n&quot;,getpid(),buf);</span><br><span class="line">    &#125; else if (pid == 0) &#123;</span><br><span class="line">         printf(&quot;Fork child process successed\n&quot;);</span><br><span class="line">         printf(&quot;Child process&apos;s pid is :%d\n&quot;,getpid());</span><br><span class="line">         close(s[0]);</span><br><span class="line">         char *messageToParent = &quot;a message to parent process!&quot;;</span><br><span class="line">         if ((w = write(s[1] , messageToParent , strlen(messageToParent))) == -1 ) &#123;</span><br><span class="line">             printf(&quot;Write socket error:%s\n&quot;,strerror(errno));</span><br><span class="line">             exit(-1);</span><br><span class="line">         &#125;</span><br><span class="line">         sleep(1);</span><br><span class="line">         if ((r = read(s[1], buf , BUF_SIZE )) == -1) &#123;</span><br><span class="line">             printf(&quot;Pid %d read from socket error:%s\n&quot;, getpid() , strerror(errno) );</span><br><span class="line">             exit(-1);</span><br><span class="line">         &#125;</span><br><span class="line">         printf(&quot;Pid %d read string : %s \n&quot;,getpid(),buf); </span><br><span class="line">     &#125; else &#123;</span><br><span class="line">        printf(&quot;Fork failed:%s\n&quot;,strerror(errno));</span><br><span class="line">        exit(-1);</span><br><span class="line">    &#125;</span><br><span class="line">    exit(0);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>保存为 socketpair.c 后运行 <code>gcc socketpair.c -o socket &amp;&amp; ./socket</code> 输出</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Parent process&apos;s pid is 52853</span><br><span class="line">Fork child process successed</span><br><span class="line">Child process&apos;s pid is :52854</span><br><span class="line">Pid 52854 read string : a message to child  process! </span><br><span class="line">Pid 52853 read string : a message to parent process!</span><br></pre></td></tr></table></figure>
+<h3 id="Node-js-中的-IPC"><a href="#Node-js-中的-IPC" class="headerlink" title="Node.js 中的 IPC"></a>Node.js 中的 IPC</h3><p>上面从 libuv 底层方面讲解了父子进程间双向通信的原理，在上层 Node.js 中又是如何实现的呢，让我们来一探究竟。</p>
+<p>Node.js 中父进程调用 fork 产生子进程时，会事先构造一个 pipe 用于进程通信，</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">new process.binding(&apos;pipe_wrap&apos;).Pipe(true);</span><br></pre></td></tr></table></figure>
+<p>构造出的 pipe 最初还是关闭的状态，或者说底层还并没有创建一个真实的 pipe，直至调用到 libuv 底层的<code>uv_spawn</code>, 利用 socketpair 创建的全双工通信管道绑定到最初 Node.js 层创建的 pipe 上。</p>
+<p>管道此时已经真实的存在了，父进程保留对一端的操作，通过环境变量将管道的另一端文件描述符 fd 传递到子进程。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">options.envPairs.push(&apos;NODE_CHANNEL_FD=&apos; + ipcFd);</span><br></pre></td></tr></table></figure>
+<p>子进程启动后通过环境变量拿到 fd</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var fd = parseInt(process.env.NODE_CHANNEL_FD, 10);</span><br></pre></td></tr></table></figure>
+<p>并将 fd 绑定到一个新构造的 pipe 上</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">var p = new Pipe(true);</span><br><span class="line">p.open(fd);</span><br></pre></td></tr></table></figure>
+<p>于是父子进程间用于双向通信的所有基础设施都已经准备好了。说了这么多可能还是不太明白吧？ 没关系，我们还是来写一个简单的 demo 感受下。</p>
+<p>Node.js 构造出的 pipe 被存储在进程的<code>_channel</code>属性上</p>
+<p>master.js</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">const WriteWrap = process.binding(&apos;stream_wrap&apos;).WriteWrap;</span><br><span class="line">var cp = require(&apos;child_process&apos;);</span><br><span class="line"></span><br><span class="line">var worker = cp.fork(__dirname + &apos;/worker.js&apos;);</span><br><span class="line">var channel = worker._channel;</span><br><span class="line"></span><br><span class="line">channel.onread = function (len, buf, handle) &#123;</span><br><span class="line">    if (buf) &#123;</span><br><span class="line">        console.log(buf.toString())</span><br><span class="line">        channel.close()</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        channel.close()</span><br><span class="line">        console.log(&apos;channel closed&apos;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var message = &#123; hello: &apos;worker&apos;,  pid: process.pid &#125;;</span><br><span class="line">var req = new WriteWrap();</span><br><span class="line">var string = JSON.stringify(message) + &apos;\n&apos;;</span><br><span class="line">channel.writeUtf8String(req, string, null);</span><br></pre></td></tr></table></figure>
+<p>worker.js</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">const WriteWrap = process.binding(&apos;stream_wrap&apos;).WriteWrap;</span><br><span class="line">const channel = process._channel;</span><br><span class="line"></span><br><span class="line">channel.ref();</span><br><span class="line">channel.onread = function (len, buf, handle) &#123;</span><br><span class="line">    if (buf) &#123;</span><br><span class="line">        console.log(buf.toString())</span><br><span class="line">    &#125;else&#123;</span><br><span class="line">        process._channel.close()</span><br><span class="line">        console.log(&apos;channel closed&apos;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var message = &#123; hello: &apos;master&apos;,  pid: process.pid &#125;;</span><br><span class="line">var req = new WriteWrap();</span><br><span class="line">var string = JSON.stringify(message) + &apos;\n&apos;;</span><br><span class="line">channel.writeUtf8String(req, string, null);</span><br></pre></td></tr></table></figure>
+<p>运行<code>node master.js</code> 输出</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&#123;&quot;hello&quot;:&quot;worker&quot;,&quot;pid&quot;:58731&#125;</span><br><span class="line">&#123;&quot;hello&quot;:&quot;master&quot;,&quot;pid&quot;:58732&#125;</span><br><span class="line">channel closed</span><br></pre></td></tr></table></figure>
+<h3 id="进程失联"><a href="#进程失联" class="headerlink" title="进程失联"></a>进程失联</h3><p>在多进程服务器中，为了保障整个 web 应用的稳定性，master 进程需要监控 worker 进程的 exit 以及 disconnect 事件，收到相应事件通知后重启 worker 进程。</p>
+<p>exit 事件不用说，disconnect 事件可能很多人就不太明白了。还记得上面讲到的进程优雅退出吗，当捕获到未处理异常时，进程不立即退出，但是会立刻通知 master 进程重新 fork 新的进程，而不是等该进程主动退出后再 fork。具体的做法就是调用 worker进程的 disconnect 方法，从而关闭父子进程用于通信的 channel ，此时父子进程之间失去了联系，此时master 进程会触发 disconnect 事件，fork 一个新的 worker进程。</p>
+<p>下面是一个触发<code>disconnect</code>事件的简单 demo</p>
+<p>master.js</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">const WriteWrap = process.binding(&apos;stream_wrap&apos;).WriteWrap;</span><br><span class="line">const net = require(&apos;net&apos;);</span><br><span class="line">const fork = require(&apos;child_process&apos;).fork;</span><br><span class="line"></span><br><span class="line">var workers = [];</span><br><span class="line">for (var i = 0; i &lt; 4; i++) &#123;</span><br><span class="line">     var worker = fork(__dirname + &apos;/worker.js&apos;);</span><br><span class="line">     worker.on(&apos;disconnect&apos;, function () &#123;</span><br><span class="line">         console.log(&apos;[%s] worker %s is disconnected&apos;, process.pid, worker.pid);</span><br><span class="line">     &#125;);</span><br><span class="line">     workers.push(worker);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var handle = net._createServerHandle(&apos;0.0.0.0&apos;, 3000);</span><br><span class="line">handle.listen();</span><br><span class="line">handle.onconnection = function (err,handle) &#123;</span><br><span class="line">    var worker = workers.pop();</span><br><span class="line">    var channel = worker._channel;</span><br><span class="line">    var req = new WriteWrap();</span><br><span class="line">    channel.writeUtf8String(req, &apos;dispatch handle&apos;, handle);</span><br><span class="line">    workers.unshift(worker);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>worker.js</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">const net = require(&apos;net&apos;);</span><br><span class="line">const WriteWrap = process.binding(&apos;stream_wrap&apos;).WriteWrap;</span><br><span class="line">const channel = process._channel;</span><br><span class="line">var buf = &apos;hello Node.js&apos;;</span><br><span class="line">var res = [&apos;HTTP/1.1 200 OK&apos;,&apos;content-length:&apos; + buf.length].join(&apos;\r\n&apos;) + &apos;\r\n\r\n&apos; + buf;</span><br><span class="line"></span><br><span class="line">channel.ref(); //防止进程退出</span><br><span class="line">channel.onread = function (len, buf, handle) &#123;</span><br><span class="line">    console.log(&apos;[%s] worker %s got a connection&apos;, process.pid, process.pid);</span><br><span class="line">    var socket = new net.Socket(&#123;</span><br><span class="line">        handle: handle</span><br><span class="line">    &#125;);</span><br><span class="line">    socket.readable = socket.writable = true;</span><br><span class="line">    socket.end(res);</span><br><span class="line">    console.log(&apos;[%s] worker %s is going to disconnect&apos;, process.pid, process.pid);</span><br><span class="line">    channel.close();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>运行<code>node master.js</code>启动服务器后，在另一个终端执行多次<code>curl http://127.0.0.1:3000</code>，下面是输出的内容</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[63240] worker 63240 got a connection</span><br><span class="line">[63240] worker 63240 is going to disconnect</span><br><span class="line">[63236] worker 63240 is disconnected</span><br></pre></td></tr></table></figure>
+<h2 id="最简单的负载均衡-server"><a href="#最简单的负载均衡-server" class="headerlink" title="最简单的负载均衡 server"></a>最简单的负载均衡 server</h2><p>回到前面讲的 round-robin 多进程服务器模型，用于通信的 channel 除了可以发送简单的字符串数据外，还可以发送文件描述符，</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">channel.writeUtf8String(req, string, null);</span><br></pre></td></tr></table></figure>
+<p>最后一个参数便是要传递的 fd。round-robin 多进程服务器模型的核心也正式依赖于这个特性。 在上面的 demo 基础上，我们再稍微加工一下，还原在 Node.js 中最原始的处理。</p>
+<p>master.js</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">const WriteWrap = process.binding(&apos;stream_wrap&apos;).WriteWrap;</span><br><span class="line">const net = require(&apos;net&apos;);</span><br><span class="line">const fork = require(&apos;child_process&apos;).fork;</span><br><span class="line"></span><br><span class="line">var workers = [];</span><br><span class="line">for(var i = 0; i &lt; 4; i++) &#123;</span><br><span class="line">    workers.push(fork(__dirname + &apos;/worker.js&apos;));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var handle = net._createServerHandle(&apos;0.0.0.0&apos;, 3000);</span><br><span class="line">handle.listen();</span><br><span class="line">handle.onconnection = function (err,handle) &#123;</span><br><span class="line">    var worker = workers.pop();</span><br><span class="line">    var channel = worker._channel;</span><br><span class="line">    var req = new WriteWrap();</span><br><span class="line">    channel.writeUtf8String(req, &apos;dispatch handle&apos;, handle);</span><br><span class="line">    workers.unshift(worker);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>worker.js</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">const net = require(&apos;net&apos;);</span><br><span class="line">const WriteWrap = process.binding(&apos;stream_wrap&apos;).WriteWrap;</span><br><span class="line">const channel = process._channel;</span><br><span class="line">var buf = &apos;hello Node.js&apos;;</span><br><span class="line">var res = [&apos;HTTP/1.1 200 OK&apos;, &apos;content-length:&apos; + buf.length].join(&apos;\r\n&apos;) + &apos;\r\n\r\n&apos; + buf;</span><br><span class="line"></span><br><span class="line">channel.ref();</span><br><span class="line">channel.onread = function (len, buf, handle) &#123;</span><br><span class="line">    var socket = new net.Socket(&#123;</span><br><span class="line">        handle: handle</span><br><span class="line">    &#125;);</span><br><span class="line">    socket.readable = socket.writable = true;</span><br><span class="line">    socket.end(res);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>运行 <code>node master.js</code>， 一个简单的多进程 Node.js web 服务器便跑起来了。</p>
+<h2 id="小结-1"><a href="#小结-1" class="headerlink" title="小结"></a>小结</h2><p>到此整个 Node.js 的多进程服务器模型，以及底层进程间通信原理就讲完了，也为大家揭开了 cluster 的神秘面纱， 相信大家对 cluster 有了更深刻的认识。祝大家 Node.js 的开发旅途上玩得更愉快！</p>
+<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="http://taobaofed.org/blog/2015/11/03/nodejs-cluster/" target="_blank" rel="noopener">http://taobaofed.org/blog/2015/11/03/nodejs-cluster/</a><br><a href="http://taobaofed.org/blog/2015/11/10/nodejs-cluster-2/" target="_blank" rel="noopener">http://taobaofed.org/blog/2015/11/10/nodejs-cluster-2/</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2015-11-05T14:16:53.000Z"><a href="/2015/11/05/Node.js_事件/初识单线程的Node.js/">2015-11-05</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2015/11/05/Node.js_事件/初识单线程的Node.js/">初识单线程的Node.js</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>从Node.js进入人们的视野时，我们所知道的它就由这些关键字组成 <strong>事件驱动、非阻塞I/O、高效、轻量</strong>，它在官网中也是这么描述自己的。</p>
+<p>Node.js® is a JavaScript runtime built on Chrome’s V8 JavaScript engine. Node.js uses an <strong>event-driven</strong>, <strong>non-blocking I/O model</strong> that makes it <strong>lightweight</strong> and <strong>efficient</strong>.</p>
+<p>于是，会有下面的场景出现：<br>当我们刚开始接触它时，可能会好奇：</p>
+<ul>
+<li><p><strong>为什么在浏览器中运行的 Javascript 能与操作系统进行如此底层的交互？</strong><br>当我们在用它进行文件 I/O 和网络 I/O 的时候，发现方法都需要传入回调，是异步的：</p>
+</li>
+<li><p><strong>那么这种异步，非阻塞的 I/O 是如何实现的？</strong><br>当我们习惯了用回调来处理 I/O，发现当需要顺序处理时，Callback Hell 出现了，于是有想到了同步的方法：</p>
+</li>
+<li><p><strong>那么在异步为主的 Node.js，有同步的方法嘛？</strong><br>身为一个前端，你在使用时，发现它的异步处理是基于事件的，跟前端很相似：</p>
+</li>
+<li><p><strong>那么它如何实现的这种事件驱动的处理方式呢？</strong><br>当我们慢慢写的多了，处理了大量 I/O 请求的时候，你会想：</p>
+</li>
+<li><p><strong>Node.js 异步非阻塞的 I/O 就不会有瓶颈出现吗？</strong><br>之后你还会想：</p>
+</li>
+<li><p><strong>Node.js 这么厉害，难道没有它不适合的事情吗？</strong><br>看到这些问题，是否有点头大，别急，带着这些问题我们来慢慢看这篇文章。</p>
+</li>
+</ul>
+<h3 id="Node-js-结构"><a href="#Node-js-结构" class="headerlink" title="Node.js 结构"></a>Node.js 结构</h3><p>从 Node.js 本身入手，先来看看 Node.js 的结构。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/nodestandard.jpeg" alt=""></p>
+<p>我们可以看到，Node.js 的结构大致分为三个层次：</p>
+<p> Node.js 标准库，这部分是由 Javascript 编写的，即我们使用过程中直接能调用的 API。在源码中的 <a href="https://github.com/nodejs/node/tree/master/lib" target="_blank" rel="noopener">lib</a> 目录下可以看到。</p>
+<ul>
+<li>Node bindings，这一层是 Javascript 与底层 C/C++ 能够沟通的关键，前者通过 bindings 调用后者，相互交换数据。实现在 <a href="https://github.com/nodejs/node/blob/master/src/node.cc" target="_blank" rel="noopener">node.cc</a></li>
+<li>这一层是支撑 Node.js 运行的关键，由 C/C++ 实现。<ul>
+<li>V8：Google 推出的 Javascript VM，也是 Node.js 为什么使用的是 Javascript 的关键，它为 Javascript 提供了在非浏览器端运行的环境，它的高效是 Node.js 之所以高效的原因之一。</li>
+<li>Libuv：它为 Node.js 提供了跨平台，线程池，事件池，异步 I/O 等能力，是 Node.js 如此强大的关键。</li>
+<li>C-ares：提供了异步处理 DNS 相关的能力。</li>
+<li>http_parser、OpenSSL、zlib 等：提供包括 http 解析、SSL、数据压缩等其他的能力。</li>
+</ul>
+</li>
+</ul>
+<h3 id="Libuv"><a href="#Libuv" class="headerlink" title="Libuv"></a>Libuv</h3><p>Libuv 是 Node.js 关键的一个组成部分，它为上层的 Node.js 提供了统一的 API 调用，使其不用考虑平台差距，隐藏了底层实现。</p>
+<p>具体它能做什么，官网的这张图体现的很好：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/1807041754libuv.png" alt=""></p>
+<p>可以看出，它是一个对开发者友好的工具集，包含定时器，非阻塞的网络 I/O，异步文件系统访问，子进程等功能。它封装了 Libev、Libeio 以及 IOCP，保证了跨平台的通用性。</p>
+<p>我们只要先知道它本身是异步和事件驱动的，记住这点，下面的问题就有了答案，我们一一来看。</p>
+<p> 与操作系统交互</p>
+<p>举个简单的例子，我们想要打开一个文件，并进行一些操作，可以写下面这样一段代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">var fs = require(&apos;fs&apos;);</span><br><span class="line">fs.open(&apos;./test.txt&apos;, &quot;w&quot;, function(err, fd) &#123;</span><br><span class="line">	//..do something</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>这段代码的调用过程大致可描述为：<a href="https://github.com/nodejs/node/blob/master/lib/fs.js" target="_blank" rel="noopener">lib/fs.js</a> → <a href="https://github.com/nodejs/node/blob/master/src/node_file.cc" target="_blank" rel="noopener">src/node_file.cc</a> → <a href="https://github.com/nodejs/node/tree/master/deps/uv/src" target="_blank" rel="noopener">uv_fs</a></p>
+<p>Node.js 深入浅出上的一幅图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/nodelib_180701.png" alt=""></p>
+<p>具体来说，当我们调用 <code>fs.open</code> 时，Node.js 通过 <code>process.binding</code> 调用 C/C++ 层面的 <code>Open</code> 函数，然后通过它调用 Libuv 中的具体方法 <code>uv_fs_open</code>，最后执行的结果通过回调的方式传回，完成流程。在图中，可以看到平台判断的流程，需要说明的是，这一步是在编译的时候已经决定好的，并不是在运行时中。</p>
+<p>总体来说，我们在 Javascript 中调用的方法，最终都会通过 <code>process.binding</code> 传递到 C/C++ 层面，最终由他们来执行真正的操作。Node.js 即这样与操作系统进行互动。</p>
+<p>通过这个过程，我们可以发现，实际上，Node.js 虽然说是用的 Javascript，但只是在开发时使用 Javascript 的语法来编写程序。真正的执行过程还是由 V8 将 Javascript 解释，然后由 C/C++ 来执行真正的系统调用，所以并不需要过分担心 Javascript 执行效率的问题。可以看出，Node.js 并不是一门语言，而是一个 <strong>平台</strong>，这点一定要分清楚。</p>
+<h3 id="异步、非阻塞-I-O"><a href="#异步、非阻塞-I-O" class="headerlink" title="异步、非阻塞 I/O"></a>异步、非阻塞 I/O</h3><p>通过上文，我们了解到，真正执行系统调用的其实是 Libuv。之前我们提到，Libuv 本身就是异步和事件驱动的，所以，当我们将 I/O 操作的请求传达给 Libuv 之后，Libuv 开启线程来执行这次 I/O 调用，并在执行完成后，传回给 Javascript 进行后续处理。</p>
+<p>这里面的 I/O 包括文件 I/O 和 网络 I/O。两者的底层执行略有不同。从上面的 Libuv 官网的图中，我们可以看到，文件 I/O，DNS 等操作，都是依托线程池（Thread Pool）来实现的。而网络 I/O 这一大类，包括：TCP、UDP、TTY 等，是由 epoll、IOCP、kqueue 来具体实现的。</p>
+<p>总结来说，一个异步 I/O 的大致流程如下：</p>
+<ul>
+<li>发起 I/O 调用<ol>
+<li>用户通过 Javascript 代码调用 Node 核心模块，将参数和回调函数传入到核心模块；</li>
+<li>Node 核心模块会将传入的参数和回调函数封装成一个请求对象；</li>
+<li>将这个请求对象推入到 I/O 线程池等待执行；</li>
+<li>Javascript 发起的异步调用结束，Javascript 线程继续执行后续操作。</li>
+</ol>
+</li>
+<li>执行回调<ol>
+<li>I/O 操作完成后，会将结果储存到请求对象的 result 属性上，并发出操作完成的通知；</li>
+<li>每次事件循环时会检查是否有完成的 I/O 操作，如果有就将请求对象加入到 I/O 观察者队列中，之后当做事件处理；</li>
+<li>处理 I/O 观察者事件时，会取出之前封装在请求对象中的回调函数，执行这个回调函数，并将 result 当参数，以完成 Javascript 回调的目的。</li>
+</ol>
+</li>
+</ul>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/updateloop_180701.png" alt=""></p>
+<p>这里面涉及到了 Libuv 本身的一个设计理念，事件循环（Event Loop），它是一个类似于 <code>while true</code> 的无限循环，其核心函数是 <code>uv_run</code>，下文会用到。</p>
+<p>从这里，我们可以看到，我们其实对 Node.js 的单线程一直有个误会。事实上，它的单线程指的是自身 Javascript 运行环境的单线程，Node.js 并没有给 Javascript 执行时创建新线程的能力，最终的实际操作，还是通过 Libuv 以及它的事件循环来执行的。这也就是为什么 Javascript 一个单线程的语言，能在 Node.js 里面实现异步操作的原因，两者并不冲突。</p>
+<h3 id="事件驱动"><a href="#事件驱动" class="headerlink" title="事件驱动"></a>事件驱动</h3><p>说到，事件驱动，对于前端来说，并不陌生。事件，是一个在 GUI 开发时很常用的一个概念，常见的有鼠标事件，键盘事件等等。在异步的多种实现中，事件是一种比较容易理解和实现的方式。</p>
+<p>说到事件，一定会想到回调，当我们写了一大堆事件处理函数后，Libuv 如何来执行这些回调呢？这就提到了我们之前说到的 <code>uv_run</code>，先看一张它的执行流程图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/loopalive_180701.png" alt=""></p>
+<p>在 <code>uv_run</code> 函数中，会维护一系列的监视器：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">typedef struct uv_loop_s uv_loop_t;</span><br><span class="line">typedef struct uv_err_s uv_err_t;</span><br><span class="line">typedef struct uv_handle_s uv_handle_t;</span><br><span class="line">typedef struct uv_stream_s uv_stream_t;</span><br><span class="line">typedef struct uv_tcp_s uv_tcp_t;</span><br><span class="line">typedef struct uv_udp_s uv_udp_t;</span><br><span class="line">typedef struct uv_pipe_s uv_pipe_t;</span><br><span class="line">typedef struct uv_tty_s uv_tty_t;</span><br><span class="line">typedef struct uv_poll_s uv_poll_t;</span><br><span class="line">typedef struct uv_timer_s uv_timer_t;</span><br><span class="line">typedef struct uv_prepare_s uv_prepare_t;</span><br><span class="line">typedef struct uv_check_s uv_check_t;</span><br><span class="line">typedef struct uv_idle_s uv_idle_t;</span><br><span class="line">typedef struct uv_async_s uv_async_t;</span><br><span class="line">typedef struct uv_process_s uv_process_t;</span><br><span class="line">typedef struct uv_fs_event_s uv_fs_event_t;</span><br><span class="line">typedef struct uv_fs_poll_s uv_fs_poll_t;</span><br><span class="line">typedef struct uv_signal_s uv_signal_t;</span><br></pre></td></tr></table></figure>
+<p>这些监视器都有对应着一种异步操作，它们通过 <code>uv_TYPE_start</code>，来注册事件监听以及相应的回调。</p>
+<p>在 <code>uv_run</code> 执行过程中，它会不断的检查这些队列中是或有 <code>pending</code> 状态的事件，有则触发，而且它在这里只会执行一个回调，避免在多个回调调用时发生竞争关系，因为 Javascript 是单线程的，无法处理这种情况。</p>
+<p>上面的图中，对 I/O 操作的事件驱动，表达的比较清楚。除了我们常提到的 I/O 操作，图中还表述了一种情况，timer（定时器）。它与其他两者不同之处在于，它没有单独开立新的线程，而是在事件循环中直接完成的。</p>
+<p>事件循环除了维护那些观察者队列，还维护了一个 <code>time</code> 字段，在初始化时会被赋值为0，每次循环都会更新这个值。所有与时间相关的操作，都会和这个值进行比较，来决定是否执行。</p>
+<p>在图中，与 timer 相关的过程如下：</p>
+<ol>
+<li>更新当前循环的 time 字段，即当前循环下的“现在”；</li>
+<li>检查循环中是否还有需要处理的任务（handlers/requests），如果没有就不必循环了，即是否 alive。</li>
+<li>检查注册过的 timer，如果某一个 timer 中指定的时间落后于当前时间了，说明该 timer 已到期，于是执行其对应的回调函数；</li>
+<li>执行一次 I/O polling（即阻塞住线程，等待 I/O 事件发生），如果在下一个 timer 到期时还没有任何 I/O 完成，则停止等待，执行下一个 timer 的回调。如果发生了 I/O 事件，则执行对应的回调；由于执行回调的时间里可能又有 timer 到期了，这里要再次检查 timer 并执行回调。<br>Node.js 会一直调用 <code>uv_run</code> 直到到循环不在 alive。</li>
+</ol>
+<h3 id="同步方法"><a href="#同步方法" class="headerlink" title="同步方法"></a>同步方法</h3><p>虽然 Node.js 是以异步为主要模式的，但我们在实际开发中，难免会有一些情况是有时序性的，如果由异步来写，就会写出很丑的 Callback Hell，如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">db.query(&apos;select nickname from users where id=&quot;12&quot;&apos;, function() &#123;</span><br><span class="line">	db.query(&apos;select * from xxx where id=&quot;12&quot;&apos;, function() &#123;</span><br><span class="line">		db.query(&apos;select * from xxx where id=&quot;12&quot;&apos;, function() &#123;</span><br><span class="line">			db.query(&apos;select * from xxx where id=&quot;12&quot;&apos;, function() &#123;</span><br><span class="line">				//...	</span><br><span class="line">			&#125;);</span><br><span class="line">		&#125;);</span><br><span class="line">	&#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>这个时候如果有同步方法，就会方便很多。这一点，Node.js 的开发者也想到了，目前大部分的异步操作函数，都存在其对应的同步版本，只需要在其名称后面加上 <code>Sync</code> 即可，不用传入回调。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var file = fs.readFileSync(&apos;/test.txt&apos;, &#123;&quot;encoding&quot;: &quot;utf-8&#125;);</span><br></pre></td></tr></table></figure>
+<p>这写方法还是比较好用的，执行 shell 命令，读取文件等都比较方便。不过，体验不太好的一点就是这种调用的错误收集，它不会像回调函数那样，在第一参数中传入错误信息，它会将错误直接抛出，你需要使用 <code>try...catch</code> 来获取，如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">var data;</span><br><span class="line">try &#123;</span><br><span class="line">  data = fs.readFileSync(&apos;/test.txt&apos;);</span><br><span class="line">&#125; catch (e) &#123;</span><br><span class="line">	if (e.code == &apos;ENOENT&apos;) &#123;</span><br><span class="line">		//...</span><br><span class="line">	&#125;</span><br><span class="line"> 	//...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>至于这些方法如何实现的，我们下回再论。</p>
+<h3 id="一些可能的瓶颈"><a href="#一些可能的瓶颈" class="headerlink" title="一些可能的瓶颈"></a>一些可能的瓶颈</h3><p>首先，文件的 I/O 方面，用户代码的运行，事件循环的通知等，是通过 Libuv 维护的线程池来进行操作的，它会运行全部的文件系统操作。既然这样，我们抛开硬盘的影响，对于严谨的 C/C++ 来说，这个线程池一定是有大小限制的。官方默认给出的大小是 <strong>4</strong>。当然是可以改变的。在启动时，通过设置 <code>UV_THREADPOOL_SIZE</code> 来改变这个值即可。不过，最大也只能是 <strong>128</strong>，因为这个是涉及到内存占用的。</p>
+<p>这个线程池对于所有的事件循环是共享的。当一个函数要使用线程池的时候（比如调用 <code>uv_queue_work</code>），Libuv 会预先分配并初始化 <code>UV_THREADPOOL_SIZE</code> 所允许的线程出来。而<strong>128</strong> 占用的内存大约是 1MB，如果设置的太高，当使用线程池频繁时，会因为内存占用过多而降低线程的性能。<a href="https://github.com/libuv/libuv/blob/master/docs/src/threadpool.rst" target="_blank" rel="noopener">具体说明</a>;</p>
+<p>对于网络 I/O 方面，以 Linux 系统下来说，网络 I/O 采用的是 epoll 这个异步模型。它的优点是采用了事件回调的方式，大大降低了文件描述符的创建（Linux下什么都是文件）。</p>
+<p>在每次调用 <code>epoll_wait</code> 时，实际返回的是就绪描述符的数量，根据这个值，去 epoll 指定的数组里面取对应数量的描述符，是一种 <strong>内存映射</strong> 的方式，减少了文件描述符的复制开销。</p>
+<p>上面提到的 epoll 指定的数组，它的大小即可监听的数量大小，它在不同的系统下，有不同的默认值，可见这里 <a href="https://github.com/nodejs/node/blob/master/deps/uv/src/unix/linux-syscalls.c#L80" target="_blank" rel="noopener">epoll create</a>。</p>
+<p>有了大小的限制，还远不够，为了保证运行的稳定，防止你在调用 epoll 函数时，指针越界，导致内存泄漏。还会用到另外一个值 <code>maxevents</code>，它是 <code>epoll_wait</code> 所能处理的最大数量，在调用 <code>epoll_wait</code> 时可以指定。一般情况下小于创建时（epoll_create）的数组大小，当然，也可以设置的比 size 大，不过应该没什么用。可以想到如果就绪的事件很多，超过了 <code>maxevents</code>，那么超出的事件就要等待前面的事件处理完成，才可以继续，可能会导致效率的下降。</p>
+<p>在这种情况下，你可能会担心事件会丢失。其实，是不会丢失的，它会通过 <code>ep_collect_ready_items</code> 将这些事件保存在一个队列中，在下一个 <code>epoll_wait</code> 再进行通知。</p>
+<h3 id="Node-js-不适合做什么"><a href="#Node-js-不适合做什么" class="headerlink" title="Node.js 不适合做什么"></a>Node.js 不适合做什么</h3><p>虽然看起来，Node.js 可以做很多事情，并且拥有很高的性能。比如做聊天室，搭建 Blog 等等，这些 I/O 密集型的应用，是比较适合 Node.js 的。</p>
+<p>但是，有一种类型的应用，可能 Node.js 处理起来会比较吃力，那就是 CPU 密集型的应用。前文提到，Libuv 通过事件循环来处理异步的事件，这是存在于 Node.js 主线程的机制。通过这个机制，所有的 I/O 操作，底层API的调用都变成了异步的。但用户的 Javascript 代码是运行在主线程中的，如果这部分代码运行耗时很长，就会导致事件循环被阻塞。因为，它对于事件的处理，都是按照队列顺序的，所以如果其中的任何一个事务/事件本身没有完成，那么其他的回调、监听器、超时、nextTick() 都得不到运行的机会，被阻塞的事件循环没有机会去处理它们。这样下去，轻则效率降低，重则运行停滞。</p>
+<p>比如我们常见的模板渲染，压缩，解压缩，加/解密等操作，都是 Node.js 的软肋，所以使用的时候要考虑到这方面。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ul>
+<li>Node.js 通过 <code>libuv</code> 来处理与操作系统的交互，并且因此具备了异步、非阻塞、事件驱动的能力。</li>
+<li>Node.js 实际上是 Javascript 执行线程的单线程，真正的的 I/O 操作，底层 API 调用都是通过多线程执行的。</li>
+<li>CPU 密集型的任务是 Node.js 的软肋。</li>
+</ul>
+<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="http://taobaofed.org/blog/2015/10/29/deep-into-node-1/" target="_blank" rel="noopener">http://taobaofed.org/blog/2015/10/29/deep-into-node-1/</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2015-06-07T06:45:23.000Z"><a href="/2015/06/07/Node.js_模块/Node.js中的循环依赖/">2015-06-07</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2015/06/07/Node.js_模块/Node.js中的循环依赖/">Node.js 中的循环依赖</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>我们在写node的时候有可能会遇到循环依赖的情况，什么是循环依赖，怎么避免或解决循环依赖问题？</p>
+<p>先看一段官网给出的循环依赖的代码:</p>
+<p><code>a.js</code>:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">console.log(&apos;a starting&apos;); </span><br><span class="line">exports.done = false;</span><br><span class="line">var b = require(&apos;./b.js&apos;); // ---&gt; 1</span><br><span class="line">console.log(&apos;in a, b.done = %j&apos;, b.done);</span><br><span class="line">exports.done = true;</span><br><span class="line">console.log(&apos;a done&apos;) // ---&gt; 4</span><br></pre></td></tr></table></figure>
+<p><code>b.js</code>:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">console.log(&apos;b starting&apos;); </span><br><span class="line">exports.done = false;</span><br><span class="line">var a = require(&apos;./a.js&apos;);  // ---&gt; 2</span><br><span class="line">// console.log(a);  ---&gt; &#123;done:false&#125;</span><br><span class="line">console.log(&apos;in b, a.done = %j&apos;, a.done); // ---&gt; 3</span><br><span class="line">exports.done = true;</span><br><span class="line">console.log(&apos;b done&apos;);</span><br></pre></td></tr></table></figure>
+<p><code>main.js</code>:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">console.log(&apos;main starting&apos;); </span><br><span class="line">var a = require(&apos;./a.js&apos;); // --&gt; 0</span><br><span class="line">var b = require(&apos;./b.js&apos;);</span><br><span class="line">console.log(&apos;in main, a.done=%j, b.done=%j&apos;, a.done, b.done);</span><br></pre></td></tr></table></figure>
+<p>如果我们启动 <code>main.js</code> 会出现什么情况？ 在 <code>a.js</code> 中加载 <code>b.js</code>，然后在<code>b.js</code>中加载 <code>a.js</code>，然后再在 <code>a.js</code>中加载 <code>b.js</code> 吗？这样就会造成循环依赖死循环。</p>
+<p>让我们执行看看：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$ node main.js</span><br><span class="line"></span><br><span class="line">main starting</span><br><span class="line">a starting</span><br><span class="line">b starting</span><br><span class="line">in b, a.done = false</span><br><span class="line">b done</span><br><span class="line">in a, b.done = true</span><br><span class="line">a done</span><br><span class="line">in main, a.done=true, b.done=true</span><br></pre></td></tr></table></figure>
+<p>可以看到程序并没有陷入死循环，从上面的执行结果可以看到 <code>main.js</code> 中先<code>require</code>了 <code>a.js</code> ，<code>a.js</code> 中执行完了<code>console</code>和<code>export.done=fasle</code>之后，转而去加载<code>b.js</code>，待<code>b.js</code>被load完之后，再返回<code>a.js</code>中执行完剩下的代码。</p>
+<p>我在官网的代码基础上增加了一些注释，基本 load 顺序就是按照这个<code>0--&gt;1--&gt;2--&gt;3--&gt;4</code>的顺序去执行的，然后在第二步下面我打印出了<code>require(&#39;./a&#39;)</code>的结果，可以看到是<code>{done:false}</code>，可以猜测在<code>b.js</code>中<code>require(&#39;./a&#39;)</code>的结果是<code>a.js</code>中已经执行到的<code>exports</code>出的值。</p>
+<p>上面所说的还只是基于结果基础上的猜测，没有什么说服力，为了验证我的猜测是正确的，我把 Node 的源码稍微翻看了一些，C++ 的代码看不懂没关系，能看懂 JS 的部分就可以了，下面就是 Node 源码的分析（主要是 module 的分析， <a href="https://github.com/nodejs/node" target="_blank" rel="noopener">Node 源码在此</a>）：</p>
+<p>将会分析的主要源码：</p>
+<ol>
+<li>node/src/node.js</li>
+<li>node/lib/module.js</li>
+</ol>
+<h2 id="启动-node-main-js"><a href="#启动-node-main-js" class="headerlink" title="启动 $ node main.js"></a>启动 $ node main.js</h2><p>C++ 的代码我看不懂，总而言之，在我查了资料之后知道当我们在<code>shell</code>中输入<code>node main.js</code>之后，会先执行 <code>node/src/node.cc</code>，然后会执行 <code>node/src/node.js</code>， 所以C++代码不分析，从分析 <code>node/src/node.js</code> 开始（只会分析和主题相关的代码）。</p>
+<h2 id="node-js-源码分析"><a href="#node-js-源码分析" class="headerlink" title="node.js 源码分析"></a>node.js 源码分析</h2><p><code>node.js</code>文件主要结构为</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">(function(process) &#123;</span><br><span class="line"></span><br><span class="line">    this.global = this</span><br><span class="line">    </span><br><span class="line">    function startup() &#123;</span><br><span class="line">      ...</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    startup()</span><br><span class="line"></span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<p>这种闭包代码很常见，从名字可以看出，此处为启动文件。接下来看看 startup 函数中有一大块条件语句，我删除大多数无关代码，如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">if (process.argv[1]) &#123;</span><br><span class="line">     // ...</span><br><span class="line">    </span><br><span class="line">    var Module = NativeModule.require(&apos;module&apos;);</span><br><span class="line">    Module.runMain();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我把无关的代码基本都删除了。可以看到这段代码主要做的事是先通过 Native 引入<code>module</code>模块，执行 <code>Module.runMain()</code>。</p>
+<p>很多人都知道 <code>require</code> 核心代码，如 require(‘path’)，不需要写全路径，Node 是怎样做到的呢？</p>
+<blockquote>
+<p>Node 采用了 V8 附带的 js2c.py 工具，将所有内置的 JavasSript 代码( src/node.js 和 lib/*.js) 转成 c++ 里面的数组生成 node_navtives.h 头文件。<br>在这个过程中， JavasSript 以字符串的形式存储在 node 命名空间中， 是不可直接执行的。<br>在启动 Node 进程时， JavaScript 代码直接加载进内存中。</p>
+<p>Node 在启动时，会生成一个全局变量 process， 并提供 binding() 方法来协助加载内建模块。</p>
+</blockquote>
+<p>上面大段介绍基本引自朴老师的「深入浅出 Node.js」。大概理解就是在启动命令的时候，Node 会把 <code>node.js</code> 和 <code>lib/*.js</code> 的内容都放到 <code>process</code> 中传入当前闭包中，我们在当前函数就可以通过<code>process.binding(&#39;natives&#39;)</code>取出来放到 _source 中，如下代码所示：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">function NativeModule(id) &#123;</span><br><span class="line">  this.filename = id + &apos;.js&apos;;</span><br><span class="line">  this.id = id;</span><br><span class="line">  this.exports = &#123;&#125;;</span><br><span class="line">  this.loaded = false;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">NativeModule._source = process.binding(&apos;natives&apos;);</span><br><span class="line">NativeModule._cache = &#123;&#125;;</span><br></pre></td></tr></table></figure>
+<p>接下来看看<code>NativeModule.require</code>做了哪些事情：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">NativeModule.require = function(id) &#123;</span><br><span class="line">  if (id == &apos;native_module&apos;) &#123;</span><br><span class="line">    return NativeModule;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  var cached = NativeModule.getCached(id);</span><br><span class="line">  if (cached) &#123;</span><br><span class="line">    return cached.exports;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  var nativeModule = new NativeModule(id);</span><br><span class="line"></span><br><span class="line">  nativeModule.cache();</span><br><span class="line">  nativeModule.compile();</span><br><span class="line"></span><br><span class="line">  return nativeModule.exports;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>这上面的代码表明内建模块被缓存，就直接返回内建模块的<code>exports</code>，如果没有的话，就生成一个核心模块的实例，然后先把模块根据id来<code>cache</code>，然后调用<code>nativeModule.compile</code>接口编译源文件：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">NativeModule.getSource = function(id) &#123;</span><br><span class="line">  return NativeModule._source[id];</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">NativeModule.wrap = function(script) &#123;</span><br><span class="line">  return NativeModule.wrapper[0] + script + NativeModule.wrapper[1];</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">NativeModule.wrapper = [</span><br><span class="line">  &apos;(function (exports, require, module, __filename, __dirname) &#123;\n&apos;,</span><br><span class="line">  &apos;\n&#125;);&apos;</span><br><span class="line">];</span><br><span class="line"></span><br><span class="line">NativeModule.prototype.compile = function() &#123;</span><br><span class="line">  var source = NativeModule.getSource(this.id);</span><br><span class="line">  source = NativeModule.wrap(source);</span><br><span class="line"></span><br><span class="line">  var fn = runInThisContext(source, &#123;</span><br><span class="line">    filename: this.filename,</span><br><span class="line">    lineOffset: -1</span><br><span class="line">  &#125;);</span><br><span class="line">  fn(this.exports, NativeModule.require, this, this.filename);</span><br><span class="line"></span><br><span class="line">  this.loaded = true;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">NativeModule.prototype.cache = function() &#123;</span><br><span class="line">  NativeModule._cache[this.id] = this;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>cache 是把实例根据 id 放到 _cache 对象中。先从 _source 中取出对应id的源文件字符串，包上一层<br><code>(function (exports, require, module, __filename, __dirname) {\n&#39;,&#39;\n});</code>。比如<code>main.js</code>最终变成如下JS代码的字符串:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">(function (exports, require, module, __filename, __dirname) &#123;</span><br><span class="line"> // 如果是main.js</span><br><span class="line">     console.log(&apos;main starting&apos;); </span><br><span class="line">    var a = require(&apos;./a.js&apos;); // --&gt; 0</span><br><span class="line">    var b = require(&apos;./b.js&apos;);</span><br><span class="line">    console.log(&apos;in main, a.done=%j, b.done=%j&apos;, a.done, b.done);</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<p><code>runInThisContext</code>是将被包装后的源字符串转成可执行函数，（<code>runInThisContext</code>来自<code>contextify</code>模块），<code>runInThisContext</code>的作用，类似<code>eval</code>，再执行这个被<code>eval</code>后的函数，就算被 load 完成了，最后把 load 设为 true。</p>
+<p>可以看到<code>fn</code>的实参为 <code>this.exports; NativeModule.require; this; this.filename;</code>。</p>
+<p>所以<code>require(&#39;module&#39;)</code>的作用是加载<code>/lib/module.js</code>文件。让我们再回到 startup 函数，加载完 module.js，紧接着运行 <code>Module.runMain()</code>方法。（估计有人忘了前面的startup函数是干嘛的，我再放一次，省得再拉回去了）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">if (process.argv[1]) &#123;</span><br><span class="line">     // ...</span><br><span class="line">    </span><br><span class="line">    var Module = NativeModule.require(&apos;module&apos;);</span><br><span class="line">    Module.runMain();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="module-js源码分析"><a href="#module-js源码分析" class="headerlink" title="module.js源码分析"></a>module.js源码分析</h2><p>上面走完了<code>NatvieModule</code>的加载代码。再看看<code>module.js</code>是怎样加载用户使用的文件的。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">function Module(id, parent) &#123;</span><br><span class="line">  this.id = id;</span><br><span class="line">  this.exports = &#123;&#125;;</span><br><span class="line">  this.parent = parent;</span><br><span class="line">  if (parent &amp;&amp; parent.children) &#123;</span><br><span class="line">    parent.children.push(this);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  this.filename = null;</span><br><span class="line">  this.loaded = false;</span><br><span class="line">  this.children = [];</span><br><span class="line">&#125;</span><br><span class="line">module.exports = Module;</span><br><span class="line"></span><br><span class="line">Module._cache = &#123;&#125;;</span><br><span class="line">Module._pathCache = &#123;&#125;;</span><br><span class="line">Module._extensions = &#123;&#125;;</span><br><span class="line">var modulePaths = [];</span><br><span class="line">Module.globalPaths = [];</span><br><span class="line"></span><br><span class="line">Module.wrapper = NativeModule.wrapper;</span><br><span class="line">Module.wrap = NativeModule.wrap;</span><br></pre></td></tr></table></figure>
+<p>这是<code>Module</code>的构造函数，<code>Module.wrapper</code>和<code>Module.wrap</code>，是由<code>NativeModule</code>赋值来的，<code>Module._cache</code>是个空对象，存放所有被 load 后的模块 id。</p>
+<p>在<code>node.js</code>文件的 startup 函数中，最后一步走到<code>Module.runMain()</code>:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Module.runMain = function() &#123;</span><br><span class="line">  // Load the main module--the command line argument.</span><br><span class="line">  Module._load(process.argv[1], null, true);</span><br><span class="line">  // Handle any nextTicks added in the first tick of the program</span><br><span class="line">  process._tickCallback();</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>在<code>runMain</code>方法中调用了<code>_load</code>方法:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">Module._load = function(request, parent, isMain) &#123;</span><br><span class="line">  var filename = Module._resolveFilename(request, parent);</span><br><span class="line">  var cachedModule = Module._cache[filename];</span><br><span class="line">  </span><br><span class="line">  if (cachedModule) &#123;</span><br><span class="line">    return cachedModule.exports;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  var module = new Module(filename, parent);</span><br><span class="line">  Module._cache[filename] = module;</span><br><span class="line"></span><br><span class="line">  module.load(filename);</span><br><span class="line">  </span><br><span class="line">  return module.exports;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>上述代码照例我删除了一些不是很相关的代码，从剩下的代码可以看出<code>_load</code>函数的主要干了两件事（还有一件加载NativeModule的代码被我删掉了）:</p>
+<ol>
+<li>先判断当前的源文件有没有被加载过，如果 _cache 对象中存在，直接返回 _cache 中的exports对象</li>
+<li>如果没有被加载过，新建这个源文件的 module 的实例，并存放到 _cache 中，然后调用 load 方法。</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">Module.prototype.load = function(filename) &#123;</span><br><span class="line">  this.filename = filename;</span><br><span class="line">  this.paths = Module._nodeModulePaths(path.dirname(filename));</span><br><span class="line"></span><br><span class="line">  var extension = path.extname(filename) || &apos;.js&apos;;</span><br><span class="line">  if (!Module._extensions[extension]) extension = &apos;.js&apos;;</span><br><span class="line">  Module._extensions[extension](this, filename);</span><br><span class="line">  this.loaded = true;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>在<code>load</code>方法中判断源文件的扩展名是什么，默认是<code>&#39;.js&#39;</code>，（我这里也只分析后缀是 <code>.js</code> 的情况），然后调用 <code>Module._extensions[extension]()</code> 方法，并传入 this 和 filename；当<code>extension</code>是<code>&#39;.js&#39;</code>的时候， 调用<code>Module._extensions[&#39;.js&#39;]()</code> 方法。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">// Native extension for .js</span><br><span class="line">Module._extensions[&apos;.js&apos;] = function(module, filename) &#123;</span><br><span class="line">  var content = fs.readFileSync(filename, &apos;utf8&apos;);</span><br><span class="line">  module._compile(internalModule.stripBOM(content), filename);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>这个方法是读到源文件的字符串后，调用<code>module._compile</code>方法。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">Module.prototype._compile = function(content, filename) &#123;</span><br><span class="line"></span><br><span class="line">  var self = this;</span><br><span class="line"></span><br><span class="line">  function require(path) &#123;</span><br><span class="line">    return self.require(path);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  var dirname = path.dirname(filename);</span><br><span class="line">  // create wrapper function</span><br><span class="line">  var wrapper = Module.wrap(content);</span><br><span class="line"></span><br><span class="line">  var compiledWrapper = runInThisContext(wrapper,</span><br><span class="line">                                      &#123; filename: filename, lineOffset: -1 &#125;);</span><br><span class="line"></span><br><span class="line">  var args = [self.exports, require, self, filename, dirname];</span><br><span class="line">  return compiledWrapper.apply(self.exports, args);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>其实跟<code>NativeModule</code>的<code>_complie</code>做的事情差不多。先把源文件<code>content</code>包装一层<code>(function (exports, require, module, __filename, __dirname) {\n&#39;,&#39;\n});</code>， 然后通过 <code>runInThisContext</code>把字符串转成可执行的函数，最后把<br><code>self.exports, require, self, filename, dirname</code> 这几个实参传入可执行函数中。</p>
+<p><code>require</code> 方法为:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Module.prototype.require = function(path) &#123;</span><br><span class="line">  return Module._load(path, this);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h2 id="循环依赖的时候为什么不会无限循环引用"><a href="#循环依赖的时候为什么不会无限循环引用" class="headerlink" title="循环依赖的时候为什么不会无限循环引用"></a>循环依赖的时候为什么不会无限循环引用</h2><p>所谓的循环依赖就是在两个不同的文件中互相应用了对方。假设按照最上面官网给出的例子中，</p>
+<p>在 <code>main.js</code> 中:</p>
+<ol>
+<li><code>require(&#39;./a.js&#39;)</code>；此时会调用 <code>self.require()</code>,<br>然后会走到<code>module._load</code>，在<code>_load</code>中会判断<code>./a.js</code>是否被load过，当然运行到这里，<code>./a.js</code>还没被 load 过，所以会走完整个load流程，直到<code>_compile</code>。</li>
+<li>运行<code>./a.js</code>，运行到 <code>exports.done = false</code> 的时候，给 esports 增加了一个属性。此时的 <code>exports={done: false}</code>。</li>
+<li>运行<code>require(&#39;./b.js&#39;)</code>，同 第 1 步。</li>
+<li>运行<code>./b.js</code>，到<code>require(&#39;./a.js&#39;)</code>。此时走到<code>_load</code>函数的时候发现<code>./a.js</code>已经被load过了，所以会直接从<code>_cache</code>中返回。所以此时<code>./a.js</code>还没有运行完，<code>exports = {done.false}</code>，那么返回的结果就是 <code>in b, a.done = false</code>;</li>
+<li><code>./b.js</code>全部运行完毕，回到<code>./a.js</code>中，继续向下运行，此时的<code>./b.js</code>的 <code>exports={done:true}</code>， 结果自然是<code>in main, a.done=true, b.done=true</code></li>
+</ol>
+<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="https://segmentfault.com/a/1190000004151411" target="_blank" rel="noopener">https://segmentfault.com/a/1190000004151411</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2015-05-09T06:45:23.000Z"><a href="/2015/05/09/Redis/Node.js与Redis/">2015-05-09</a></time>
       
       
@@ -462,252 +836,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2014-07-05T06:45:23.000Z"><a href="/2014/07/05/Shell/shell入门/">2014-07-05</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2014/07/05/Shell/shell入门/">shell入门(1)</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h2 id="shell简介"><a href="#shell简介" class="headerlink" title="shell简介"></a>shell简介</h2><p>Shell本身是一个用C语言编写的程序，它是用户使用Unix/Linux的桥梁，用户的大部分工作都是通过Shell完成的。Shell既是一种命令语言，又是一种程序设计语言。作为命令语言，它交互式地解释和执行用户输入的命令；作为程序设计语言，它定义了各种变量和参数，并提供了许多在高级语言中才具有的控制结构，包括循环和分支。</p>
-<p>它虽然不是Unix/Linux系统内核的一部分，但它调用了系统核心的大部分功能来执行程序、建立文件并以并行的方式协调各个程序的运行。因此，对于用户来说，shell是最重要的实用程序，深入了解和熟练掌握shell的特性极其使用方法，是用好Unix/Linux系统的关键。</p>
-<p>可以说，shell使用的熟练程度反映了用户对Unix/Linux使用的熟练程度。</p>
-<p>Shell有两种执行命令的方式：</p>
-<ul>
-<li>交互式（Interactive）：解释执行用户的命令，用户输入一条命令，Shell就解释执行一条。</li>
-<li>批处理（Batch）：用户事先写一个Shell脚本(Script)，其中有很多条命令，让Shell一次把这些命令执行完，而不必一条一条地敲命令。</li>
-</ul>
-<p>Shell脚本和编程语言很相似，也有变量和流程控制语句，但Shell脚本是解释执行的，不需要编译，Shell程序从脚本中一行一行读取并执行这些命令，相当于一个用户把脚本中的命令一行一行敲到Shell提示符下执行。</p>
-<p>Unix/Linux上常见的Shell脚本解释器有bash、sh、csh、ksh等，习惯上把它们称作一种Shell。我们常说有多少种Shell，其实说的是Shell脚本解释器。由于bash是最常见的脚本解释器，如无特殊说明，shell默认都是bash shell。</p>
-<p>注意：bash是linux标准的默认shell，bash完全兼容sh，也就是说，用sh写的脚本可以不加修改的在bash中执行。</p>
-<h2 id="什么时候使用shell"><a href="#什么时候使用shell" class="headerlink" title="什么时候使用shell"></a>什么时候使用shell</h2><p>因为Shell是各UNIX系统之间通用的功能，并且经过了POSIX的标准化。因此，Shell脚本只要“用心写”一次，即可应用到很多系统上。因此，之所以要使用Shell脚本是基于：</p>
-<ul>
-<li>简单性：Shell是一个高级语言；通过它，你可以简洁地表达复杂的操作。</li>
-<li>可移植性：使用POSIX所定义的功能，可以做到脚本无须修改就可在不同的系统上执行。</li>
-<li>开发容易：可以在短时间内完成一个功能强大又实用的脚本。</li>
-</ul>
-<p>但是，考虑到Shell脚本的命令限制和效率问题，下列情况一般不使用Shell：</p>
-<ol>
-<li>资源密集型的任务，尤其在需要考虑效率时（比如，排序，hash等等）。</li>
-<li>需要处理大任务的数学操作，尤其是浮点运算，精确运算，或者复杂的算术运算（这种情况一般使用C++或FORTRAN 来处理）。</li>
-<li>有跨平台（操作系统）移植需求（一般使用C 或Java）。</li>
-<li>复杂的应用，在必须使用结构化编程的时候（需要变量的类型检查，函数原型，等等）。</li>
-<li>对于影响系统全局性的关键任务应用。</li>
-<li>对于安全有很高要求的任务，比如你需要一个健壮的系统来防止入侵、破解、恶意破坏等等。</li>
-<li>项目由连串的依赖的各个部分组成。</li>
-<li>需要大规模的文件操作。 需要多维数组的支持。</li>
-<li>需要数据结构的支持，比如链表或数等数据结构。</li>
-<li>需要产生或操作图形化界面 GUI。</li>
-<li>需要直接操作系统硬件。</li>
-<li>需要 I/O 或socket 接口。</li>
-<li>需要使用库或者遗留下来的老代码的接口。</li>
-<li>私人的、闭源的应用（shell 脚本把代码就放在文本文件中，全世界都能看到）。<br>如果你的应用符合上边的任意一条，那么就考虑一下更强大的语言吧——或许是Perl、Tcl、Python、Ruby——或者是更高层次的编译语言比如C/C++，或者是Java。即使如此，你会发现，使用shell来原型开发你的应用，在开发步骤中也是非常有用的。</li>
-</ol>
-<h2 id="第一个shell脚本"><a href="#第一个shell脚本" class="headerlink" title="第一个shell脚本"></a>第一个shell脚本</h2><p>打开文本编辑器vim，新建一个文件test，扩展名为sh（sh代表shell），全名是test.sh。扩展名并不影响脚本执行，见名知意就好，如果你用 php 写shell 脚本，扩展名就用 php 好了。</p>
-<p>输入一些代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">#!/bin/sh</span><br><span class="line">#echo &quot;123456&quot;</span><br><span class="line">echo &quot;Hello World !&quot;</span><br></pre></td></tr></table></figure></p>
-<p>第一行“#!” 是一个约定的标记，它告诉系统这个脚本需要什么解释器来执行，即使用哪一种Shell。通常/bin/sh是指向/bin/bash的。<br>但后面的字符 # 表示注释，#后面的内容将被忽略。<br>echo命令用于向窗口输出文本。</p>
-<p>运行Shell脚本有两种方法。</p>
-<h3 id="作为可执行程序"><a href="#作为可执行程序" class="headerlink" title="作为可执行程序"></a>作为可执行程序</h3><p>将上面的代码保存为test.sh，并 cd 到相应目录：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ chmod +x ./test.sh  #使脚本具有执行权限</span><br><span class="line">$ ./test.sh  #执行脚本</span><br><span class="line">Hello World !</span><br></pre></td></tr></table></figure></p>
-<p>注意，一定要写成./test.sh，而不是test.sh。运行其它二进制的程序也一样，直接写test.sh，linux系统会去PATH里寻找有没有叫test.sh的，而只有/bin, /sbin, /usr/bin，/usr/sbin等在PATH里，你的当前目录通常不在PATH里，所以写成test.sh是会找不到命令的，要用./test.sh告诉系统说，就在当前目录找。<br>通过这种方式运行bash脚本，第一行一定要写对，好让系统查找到正确的解释器。</p>
-<p>###作为解释器参数</p>
-<p>这种运行方式是，直接运行解释器，其参数就是shell脚本的文件名，如：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ /bin/sh test.sh</span><br><span class="line">$ /bin/php test.php</span><br></pre></td></tr></table></figure></p>
-<p>这种方式运行的脚本，不需要在第一行指定解释器信息，写了也没用。</p>
-<p>再看一个例子。下面的脚本使用 read 命令从 stdin 获取输入并赋值给 PERSON 变量，最后在 stdout 上输出：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">#!/bin/bash</span><br><span class="line"># Author : shouliang</span><br><span class="line">echo &quot;What is your name?&quot;</span><br><span class="line">read PERSON</span><br><span class="line">echo &quot;Hello, $PERSON&quot;</span><br></pre></td></tr></table></figure></p>
-<p>运行脚本：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ chmod +x ./test.sh</span><br><span class="line">$ ./test.sh</span><br><span class="line">What is your name?</span><br><span class="line">shouliang</span><br><span class="line">Hello, shouliang</span><br></pre></td></tr></table></figure></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2014-06-29T11:45:23.000Z"><a href="/2014/06/29/Git/Git(7)自定义Git/">2014-06-29</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2014/06/29/Git/Git(7)自定义Git/">七.自定义Git</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-自定义Git"><a href="#1-自定义Git" class="headerlink" title="1.自定义Git"></a>1.自定义Git</h3><hr>
-<p>在安装Git一节中，我们已经配置了user.name和user.email，实际上，Git还有很多可配置项。</p>
-<p>比如，让Git显示颜色，会让命令输出看起来更醒目：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git config --global color.ui true</span><br></pre></td></tr></table></figure></p>
-<p>这样，Git会适当地显示不同的颜色，比如git status命令：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgitColor01.png" alt=""></p>
-<p>文件名就会标上颜色。</p>
-<h3 id="2-忽略特殊文件"><a href="#2-忽略特殊文件" class="headerlink" title="2.忽略特殊文件"></a>2.忽略特殊文件</h3><hr>
-<p>有些时候我们需要把一些文件例如：保存了数据库密码的配置文件放在Git目录下，但又不提交，那么需要我们在Git工作区的根目录下创建一个特殊的.gitignore文件，然后把要忽略的文件名填进去，Git就会自动忽略这些文件。</p>
-<p>　　不需要从头写.gitignore文件，GitHub已经为我们准备了各种配置文件，只需要组合一下就可以使用了。所有配置文件可以直接在线浏览：<a href="https://github.com/github/gitignore" target="_blank" rel="noopener">https://github.com/github/gitignore</a></p>
-<p>忽略文件的原则是：</p>
-<ul>
-<li>忽略操作系统自动生成的文件，比如缩略图等；</li>
-<li>忽略编译生成的中间文件、可执行文件等，也就是如果一个文件是通过另一个文件自动生成的，那自动生成的文件就没必要放进版本库，比如Java编译产生的.class文件；</li>
-<li>忽略你自己的带有敏感信息的配置文件，比如存放口令的配置文件。</li>
-</ul>
-<h3 id="3-配置别名"><a href="#3-配置别名" class="headerlink" title="3.配置别名"></a>3.配置别名</h3><hr>
-<p>配置别名其实就是把命令重新设置简单些，方便输入，例如：如果输入git st就表示git status。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git config --global alias.st status</span><br></pre></td></tr></table></figure></p>
-<p>现在都用co表示checkout，ci表示commit，br表示branch：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git config --global alias.co checkout</span><br><span class="line">$ git config --global alias.ci commit</span><br><span class="line">$ git config --global alias.br branch</span><br></pre></td></tr></table></figure></p>
-<p>–global参数是全局参数，也就是这些命令在这台电脑的所有Git仓库下都有用。</p>
-<h3 id="4-配置文件"><a href="#4-配置文件" class="headerlink" title="4.配置文件"></a>4.配置文件</h3><hr>
-<p>配置Git的时候，加上–global是针对当前用户起作用的，如果不加，那只针对当前的仓库起作用。</p>
-<p>配置文件放哪了？每个仓库的Git配置文件都放在.git/config文件中：</p>
-<p>$ cat .git/config<br>[core]<br>    repositoryformatversion = 0<br>    filemode = true<br>    bare = false<br>    logallrefupdates = true<br>    ignorecase = true<br>    precomposeunicode = true<br>[remote “origin”]<br>    url = <a href="mailto:git@github.com" target="_blank" rel="noopener">git@github.com</a>:michaelliao/learngit.git<br>    fetch = +refs/heads/*:refs/remotes/origin/*<br>[branch “master”]<br>    remote = origin<br>    merge = refs/heads/master<br>[alias]<br>    last = log -1</p>
-<p>别名就在[alias]后面，要删除别名，直接把对应的行删掉即可。</p>
-<p>而当前用户的Git配置文件放在用户主目录下的一个隐藏文件.gitconfig中：</p>
-<p>$ cat .gitconfig<br>[alias]<br>    co = checkout<br>    ci = commit<br>    br = branch<br>    st = status<br>[user]<br>    name = Your Name<br>    email = <a href="mailto:your@email.com" target="_blank" rel="noopener">your@email.com</a></p>
-<p>配置别名也可以直接修改这个文件，如果改错了，可以删掉文件重新通过命令配置。</p>
-<h3 id="5-搭建Git服务器"><a href="#5-搭建Git服务器" class="headerlink" title="5.搭建Git服务器"></a>5.搭建Git服务器</h3><hr>
-<p>搭建Git服务器需要准备一台运行Linux的机器，强烈推荐用Ubuntu或Debian，这样，通过几条简单的apt命令就可以完成安装。</p>
-<p>假设你已经有sudo权限的用户账号，下面，正式开始安装。</p>
-<p><strong>第一步</strong>，安装git：</p>
-<pre><code>$ sudo apt-get install git
-</code></pre><p><strong>第二步</strong>，创建一个git用户，用来运行git服务：</p>
-<pre><code>$ sudo adduser git
-</code></pre><p><strong>第三步</strong>，创建证书登录：</p>
-<p>收集所有需要登录的用户的公钥，就是他们自己的id_rsa.pub文件，把所有公钥导入到/home/git/.ssh/authorized_keys文件里，一行一个。</p>
-<p><strong>第四步</strong>，初始化Git仓库：</p>
-<p>先选定一个目录作为Git仓库，假定是/srv/sample.git，在/srv目录下输入命令：</p>
-<pre><code>$ sudo git init --bare sample.git
-</code></pre><p>　　Git就会创建一个裸仓库，裸仓库没有工作区，因为服务器上的Git仓库纯粹是为了共享，所以不让用户直接登录到服务器上去改工作区，并且服务器上的Git仓库通常都以.git结尾。然后，把owner改为git：</p>
-<pre><code>$ sudo chown -R git:git sample.git
-</code></pre><p><strong>第五步</strong>，禁用shell登录：</p>
-<p>出于安全考虑，第二步创建的git用户不允许登录shell，这可以通过编辑/etc/passwd文件完成。找到类似下面的一行：</p>
-<pre><code>git:x:1001:1001:,,,:/home/git:/bin/bash
-</code></pre><p>改为：</p>
-<pre><code>git:x:1001:1001:,,,:/home/git:/usr/bin/git-shell
-</code></pre><p>这样，git用户可以正常通过ssh使用git，但无法登录shell，因为我们为git用户指定的git-shell每次一登录就自动退出。</p>
-<p><strong>第六步</strong>，克隆远程仓库：</p>
-<p>现在，可以通过git clone命令克隆远程仓库了，在各自的电脑上运行：</p>
-<pre><code>$ git clone git@server:/srv/sample.git
-Cloning into &apos;sample&apos;...
-warning: You appear to have cloned an empty repository.
-</code></pre><h3 id="6-管理公钥和权限"><a href="#6-管理公钥和权限" class="headerlink" title="6.管理公钥和权限"></a>6.管理公钥和权限</h3><hr>
-<h4 id="管理公钥"><a href="#管理公钥" class="headerlink" title="管理公钥"></a>管理公钥</h4><p>　　如果团队很小，把每个人的公钥收集起来放到服务器的/home/git/.ssh/authorized_keys文件里就是可行的。如果团队有几百号人，就没法这么玩了，这时，可以用Gitosis来管理公钥。</p>
-<h4 id="管理权限"><a href="#管理权限" class="headerlink" title="管理权限"></a>管理权限</h4><p>　　有很多不但视源代码如生命，而且视员工为窃贼的公司，会在版本控制系统里设置一套完善的权限控制，每个人是否有读写权限会精确到每个分支甚至每个目录下。因为Git是为Linux源代码托管而开发的，所以Git也继承了开源社区的精神，不支持权限控制。不过，因为Git支持钩子（hook），所以，可以在服务器端编写一系列脚本来控制提交等操作，达到权限控制的目的。Gitolite就是这个工具。</p>
-<p>这里我们也不介绍Gitolite了，不要把有限的生命浪费到权限斗争中。</p>
-<p>主要两点：</p>
-<ul>
-<li>要方便管理公钥，用Gitosis；</li>
-<li>要像SVN那样变态地控制权限，用Gitolite。</li>
-</ul>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2014-06-27T09:45:23.000Z"><a href="/2014/06/27/Git/Git(6)标签管理/">2014-06-27</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2014/06/27/Git/Git(6)标签管理/">六.标签管理</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-标签的简介"><a href="#1-标签的简介" class="headerlink" title="1.标签的简介"></a>1.标签的简介</h3><hr>
-<p>本节主要记录的Git标签的作用、标签的多种创建方式，以及标签的删除，与推送，和使用GitHub的Fork参与别人的项目。</p>
-<p><strong>标签的作用</strong><br>　　发布版本时，通常先在版本库中打一个标签，这样，就唯一确定了打标签时刻的版本。无论什么时候，取某个标签的版本，就是把那个打标签的时刻的历史版本取出来。所以，标签也是版本库的一个快照。Git的标签虽然是版本库的快照，但其实它就是指向某个commit的指针（跟分支很像，但是分支可以移动，标签不能移动），所以，创建和删除标签都是瞬间完成的。
-　　</p>
-<h3 id="2-创建标签"><a href="#2-创建标签" class="headerlink" title="2.创建标签"></a>2.创建标签</h3><hr>
-<p>在Git中打标签非常简单，首先，切换到需要打标签的分支上：</p>
-<p>$ git branch<br>*dev<br>  master<br>$ git checkout master<br>Switched to branch ‘master’<br>然后，敲命令git tag <name>就可以打一个新标签：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git tag v1.0</span><br></pre></td></tr></table></figure></name></p>
-<p>　　默认标签是打在最新提交的commit上的。还可以对历史提交打上标签，只要找到历史提交的commit id，然后打上就可以了，例如要对add merge这次提交打标签，它对应的commit id是6224937，输入命令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git tag v0.9 6224937</span><br></pre></td></tr></table></figure></p>
-<p>　　还可以创建带有说明的标签，用-a指定标签名，-m指定说明文字：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git tag -a v0.1 -m &quot;version 0.1 released&quot; 3628164</span><br></pre></td></tr></table></figure></p>
-<p>　　用命令git show 可以看到说明文字：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ git show v0.1</span><br><span class="line">tag v0.1</span><br><span class="line">Tagger: hubwiz &lt;hubwiz@163.com&gt;</span><br><span class="line">Date:   Mon Aug 26 07:28:11 2015 +0800</span><br><span class="line">version 0.1 released</span><br></pre></td></tr></table></figure></p>
-<p>　　签名采用PGP签名，因此，必须首先安装gpg（GnuPG），如果没有找到gpg，或者没有gpg密钥对，就会报错：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">gpg: signing failed: secret key not available</span><br><span class="line">error: gpg failed to sign the data</span><br><span class="line">error: unable to sign the tag</span><br></pre></td></tr></table></figure></p>
-<p>　　如果报错，请参考GnuPG帮助文档配置Key。</p>
-<ul>
-<li>命令git tag <name>用于新建一个标签，默认为HEAD，也可以指定一个commit id；</name></li>
-<li>git tag -a <tagname> -m “blablabla…”可以指定标签信息；</tagname></li>
-<li>git tag -s <tagname> -m “blablabla…”可以用PGP签名标签；</tagname></li>
-<li>命令git tag可以查看所有标签。</li>
-</ul>
-<h3 id="3-操作标签"><a href="#3-操作标签" class="headerlink" title="3.操作标签"></a>3.操作标签</h3><hr>
-<p>如果标签打错了，也可以删除：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git tag -d v0.1</span><br><span class="line">Deleted tag &apos;v0.1&apos; (was e078af9)</span><br></pre></td></tr></table></figure></p>
-<p>因为创建的标签都只存储在本地，不会自动推送到远程。所以，打错的标签可以在本地安全删除。</p>
-<p>如果要推送某个标签到远程，使用命令it push origin <tagname>:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ git push origin v1.0</span><br><span class="line">Total 0 (delta 0), reused 0 (delta 0)</span><br><span class="line">To git@github.com:michaelliao/learngit.git</span><br><span class="line"> * [new tag]         v1.0 -&gt; v1.0</span><br></pre></td></tr></table></figure></tagname></p>
-<p>或者，一次性推送全部尚未推送到远程的本地标签：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ git push origin --tags</span><br><span class="line">Counting objects: 1, done.</span><br><span class="line">Writing objects: 100% (1/1), 554 bytes, done.</span><br><span class="line">Total 1 (delta 0), reused 0 (delta 0)</span><br><span class="line">To git@github.com:michaelliao/learngit.git</span><br><span class="line">* [new tag]         v0.2 -&gt; v0.2</span><br><span class="line">* [new tag]         v0.9 -&gt; v0.9</span><br></pre></td></tr></table></figure></p>
-<p>如果标签已经推送到远程，要删除远程标签就麻烦一点，先从本地删除：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git tag -d v0.9</span><br><span class="line">Deleted tag &apos;v0.9&apos; (was 6224937)</span><br></pre></td></tr></table></figure></p>
-<p>然后，从远程删除。删除命令也是push，但是格式如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git push origin :refs/tags/v0.9</span><br><span class="line">To git@github.com:michaelliao/learngit.git</span><br><span class="line"> - [deleted]         v0.9</span><br></pre></td></tr></table></figure></p>
-<p>要看看是否真的从远程库删除了标签，可以登陆GitHub查看。</p>
-<p>本节知识点主要学习点：</p>
-<ul>
-<li>git push origin <tagname>可以推送一个本地标签；</tagname></li>
-<li>git push origin –tags可以推送全部未推送过的本地标签；</li>
-<li>git tag -d <tagname>可以删除一个本地标签；</tagname></li>
-<li>git push origin :refs/tags/<tagname>可以删除一个远程标签。</tagname></li>
-</ul>
-<h3 id="4-GitHub的使用"><a href="#4-GitHub的使用" class="headerlink" title="4.GitHub的使用"></a>4.GitHub的使用</h3><hr>
-<p>GitHub不仅是免费的远程仓库，个人的开源项目，可以放到GitHub上，而且GitHub还是一个开源协作社区，通过GitHub，既可以让别人参与你的开源项目，也可以参与别人的开源项目。</p>
-<p>　　在GitHub上，利用Git极其强大的克隆和分支功能，人们可以自由参与各种开源项目。比如人气极高的bootstrap项目，这是一个非常强大的CSS框架，在它的项目主页，点“Fork”就在自己的账号下克隆了一个bootstrap仓库，然后，从自己的账号下clone。一定要从自己的账号下clone仓库，这样你才能推送修改。如果从bootstrap的作者的仓库地址<a href="mailto:git@github.com" target="_blank" rel="noopener">git@github.com</a>:twbs/bootstrap.git克隆，因为没有权限，你将不能推送修改。</p>
-<p>　　Bootstrap的官方仓库twbs/bootstrap、你在GitHub上克隆的仓库my/bootstrap，以及你自己克隆到本地电脑的仓库，他们的关系就像下图显示的那样：<br>　　<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbootstrap.png" alt=""></p>
-<p>如果你希望bootstrap的官方库能接受你的修改，你就可以在GitHub上发起一个pull request。</p>
-<p>本节主要内容：</p>
-<ul>
-<li>在GitHub上，可以任意Fork开源仓库；</li>
-<li>自己拥有Fork后的仓库的读写权限；</li>
-<li>可以推送pull request给官方仓库来贡献代码。</li>
-</ul>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -745,13 +873,13 @@ warning: You appear to have cloned an empty repository.
   
     <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
   
-    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>2</small></li>
+    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>4</small></li>
   
     <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
   
     <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
   
-    <li><a href="/tags/MySQL实战/">MySQL实战</a><small>3</small></li>
+    <li><a href="/tags/MySQL实战/">MySQL实战</a><small>4</small></li>
   
     <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>4</small></li>
   

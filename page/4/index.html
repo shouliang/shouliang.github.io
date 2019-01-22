@@ -53,6 +53,329 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2018-06-13T06:45:23.000Z"><a href="/2018/06/13/趣谈网络协议/第12讲 TCP协议（下）：西行必定多妖孽，恒心智慧消磨难/">2018-06-13</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/06/13/趣谈网络协议/第12讲 TCP协议（下）：西行必定多妖孽，恒心智慧消磨难/">第12讲 | TCP协议（下）：西行必定多妖孽，恒心智慧消磨难</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>  我们前面说到玄奘西行，要出网关。既然出了网关，那就是在公网上传输数据，公网往往是不可靠的，因而需要很多的机制去保证传输的可靠性，这里面需要恒心，也即各种<strong>重传的策略</strong>，还需要有智慧，也就是说，这里面包含着<strong>大量的算法</strong>。</p>
+<h2 id="如何做个靠谱的人？"><a href="#如何做个靠谱的人？" class="headerlink" title="如何做个靠谱的人？"></a>如何做个靠谱的人？</h2><p>  TCP 想成为一个成熟稳重的人，成为一个靠谱的人。那一个人怎么样才算靠谱呢？咱们工作中经常就有这样的场景，比如你交代给下属一个事情以后，下属到底能不能做到，做到什么程度，什么时候能够交付，往往就会有应答，有回复。这样，处理事情的过程中，一旦有异常，你也可以尽快知道，而不是交代完之后就石沉大海，过了一个月再问，他说，啊我不记得了。</p>
+<p>  对应到网络协议上，就是客户端每发送的一个包，服务器端都应该有个回复，如果服务器端超过一定的时间没有回复，客户端就会重新发送这个包，直到有回复。</p>
+<p>  这个发送应答的过程是什么样呢？可以是<strong>上一个收到了应答，再发送下一个</strong>。这种模式有点像两个人直接打电话，你一句，我一句。但是这种方式的缺点是效率比较低。如果一方在电话那头处理的时间比较长，这一头就要干等着，双方都没办法干其他事情。咱们在日常工作中也不是这样的，不能你交代你的下属办一件事情，就一直打着电话看着他做，而是应该他按照你的安排，先将事情记录下来，办完一件回复一件。在他办事情的过程中，你还可以同时交代新的事情，这样双方就并行了。</p>
+<p>  如果使⽤这种模式，其实需要你和你的下属就不能靠脑⼦了，⽽是要都准备⼀个本⼦，你每交代下属⼀个事情，双方的本子都要记录⼀下。</p>
+<p>  当你的下属做完⼀件事情，就回复你，做完了，你就在你的本⼦上将这个事情划去。同时你的本⼦上每件事情都有时限，如果超过了时限下属还没有回复，你就要主动重新交代⼀下：上次那件事情，你还没回复我，咋样啦？</p>
+<p>  既然多件事情可以一起处理，那就需要给每个事情编个号，防止弄错了。例如，程序员平时看任务的时候，都会看 JIRA 的 ID，而不是每次都要描述一下具体的事情。在大部分情况下，对于事情的处理是按照顺序来的，先来的先处理，这就给应答和汇报工作带来了方便。等开周会的时候，每个程序员都可以将 JIRA ID 的列表拉出来，说以上的都做完了，⽽不⽤⼀个个说。</p>
+<h2 id="如何实现一个靠谱的协议？"><a href="#如何实现一个靠谱的协议？" class="headerlink" title="如何实现一个靠谱的协议？"></a>如何实现一个靠谱的协议？</h2><p>  TCP 协议使用的也是同样的模式。为了保证顺序性，每一个包都有一个 ID。在建立连接的时候，会商定起始的 ID 是什么，然后按照 ID 一个个发送。为了保证不丢包，对于发送的包都要进行应答，但是这个应答也不是一个一个来的，而是会应答某个之前的 ID，表示都收到了，这种模式称为<strong>累计确认</strong>或者<strong>累计应答</strong>（<strong>cumulative acknowledgment</strong>）。</p>
+<p>  为了记录所有发送的包和接收的包，TCP 也需要发送端和接收端分别都有缓存来保存这些记录。发送端的缓存里是按照包的 ID 一个个排列，根据处理的情况分成四个部分。</p>
+<p>  第一部分：发送了并且已经确认的。这部分就是你交代下属的，并且也做完了的，应该划掉的。</p>
+<p>  第二部分：发送了并且尚未确认的。这部分是你交代下属的，但是还没做完的，需要等待做完的回复之后，才能划掉。</p>
+<p>  第三部分：没有发送，但是已经等待发送的。这部分是你还没有交代给下属，但是马上就要交代的。</p>
+<p>  第四部分：没有发送，并且暂时还不会发送的。这部分是你还没有交代给下属，而且暂时还不会交代给下属的。</p>
+<p>  这里面为什么要区分第三部分和第四部分呢？没交代的，一下子全交代了不就完了吗？</p>
+<p>  这就是我们上一节提到的十个词口诀里的“流量控制，把握分寸”。作为项目管理人员，你应该根据以往的工作情况和这个员工反馈的能力、抗压力等，先在心中估测一下，这个人一天能做多少工作。如果工作布置少了，就会不饱和；如果工作布置多了，他就会做不完；如果你使劲逼迫，人家可能就要辞职了。</p>
+<p>  到底一个员工能够同时处理多少事情呢？在 TCP 里，接收端会给发送端报一个窗口的大小，叫<strong>Advertised window</strong>。这个窗口的大小应该等于上面的第二部分加上第三部分，就是已经交代了没做完的加上马上要交代的。超过这个窗口的，接收端做不过来，就不能发送了。</p>
+<p>  于是，发送端需要保持下面的数据结构。</p>
+<p>  <img src="https://static001.geekbang.org/resource/image/16/7b/16dcd6fb8105a1caa75887b5ffa0bd7b.jpg" alt="img"></p>
+<ul>
+<li>LastByteAcked：第一部分和第二部分的分界线</li>
+<li>LastByteSent：第二部分和第三部分的分界线</li>
+<li><p>LastByteAcked + AdvertisedWindow：第三部分和第四部分的分界线</p>
+<p>对于接收端来讲，它的缓存里记录的内容要简单一些。</p>
+<p>第一部分：接受并且确认过的。也就是我领导交代给我，并且我做完的。</p>
+<p>第二部分：还没接收，但是马上就能接收的。也即是我自己的能够接受的最大工作量。</p>
+<p>第三部分：还没接收，也没法接收的。也即超过工作量的部分，实在做不完。</p>
+<p>对应的数据结构就像这样。</p>
+<p><img src="https://static001.geekbang.org/resource/image/f7/a4/f7b1d3bc6b6d8e55f0951e82294c8ba4.jpg" alt="img"></p>
+</li>
+<li><p>MaxRcvBuffer：最大缓存的量；</p>
+</li>
+<li>LastByteRead 之后是已经接收了，但是还没被应用层读取的；</li>
+<li><p>NextByteExpected 是第一部分和第二部分的分界线。</p>
+<p>第二部分的窗口有多大呢？</p>
+<p>NextByteExpected 和 LastByteRead 的差其实是还没被应用层读取的部分占用掉的 MaxRcvBuffer 的量，我们定义为 A。</p>
+<p>AdvertisedWindow 其实是 MaxRcvBuffer 减去 A。</p>
+<p>也就是：AdvertisedWindow=MaxRcvBuffer-((NextByteExpected-1)-LastByteRead)。</p>
+<p>那第二部分和第三部分的分界线在哪里呢？NextByteExpected 加 AdvertisedWindow 就是第二部分和第三部分的分界线，其实也就是 LastByteRead 加上 MaxRcvBuffer。</p>
+<p>其中第二部分里面，由于受到的包可能不是顺序的，会出现空挡，只有和第一部分连续的，可以马上进行回复，中间空着的部分需要等待，哪怕后面的已经来了。</p>
+<h2 id="顺序问题与丢包问题"><a href="#顺序问题与丢包问题" class="headerlink" title="顺序问题与丢包问题"></a>顺序问题与丢包问题</h2><p>接下来我们结合一个例子来看。</p>
+<p>还是刚才的图，在发送端来看，1、2、3 已经发送并确认；4、5、6、7、8、9 都是发送了还没确认；10、11、12 是还没发出的；13、14、15 是接收方没有空间，不准备发的。</p>
+<p>在接收端来看，1、2、3、4、5 是已经完成 ACK，但是没读取的；6、7 是等待接收的；8、9 是已经接收，但是没有 ACK 的。</p>
+<p>发送端和接收端当前的状态如下：</p>
+</li>
+<li><p>1、2、3 没有问题，双方达成了一致。</p>
+</li>
+<li>4、5 接收方说 ACK 了，但是发送方还没收到，有可能丢了，有可能在路上。</li>
+<li><p>6、7、8、9 肯定都发了，但是 8、9 已经到了，但是 6、7 没到，出现了乱序，缓存着但是没办法 ACK。</p>
+<p>根据这个例子，我们可以知道，顺序问题和丢包问题都有可能发生，所以我们先来看<strong>确认与重发的机制</strong>。</p>
+<p>假设 4 的确认到了，不幸的是，5 的 ACK 丢了，6、7 的数据包丢了，这该怎么办呢？</p>
+<p>一种方法就是<strong>超时重试</strong>，也即对每一个发送了，但是没有 ACK 的包，都有设一个定时器，超过了一定的时间，就重新尝试。但是这个超时的时间如何评估呢？这个时间不宜过短，时间必须大于往返时间 RTT，否则会引起不必要的重传。也不宜过长，这样超时时间变长，访问就变慢了。</p>
+<p>估计往返时间，需要 TCP 通过采样 RTT 的时间，然后进行加权平均，算出一个值，而且这个值还是要不断变化的，因为网络状况不断的变化。除了采样 RTT，还要采样 RTT 的波动范围，计算出一个估计的超时时间。由于重传时间是不断变化的，我们称为<strong>自适应重传算法</strong>（<strong>Adaptive Retransmission Algorithm</strong>）。</p>
+<p>如果过一段时间，5、6、7 都超时了，就会重新发送。接收方发现 5 原来接收过，于是丢弃 5；6 收到了，发送 ACK，要求下一个是 7，7 不幸又丢了。当 7 再次超时的时候，有需要重传的时候，TCP 的策略是<strong>超时间隔加倍</strong>。<strong>每当遇到一次超时重传的时候，都会将下一次超时时间间隔设为先前值的两倍</strong>。<strong>两次超时，就说明网络环境差，不宜频繁反复发送。</strong></p>
+<p>超时触发重传存在的问题是，超时周期可能相对较长。那是不是可以有更快的方式呢？</p>
+<p>有一个可以快速重传的机制，当接收方收到一个序号大于下一个所期望的报文段时，就检测到了数据流中的一个间格，于是发送三个冗余的 ACK，客户端收到后，就在定时器过期之前，重传丢失的报文段。</p>
+<p>例如，接收方发现 6、8、9 都已经接收了，就是 7 没来，那肯定是丢了，于是发送三个 6 的 ACK，要求下一个是 7。客户端收到 3 个，就会发现 7 的确又丢了，不等超时，马上重发。</p>
+<p>还有一种方式称为<strong>Selective Acknowledgment</strong> （<strong>SACK</strong>）。这种方式需要在 TCP 头里加一个 SACK 的东西，可以将缓存的地图发送给发送方。例如可以发送 ACK6、SACK8、SACK9，有了地图，发送方一下子就能看出来是 7 丢了。</p>
+<h2 id="流量控制问题"><a href="#流量控制问题" class="headerlink" title="流量控制问题"></a>流量控制问题</h2><p>我们再来看流量控制机制，在对于包的确认中，同时会携带一个窗口的大小。</p>
+<p>我们先假设窗口不变的情况，窗口始终为 9。4 的确认来的时候，会右移一个，这个时候第 13 个包也可以发送了。</p>
+<p><img src="https://static001.geekbang.org/resource/image/73/33/7339fd8973865164d25227cac206ca33.jpg" alt="img"></p>
+<p>这个时候，假设发送端发送过猛，会将第三部分的 10、11、12、13 全部发送完毕，之后就停止发送了，未发送可发送部分为 0。</p>
+<p><img src="https://static001.geekbang.org/resource/image/06/d2/06cc25118730fbf611eb315705420ed2.jpg" alt="img"></p>
+<p>当对于包 5 的确认到达的时候，在客户端相当于窗口再滑动了一格，这个时候，才可以有更多的包可以发送了，例如第 14 个包才可以发送。</p>
+<p><img src="https://static001.geekbang.org/resource/image/bd/c3/bddb59ebbf7eecc4853cafce0bb1dcc3.jpg" alt="img"></p>
+<p>如果接收方实在处理的太慢，导致缓存中没有空间了，可以通过确认信息修改窗口的大小，甚至可以设置为 0，则发送方将暂时停止发送。</p>
+<p>我们假设一个极端情况，接收端的应用一直不读取缓存中的数据，当数据包 6 确认后，窗口大小就不能再是 9 了，就要缩小一个变为 8。</p>
+<p><img src="https://static001.geekbang.org/resource/image/92/31/92f66b1556b76c46c669aba232d35a31.jpg" alt="img"></p>
+<p>这个新的窗口 8 通过 6 的确认消息到达发送端的时候，你会发现窗口没有平行右移，而是仅仅左面的边右移了，窗口的大小从 9 改成了 8。</p>
+<p><img src="https://static001.geekbang.org/resource/image/a7/ba/a78f5195ebf9b4f9dc4ea5a9b91e94ba.jpg" alt="img"></p>
+<p>如果接收端还是一直不处理数据，则随着确认的包越来越多，窗口越来越小，直到为 0。</p>
+<p><img src="https://static001.geekbang.org/resource/image/15/d2/150f28d9e745952f5968eff05e3f0ad2.jpg" alt="img"></p>
+<p>当这个窗口通过包 14 的确认到达发送端的时候，发送端的窗口也调整为 0，停止发送。</p>
+<p><img src="https://static001.geekbang.org/resource/image/30/30/3014a6a259f74b0c950bf3067581ac30.jpg" alt="img"></p>
+<p>如果这样的话，发送方会定时发送窗口探测数据包，看是否有机会调整窗口的大小。当接收方比较慢的时候，要防止低能窗口综合征，别空出一个字节来就赶快告诉发送方，然后马上又填满了，可以当窗口太小的时候，不更新窗口，直到达到一定大小，或者缓冲区一半为空，才更新窗口。</p>
+<p>这就是我们常说的流量控制。</p>
+<h2 id="拥塞控制问题"><a href="#拥塞控制问题" class="headerlink" title="拥塞控制问题"></a>拥塞控制问题</h2><p>最后，我们看一下拥塞控制的问题，也是通过窗口的大小来控制的，前面的滑动窗口 rwnd 是怕发送方把接收方缓存塞满，而拥塞窗口 cwnd，是怕把网络塞满。</p>
+<p>这里有一个公式 LastByteSent – LastByteAcked &lt;= min {cwnd, rwnd} ，是拥塞窗口和滑动窗口共同控制发送的速度。</p>
+<p>那发送方怎么判断网络是不是满呢？这其实是个挺难的事情，因为对于 TCP 协议来讲，他压根不知道整个网络路径都会经历什么，对他来讲就是一个黑盒。TCP 发送包常被比喻为往一个水管里面灌水，而 TCP 的拥塞控制就是在不堵塞，不丢包的情况下，尽量发挥带宽。</p>
+<p>水管有粗细，网络有带宽，也即每秒钟能够发送多少数据；水管有长度，端到端有时延。在理想状态下，水管里面水的量 = 水管粗细 x 水管长度。对于到网络上，通道的容量 = 带宽 × 往返延迟。</p>
+<p>如果我们设置发送窗口，使得发送但未确认的包为为通道的容量，就能够撑满整个管道。</p>
+<p><img src="https://static001.geekbang.org/resource/image/db/e6/db8510541662281175803c7f9d1fcae6.jpg" alt="img"></p>
+<p>如图所示，假设往返时间为 8s，去 4s，回 4s，每秒发送一个包，每个包 1024byte。已经过去了 8s，则 8 个包都发出去了，其中前 4 个包已经到达接收端，但是 ACK 还没有返回，不能算发送成功。5-8 后四个包还在路上，还没被接收。这个时候，整个管道正好撑满，在发送端，已发送未确认的为 8 个包，正好等于带宽，也即每秒发送 1 个包，乘以来回时间 8s。</p>
+<p>如果我们在这个基础上再调大窗口，使得单位时间内更多的包可以发送，会出现什么现象呢？</p>
+<p>我们来想，原来发送一个包，从一端到达另一端，假设一共经过四个设备，每个设备处理一个包时间耗费 1s，所以到达另一端需要耗费 4s，如果发送的更加快速，则单位时间内，会有更多的包到达这些中间设备，这些设备还是只能每秒处理一个包的话，多出来的包就会被丢弃，这是我们不想看到的。</p>
+<p>这个时候，我们可以想其他的办法，例如这个四个设备本来每秒处理一个包，但是我们在这些设备上加缓存，处理不过来的在队列里面排着，这样包就不会丢失，但是缺点是会增加时延，这个缓存的包，4s 肯定到达不了接收端了，如果时延达到一定程度，就会超时重传，也是我们不想看到的。</p>
+<p>于是 TCP 的拥塞控制主要来避免两种现象，<strong>包丢失</strong>和<strong>超时重传</strong>。一旦出现了这些现象就说明，发送速度太快了，要慢一点。但是一开始我怎么知道速度多快呢，我怎么知道应该把窗口调整到多大呢？</p>
+<p>如果我们通过漏斗往瓶子里灌水，我们就知道，不能一桶水一下子倒进去，肯定会溅出来，要一开始慢慢的倒，然后发现总能够倒进去，就可以越倒越快。这叫作慢启动。</p>
+<p>一条 TCP 连接开始，cwnd 设置为一个报文段，一次只能发送一个；当收到这一个确认的时候，cwnd 加一，于是一次能够发送两个；当这两个的确认到来的时候，每个确认 cwnd 加一，两个确认 cwnd 加二，于是一次能够发送四个；当这四个的确认到来的时候，每个确认 cwnd 加一，四个确认 cwnd 加四，于是一次能够发送八个。可以看出这是<strong>指数性的增长</strong>。</p>
+<p>涨到什么时候是个头呢？有一个值 ssthresh 为 65535 个字节，当超过这个值的时候，就要小心一点了，不能倒这么快了，可能快满了，再慢下来。</p>
+<p>每收到一个确认后，cwnd 增加 1/cwnd，我们接着上面的过程来，一次发送八个，当八个确认到来的时候，每个确认增加 1/8，八个确认一共 cwnd 增加 1，于是一次能够发送九个，变成了线性增长。</p>
+<p>但是线性增长还是增长，还是越来越多，直到有一天，水满则溢，出现了拥塞，这时候一般就会一下子降低倒水的速度，等待溢出的水慢慢渗下去。</p>
+<p>拥塞的一种表现形式是丢包，需要超时重传，这个时候，将 sshresh 设为 cwnd/2，将 cwnd 设为 1，重新开始慢启动。这真是一旦超时重传，马上回到解放前。但是这种方式太激进了，将一个高速的传输速度一下子停了下来，会造成网络卡顿。</p>
+<p>前面我们讲过<strong>快速重传算法</strong>。当接收端发现丢了一个中间包的时候，发送三次前一个包的 ACK，于是发送端就会快速的重传，不必等待超时再重传。TCP 认为这种情况不严重，因为大部分没丢，只丢了一小部分，cwnd 减半为 cwnd/2，然后 sshthresh = cwnd，当三个包返回的时候，cwnd = sshthresh + 3，也就是没有一夜回到解放前，而是还在比较高的值，呈线性增长。</p>
+<p><img src="https://static001.geekbang.org/resource/image/19/d2/1910bc1a0048d4de7b2128eb0f5dbcd2.jpg" alt="img"></p>
+<p>就像前面说的一样，正是这种知进退，使得时延很重要的情况下，反而降低了速度。但是如果你仔细想一下，TCP 的拥塞控制主要来避免的两个现象都是有问题的。</p>
+<p><strong>第一个问题</strong>是丢包并不代表着通道满了，也可能是管子本来就漏水。例如公网上带宽不满也会丢包，这个时候就认为拥塞了，退缩了，其实是不对的。</p>
+<p><strong>第二个问题</strong>是 TCP 的拥塞控制要等到将中间设备都填充满了，才发生丢包，从而降低速度，这时候已经晚了。其实 TCP 只要填满管道就可以了，不应该接着填，直到连缓存也填满。</p>
+<p>为了优化这两个问题，后来有了<strong>TCP BBR 拥塞算法</strong>。它企图找到一个平衡点，就是通过不断的加快发送速度，将管道填满，但是不要填满中间设备的缓存，因为这样时延会增加，在这个平衡点可以很好的达到高带宽和低时延的平衡。</p>
+<p><img src="https://static001.geekbang.org/resource/image/a2/4c/a2b3a5df5eca52e302b75824e4bbbd4c.jpg" alt="img"></p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>好了，这一节我们就到这里，总结一下：</p>
+</li>
+<li><p>顺序问题、丢包问题、流量控制都是通过滑动窗口来解决的，这其实就相当于你领导和你的工作备忘录，布置过的工作要有编号，干完了有反馈，活不能派太多，也不能太少；</p>
+</li>
+<li>拥塞控制是通过拥塞窗口来解决的，相当于往管道里面倒水，快了容易溢出，慢了浪费带宽，要摸着石头过河，找到最优值。</li>
+</ul>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2018-06-11T06:45:23.000Z"><a href="/2018/06/11/趣谈网络协议/第11讲 TCP协议（上）：因性恶而复杂，先恶后善反轻松/">2018-06-11</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/06/11/趣谈网络协议/第11讲 TCP协议（上）：因性恶而复杂，先恶后善反轻松/">第11讲 | TCP协议（上）：因性恶而复杂，先恶后善反轻松</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>  上一节，我们讲的 UDP，基本上包括了传输层所必须的端口字段。它就像我们小时候一样简单，相信“网之初，性本善，不丢包，不乱序”。</p>
+<p>  后来呢，我们都慢慢长大，了解了社会的残酷，变得复杂而成熟，就像 TCP 协议一样。它之所以这么复杂，那是因为它秉承的是“性恶论”。它天然认为网络环境是恶劣的，丢包、乱序、重传，拥塞都是常有的事情，一言不合就可能送达不了，因而要从算法层面来保证可靠性。</p>
+<h2 id="TCP-包头格式"><a href="#TCP-包头格式" class="headerlink" title="TCP 包头格式"></a>TCP 包头格式</h2><p>  我们先来看 TCP 头的格式。从这个图上可以看出，它比 UDP 复杂得多。</p>
+<p>  <img src="https://static001.geekbang.org/resource/image/a7/bf/a795461effcce686a43f48e094c9adbf.jpg" alt="img"></p>
+<p>  首先，源端口号和目标端口号是不可少的，这一点和 UDP 是一样的。如果没有这两个端口号。数据就不知道应该发给哪个应用。</p>
+<p>  接下来是包的序号。为什么要给包编号呢？当然是为了解决乱序的问题。不编好号怎么确认哪个应该先来，哪个应该后到呢。编号是为了解决乱序问题。既然是社会老司机，做事当然要稳重，一件件来，面临再复杂的情况，也临危不乱。</p>
+<p>  还应该有的就是确认序号。发出去的包应该有确认，要不然我怎么知道对方有没有收到呢？如果没有收到就应该重新发送，直到送达。这个可以解决不丢包的问题。作为老司机，做事当然要靠谱，答应了就要做到，暂时做不到也要有个回复。</p>
+<p>  TCP 是靠谱的协议，但是这不能说明它面临的网络环境好。从 IP 层面来讲，如果网络状况的确那么差，是没有任何可靠性保证的，而作为 IP 的上一层 TCP 也无能为力，唯一能做的就是更加努力，不断重传，通过各种算法保证。也就是说，对于 TCP 来讲，IP 层你丢不丢包，我管不着，但是我在我的层面上，会努力保证可靠性。</p>
+<p>  这有点像如果你在北京，和客户约十点见面，那么你应该清楚堵车是常态，你干预不了，也控制不了，你唯一能做的就是早走。打车不行就改乘地铁，尽力不失约。</p>
+<p>  接下来有一些状态位。例如 SYN 是发起一个连接，ACK 是回复，RST 是重新连接，FIN 是结束连接等。TCP 是面向连接的，因而双方要维护连接的状态，这些带状态位的包的发送，会引起双方的状态变更。</p>
+<p>  不像小时候，随便一个不认识的小朋友都能玩在一起，人大了，就变得礼貌，优雅而警觉，人与人遇到会互相热情的寒暄，离开会不舍的道别，但是人与人之间的信任会经过多次交互才能建立。</p>
+<p>  还有一个重要的就是窗口大小。TCP 要做流量控制，通信双方各声明一个窗口，标识自己当前能够的处理能力，别发送的太快，撑死我，也别发的太慢，饿死我。</p>
+<p>  作为老司机，做事情要有分寸，待人要把握尺度，既能适当提出自己的要求，又不强人所难。除了做流量控制以外，TCP 还会做拥塞控制，对于真正的通路堵车不堵车，它无能为力，唯一能做的就是控制自己，也即控制发送的速度。不能改变世界，就改变自己嘛。</p>
+<p>  作为老司机，要会自我控制，知进退，知道什么时候应该坚持，什么时候应该让步。</p>
+<p>  通过对 TCP 头的解析，我们知道要掌握 TCP 协议，重点应该关注以下几个问题：</p>
+<ul>
+<li>顺序问题 ，稳重不乱；</li>
+<li>丢包问题，承诺靠谱；</li>
+<li>连接维护，有始有终；</li>
+<li>流量控制，把握分寸；</li>
+<li><p>拥塞控制，知进知退。</p>
+<h2 id="TCP-的三次握手"><a href="#TCP-的三次握手" class="headerlink" title="TCP 的三次握手"></a>TCP 的三次握手</h2><p>所有的问题，首先都要先建立一个连接，所以我们先来看连接维护问题。</p>
+<p>TCP 的连接建立，我们常常称为三次握手。</p>
+<p>A：您好，我是 A。</p>
+<p>B：您好 A，我是 B。</p>
+<p>A：您好 B。</p>
+<p>我们也常称为“请求 -&gt; 应答 -&gt; 应答之应答”的三个回合。这个看起来简单，其实里面还是有很多的学问，很多的细节。</p>
+<p>首先，为什么要三次，而不是两次？按说两个人打招呼，一来一回就可以了啊？为了可靠，为什么不是四次？</p>
+<p>我们还是假设这个通路是非常不可靠的，A 要发起一个连接，当发了第一个请求杳无音信的时候，会有很多的可能性，比如第一个请求包丢了，再如没有丢，但是绕了弯路，超时了，还有 B 没有响应，不想和我连接。</p>
+<p>A 不能确认结果，于是再发，再发。终于，有一个请求包到了 B，但是请求包到了 B 的这个事情，目前 A 还是不知道的，A 还有可能再发。</p>
+<p>B 收到了请求包，就知道了 A 的存在，并且知道 A 要和它建立连接。如果 B 不乐意建立连接，则 A 会重试一阵后放弃，连接建立失败，没有问题；如果 B 是乐意建立连接的，则会发送应答包给 A。</p>
+<p>当然对于 B 来说，这个应答包也是一入网络深似海，不知道能不能到达 A。这个时候 B 自然不能认为连接是建立好了，因为应答包仍然会丢，会绕弯路，或者 A 已经挂了都有可能。</p>
+<p>而且这个时候 B 还能碰到一个诡异的现象就是，A 和 B 原来建立了连接，做了简单通信后，结束了连接。还记得吗？A 建立连接的时候，请求包重复发了几次，有的请求包绕了一大圈又回来了，B 会认为这也是一个正常的的请求的话，因此建立了连接，可以想象，这个连接不会进行下去，也没有个终结的时候，纯属单相思了。因而两次握手肯定不行。</p>
+<p>B 发送的应答可能会发送多次，但是只要一次到达 A，A 就认为连接已经建立了，因为对于 A 来讲，他的消息有去有回。A 会给 B 发送应答之应答，而 B 也在等这个消息，才能确认连接的建立，只有等到了这个消息，对于 B 来讲，才算它的消息有去有回。</p>
+<p>当然 A 发给 B 的应答之应答也会丢，也会绕路，甚至 B 挂了。按理来说，还应该有个应答之应答之应答，这样下去就没底了。所以四次握手是可以的，四十次都可以，关键四百次也不能保证就真的可靠了。只要双方的消息都有去有回，就基本可以了。</p>
+<p>好在大部分情况下，A 和 B 建立了连接之后，A 会马上发送数据的，一旦 A 发送数据，则很多问题都得到了解决。例如 A 发给 B 的应答丢了，当 A 后续发送的数据到达的时候，B 可以认为这个连接已经建立，或者 B 压根就挂了，A 发送的数据，会报错，说 B 不可达，A 就知道 B 出事情了。</p>
+<p>当然你可以说 A 比较坏，就是不发数据，建立连接后空着。我们在程序设计的时候，可以要求开启 keepalive 机制，即使没有真实的数据包，也有探活包。</p>
+<p>另外，你作为服务端 B 的程序设计者，对于 A 这种长时间不发包的客户端，可以主动关闭，从而空出资源来给其他客户端使用。</p>
+<p>三次握手除了双方建立连接外，主要还是为了沟通一件事情，就是<strong>TCP 包的序号的问题</strong>。</p>
+<p>A 要告诉 B，我这面发起的包的序号起始是从哪个号开始的，B 同样也要告诉 A，B 发起的包的序号起始是从哪个号开始的。为什么序号不能都从 1 开始呢？因为这样往往会出现冲突。</p>
+<p>例如，A 连上 B 之后，发送了 1、2、3 三个包，但是发送 3 的时候，中间丢了，或者绕路了，于是重新发送，后来 A 掉线了，重新连上 B 后，序号又从 1 开始，然后发送 2，但是压根没想发送 3，但是上次绕路的那个 3 又回来了，发给了 B，B 自然认为，这就是下一个包，于是发生了错误。</p>
+<p>因而，每个连接都要有不同的序号。这个序号的起始序号是随着时间变化的，可以看成一个 32 位的计数器，每 4ms 加一，如果计算一下，如果到重复，需要 4 个多小时，那个绕路的包早就死翘翘了，因为我们都知道 IP 包头里面有个 TTL，也即生存时间。</p>
+<p>好了，双方终于建立了信任，建立了连接。前面也说过，为了维护这个连接，双方都要维护一个状态机，在连接建立的过程中，双方的状态变化时序图就像这样。</p>
+<p><img src="https://static001.geekbang.org/resource/image/66/a2/666d7d20aa907d8317af3770411f5aa2.jpg" alt="img"></p>
+<p>一开始，客户端和服务端都处于 CLOSED 状态。先是服务端主动监听某个端口，处于 LISTEN 状态。然后客户端主动发起连接 SYN，之后处于 SYN-SENT 状态。服务端收到发起的连接，返回 SYN，并且 ACK 客户端的 SYN，之后处于 SYN-RCVD 状态。客户端收到服务端发送的 SYN 和 ACK 之后，发送 ACK 的 ACK，之后处于 ESTABLISHED 状态，因为它一发一收成功了。服务端收到 ACK 的 ACK 之后，处于 ESTABLISHED 状态，因为它也一发一收了。</p>
+<h2 id="TCP-四次挥手"><a href="#TCP-四次挥手" class="headerlink" title="TCP 四次挥手"></a>TCP 四次挥手</h2><p>好了，说完了连接，接下来说一说“拜拜”，好说好散。这常被称为四次挥手。</p>
+<p>A：B 啊，我不想玩了。</p>
+<p>B：哦，你不想玩了啊，我知道了。</p>
+<p>这个时候，还只是 A 不想玩了，也即 A 不会再发送数据，但是 B 能不能在 ACK 的时候，直接关闭呢？当然不可以了，很有可能 A 是发完了最后的数据就准备不玩了，但是 B 还没做完自己的事情，还是可以发送数据的，所以称为半关闭的状态。</p>
+<p>这个时候 A 可以选择不再接收数据了，也可以选择最后再接收一段数据，等待 B 也主动关闭。</p>
+<p>B：A 啊，好吧，我也不玩了，拜拜。</p>
+<p>A：好的，拜拜。</p>
+<p>这样整个连接就关闭了。但是这个过程有没有异常情况呢？当然有，上面是和平分手的场面。</p>
+<p>A 开始说“不玩了”，B 说“知道了”，这个回合，是没什么问题的，因为在此之前，双方还处于合作的状态，如果 A 说“不玩了”，没有收到回复，则 A 会重新发送“不玩了”。但是这个回合结束之后，就有可能出现异常情况了，因为已经有一方率先撕破脸。</p>
+<p>一种情况是，A 说完“不玩了”之后，直接跑路，是会有问题的，因为 B 还没有发起结束，而如果 A 跑路，B 就算发起结束，也得不到回答，B 就不知道该怎么办了。另一种情况是，A 说完“不玩了”，B 直接跑路，也是有问题的，因为 A 不知道 B 是还有事情要处理，还是过一会儿会发送结束。</p>
+<p>那怎么解决这些问题呢？TCP 协议专门设计了几个状态来处理这些问题。我们来看断开连接的时候的<strong>状态时序图</strong>。</p>
+<p><img src="https://static001.geekbang.org/resource/image/1f/11/1f6a5e17b34f00d28722428b7b8ccb11.jpg" alt="img"></p>
+<p>断开的时候，我们可以看到，当 A 说“不玩了”，就进入 FIN_WAIT_1 的状态，B 收到“A 不玩”的消息后，发送知道了，就进入 CLOSE_WAIT 的状态。</p>
+<p>A 收到“B 说知道了”，就进入 FIN_WAIT_2 的状态，如果这个时候 B 直接跑路，则 A 将永远在这个状态。TCP 协议里面并没有对这个状态的处理，但是 Linux 有，可以调整 tcp_fin_timeout 这个参数，设置一个超时时间。</p>
+<p>如果 B 没有跑路，发送了“B 也不玩了”的请求到达 A 时，A 发送“知道 B 也不玩了”的 ACK 后，从 FIN_WAIT_2 状态结束，按说 A 可以跑路了，但是最后的这个 ACK 万一 B 收不到呢？则 B 会重新发一个“B 不玩了”，这个时候 A 已经跑路了的话，B 就再也收不到 ACK 了，因而 TCP 协议要求 A 最后等待一段时间 TIME_WAIT，这个时间要足够长，长到如果 B 没收到 ACK 的话，“B 说不玩了”会重发的，A 会重新发一个 ACK 并且足够时间到达 B。</p>
+<p>A 直接跑路还有一个问题是，A 的端口就直接空出来了，但是 B 不知道，B 原来发过的很多包很可能还在路上，如果 A 的端口被一个新的应用占用了，这个新的应用会收到上个连接中 B 发过来的包，虽然序列号是重新生成的，但是这里要上一个双保险，防止产生混乱，因而也需要等足够长的时间，等到原来 B 发送的所有的包都死翘翘，再空出端口来。</p>
+<p>等待的时间设为 2MSL，<strong>MSL</strong>是<strong>Maximum Segment Lifetime</strong>，<strong>报文最大生存时间</strong>，它是任何报文在网络上存在的最长时间，超过这个时间报文将被丢弃。因为 TCP 报文基于是 IP 协议的，而 IP 头中有一个 TTL 域，是 IP 数据报可以经过的最大路由数，每经过一个处理他的路由器此值就减 1，当此值为 0 则数据报将被丢弃，同时发送 ICMP 报文通知源主机。协议规定 MSL 为 2 分钟，实际应用中常用的是 30 秒，1 分钟和 2 分钟等。</p>
+<p>还有一个异常情况就是，B 超过了 2MSL 的时间，依然没有收到它发的 FIN 的 ACK，怎么办呢？按照 TCP 的原理，B 当然还会重发 FIN，这个时候 A 再收到这个包之后，A 就表示，我已经在这里等了这么长时间了，已经仁至义尽了，之后的我就都不认了，于是就直接发送 RST，B 就知道 A 早就跑了。</p>
+<h2 id="TCP-状态机"><a href="#TCP-状态机" class="headerlink" title="TCP 状态机"></a>TCP 状态机</h2><p>将连接建立和连接断开的两个时序状态图综合起来，就是这个著名的 TCP 的状态机。学习的时候比较建议将这个状态机和时序状态机对照着看，不然容易晕。</p>
+<p><img src="https://static001.geekbang.org/resource/image/da/ab/dab9f6ee2908b05ed6f15f3e21be88ab.jpg" alt="img"></p>
+<p>在这个图中，加黑加粗的部分，是上面说到的主要流程，其中阿拉伯数字的序号，是连接过程中的顺序，而大写中文数字的序号，是连接断开过程中的顺序。加粗的实线是客户端 A 的状态变迁，加粗的虚线是服务端 B 的状态变迁。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>好了，这一节就到这里了，我来做一个总结：</p>
+</li>
+<li><p>TCP 包头很复杂，但是主要关注五个问题，顺序问题，丢包问题，连接维护，流量控制，拥塞控制；</p>
+</li>
+<li>连接的建立是经过三次握手，断开的时候四次挥手，一定要掌握的我画的那个状态图。</li>
+</ul>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2018-06-08T06:45:23.000Z"><a href="/2018/06/08/趣谈网络协议/第10讲 | UDP协议：因性善而简单，难免碰到城会玩/">2018-06-08</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/06/08/趣谈网络协议/第10讲 | UDP协议：因性善而简单，难免碰到城会玩/">第10讲 | UDP协议：因性善而简单，难免碰到城会玩</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>讲完了 IP 层以后，接下来我们开始讲传输层。传输层里比较重要的两个协议，一个是 TCP，一个是 UDP。对于不从事底层开发的人员来讲，或者对于开发应用的人来讲，最常用的就是这两个协议。由于面试的时候，这两个协议经常会被放在一起问，因而我在讲的时候，也会结合着来讲。</p>
+<h2 id="TCP-和-UDP-有哪些区别？"><a href="#TCP-和-UDP-有哪些区别？" class="headerlink" title="TCP 和 UDP 有哪些区别？"></a>TCP 和 UDP 有哪些区别？</h2><p>一般面试的时候我问这两个协议的区别，大部分人会回答，TCP 是面向连接的，UDP 是面向无连接的。</p>
+<p>什么叫面向连接，什么叫无连接呢？在互通之前，面向连接的协议会先建立连接。例如，TCP 会三次握手，而 UDP 不会。为什么要建立连接呢？你 TCP 三次握手，我 UDP 也可以发三个包玩玩，有什么区别吗？</p>
+<p><strong>所谓的建立连接，是为了在客户端和服务端维护连接，而建立一定的数据结构来维护双方交互的状态，用这样的数据结构来保证所谓的面向连接的特性。</strong></p>
+<p>例如，<strong>TCP 提供可靠交付</strong>。通过 TCP 连接传输的数据，无差错、不丢失、不重复、并且按序到达。我们都知道 IP 包是没有任何可靠性保证的，一旦发出去，就像西天取经，走丢了、被妖怪吃了，都只能随它去。但是 TCP 号称能做到那个连接维护的程序做的事情，这个下两节我会详细描述。而<strong>UDP 继承了 IP 包的特性，不保证不丢失，不保证按顺序到达。</strong></p>
+<p>再如，<strong>TCP 是面向字节流的</strong>。发送的时候发的是一个流，没头没尾。IP 包可不是一个流，而是一个个的 IP 包。之所以变成了流，这也是 TCP 自己的状态维护做的事情。而<strong>UDP 继承了 IP 的特性，基于数据报的，一个一个地发，一个一个地收。</strong></p>
+<p>还有<strong>TCP 是可以有拥塞控制的</strong>。它意识到包丢弃了或者网络的环境不好了，就会根据情况调整自己的行为，看看是不是发快了，要不要发慢点。<strong>UDP 就不会，应用让我发，我就发，管它洪水滔天。</strong></p>
+<p>因而<strong>TCP 其实是一个有状态服务</strong>，通俗地讲就是有脑子的，里面精确地记着发送了没有，接收到没有，发送到哪个了，应该接收哪个了，错一点儿都不行。而 <strong>UDP 则是无状态服务。</strong> 通俗地说是没脑子的，天真无邪的，发出去就发出去了。</p>
+<p>我们可以这样比喻，如果 MAC 层定义了本地局域网的传输行为，IP 层定义了整个网络端到端的传输行为，这两层基本定义了这样的基因：网络传输是以包为单位的，二层叫帧，网络层叫包，传输层叫段。我们笼统地称为包。包单独传输，自行选路，在不同的设备封装解封装，不保证到达。基于这个基因，生下来的孩子 UDP 完全继承了这些特性，几乎没有自己的思想。</p>
+<h2 id="UDP-包头是什么样的？"><a href="#UDP-包头是什么样的？" class="headerlink" title="UDP 包头是什么样的？"></a>UDP 包头是什么样的？</h2><p>我们来看一下 UDP 包头。</p>
+<p>前面章节我已经讲过包的传输过程，这里不再赘述。当我发送的 UDP 包到达目标机器后，发现 MAC 地址匹配，于是就取下来，将剩下的包传给处理 IP 层的代码。把 IP 头取下来，发现目标 IP 匹配，接下来呢？这里面的数据包是给谁呢？</p>
+<p>发送的时候，我知道我发的是一个 UDP 的包，收到的那台机器咋知道的呢？所以在 IP 头里面有个 8 位协议，这里会存放，数据里面到底是 TCP 还是 UDP，当然这里是 UDP。于是，如果我们知道 UDP 头的格式，就能从数据里面，将它解析出来。解析出来以后呢？数据给谁处理呢？</p>
+<p>处理完传输层的事情，内核的事情基本就干完了，里面的数据应该交给应用程序自己去处理，可是一台机器上跑着这么多的应用程序，应该给谁呢？</p>
+<p>无论应用程序写的使用 TCP 传数据，还是 UDP 传数据，都要监听一个端口。正是这个端口，用来区分应用程序，要不说端口不能冲突呢。两个应用监听一个端口，到时候包给谁呀？所以，按理说，无论是 TCP 还是 UDP 包头里面应该有端口号，根据端口号，将数据交给相应的应用程序。<br><img src="https://static001.geekbang.org/resource/image/6d/bf/6d1313f51b9dfd7ab454b2cef1cb37bf.jpg" alt="img"></p>
+<p>当我们看到 UDP 包头的时候，发现的确有端口号，有源端口号和目标端口号。因为是两端通信嘛，这很好理解。但是你还会发现，UDP 除了端口号，再没有其他的了。和下两节要讲的 TCP 头比起来，这个简直简单得一塌糊涂啊！</p>
+<h2 id="UDP-的三大特点"><a href="#UDP-的三大特点" class="headerlink" title="UDP 的三大特点"></a>UDP 的三大特点</h2><p>UDP 就像小孩子一样，有以下这些特点：</p>
+<p>第一，<strong>沟通简单</strong>，不需要一肚子花花肠子（大量的数据结构、处理逻辑、包头字段）。前提是它相信网络世界是美好的，秉承性善论，相信网络通路默认就是很容易送达的，不容易被丢弃的。</p>
+<p>第二，<strong>轻信他人</strong>。它不会建立连接，虽然有端口号，但是监听在这个地方，谁都可以传给他数据，他也可以传给任何人数据，甚至可以同时传给多个人数据。</p>
+<p>第三，<strong>愣头青，做事不懂权变</strong>。不知道什么时候该坚持，什么时候该退让。它不会根据网络的情况进行发包的拥塞控制，无论网络丢包丢成啥样了，它该怎么发还怎么发。</p>
+<h2 id="UDP-的三大使用场景"><a href="#UDP-的三大使用场景" class="headerlink" title="UDP 的三大使用场景"></a>UDP 的三大使用场景</h2><p>基于 UDP 这种“小孩子”的特点，我们可以考虑在以下的场景中使用。</p>
+<p>第一，<strong>需要资源少，在网络情况比较好的内网，或者对于丢包不敏感的应用</strong>。这很好理解，就像如果你是领导，你会让你们组刚毕业的小朋友去做一些没有那么难的项目，打一些没有那么难的客户，或者做一些失败了也能忍受的实验性项目。</p>
+<p>我们在第四节讲的 DHCP 就是基于 UDP 协议的。一般的获取 IP 地址都是内网请求，而且一次获取不到 IP 又没事，过一会儿还有机会。我们讲过 PXE 可以在启动的时候自动安装操作系统，操作系统镜像的下载使用的 TFTP，这个也是基于 UDP 协议的。在还没有操作系统的时候，客户端拥有的资源很少，不适合维护一个复杂的状态机，而是因为是内网，一般也没啥问题。</p>
+<p>第二，<strong>不需要一对一沟通，建立连接，而是可以广播的应用</strong>。咱们小时候人都很简单，大家在班级里面，谁成绩好，谁写作好，应该表扬谁惩罚谁，谁得几个小红花都是当着全班的面讲的，公平公正公开。长大了人心复杂了，薪水、奖金要背靠背，和员工一对一沟通。</p>
+<p>UDP 的不面向连接的功能，可以使得可以承载广播或者多播的协议。DHCP 就是一种广播的形式，就是基于 UDP 协议的，而广播包的格式前面说过了。</p>
+<p>对于多播，我们在讲 IP 地址的时候，讲过一个 D 类地址，也即组播地址，使用这个地址，可以将包组播给一批机器。当一台机器上的某个进程想监听某个组播地址的时候，需要发送 IGMP 包，所在网络的路由器就能收到这个包，知道有个机器上有个进程在监听这个组播地址。当路由器收到这个组播地址的时候，会将包转发给这台机器，这样就实现了跨路由器的组播。</p>
+<p>在后面云中网络部分，有一个协议 VXLAN，也是需要用到组播，也是基于 UDP 协议的。</p>
+<p>第三，<strong>需要处理速度快，时延低，可以容忍少数丢包，但是要求即便网络拥塞，也毫不退缩，一往无前的时候</strong>。记得曾国藩建立湘军的时候，专门招出生牛犊不怕虎的新兵，而不用那些“老油条”的八旗兵，就是因为八旗兵经历的事情多，遇到敌军不敢舍死忘生。</p>
+<p>同理，UDP 简单、处理速度快，不像 TCP 那样，操这么多的心，各种重传啊，保证顺序啊，前面的不收到，后面的没法处理啊。不然等这些事情做完了，时延早就上去了。而 TCP 在网络不好出现丢包的时候，拥塞控制策略会主动的退缩，降低发送速度，这就相当于本来环境就差，还自断臂膀，用户本来就卡，这下更卡了。</p>
+<p>当前很多应用都是要求低时延的，它们可不想用 TCP 如此复杂的机制，而是想根据自己的场景，实现自己的可靠和连接保证。例如，如果应用自己觉得，有的包丢了就丢了，没必要重传了，就可以算了，有的比较重要，则应用自己重传，而不依赖于 TCP。有的前面的包没到，后面的包到了，那就先给客户展示后面的嘛，干嘛非得等到齐了呢？如果网络不好，丢了包，那不能退缩啊，要尽快传啊，速度不能降下来啊，要挤占带宽，抢在客户失去耐心之前到达。</p>
+<p>由于 UDP 十分简单，基本啥都没做，也就给了应用“城会玩”的机会。就像在和平年代，每个人应该有独立的思考和行为，应该可靠并且礼让；但是如果在战争年代，往往不太需要过于独立的思考，而需要士兵简单服从命令就可以了。</p>
+<p>曾国藩说哪支部队需要诱敌牺牲，也就牺牲了，相当于包丢了就丢了。两军狭路相逢的时候，曾国藩说上，没有带宽也要上，这才给了曾国藩运筹帷幄，城会玩的机会。同理如果你实现的应用需要有自己的连接策略，可靠保证，时延要求，使用 UDP，然后再应用层实现这些是再好不过了。</p>
+<h2 id="基于-UDP-的“城会玩”的五个例子"><a href="#基于-UDP-的“城会玩”的五个例子" class="headerlink" title="基于 UDP 的“城会玩”的五个例子"></a>基于 UDP 的“城会玩”的五个例子</h2><p>我列举几种“城会玩”的例子。</p>
+<h3 id="“城会玩”一：网页或者-APP-的访问"><a href="#“城会玩”一：网页或者-APP-的访问" class="headerlink" title="“城会玩”一：网页或者 APP 的访问"></a>“城会玩”一：网页或者 APP 的访问</h3><p>原来访问网页和手机 APP 都是基于 HTTP 协议的。HTTP 协议是基于 TCP 的，建立连接都需要多次交互，对于时延比较大的目前主流的移动互联网来讲，建立一次连接需要的时间会比较长，然而既然是移动中，TCP 可能还会断了重连，也是很耗时的。而且目前的 HTTP 协议，往往采取多个数据通道共享一个连接的情况，这样本来为了加快传输速度，但是 TCP 的严格顺序策略使得哪怕共享通道，前一个不来，后一个和前一个即便没关系，也要等着，时延也会加大。</p>
+<p>而<strong>QUIC</strong>（全称<strong>Quick UDP Internet Connections</strong>，<strong>快速 UDP 互联网连接</strong>）是 Google 提出的一种基于 UDP 改进的通信协议，其目的是降低网络通信的延迟，提供更好的用户互动体验。</p>
+<p>QUIC 在应用层上，会自己实现快速连接建立、减少重传时延，自适应拥塞控制，是应用层“城会玩”的代表。这一节主要是讲 UDP，QUIC 我们放到应用层去讲。</p>
+<h3 id="“城会玩”二：流媒体的协议"><a href="#“城会玩”二：流媒体的协议" class="headerlink" title="“城会玩”二：流媒体的协议"></a>“城会玩”二：流媒体的协议</h3><p>现在直播比较火，直播协议多使用 RTMP，这个协议我们后面的章节也会讲，而这个 RTMP 协议也是基于 TCP 的。TCP 的严格顺序传输要保证前一个收到了，下一个才能确认，如果前一个收不到，下一个就算包已经收到了，在缓存里面，也需要等着。对于直播来讲，这显然是不合适的，因为老的视频帧丢了其实也就丢了，就算再传过来用户也不在意了，他们要看新的了，如果老是没来就等着，卡顿了，新的也看不了，那就会丢失客户，所以直播，实时性比较比较重要，宁可丢包，也不要卡顿的。</p>
+<p>另外，对于丢包，其实对于视频播放来讲，有的包可以丢，有的包不能丢，因为视频的连续帧里面，有的帧重要，有的不重要，如果必须要丢包，隔几个帧丢一个，其实看视频的人不会感知，但是如果连续丢帧，就会感知了，因而在网络不好的情况下，应用希望选择性的丢帧。</p>
+<p>还有就是当网络不好的时候，TCP 协议会主动降低发送速度，这对本来当时就卡的看视频来讲是要命的，应该应用层马上重传，而不是主动让步。因而，很多直播应用，都基于 UDP 实现了自己的视频传输协议。</p>
+<h3 id="“城会玩”三：实时游戏"><a href="#“城会玩”三：实时游戏" class="headerlink" title="“城会玩”三：实时游戏"></a>“城会玩”三：实时游戏</h3><p>游戏有一个特点，就是实时性比较高。快一秒你干掉别人，慢一秒你被别人爆头，所以很多职业玩家会买非常专业的鼠标和键盘，争分夺秒。</p>
+<p>因而，实时游戏中客户端和服务端要建立长连接，来保证实时传输。但是游戏玩家很多，服务器却不多。由于维护 TCP 连接需要在内核维护一些数据结构，因而一台机器能够支撑的 TCP 连接数目是有限的，然后 UDP 由于是没有连接的，在异步 IO 机制引入之前，常常是应对海量客户端连接的策略。</p>
+<p>另外还是 TCP 的强顺序问题，对战的游戏，对网络的要求很简单，玩家通过客户端发送给服务器鼠标和键盘行走的位置，服务器会处理每个用户发送过来的所有场景，处理完再返回给客户端，客户端解析响应，渲染最新的场景展示给玩家。</p>
+<p>如果出现一个数据包丢失，所有事情都需要停下来等待这个数据包重发。客户端会出现等待接收数据，然而玩家并不关心过期的数据，激战中卡 1 秒，等能动了都已经死了。</p>
+<p>游戏对实时要求较为严格的情况下，采用自定义的可靠 UDP 协议，自定义重传策略，能够把丢包产生的延迟降到最低，尽量减少网络问题对游戏性造成的影响。</p>
+<h3 id="“城会玩”四：IoT-物联网"><a href="#“城会玩”四：IoT-物联网" class="headerlink" title="“城会玩”四：IoT 物联网"></a>“城会玩”四：IoT 物联网</h3><p>一方面，物联网领域终端资源少，很可能只是个内存非常小的嵌入式系统，而维护 TCP 协议代价太大；另一方面，物联网对实时性要求也很高，而 TCP 还是因为上面的那些原因导致时延大。Google 旗下的 Nest 建立 Thread Group，推出了物联网通信协议 Thread，就是基于 UDP 协议的。</p>
+<h3 id="“城会玩”五：移动通信领域"><a href="#“城会玩”五：移动通信领域" class="headerlink" title="“城会玩”五：移动通信领域"></a>“城会玩”五：移动通信领域</h3><p>在 4G 网络里，移动流量上网的数据面对的协议 GTP-U 是基于 UDP 的。因为移动网络协议比较复杂，而 GTP 协议本身就包含复杂的手机上线下线的通信协议。如果基于 TCP，TCP 的机制就显得非常多余，这部分协议我会在后面的章节单独讲解。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>好了，这节就到这里了，我们来总结一下：</p>
+<ul>
+<li>如果将 TCP 比作成熟的社会人，UDP 则是头脑简单的小朋友。TCP 复杂，UDP 简单；TCP 维护连接，UDP 谁都相信；TCP 会坚持知进退；UDP 愣头青一个，勇往直前；</li>
+<li>UDP 虽然简单，但它有简单的用法。它可以用在环境简单、需要多播、应用层自己控制传输的地方。例如 DHCP、VXLAN、QUIC 等。</li>
+</ul>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2018-05-23T06:45:23.000Z"><a href="/2018/05/23/趣谈网络协议/第3讲 | ifconfig：最熟悉又陌生的命令行/">2018-05-23</a></time>
       
       
@@ -721,240 +1044,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2018-02-25T14:16:53.000Z"><a href="/2018/02/25/Node.js_IO/console模块解读之实现一个console.log/">2018-02-25</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2018/02/25/Node.js_IO/console模块解读之实现一个console.log/">console模块解读之实现一个console.log</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="console是同步的还是异步的"><a href="#console是同步的还是异步的" class="headerlink" title="console是同步的还是异步的?"></a>console是同步的还是异步的?</h3><p>console.log既不是总是同步的，也不总是异步的。是否为同步取决于链接的是什么流以及操作系统是Windows还是POSIX:</p>
-<p>注意: 同步写将会阻塞事件循环直到写完成。 有时可能一瞬间就能写到一个文件，但当系统处于高负载时，管道的接收端可能不会被读取、缓慢的终端或文件系统，因为事件循环被阻塞的足够频繁且足够长的时间，这些可能会给系统性能带来消极的影响。当你向一个交互终端会话写时这可能不是个问题，但当生产日志到进程的输出流时要特别留心。</p>
-<ul>
-<li><p>文件(Files): Windows和POSIX平台下都是同步</p>
-</li>
-<li><p>终端(TTYs): 在Windows平台下同步，在POSIX平台下异步</p>
-</li>
-<li><p>管道(Pipes): 在Windows平台下同步，在POSIX平台下异步</p>
-</li>
-</ul>
-<h3 id="实现一个console-log"><a href="#实现一个console-log" class="headerlink" title="实现一个console.log"></a>实现一个console.log</h3><p>实现console.log在控制台打印，利用process.stdout将输入流数据输出到输出流(即输出到终端)，一个简单的例子输出hello world ， process.stdout.write(‘hello world!’ + ‘\n’); ，以下例子是对console源码解读实现，将Console取名为Logger。</p>
-<h4 id="实现步骤"><a href="#实现步骤" class="headerlink" title="实现步骤"></a>实现步骤</h4><ol>
-<li>初始化Logger对象</li>
-<li>对参数进行检验，当前对象是否为Logger实例，是否为一个可写流实例</li>
-<li>为Logger对象定义_stdout，_stderr等属性</li>
-<li>将原型方法上的属性绑定到Logger实例上</li>
-<li>实现log、error、warning、trace、clear等方法</li>
-</ol>
-<h4 id="创建logger-js文件"><a href="#创建logger-js文件" class="headerlink" title="创建logger.js文件"></a>创建logger.js文件</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> util = <span class="built_in">require</span>(<span class="string">'util'</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 初始化Logger对象</span></span><br><span class="line"><span class="comment"> * @param &#123;*&#125; stdout </span></span><br><span class="line"><span class="comment"> * @param &#123;*&#125; stderr </span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Logger</span>(<span class="params">stdout, stderr</span>)</span>&#123;</span><br><span class="line">    <span class="comment">// step1 检查当前对象是否为Logger实例</span></span><br><span class="line">    <span class="keyword">if</span>(!(<span class="keyword">this</span> <span class="keyword">instanceof</span> Logger))&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> Logger(stdout, stderr);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//检查是否是一个可写流实例</span></span><br><span class="line">    <span class="keyword">if</span>(!stdout || !(stdout.write <span class="keyword">instanceof</span> <span class="built_in">Function</span>))&#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'Logger expects a writable stream instance'</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果stderr未指定，使用stdout</span></span><br><span class="line">    <span class="keyword">if</span>(!stderr)&#123;</span><br><span class="line">        stderr = stdout;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//设置js Object的属性</span></span><br><span class="line">    <span class="keyword">let</span> props = &#123;</span><br><span class="line">        writable: <span class="literal">true</span>, <span class="comment">// 对象属性是否可修改,flase为不可修改，默认值为true</span></span><br><span class="line">        enumerable: <span class="literal">false</span>, <span class="comment">// 对象属性是否可通过for-in循环，flase为不可循环，默认值为true</span></span><br><span class="line">        configurable: <span class="literal">false</span>, <span class="comment">// 能否使用delete、能否需改属性特性、或能否修改访问器属性、，false为不可重新定义，默认值为true</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Logger对象定义_stdout属性</span></span><br><span class="line">    <span class="built_in">Object</span>.defineProperty(<span class="keyword">this</span>, <span class="string">'_stdout'</span>, <span class="built_in">Object</span>.assign(props, &#123;</span><br><span class="line">        value: stdout,</span><br><span class="line">    &#125;));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Logger对象定义_stderr属性</span></span><br><span class="line">    <span class="built_in">Object</span>.defineProperty(<span class="keyword">this</span>, <span class="string">'_stderr'</span>, <span class="built_in">Object</span>.assign(props, &#123;</span><br><span class="line">        value: stderr,</span><br><span class="line">    &#125;));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Logger对象定义_times属性</span></span><br><span class="line">    <span class="built_in">Object</span>.defineProperty(<span class="keyword">this</span>, <span class="string">'_times'</span>, <span class="built_in">Object</span>.assign(props, &#123;</span><br><span class="line">        value: <span class="keyword">new</span> <span class="built_in">Map</span>(),</span><br><span class="line">    &#125;));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将原型方法上的属性绑定到Logger实例上</span></span><br><span class="line">    <span class="keyword">const</span> keys = <span class="built_in">Object</span>.keys(Logger.prototype);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">let</span> k <span class="keyword">in</span> keys)&#123;</span><br><span class="line">        <span class="keyword">this</span>[keys[k]] = <span class="keyword">this</span>[keys[k]].bind(<span class="keyword">this</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//定义原型Logger的log方法</span></span><br><span class="line">Logger.prototype.log = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="keyword">this</span>._stdout.write(util.format.apply(<span class="keyword">this</span>, <span class="built_in">arguments</span>) + <span class="string">'\n'</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Logger.prototype.info = Logger.prototype.log;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 定义原型Logger的warn方法</span></span><br><span class="line">Logger.prototype.warn = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="keyword">this</span>._stderr.write(util.format.apply(<span class="keyword">this</span>, <span class="built_in">arguments</span>) + <span class="string">`\n`</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Logger.prototype.error = Logger.prototype.warn;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 返回当前调用堆栈信息</span></span><br><span class="line">Logger.prototype.trace = <span class="function"><span class="keyword">function</span> <span class="title">trace</span>(<span class="params">...args</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">const</span> err = &#123;</span><br><span class="line">        name: <span class="string">'Trace'</span>,</span><br><span class="line">        message: util.format.apply(<span class="literal">null</span>, args)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 源自V8引擎的Stack Trace API https://github.com/v8/v8/wiki/Stack-Trace-API</span></span><br><span class="line">    <span class="built_in">Error</span>.captureStackTrace(err, trace);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.error(err.stack);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 清除控制台信息</span></span><br><span class="line">Logger.prototype.clear = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 如果stdout输出是一个控制台，进行clear 否则不进行处理</span></span><br><span class="line">    <span class="keyword">if</span>(<span class="keyword">this</span>._stdout.isTTY)&#123;</span><br><span class="line">        <span class="keyword">const</span> &#123; cursorTo, clearScreenDown &#125; = <span class="built_in">require</span>(<span class="string">'readline'</span>);</span><br><span class="line">        cursorTo(<span class="keyword">this</span>._stdout, <span class="number">0</span>, <span class="number">0</span>); <span class="comment">// 移动光标到给定的 TTY stream 中指定的位置。</span></span><br><span class="line">        clearScreenDown(<span class="keyword">this</span>._stdout); <span class="comment">// 方法会从光标的当前位置向下清除给定的 TTY 流</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//直接输出某个对象</span></span><br><span class="line">Logger.prototype.dir = <span class="function"><span class="keyword">function</span>(<span class="params">object, options</span>)</span>&#123;</span><br><span class="line">    options = <span class="built_in">Object</span>.assign(&#123; <span class="attr">customInspect</span>: <span class="literal">false</span> &#125;, options);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * util.inspect(object,[showHidden],[depth],[colors])是一个将任意对象转换为字符串的方法，通常用于调试和错误的输出。</span></span><br><span class="line"><span class="comment">     * showhidden - 是一个可选参数，如果值为true，将会输出更多隐藏信息。</span></span><br><span class="line"><span class="comment">     * depth - 表示最大递归的层数。如果对象很复杂，可以指定层数控制输出信息的多少。</span></span><br><span class="line"><span class="comment">     * 如果不指定depth,默认会递归3层，指定为null表示不限递归层数完整遍历对象。</span></span><br><span class="line"><span class="comment">     * 如果color = true，输出格式将会以ansi颜色编码，通常用于在终端显示更漂亮的效果。</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">this</span>._stdout.write(util.inspect(object, options) + <span class="string">'\n'</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 计时器开始时间</span></span><br><span class="line">Logger.prototype.time = <span class="function"><span class="keyword">function</span>(<span class="params">label</span>)</span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// process.hrtime()方法返回当前时间以[seconds, nanoseconds] tuple Array表示的高精度解析值， nanoseconds是当前时间无法使用秒的精度表示的剩余部分。</span></span><br><span class="line">    <span class="keyword">this</span>._times.set(label, process.hrtime())</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 计时器结束时间</span></span><br><span class="line">Logger.prototype.timeEnd = <span class="function"><span class="keyword">function</span>(<span class="params">label</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">const</span> time = <span class="keyword">this</span>._times.get(label);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!time) &#123;</span><br><span class="line">        process.emitWarning(<span class="string">`No such label '<span class="subst">$&#123;label&#125;</span>' for console.timeEnd()`</span>);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> duration = process.hrtime(time);</span><br><span class="line">    <span class="keyword">const</span> ms = duration[<span class="number">0</span>] * <span class="number">1000</span> + duration[<span class="number">1</span>] / <span class="number">1e6</span>; <span class="comment">// 1e6 = 1000000.0 1e6表示1*10^6</span></span><br><span class="line">    <span class="keyword">this</span>.log(<span class="string">'%s: %sms'</span>, label, ms.toFixed(<span class="number">3</span>));</span><br><span class="line">    <span class="keyword">this</span>._times.delete(label);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">module</span>.exports = <span class="keyword">new</span> Logger(process.stdout, process.stderr);</span><br><span class="line"></span><br><span class="line"><span class="built_in">module</span>.exports.Logger = Logger;</span><br></pre></td></tr></table></figure>
-<h2 id="使用说明"><a href="#使用说明" class="headerlink" title="使用说明"></a>使用说明</h2><h4 id="基础例子"><a href="#基础例子" class="headerlink" title="基础例子"></a>基础例子</h4><p>无特殊说明，日志都是默认打印到控制台</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> logger = reuqire(<span class="string">'logger'</span>);</span><br><span class="line"></span><br><span class="line">logger.log(<span class="string">'hello world'</span>)   <span class="comment">// 普通日志打印</span></span><br><span class="line">logger.info(<span class="string">'hello world'</span>)  <span class="comment">// 等同于logger.log</span></span><br><span class="line">logger.error(<span class="string">'hello world'</span>) <span class="comment">// 错误日志打印</span></span><br><span class="line">logger.warn(<span class="string">'hello world'</span>)  <span class="comment">// 等同于logger.error</span></span><br><span class="line">logger.clear()              <span class="comment">// 清除控制台信息</span></span><br></pre></td></tr></table></figure>
-<p>将调试信息打印到本地指定文件，这里要注意版本问题，以下代码示例在nodev10.x以下版本可以，具体原因参考 <a href="https://github.com/nodejs/node/issues/21366" target="_blank" rel="noopener">TypeError: Console expects a writable stream instance</a></p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> fs = <span class="built_in">require</span>(<span class="string">'fs'</span>);</span><br><span class="line"><span class="keyword">const</span> output = fs.createWriteStream(<span class="string">'./stdout.txt'</span>);</span><br><span class="line"><span class="keyword">const</span> errorOutput = fs.createWriteStream(<span class="string">'./stderr.txt'</span>);</span><br><span class="line"><span class="keyword">const</span> &#123; Logger &#125; = <span class="built_in">require</span>(<span class="string">'./logger'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> logger = Logger(output, errorOutput);</span><br><span class="line"></span><br><span class="line">logger.info(<span class="string">'hello world!'</span>); <span class="comment">// 内容输出到stdout.txt文件</span></span><br><span class="line">logger.error(<span class="string">'错误日志记录'</span>); <span class="comment">// 内容输出到stderr.txt文件</span></span><br></pre></td></tr></table></figure>
-<h4 id="trace打印错误堆栈"><a href="#trace打印错误堆栈" class="headerlink" title="trace打印错误堆栈"></a>trace打印错误堆栈</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">logger.trace(<span class="string">'测试错误'</span>);</span><br></pre></td></tr></table></figure>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Trace: 测试错误</span><br><span class="line">    at Object.&lt;anonymous&gt; (/Users/qufei/Documents/mycode/Summarize/test/console-test.js:7:8)</span><br><span class="line">    at Module._compile (module.js:624:30)</span><br><span class="line">    at Object.Module._extensions..js (module.js:635:10)</span><br><span class="line">    at Module.load (module.js:545:32)</span><br><span class="line">    at tryModuleLoad (module.js:508:12)</span><br><span class="line">    at Function.Module._load (module.js:500:3)</span><br><span class="line">    at Function.Module.runMain (module.js:665:10)</span><br><span class="line">    at startup (bootstrap_node.js:201:16)</span><br><span class="line">    at bootstrap_node.js:626:3</span><br></pre></td></tr></table></figure>
-<h4 id="dir显示一个对象的所有属性和方法"><a href="#dir显示一个对象的所有属性和方法" class="headerlink" title="dir显示一个对象的所有属性和方法"></a>dir显示一个对象的所有属性和方法</h4><p>depth - 表示最大递归的层数。如果对象很复杂，可以指定层数控制输出信息的多少。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> family = &#123;</span><br><span class="line">    name: <span class="string">'Jack'</span>,</span><br><span class="line">    brother: &#123;</span><br><span class="line">        hobby: [<span class="string">'篮球'</span>, <span class="string">'足球'</span>]</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">logger.dir(family, &#123;<span class="attr">depth</span>: <span class="number">3</span>&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// &#123; name: 'Jack', brother: &#123; hobby: [ '篮球', '足球' ] &#125; &#125;</span></span><br></pre></td></tr></table></figure>
-<h4 id="time和timeEnd计算程序执行消耗时间"><a href="#time和timeEnd计算程序执行消耗时间" class="headerlink" title="time和timeEnd计算程序执行消耗时间"></a>time和timeEnd计算程序执行消耗时间</h4><p>logger.time 和 logger.timeEnd用来测量一个javascript脚本程序执行消耗的时间，单位是毫秒</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 启动计时器</span></span><br><span class="line">logger.time(<span class="string">'计时器'</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 中间写一些测试代码</span></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">let</span> i=<span class="number">0</span>; i &lt; <span class="number">1000000000</span>; i++)&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 停止计时器</span></span><br><span class="line">logger.timeEnd(<span class="string">'计时器'</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 计时器: 718.034ms</span></span><br></pre></td></tr></table></figure>
-<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="https://github.com/Q-Angelo/summarize/blob/master/node/console.md" target="_blank" rel="noopener">https://github.com/Q-Angelo/summarize/blob/master/node/console.md</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2018-01-25T14:16:53.000Z"><a href="/2018/01/25/Node.js_事件/事件循环机制-实例/">2018-01-25</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2018/01/25/Node.js_事件/事件循环机制-实例/">事件循环机制-实例</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>在node服务器端运行以下代码会出现什么输出结果？</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">setTimeout(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'setTimeout'</span>);</span><br><span class="line">    process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'nextTick1'</span>);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'main1'</span>);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">say</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'hello! '</span>);</span><br><span class="line">    process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'nextTick2'</span>);</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function"><span class="keyword">function</span>(<span class="params">resolve</span>)</span>&#123;</span><br><span class="line">    process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'nextTick3'</span>);</span><br><span class="line">    &#125;)</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'promise 1'</span>);</span><br><span class="line">    resolve(<span class="string">'promise then'</span>)</span><br><span class="line">&#125;).then(<span class="function"><span class="keyword">function</span>(<span class="params">data</span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(data);</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'main2'</span>);</span><br><span class="line"></span><br><span class="line">process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'nextTick4'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">say();</span><br></pre></td></tr></table></figure>
-<p>下面就结合这个原理图，根据问题，来一步一步分析：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/micro_macro_180703" alt=""></p>
-<p>也可参考下图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/runtime_180703.png" alt=""></p>
-<p>我们经常会听到引擎和runtime，它们的区别是什么呢？</p>
-<ul>
-<li>引擎：解释并编译代码，让它变成能交给机器运行的代码（runnable commands）。</li>
-<li>runtime：就是运行环境，它提供一些对外接口供Js调用，以跟外界打交道。不同的runtime，会提供不同的接口，比如，在 Node.js 环境中，我们可以通过 <code>require</code> 来引入模块；而在浏览器中，我们有 <code>window</code>、 DOM。</li>
-</ul>
-<p>Js引擎是单线程的，如上图中，它负责维护任务队列，并通过 Event Loop 的机制，按顺序把任务放入栈中执行。而图中的异步处理模块，就是 runtime 提供的，拥有和Js引擎互不干扰的线程。</p>
-<h3 id="任务队列"><a href="#任务队列" class="headerlink" title="任务队列"></a>任务队列</h3><p>Js 中，有两类任务队列：宏任务队列（macro tasks）和微任务队列（micro tasks）。宏任务队列可以有多个，微任务队列只有<strong>一个</strong>。那么什么任务，会分到哪个队列呢？</p>
-<ul>
-<li>宏任务：script（全局任务）, setTimeout, setInterval, setImmediate, I/O, UI rendering.</li>
-<li>微任务：process.nextTick, Promise, Object.observer, MutationObserver.</li>
-</ul>
-<p>我们上面讲到，当stack空的时候，就会从任务队列中，取任务来执行。共分3步：</p>
-<ol>
-<li>取一个宏任务来执行。执行完毕后，下一步。</li>
-<li>取一个微任务来执行，执行完毕后，再取一个微任务来执行。直到微任务队列为空，执行下一步。</li>
-</ol>
-<p>从执行步骤来看，我们发现微任务，受到了特殊待遇！我们代码开始执行都是从script（全局任务）开始，所以，一旦我们的全局任务（属于宏任务）执行完，就马上执行完整个微任务队列。</p>
-<p>我们代码的开始执行都是从script（全局任务）开始，这个全局任务属于宏任务；代码由上向下执行；</p>
-<p>第1行，遇到了一个timer异步任务，属于宏任务，放入宏任务队列；</p>
-<p>第8行，遇到log,内部没有其它函数，直接输出main1;</p>
-<p>第10行，函数的定义，不执行；</p>
-<p>第17行，遇到new Promise()，进入回调函数内部:<br>1） 遇到promise.nextTick,属于微任务，放入微任务队列nextTick3;<br>2） 遇到log,内部没有其它函数，直接输出promise 1;<br>3） 遇到resolve回调，属于微任务，放入微任务队列promise then;</p>
-<p>第27行，遇到log,内部没有其它函数，直接输出main2;</p>
-<p>第29行，遇到promise.nextTick,属于微任务，放入微任务队列nextTick4;</p>
-<p>第33行，执行say()：<br>1）遇到log,内部没有其它函数，直接输出hello;<br>2）遇到promise.nextTick,属于微任务，放入微任务队列nextTick2;<br>到此为止，我们已经做了如下事情：<br>1）宏任务队列中放入了一个timer函数；<br>2）输出了main1，promise 1，main2，hello1；<br>3）微任务队列中已经放入了promise then,nextTick3,nextTick4,nextTick2;</p>
-<p>此时，我们的全局任务已执行完成了，就要马上执行完整个微任务队列。但是在微任务中，process.nextTick 是一个特殊的任务，它会被直接插入到微任务的队首（当然了，多个process.nextTick 之间也是先入先出的），优先级最高。所以，依次输出nextTick3,nextTick4,nextTick2,promise then</p>
-<p>这时，执行栈为空了，可是别忘了，我们的宏任务队列还放者一个timer函数待执行，进入timer函数：<br>1）遇到log,内部没有其它函数，直接输出setTimeout;<br>2）遇到promise.nextTick,属于微任务，放入微任务队列nextTick1;</p>
-<p>这个timer宏任务也执行完了，就马上执行完整个微任务队列，微任务队列目前只有一个任务，直接输出nextTick1；</p>
-<p>这时，执行栈又为空了，还有其它任务吗? 没有了，大功告成；</p>
-<p>以上的这种当函数执行栈为空，从任务队列中去一个任务来执行。再次为空，再取一个任务来执行，如此循环，这就是Event Loop，事件循环机制；</p>
-<p>参考：</p>
-<p><a href="https://juejin.im/post/5a63470bf265da3e2c383068" target="_blank" rel="noopener">https://juejin.im/post/5a63470bf265da3e2c383068</a></p>
-<p><a href="https://segmentfault.com/a/1190000011198232" target="_blank" rel="noopener">https://segmentfault.com/a/1190000011198232</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2017-12-05T14:16:53.000Z"><a href="/2017/12/05/Node.js_事件/理解事件循环机制/">2017-12-05</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/12/05/Node.js_事件/理解事件循环机制/">理解事件循环机制</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><blockquote>
-<p>Node.js 是基于V8引擎的javascript运行环境. Node.js具有<code>事件驱动</code>, <code>非阻塞I/O</code>等特点. 结合Node API, Node.js 具有网络编程, 文件系统等服务端的功能, Node.js用<code>libuv</code>库进行异步事件处理.</p>
-</blockquote>
-<h3 id="线程"><a href="#线程" class="headerlink" title="线程"></a>线程</h3><blockquote>
-<p>Node.js的单线程含义, 实际上说的是执行同步代码的主线程. 一个Node程序的启动, 不止是分配了一个线程，而是我们只能在一个线程执行代码. 当出现I/O资源调用, TCP连接等外部资源申请的时候, 不会阻塞主线程, 而是委托给I/O线程进行处理,并且进入等待队列. 一旦主线程执行完成，将会消费事件队列(Event Queue). 因为只有一个主线程, 只占用CPU内核处理逻辑计算, 因此不适合在CPU密集型进行使用.</p>
-</blockquote>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/180701NodeSystem.png" alt=""></p>
-<p><strong>注意，上图的EVENT_QUEUE 给人看起来是只有一个队列, 根据Node.js官方介绍, EventLoop有6个阶段, 同时每个阶段都有对应的一个先进先出的回调队列.</strong></p>
-<h3 id="什么是事件循环-EventLoop"><a href="#什么是事件循环-EventLoop" class="headerlink" title="什么是事件循环(EventLoop) ?"></a>什么是事件循环(EventLoop) ?</h3><blockquote>
-<p>In computer science, the event loop, message dispatcher, message loop, message pump, or run loop is a programming construct that waits for and dispatches events or messages in a program. – <a href="https://en.wikipedia.org/wiki/Event_loop" target="_blank" rel="noopener">from wiki</a></p>
-</blockquote>
-<p><strong>大概含义: EventLoop 是一种常用的机制，通过对内部或外部的事件提供者发出请求, 如文件读写, 网络连接 等异步操作, 完成后调用事件处理程序. 整个过程都是异步阶段</strong></p>
-<h3 id="Node-js的事件循环机制"><a href="#Node-js的事件循环机制" class="headerlink" title="Node.js的事件循环机制"></a>Node.js的事件循环机制</h3><blockquote>
-<p>When Node.js starts, it initializes the event loop, processes the provided input script (or drops into the REPL, which is not covered in this document) which may make async API calls, schedule timers, or call process.nextTick(), then begins processing the event loop. – from <a href="https://github.com/nodejs/node/blob/v6.x/doc/topics/event-loop-timers-and-nexttick.md" target="_blank" rel="noopener">node.js doc</a></p>
-</blockquote>
-<p><strong>大致含义: 当Node.js 启动, 就会初始化一个 event loop, 处理脚本时, 可能会发生异步API行为调用, 使用定时器任务或者nexTick, 处理完成后进入事件循环处理过程</strong></p>
-<h3 id="事件循环阶段"><a href="#事件循环阶段" class="headerlink" title="事件循环阶段"></a>事件循环阶段</h3><p><a href="https://en.wikipedia.org/wiki/Node.js" target="_blank" rel="noopener">Node.js</a>采用V8作为js的解析引擎，而I/O处理方面使用了自己设计的libuv，libuv是一个基于事件驱动的跨平台抽象层，封装了不同操作系统一些底层特性，对外提供统一的API，事件循环机制也是它里面的实现<a href="https://github.com/libuv/libuv/blob/v1.x/src/unix/core.c#L348-L397" target="_blank" rel="noopener">核心源码参考</a>：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">int uv_run(uv_loop_t* loop, uv_run_mode mode) &#123;</span><br><span class="line">  int timeout;</span><br><span class="line">  int r;</span><br><span class="line">  int ran_pending;</span><br><span class="line"></span><br><span class="line">  r = uv__loop_alive(loop);</span><br><span class="line">  if (!r)</span><br><span class="line">    uv__update_time(loop);</span><br><span class="line"></span><br><span class="line">  while (r != 0 &amp;&amp; loop-&gt;stop_flag == 0) &#123;</span><br><span class="line">    uv__update_time(loop);</span><br><span class="line">    // timers阶段</span><br><span class="line">    uv__run_timers(loop);</span><br><span class="line">    // I/O callbacks阶段</span><br><span class="line">    ran_pending = uv__run_pending(loop);</span><br><span class="line">    // idle阶段</span><br><span class="line">    uv__run_idle(loop);</span><br><span class="line">    // prepare阶段</span><br><span class="line">    uv__run_prepare(loop);</span><br><span class="line"></span><br><span class="line">    timeout = 0;</span><br><span class="line">    if ((mode == UV_RUN_ONCE &amp;&amp; !ran_pending) || mode == UV_RUN_DEFAULT)</span><br><span class="line">      timeout = uv_backend_timeout(loop);</span><br><span class="line">    // poll阶段</span><br><span class="line">    uv__io_poll(loop, timeout);</span><br><span class="line">    // check阶段</span><br><span class="line">    uv__run_check(loop);</span><br><span class="line">    // close callbacks阶段</span><br><span class="line">    uv__run_closing_handles(loop);</span><br><span class="line"></span><br><span class="line">    if (mode == UV_RUN_ONCE) &#123;</span><br><span class="line">      uv__update_time(loop);</span><br><span class="line">      uv__run_timers(loop);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    r = uv__loop_alive(loop);</span><br><span class="line">    if (mode == UV_RUN_ONCE || mode == UV_RUN_NOWAIT)</span><br><span class="line">      break;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  if (loop-&gt;stop_flag != 0)</span><br><span class="line">    loop-&gt;stop_flag = 0;</span><br><span class="line"></span><br><span class="line">  return r;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>根据<a href="https://nodejs.org/en/docs/guides/event-loop-timers-and-nexttick/" target="_blank" rel="noopener">Node.js</a>官方介绍，每次事件循环都包含了6个阶段，对应到 libuv 源码中的实现，如下图所示</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/node-libuv_180703.png" alt=""></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">   ┌───────────────────────┐</span><br><span class="line">┌─&gt;│        timers         │</span><br><span class="line">│  └──────────┬────────────┘</span><br><span class="line">│  ┌──────────┴────────────┐</span><br><span class="line">│  │     I/O callbacks     │</span><br><span class="line">│  └──────────┬────────────┘</span><br><span class="line">│  ┌──────────┴────────────┐</span><br><span class="line">│  │     idle, prepare     │</span><br><span class="line">│  └──────────┬────────────┘      ┌───────────────┐</span><br><span class="line">│  ┌──────────┴────────────┐      │   incoming:   │</span><br><span class="line">│  │         poll          │&lt;─────┤  connections, │</span><br><span class="line">│  └──────────┬────────────┘      │   data, etc.  │</span><br><span class="line">│  ┌──────────┴────────────┐      └───────────────┘</span><br><span class="line">│  │        check          │</span><br><span class="line">│  └──────────┬────────────┘</span><br><span class="line">│  ┌──────────┴────────────┐</span><br><span class="line">└──┤    close callbacks    │</span><br><span class="line">   └───────────────────────┘</span><br></pre></td></tr></table></figure>
-<p><strong>每一个阶段都有一个FIFO的callbacks队列, 每个阶段都有自己的事件处理方式. 当事件循环进入某个阶段时, 将会在该阶段内执行回调，直到队列耗尽或者回调的最大数量已执行, 那么将进入下一个处理阶段.</strong></p>
-<ul>
-<li><strong>timers</strong> 阶段: 这个阶段执行setTimeout(callback) and setInterval(callback)预定的callback;</li>
-<li><strong>I/O callbacks</strong> 阶段: 执行除了close事件的callbacks、被timers(定时器，setTimeout、setInterval等)设定的callbacks、setImmediate()设定的callbacks之外的callbacks; (目前这个阶段)</li>
-<li><strong>idle, prepare</strong> 阶段: 仅node内部使用;</li>
-<li><strong>poll</strong> 阶段: 获取新的I/O事件, 适当的条件下node将阻塞在这里;</li>
-<li><strong>check</strong> 阶段: 执行setImmediate() 设定的callbacks;</li>
-<li><strong>close callbacks</strong> 阶段: 比如socket.on(‘close’, callback)的callback会在这个阶段执行.</li>
-</ul>
-<h4 id="timers阶段"><a href="#timers阶段" class="headerlink" title="timers阶段"></a><strong>timers阶段</strong></h4><p>一个timer指定一个下限时间而不是准确时间，在达到这个下限时间后执行回调。在指定时间过后，timers会尽可能早地执行回调，但系统调度或者其它回调的执行可能会延迟它们。</p>
-<p>注意：技术上来说，poll 阶段控制 timers 什么时候执行。</p>
-<p>注意：这个下限时间有个范围：[1, 2147483647]，如果设定的时间不在这个范围，将被设置为1。</p>
-<h4 id="I-O-callbacks阶段"><a href="#I-O-callbacks阶段" class="headerlink" title="I/O callbacks阶段"></a><strong>I/O callbacks阶段</strong></h4><p>这个阶段执行一些系统操作的回调。比如TCP错误，如一个TCP socket在想要连接时收到ECONNREFUSED,<br>类unix系统会等待以报告错误，这就会放到 I/O callbacks 阶段的队列执行.<br>名字会让人误解为执行I/O回调处理程序, 实际上I/O回调会由poll阶段处理.</p>
-<h4 id="poll阶段"><a href="#poll阶段" class="headerlink" title="poll阶段"></a><strong>poll阶段</strong></h4><p>poll 阶段有两个主要功能：</p>
-<p>执行下限时间已经达到的timers的回调，然后<br>处理 poll 队列里的事件。<br>当event loop进入 poll 阶段，并且 没有设定的timers（there are no timers scheduled），会发生下面两件事之一：</p>
-<p>如果 poll 队列不空，event loop会遍历队列并同步执行回调，直到队列清空或执行的回调数到达系统上限；</p>
-<p>如果 poll 队列为空，则发生以下两件事之一：</p>
-<ol>
-<li>如果代码已经被setImmediate()设定了回调, event loop将结束 poll 阶段进入 check 阶段来执行 check 队列（里的回调）。</li>
-<li>如果代码没有被setImmediate()设定回调，event loop将阻塞在该阶段等待回调被加入 poll 队列，并立即执行。</li>
-</ol>
-<p>但是，当event loop进入 poll 阶段，并且 有设定的timers，一旦 poll 队列为空（poll 阶段空闲状态）：</p>
-<ol>
-<li>event loop将检查timers,如果有1个或多个timers的下限时间已经到达，event loop将绕回 <strong>timers</strong> 阶段，并执行 <strong>timer</strong>队列。</li>
-</ol>
-<h3 id="check阶段"><a href="#check阶段" class="headerlink" title="check阶段"></a><strong>check阶段</strong></h3><p>这个阶段允许在 poll 阶段结束后立即执行回调。如果 poll 阶段空闲，并且有被setImmediate()设定的回调，event loop会转到 check 阶段而不是继续等待。</p>
-<p>setImmediate()实际上是一个特殊的timer，跑在event loop中一个独立的阶段。它使用libuv的API<br>来设定在 poll 阶段结束后立即执行回调。</p>
-<p>通常上来讲，随着代码执行，event loop终将进入 poll 阶段，在这个阶段等待 incoming connection, request 等等。但是，只要有被setImmediate()设定了回调，一旦 poll 阶段空闲，那么程序将结束 poll 阶段并进入 check 阶段，而不是继续等待 poll 事件们 （poll events）。</p>
-<h3 id="close-callbacks-阶段"><a href="#close-callbacks-阶段" class="headerlink" title="close callbacks 阶段"></a><strong>close callbacks 阶段</strong></h3><p>如果一个 socket 或 handle 被突然关掉（比如 socket.destroy()），close事件将在这个阶段被触发，否则将通过process.nextTick()触发</p>
-<p><strong>简单的 EventLoop</strong></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">const fs = require(&apos;fs&apos;);</span><br><span class="line">let counts = 0;</span><br><span class="line"></span><br><span class="line">function wait (mstime) &#123;</span><br><span class="line">  let date = Date.now();</span><br><span class="line">  while (Date.now() - date &lt; mstime) &#123;</span><br><span class="line">    // do nothing</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">function asyncOperation (callback) &#123;</span><br><span class="line">  fs.readFile(__dirname + &apos;/&apos; + __filename, callback);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">const lastTime = Date.now();</span><br><span class="line"></span><br><span class="line">setTimeout(() =&gt; &#123;</span><br><span class="line">  console.log(&apos;timers&apos;, Date.now() - lastTime + &apos;ms&apos;);</span><br><span class="line">&#125;, 0);</span><br><span class="line"></span><br><span class="line">process.nextTick(() =&gt; &#123;</span><br><span class="line">  // 进入event loop</span><br><span class="line">  // timers阶段之前执行</span><br><span class="line">  wait(20);</span><br><span class="line">  asyncOperation(() =&gt; &#123;</span><br><span class="line">    console.log(&apos;poll&apos;);</span><br><span class="line">  &#125;);  </span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * result:</span><br><span class="line"> * timers 21ms</span><br><span class="line"> * poll</span><br><span class="line"> */</span><br></pre></td></tr></table></figure>
-<p>为了让<code>setTimeout</code>优先于<code>fs.readFile</code> 回调, 执行了process.nextTick, 表示在进入 timers阶段前, 等待20ms后执行文件读取.</p>
-<h3 id="nextTick-与-setImmediate"><a href="#nextTick-与-setImmediate" class="headerlink" title="nextTick 与 setImmediate"></a>nextTick 与 setImmediate</h3><p>process.nextTick 不属于事件循环的任何一个阶段，它属于该阶段与下阶段之间的过渡, 即本阶段执行结束, 进入下一个阶段前, 所要执行的回调。有给人一种插队的感觉.</p>
-<p>setImmediate的回调处于check阶段, 当poll阶段的队列为空, 且check阶段的事件队列存在的时候，切换到check阶段执行.</p>
-<p><strong>nextTick 递归的危害</strong><br>由于nextTick具有插队的机制，nextTick的递归会让事件循环机制无法进入下一个阶段. 导致I/O处理完成或者定时任务超时后仍然无法执行, 导致了其它事件处理程序处于饥饿状态. 为了防止递归产生的问题, Node.js 提供了一个 process.maxTickDepth (默认 1000)。</p>
-<p>递归nextTick</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">const fs = require(&apos;fs&apos;);</span><br><span class="line">let counts = 0;</span><br><span class="line"></span><br><span class="line">function wait (mstime) &#123;</span><br><span class="line">  let date = Date.now();</span><br><span class="line">  while (Date.now() - date &lt; mstime) &#123;</span><br><span class="line">    // do nothing</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">function nextTick () &#123;</span><br><span class="line">  process.nextTick(() =&gt; &#123;</span><br><span class="line">    wait(20);</span><br><span class="line">    nextTick();</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">const lastTime = Date.now();</span><br><span class="line"></span><br><span class="line">setTimeout(() =&gt; &#123;</span><br><span class="line">  console.log(&apos;timers&apos;, Date.now() - lastTime + &apos;ms&apos;);</span><br><span class="line">&#125;, 0);</span><br><span class="line"></span><br><span class="line">nextTick();</span><br></pre></td></tr></table></figure>
-<p>此时永远无法跳到timer阶段, 因为在进入timers阶段前有不断的nextTick插入执行. 除非执行了1000次到了执行上限.</p>
-<p><strong>setImmediate</strong><br>如果在一个I/O周期内进行调度，setImmediate（）将始终在任何定时器之前执行.</p>
-<h3 id="setTimeout-与-setImmediate"><a href="#setTimeout-与-setImmediate" class="headerlink" title="setTimeout 与 setImmediate"></a>setTimeout 与 setImmediate</h3><ul>
-<li>setImmediate()被设计在 poll 阶段结束后立即执行回调；</li>
-<li>setTimeout()被设计在指定下限时间到达后执行回调;</li>
-</ul>
-<p>无 I/O 处理情况下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">setTimeout(function timeout () &#123;</span><br><span class="line">  console.log(&apos;timeout&apos;);</span><br><span class="line">&#125;,0);</span><br><span class="line"></span><br><span class="line">setImmediate(function immediate () &#123;</span><br><span class="line">  console.log(&apos;immediate&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p><strong>输出结果是 不确定 的！</strong><br>setTimeout(fn, 0) 具有几毫秒的不确定性. 无法保证进入timers阶段, 定时器能够立即执行处理程序.</p>
-<p>在I/O事件处理程序下</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">var fs = require(&apos;fs&apos;)</span><br><span class="line"></span><br><span class="line">fs.readFile(__filename, () =&gt; &#123;</span><br><span class="line">  setTimeout(() =&gt; &#123;</span><br><span class="line">    console.log(&apos;timeout&apos;)</span><br><span class="line">  &#125;, 0)</span><br><span class="line">  setImmediate(() =&gt; &#123;</span><br><span class="line">    console.log(&apos;immediate&apos;)</span><br><span class="line">  &#125;)</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
-<p>此时 <code>setImmediate</code> 优先于 <code>setTimeout</code> 执行，因为 poll阶段执行完成后 进入 check阶段. timers阶段处于下一个事件循环阶段了.</p>
-<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><p><a href="https://segmentfault.com/a/1190000012258592" target="_blank" rel="noopener">https://segmentfault.com/a/1190000012258592</a><br><a href="http://lynnelv.github.io/js-event-loop-nodejs" target="_blank" rel="noopener">http://lynnelv.github.io/js-event-loop-nodejs</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -992,13 +1081,13 @@
   
     <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
   
-    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>2</small></li>
+    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>4</small></li>
   
     <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
   
     <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
   
-    <li><a href="/tags/MySQL实战/">MySQL实战</a><small>3</small></li>
+    <li><a href="/tags/MySQL实战/">MySQL实战</a><small>4</small></li>
   
     <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>4</small></li>
   

@@ -1,0 +1,295 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>01 | 如何学习Linux性能优化 | shouliang&#39;s blog</title>
+  <meta name="author" content="shouliang">
+  
+  <meta name="description" content="Node">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="01 | 如何学习Linux性能优化"/>
+  <meta property="og:site_name" content="shouliang&#39;s blog"/>
+
+  
+    <meta property="og:image" content=""/>
+  
+
+  <link href="/favicon.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="shouliang&#39;s blog" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+
+</head>
+
+
+<body>
+  <header id="header" class="inner"><div class="alignleft">
+  <h1><a href="/">shouliang&#39;s blog</a></h1>
+  <h2><a href="/"></a></h2>
+</div>
+<nav id="main-nav" class="alignright">
+  <ul>
+    
+      <li><a href="/">首页</a></li>
+    
+      <li><a href="/archives">归档</a></li>
+    
+      <li><a href="/about">关于</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+<div class="clearfix"></div></header>
+  <div id="content" class="inner">
+    <div id="main-col" class="alignleft"><div id="wrapper"><article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2018-11-21T06:45:23.000Z"><a href="/2018/11/21/Linux性能优化/01 | 如何学习Linux性能优化/">2018-11-21</a></time>
+      
+      
+  
+    <h1 class="title">01 | 如何学习Linux性能优化</h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>你是否也曾跟我一样，看了很多书、学了很多 Linux 性能工具，但在面对 Linux 性能问题时，还是束手无策？实际上，性能分析和优化始终是大多数软件工程师的一个痛点。但是，面对难题，我们真的就无解了吗？</p>
+<p>固然，性能问题的复杂性增加了学习难度，但这并不能成为我们进阶路上的“拦路虎”。在我看来，大多数人对性能问题“投降”，原因可能只有两个。</p>
+<p>一个是你没找到有效的方法学原理，一听到“系统”、“底层”这些词就发怵，觉得东西太难，自己一定学不会，自然也就无法深入学下去，从而不能建立起性能的全局观。</p>
+<p>再一个就是，你看到性能问题的根源太复杂，既不懂怎么去分析，也不能抽丝剥茧找到瓶颈。</p>
+<p>你可能会想，反正程序出了问题，上网查就是了，用别人的方法，囫囵吞枣地多试几次，有可能就解决了。于是，你懒得深究这些方法为啥有效，更不知道为什么，很多方法在别人的环境有效，到你这儿就不行了。</p>
+<p>所以，相同的错误重复在犯，相同的状况也是重复出现。</p>
+<p>其实，性能问题并没有你想像得那么难，<strong>只要你理解了应用程序和系统的少数几个基本原理，再进行大量的实战练习，建立起整体性能的全局观</strong>，大多数性能问题的优化就会水到渠成。</p>
+<p>我见过很多工程师，在分析应用程序所使用的第三方组件的性能时，并不熟悉这些组件所用的编程语言，却依然可以分析出线上问题的根源，并能通过一些方法进行优化，比如修改应用程序对它们的调用逻辑，或者调整组件的配置选项等。</p>
+<p>还是那句话，<strong>你不需要了解每个组件的所有实现细节</strong>，只要能理解它们最基本的工作原理和协作方式，你也可以做到。</p>
+<h2 id="性能指标是什么？"><a href="#性能指标是什么？" class="headerlink" title="性能指标是什么？"></a>性能指标是什么？</h2><p>学习性能优化的第一步，一定是了解“性能指标”这个概念。</p>
+<p>当看到性能指标时，你会首先想到什么呢？我相信“<strong>高并发</strong>”和“<strong>响应快</strong>”一定是最先出现在你脑海里的两个词，而它们也正对应着性能优化的两个核心指标——“吞吐”和“延时”。这两个指标是<strong>从应用负载的视角</strong>来考察性能，直接影响了产品终端的用户体验。跟它们对应的，是<strong>从系统资源的视角</strong>出发的指标，比如资源使用率、饱和度等。</p>
+<p><img src="https://static001.geekbang.org/resource/image/92/1d/920601da775da08844d231bc2b4c301d.png" alt="img"></p>
+<p>我们知道，随着应用负载的增加，系统资源的使用也会升高，甚至达到极限。而<strong>性能问题的本质</strong>，就是系统资源已经达到瓶颈，但请求的处理却还不够快，无法支撑更多的请求。</p>
+<p>性能分析，其实就是<strong>找出应用或系统的瓶颈，并设法去避免或者缓解它们</strong>，从而更高效地利用系统资源处理更多的请求。这包含了一系列的步骤，比如下面这六个步骤。</p>
+<ul>
+<li>选择指标评估应用程序和系统的性能；</li>
+<li>为应用程序和系统设置性能目标；</li>
+<li>进行性能基准测试；</li>
+<li>性能分析定位瓶颈；</li>
+<li>优化系统和应用程序；</li>
+<li>性能监控和告警。</li>
+</ul>
+<p>了解了这些性能相关的基本指标和核心步骤后，该怎么学呢？接下来，我来说说要学好 Linux 性能优化的几个重要问题。</p>
+<h2 id="学这个专栏需要什么基础"><a href="#学这个专栏需要什么基础" class="headerlink" title="学这个专栏需要什么基础"></a>学这个专栏需要什么基础</h2><p>首先你要明白，我们这个专栏的核心是性能的分析和优化，而不是最基本的 Linux 操作系统的使用方法。</p>
+<p>因而，我希望你最好用过 Ubuntu 或其他 Linux 操作系统，然后要具备一些<strong>编程基础</strong>，比如：</p>
+<ul>
+<li>了解 Linux 常用命令的使用方法；</li>
+<li>知道怎么安装和管理软件包；</li>
+<li>知道怎么通过编程语言开发应用程序等。</li>
+</ul>
+<p>这样，在我讲性能时，你就更容易理解性能背后的原理，特别是在结合专栏里的案例实践后，对性能分析能有更直观的体会。</p>
+<p>这个专栏不会像教科书那样，详细教你操作系统、算法原理、网络协议乃至各种编程语言的全部细节，但一些重要的系统原理还是必不可少的。我还会用实际案例一步步教你，贯穿从应用程序到操作系统的各个组件。</p>
+<h2 id="学习的重点是什么？"><a href="#学习的重点是什么？" class="headerlink" title="学习的重点是什么？"></a>学习的重点是什么？</h2><p>想要学习好性能分析和优化，<strong>建立整体系统性能的全局观</strong>是最核心的话题。因而，</p>
+<ul>
+<li>理解最基本的几个系统知识原理；</li>
+<li>掌握必要的性能工具；</li>
+<li>通过实际的场景演练，贯穿不同的组件。</li>
+</ul>
+<p>这三点，就是我们学习的重中之重。我会在专栏的每篇文章中，针对不同场景，把这三个方面给你讲清楚，你也一定要花时间和心思来消化它们。</p>
+<p>其实说到性能工具，就不得不提性能领域的大师布伦丹·格雷格（Brendan Gregg）。他不仅是动态追踪工具 DTrace 的作者，还开发了许许多多的性能工具。我相信你一定见过他所描绘的 Linux 性能工具图谱：</p>
+<p><img src="https://static001.geekbang.org/resource/image/9e/7a/9ee6c1c5d88b0468af1a3280865a6b7a.png" alt="img"></p>
+<p>（图片来自<a href="http://www.brendangregg.com/Perf/linux_perf_tools_full.png" target="_blank" rel="noopener">brendangregg.com</a>）</p>
+<p>这个图是 Linux 性能分析最重要的参考资料之一，它告诉你，在 Linux 不同子系统出现性能问题后，应该用什么样的工具来观测和分析。</p>
+<p>比如，当遇到 I/O 性能问题时，可以参考图片最下方的 I/O 子系统，使用 iostat、iotop、blktrace 等工具分析磁盘 I/O 的瓶颈。你可以把这个图保存下来，在需要的时候参考查询。</p>
+<p>另外，我还要特别强调一点，就是<strong>性能工具的选用</strong>。有句话是这么说的，一个正确的选择胜过千百次的努力。虽然夸张了些，但是选用合适的性能工具，确实可以大大简化整个性能优化过程。在什么场景选用什么样的工具、以及怎么学会选择合适工具，都是我想教给你的东西。</p>
+<p>但是切记，<strong>千万不要把性能工具当成学习的全部</strong>。工具只是解决问题的手段，关键在于你的用法。只有真正理解了它们背后的原理，并且结合具体场景，融会贯通系统的不同组件，你才能真正掌握它们。</p>
+<p>最后，为了让你对性能有个全面的认识，我画了一张思维导图，里面涵盖了大部分性能分析和优化都会包含的知识，专栏中也基本都会讲到。你可以保存或者打印下来，每学会一部分就标记出来，记录并把握自己的学习进度。</p>
+<p><img src="https://static001.geekbang.org/resource/image/0f/ba/0faf56cd9521e665f739b03dd04470ba.png" alt="img"></p>
+<h2 id="怎么学更高效？"><a href="#怎么学更高效？" class="headerlink" title="怎么学更高效？"></a>怎么学更高效？</h2><p>前面我给你讲了 Linux 性能优化的学习重点，接下来我再跟你分享一下，我的几个学习技巧。掌握这些技巧，可以让你学得更轻松。</p>
+<p><strong>技巧一：虽然系统的原理很重要，但在刚开始一定不要试图抓住所有的实现细节。</strong></p>
+<p>深陷到系统实现的内部，可能会让你丢掉学习的重点，而且繁杂的实现逻辑，很可能会打退你学习的积极性。所以，我个人观点是一定要适度。</p>
+<p>你可以先学会我给你讲的这些系统工作原理，但不要去深究 Linux 内核是如何做到的，而是要把你的重点放到如何观察和运用这些原理上，比如：</p>
+<ul>
+<li>有哪些指标可以衡量性能？</li>
+<li>使用什么样的性能工具来观察指标？</li>
+<li>导致这些指标变化的因素等。</li>
+</ul>
+<p><strong>技巧二：边学边实践，通过大量的案例演习掌握 Linux 性能的分析和优化。</strong></p>
+<p>只有通过在机器上练习，把我讲的知识和案例自己过一遍，这些东西才能转化成你的。我精心设计这些案例，正是为了让你有更好的学习理解和操作体验。</p>
+<p>所以我强烈推荐你去实际运行、分析这些案例，或者用学到的知识去分析你自己的系统，这样你会有更直观的感受，获得更好的学习效果。</p>
+<p><strong>技巧三：勤思考，多反思，善总结，多问为什么。</strong></p>
+<p>想真正学懂一门知识，最好的方法就是问问题。当你能提出好的问题时，就说明你已经深入了解了它。</p>
+<p>你可以随时在留言区给我留言，写下自己的疑问、思考和总结，和我还有其他的学习者一起讨论切磋。你也可以写下自己经历过的性能问题，记录你的分析步骤和优化思路，我们一起互动探讨。</p>
+<h2 id="学习之前，你的准备"><a href="#学习之前，你的准备" class="headerlink" title="学习之前，你的准备"></a>学习之前，你的准备</h2><p>作为一个包含大量案例实践的课程，我会在每篇文章中，使用一到两台 Ubuntu 18.04 虚拟机，作为案例运行和分析的环境。如果你只是单纯听音频的讲解，却从不动手实践，学习的效果一定会大打折扣。</p>
+<p>所以，你是不是可以准备好一台 Linux 机器，用于课程案例的实践呢？任意的虚拟机或物理机都可以，并不局限于 Ubuntu 系统。</p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+  
+  <div class="tags">
+    <a href="/tags/Linux性能优化/">Linux性能优化</a>
+  </div>
+
+        
+  <div class="addthis addthis_toolbox addthis_default_style">
+    
+      <a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+    
+    
+      <a class="addthis_button_tweet"></a>
+    
+    
+      <a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+    
+    
+      <a class="addthis_button_pinterest_pinit" pi:pinit:layout="horizontal"></a>
+    
+    <a class="addthis_counter addthis_pill_style"></a>
+  </div>
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js"></script>
+
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">留言</h1>
+
+  
+      <div id="fb-root"></div>
+<script>
+  (function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=shouliang0816";
+    fjs.parentNode.insertBefore(js, fjs);
+  }(document, 'script', 'facebook-jssdk'));
+</script>
+
+<div class="fb-comments" data-href="https://shouliang.github.io/2018/11/21/Linux性能优化/01 | 如何学习Linux性能优化/index.html" data-num-posts="5" data-width="840" data-colorscheme="light"></div>
+      
+  
+</section>
+
+</div></div>
+    <aside id="sidebar" class="alignright">
+  <div class="search">
+  <form action="//google.com/search" method="get" accept-charset="utf-8">
+    <input type="search" name="q" results="0" placeholder="搜索">
+    <input type="hidden" name="q" value="site:shouliang.github.io">
+  </form>
+</div>
+
+  
+
+  
+<div class="widget tag">
+  <h3 class="title">标签</h3>
+  <ul class="entry">
+  
+    <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
+  
+    <li><a href="/tags/Docker/">Docker</a><small>3</small></li>
+  
+    <li><a href="/tags/ES6/">ES6</a><small>4</small></li>
+  
+    <li><a href="/tags/Express/">Express</a><small>2</small></li>
+  
+    <li><a href="/tags/Git/">Git</a><small>7</small></li>
+  
+    <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
+  
+    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>4</small></li>
+  
+    <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
+  
+    <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
+  
+    <li><a href="/tags/MySQL实战/">MySQL实战</a><small>4</small></li>
+  
+    <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>4</small></li>
+  
+    <li><a href="/tags/Node-js-事件/">Node.js_事件</a><small>4</small></li>
+  
+    <li><a href="/tags/Node-js-入门/">Node.js_入门</a><small>9</small></li>
+  
+    <li><a href="/tags/Node-js-基础/">Node.js_基础</a><small>6</small></li>
+  
+    <li><a href="/tags/Node-js-异步/">Node.js_异步</a><small>3</small></li>
+  
+    <li><a href="/tags/Node-js-模块/">Node.js_模块</a><small>5</small></li>
+  
+    <li><a href="/tags/Node-js-测试/">Node.js_测试</a><small>5</small></li>
+  
+    <li><a href="/tags/Node-js-网络/">Node.js_网络</a><small>1</small></li>
+  
+    <li><a href="/tags/Node-js-进程/">Node.js_进程</a><small>2</small></li>
+  
+    <li><a href="/tags/Node-js-错误处理和调试/">Node.js_错误处理和调试</a><small>5</small></li>
+  
+    <li><a href="/tags/Redis/">Redis</a><small>2</small></li>
+  
+    <li><a href="/tags/Shell/">Shell</a><small>1</small></li>
+  
+    <li><a href="/tags/Unix/">Unix</a><small>3</small></li>
+  
+    <li><a href="/tags/从0开始学大数据/">从0开始学大数据</a><small>2</small></li>
+  
+    <li><a href="/tags/区块链/">区块链</a><small>1</small></li>
+  
+    <li><a href="/tags/数据分析实战/">数据分析实战</a><small>3</small></li>
+  
+    <li><a href="/tags/数据库/">数据库</a><small>2</small></li>
+  
+    <li><a href="/tags/数据结构与算法/">数据结构与算法</a><small>12</small></li>
+  
+    <li><a href="/tags/程序员的数学基础课/">程序员的数学基础课</a><small>4</small></li>
+  
+    <li><a href="/tags/网络安全/">网络安全</a><small>8</small></li>
+  
+    <li><a href="/tags/计算机网络/">计算机网络</a><small>1</small></li>
+  
+    <li><a href="/tags/趣谈网络协议/">趣谈网络协议</a><small>7</small></li>
+  
+  </ul>
+</div>
+
+</aside>
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div class="alignleft">
+  
+  &copy; 2019 shouliang
+  
+</div>
+<div class="clearfix"></div></footer>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+</body>
+</html>

