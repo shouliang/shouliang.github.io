@@ -68,7 +68,7 @@
 <p>既然上下文切换对系统性能影响那么大，你肯定迫不及待想知道，到底要怎么查看上下文切换呢？在这里，我们可以使用 vmstat 这个工具，来查询系统的上下文切换情况。</p>
 <p>vmstat 是一个常用的系统性能分析工具，主要用来分析系统的内存使用情况，也常用来分析 CPU 上下文切换和中断的次数。</p>
 <p>比如，下面就是一个 vmstat 的使用示例：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"># 每隔 5 秒输出 1 组数据</span><br><span class="line">$ vmstat 5</span><br><span class="line">procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----</span><br><span class="line"> r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st</span><br><span class="line"> 0  0      0 7005360  91564 818900    0    0     0     0   25   33  0  0 100  0  0</span><br><span class="line"></span><br><span class="line">复制代码</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># 每隔 5 秒输出 1 组数据</span><br><span class="line">$ vmstat 5</span><br><span class="line">procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----</span><br><span class="line"> r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st</span><br><span class="line"> 0  0      0 7005360  91564 818900    0    0     0     0   25   33  0  0 100  0  0</span><br></pre></td></tr></table></figure>
 <p>我们一起来看这个结果，你可以先试着自己解读每列的含义。在这里，我重点强调下，需要特别关注的四列内容：</p>
 <ul>
 <li>cs（context switch）是每秒上下文切换的次数。</li>
@@ -224,13 +224,13 @@
   
     <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
   
-    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>4</small></li>
+    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>5</small></li>
   
     <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
   
     <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
   
-    <li><a href="/tags/MySQL实战/">MySQL实战</a><small>4</small></li>
+    <li><a href="/tags/MySQL实战/">MySQL实战</a><small>5</small></li>
   
     <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>4</small></li>
   
@@ -266,15 +266,15 @@
   
     <li><a href="/tags/数据库/">数据库</a><small>2</small></li>
   
-    <li><a href="/tags/数据结构与算法/">数据结构与算法</a><small>12</small></li>
+    <li><a href="/tags/数据结构与算法/">数据结构与算法</a><small>13</small></li>
   
-    <li><a href="/tags/程序员的数学基础课/">程序员的数学基础课</a><small>4</small></li>
+    <li><a href="/tags/程序员的数学基础课/">程序员的数学基础课</a><small>5</small></li>
   
     <li><a href="/tags/网络安全/">网络安全</a><small>8</small></li>
   
     <li><a href="/tags/计算机网络/">计算机网络</a><small>1</small></li>
   
-    <li><a href="/tags/趣谈网络协议/">趣谈网络协议</a><small>7</small></li>
+    <li><a href="/tags/趣谈网络协议/">趣谈网络协议</a><small>8</small></li>
   
   </ul>
 </div>

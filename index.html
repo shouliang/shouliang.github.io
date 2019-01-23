@@ -53,6 +53,84 @@
     <header>
       
         <div class="icon"></div>
+        <time datetime="2019-01-23T06:45:23.000Z"><a href="/2019/01/23/程序员的数学基础课/18 | 总结课：数据结构、编程语句和基础算法体现了哪些数学思想/">2019-01-23</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2019/01/23/程序员的数学基础课/18 | 总结课：数据结构、编程语句和基础算法体现了哪些数学思想/">18 | 总结课：数据结构、编程语句和基础算法体现了哪些数学思想？</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>之前的 17 讲，我们从小处着眼，介绍了离散数学中最常用的一些知识点。我讲到了很多<strong>数据结构</strong>、<strong>编程语句</strong>和<strong>基础性算法</strong>。这些知识点看似是孤立的，但是内部其实有很多联系。今天这一节，我们就来总结一下前面讲过的内容，把之前讲过的内容串联起来。</p>
+<h2 id="数据结构"><a href="#数据结构" class="headerlink" title="数据结构"></a>数据结构</h2><p>首先，我们来看一些基本的数据结构，<strong>你可别小看这些数据结构，它们其实就是一个个解决问题的“模型”**</strong>。**有了这些模型，你就能把一个个具体的问题抽象化，然后再来解决。</p>
+<p>我们从最简单的数据结构数组开始说。自从你开始接触计算机编程，<strong>数组</strong>一定是你经常使用的数据结构。它的特点你应该很清楚。数组可以通过下标，直接定位到所需的数据，因此数组特别适合快速地随机访问。它常常和循环语句相结合，来实现迭代法，例如二分查找、斐波那契数列等等。</p>
+<p>另外，我们将要在“线性代数篇”介绍的矩阵，也可以使用多维数组来表示。不过，数组只对稠密的数列更有效。如果数列非常稀疏，那么很多数组的元素就是无效值，浪费了存储空间。此外，数组中元素的插入和删除也比较麻烦，需要进行数据的批量移动。</p>
+<p>那么对于稀疏的数列而言，什么样的数据结构更有效呢？答案是<strong>链表</strong>。链表中的结点存储了数据，而链表结点之间的相连关系，在 C 和 C++ 语言中是通过指针来实现的，而在 Java 语言中是通过对象引用来实现的。</p>
+<p>链表的特点是不能通过下标来直接访问数据，而是必须按照存储的结构逐个读取。这样做的优势在于，不必事先规定数据的数量，也不再需要保存无效的值，表示稀疏的数列时可以更有效的利用存储空间，同时也利于数据的动态插入和删除。但是，相对于数组而言，链表无法支持快速地随机访问，进行读写操作时就更耗时。</p>
+<p>和数组一样，链表也可以是多维的。对于非常稀疏的矩阵，也可以用多维链表的结构来表达。此外，在链表结构中，点和点之间的连接，分别体现了图论中的顶点和边。因此，我们还可以使用指针、对象引用等来表示图结构中的顶点和边。常见的图模型，例如多叉树、无向图和有向图等，都可以用指针或引用来实现。</p>
+<p>在数组和链表这些基础的数据结构之上，我们可以构建更复杂的数据结构，比如哈希表、队列和栈等等。这些数据结构，提供了逻辑更复杂的模型，可以通过数组、链表或两者的结合来实现。</p>
+<p><a href="https://time.geekbang.org/column/article/72163" target="_blank" rel="noopener">第 2 讲</a>我提到了哈希的概念，而哈希表就可以通过数组和链表来构造。在很多编程语言中，哈希表的实现采用的是<strong>链地址哈希表</strong>。这种方法的主要思想是，先分配一个很大的数组空间，而数组中的每一个元素都是一个链表的头部。随后，我们就可以根据哈希函数算出的哈希值（也叫哈希的 key），找到数组的某个元素及对应的链表，然后把数据添加到这个链表中。</p>
+<p>之所以要这样设计，是因为存在<strong>哈希冲突</strong>。对于不同的数据，哈希函数可能产生相同的哈希值，这就是哈希冲突。如果数组的每个元素都只能存放一个数据，那就无法解决冲突。如果每个元素对应了一个链表，那么当发生冲突的时候，我们就可以把多个数据添加到同一个链表中。可是，把多个数据存放在一个链表，就代表访问效率不高。所以，我们要尽量找到一个合理的哈希函数，减少冲突发生的机会，提升检索的效率。</p>
+<p>在第 2 讲中，我还提到了使用求余相关的操作来实现哈希函数。我这里举个例子。你可以看我画的这幅图。</p>
+<p><img src="https://static001.geekbang.org/resource/image/83/c2/834ad2a0c5aefd05e0c57aa6d0528fc2.jpg" alt="img"></p>
+<p>我们把对 100 求余作为哈希函数。因此数组的长度是 100。对于每一个数字，通过它对 100 求余，确定它在数组中的位置。如果多个数字的求余结果一样，就产生冲突，使用链表来解决。我们可以看到，表中位置 98 的链表没有冲突，而 0、1、2、3 和 99 位置的链表都有冲突。</p>
+<p>说完了哈希，我们来看看栈这种数据结构。我在介绍树的深度优先搜索时讲到栈。它是先进后出的。在我们进行函数递归的时候，函数调用和返回的顺序，也是先进后出，所以，栈体现了递归的思想，可以实现基于递归的编程。实际上，计算机系统里的函数递归，在内部也是通过栈来实现的。虽然直接通过栈来实现递归不如函数递归调用那么直观，但是，由于栈可以避免过多的中间变量，它可以节省内存空间的使用。</p>
+<p>我在介绍广度优先搜索策略时，谈到了队列。队列和栈最大的不同在于，它是一种先进先出的数据结构，先进入队列的元素会优先得到处理。队列模拟了日常生活中人们排队的现象，其思想已经延伸到很多大型的数据系统中，例如消息队列。</p>
+<p>在消息系统中，生产者会源源不断地推送新的数据，而消费者会对这些消息进行处理。可是，有时消费者的处理速度会慢于生产者推送的速度，这会带来很多复杂的后续问题，因此我们可以通过队列实现消息的缓冲。新产生的数据会先进入队列，直到消费者处理它。经过这样的异步处理，消息的队列实现了生产者和消费者的松耦合，对消费者起到了保护作用，使它不容易被数据洪流冲垮。</p>
+<p>比哈希表，队列和栈更为复杂的数据结构是基于图论中的各种模型，例如各种二叉树、多叉树、有向图和无向图等等。通常，这些模型表示了顶点和顶点之间的稀疏关系，所以它们常常是基于指针或者对象引用来实现的。我在讲前缀树、社交关系图和交通地图的案例中，都使用了这些模型。另外，树模型中的多叉树、特别是二叉树体现了递归的思想。之前的递归编程的案例中的图示也可以对应到多叉树的表示。</p>
+<h2 id="编程语句"><a href="#编程语句" class="headerlink" title="编程语句"></a>编程语句</h2><p>在你刚刚开始学习编程的时候，肯定接触过条件语句、循环语句和函数调用这些基本的语句。</p>
+<p>条件语句的一个关键元素是布尔表达式。它其实体现了逻辑代数中逻辑和集合的概念。逻辑代数，也被称为布尔代数，主要包括了逻辑表达式及其相关的逻辑运算，可以帮助我们消除自然语言所带来的歧义，并严格、准确地描述事物。在编程语言中，我们把逻辑表达式和控制语言结合起来，比如 Java 语言的 If 语句：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">if(表达式) &#123;函数体 1&#125; else &#123;函数体 2&#125;：若表达式为真，执行函数体 1，否则执行函数体 2。</span><br><span class="line">复制代码</span><br></pre></td></tr></table></figure>
+<p>当然，逻辑代数在计算机中的应用，远不止条件语句。例如 SQL 语言中的 Select 语句和布尔检索模型。Select 是 SQL 查询语言中十分常用的语句。这个语句将根据指定的逻辑表达式，在一个数据库中进行查询并返回结果，而返回的结果就是满足条件的记录之集合。类似地，布尔检索模型利用逻辑表达式，确定哪些文档满足检索的条件并把它们作为结果返回。</p>
+<p>这里顺便提一下，除了条件语句中的布尔表达式，逻辑代数还体现在编程中的其他地方。例如，SQL 语言中的 Join 操作。Join 有多种类型，每种类型其实都对应了一种集合的操作。</p>
+<ul>
+<li>内连接（inner join）：假设被连接的两张数据表分别是左表和右表，那么内连接查询能将左表和右表中能关联起来的数据连接后返回，返回的结果就是两个表中所有相匹配的数据。如果认为左表是集合 A，右表是集合 B，那么从集合的角度来说，内连接产生的结果是 A、B 两个集合的交集。</li>
+<li>外连接（outer join）：外连接可以保留左表，右表或全部表。根据这些行为的不同，可分为左外连接、右外连接和全连接。无论哪一种，都是对应于不同的集合操作。</li>
+</ul>
+<p>循环语句可以让我们进行有规律性的重复性操作，直到满足某个条件。这和迭代法中反复修改某个值的操作非常一致。所以循环常用于迭代法的实现，例如二分或者牛顿法求解方程的根。在之前的迭代法讲解中，我经常使用循环来实现编码。另外，循环语句也会经常和布尔表达式相结合。嵌套的多层循环，常常用于比较多个元素的大小，或者计算多个元素之间的相似度等等，这也体现了排列组合的思想。</p>
+<p>至于函数的调用，一个函数既可以调用自己，也可以调用其他不同的函数。如果不断地调用自己，这就体现了递归的思想。同时，函数的递归调用也可以体现排列组合的思想。</p>
+<h2 id="基础算法"><a href="#基础算法" class="headerlink" title="基础算法"></a>基础算法</h2><p>在前面的专栏中，我介绍了一些常见算法及其对应的数学思想。而这些思想，在算法中的体现无处不在。</p>
+<p>介绍分治思想的时候，我谈及了 MapReduce 的数据切分。在分布式系统中，除了数据切分，我们还要经常处理的问题是：如何确定服务请求被分配到哪台机器上？这就引出了负载均衡算法。</p>
+<p>常见的包括轮询或者源地址哈希算法。轮询算法把请求按顺序轮流地分配到后端服务器上，它并不关心每台服务器当前的负载。如果我们对每个请求标上一个自动增加的 ID，我们可以认为轮询算法是对请求的 ID 进行求余操作（或者是求余的哈希函数），被除数就是可用服务器的数量，余数就是接受请求的服务器 ID。而源地址哈希进一步扩展了这个思想，扩展主要体现在：</p>
+<ul>
+<li>它可以对请求的 IP 或其他唯一标识进行哈希，而不一定是请求的 ID；</li>
+<li>哈希函数的变换操作不一定是求余。</li>
+</ul>
+<p>不管是对何种数据进行哈希变换，也不管是何种哈希函数，只要能为每个请求确定哈希 key 之后，我们就能为它查找对应的服务器。</p>
+<p>另外，在<a href="https://time.geekbang.org/column/article/75807" target="_blank" rel="noopener">第 9 节</a>中，我谈到了字符串的编辑距离，但是没有涉及字符串匹配的算法。知名的 RK（Rabin-Karp）匹配算法，在暴力匹配（Brute Force）基础之上，充分利用了迭代法和哈希，提升了算法的效率。</p>
+<p>首先，RK 算法可以根据两个字符串哈希后的值。来判断它们是不是相同。如果哈希值不同，则两个字符串肯定不同，不用再比较；此外，RK 算法中的哈希设计非常巧妙，让相邻两个子字符串的哈希值产生了固定的联系，让我们可以通过前一个子串的哈希值，推导出后一个子串的哈希值，这样就能使用迭代法来计算每个子串的哈希值，大大减少了用于哈希函数的计算。</p>
+<p>除了分治和动态规划，另一个常用的算法思想是回溯。我们可以使用回溯来解决的问题包括八皇后和 0/1 背包等等。回溯实际上体现了递归和排列的思想。不过，它对搜索空间做了一些优化，提前排除了不可能的情况，提升了算法整体的效率。当然，既然回溯体现了递归的思想，也可以把整个搜索状态表示成树，而对结果的搜索就是树的深度优先遍历。</p>
+<p>在前两节讲述算法复杂度分析的时候，我已经从数学的角度出发，总结了几个常用的法则，包括四则运算、主次分明、齐头并进、排列组合、一图千言和时空互换。这些法则体现了数学中的运算优先级、数量级、多元变量、图论等思想。这些我们上两节刚刚讲过，我就不多说了，你可以参考之前的内容快速复习一下。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>这一讲，我对常用的数据结构、编程语句和算法中所体现的数学思想，做了一个大体的梳理。可以看到，<strong>不同的数据结构，都是在编程中运用数学思维的产物。每种数据结构都有自身的特点，有利于我们更方便地实现某种特定的数学模型。</strong></p>
+<p>从数据结构的角度来看，最基本的数组遍历体现了迭代的思想，而链表和树的结构可用于刻画图论中的模型。栈的先进后出、以及队列的先进先出，分别适用于图的深度优先和广度优先遍历。哈希表则充分利用了哈希函数的特点，大幅降低了查询的时间复杂度。</p>
+<p>当然，仅仅使用数据结构来存储数据还不够，我们还需要操作这些数据。为了实现操作的流程，条件语句使用了布尔代数来控制编程逻辑，循环和函数嵌套使用迭代、递归和排列组合等思想来实现更精细的数学模型。</p>
+<p>但是，有时候我们面对的问题太复杂了，除了数据结构和基本的编程语句，我们还需要发明一些算法。为了提升算法的效率，我们需要对其进行复杂度分析。通常，这些算法中的数学思想就更为明显，因为它们都是为了解决特定的问题，根据特定的数学模型而设计的。</p>
+<p>有的时候，某个算法会体现多种数学思想，例如 RK 字符串匹配算法，同时使用了迭代法和哈希。此外，多种数学思维可能都是相通的。比如，递归的思想、排列的结果、二进制数的枚举都可以用树的结构来图示化，因此我们可以通过树来理解。</p>
+<p>所以，在平时学习编程的时候，你可以多从数学的角度出发，思考其背后的数学模型。这样不仅有利于你对现有知识的融会贯通，还可以帮助你优化数据结构和算法。</p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
         <time datetime="2019-01-16T07:55:09.000Z"><a href="/2019/01/16/Linux性能优化/03 | 基础篇：经常说的 CPU 上下文切换是什么意思？（上）/">2019-01-16</a></time>
       
       
@@ -863,108 +941,6 @@
 
 
 
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2018-12-10T06:45:23.000Z"><a href="/2018/12/10/程序员的数学基础课/01 | 二进制：不了解计算机的源头，你学什么编程/">2018-12-10</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2018/12/10/程序员的数学基础课/01 | 二进制：不了解计算机的源头，你学什么编程/">01 | 二进制：不了解计算机的源头，你学什么编程</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>我们都知道，计算机的起源是数学中的二进制计数法。可以说，没有二进制，就没有如今的计算机系统。那什么是二进制呢？为什么计算机要使用二进制，而不是我们日常生活中的十进制呢？如何在代码中操作二进制呢？专栏开始，我们就从计算机认知的起源——二进制出发，讲讲它在计算机中的“玄机”。</p>
-<h2 id="什么是二进制计数法？"><a href="#什么是二进制计数法？" class="headerlink" title="什么是二进制计数法？"></a>什么是二进制计数法？</h2><p>为了让你更好地理解二进制计数法，我们先来简单地回顾一下人类计数的发展史。</p>
-<p>原始时代，人类用路边的小石子，来统计放牧归来的羊只数量，这表明我们很早就产生了计数的意识。后来，罗马人用手指作为计数的工具，并在羊皮上画出Ⅰ、Ⅱ、Ⅲ来代替手指的数量。表示一只手时，就写成“Ⅴ”形，表示两只手时，就画成“ⅤⅤ”形等等。</p>
-<p>公元 3 世纪左右，印度数学家（也有说法是阿拉伯人）发明了阿拉伯数字。阿拉伯数字由从 0 到 9 这样 10 个计数符号组成，并采取<strong>进位制法</strong>，高位在左，低位在右，从左往右书写。由于阿拉伯数字本身笔画简单，演算便利，因此它们逐渐在各国流行起来，成为世界通用的数字。</p>
-<p>日常生活中，我们广泛使用的十进制计数法，也是基于阿拉伯数字的。这也是十进制计数法的基础。因此，相对其他计数方法，十进制最容易被我们所理解。</p>
-<p>让我们来观察一个数字：2871。</p>
-<p><img src="https://static001.geekbang.org/resource/image/d9/3d/d99f094c432638924f8665a178162c3d.jpg" alt="img"></p>
-<p>其中 ^ 表示幂或次方运算。十进制的数位（千位、百位、十位等）全部都是 10^n 的形式。需要特别注意的是，任何非 0 数字的 0 次方均为 1。在这个新的表示式里，10 被称为十进制计数法的<strong>基数</strong>，也是十进制中“十”的由来。这个我想你应该好理解，因为这和我们日常生活的习惯是统一的。</p>
-<p>明白了十进制，我们再试着用类似的思路来理解二进制的定义。我以二进制数字 110101 为例，解释给你听。我们先来看，这里 110101 究竟代表了十进制中的数字几呢？</p>
-<p>刚才我们说了，十进制计数是使用 10 作为基数，那么二进制就是使用 2 作为基数，类比过来，<strong>二进制的数位就是 2^n 的形式</strong>。如果需要将这个数字转化为人们易于理解的十进制，我们就可以这样来计算：</p>
-<p><img src="https://static001.geekbang.org/resource/image/c6/c0/c6ae1772d7bf369aa9939fc00ca7b5c0.jpg" alt="img"></p>
-<p>按照这个思路，我们还可以推导出八进制（以 8 为基数）、十六进制（以 16 为基数）等等计数法，很简单，我在这里就不赘述了。</p>
-<p>至此，你应该已经理解了什么是二进制。但是仅有数学的理论知识是不够的，结合相关的代码实践，相信你会有更深刻的印象。</p>
-<p>基于此，我们来看看二进制和十进制数在 Java 语言中是如何互相转换的，并验证一下我们之前的推算。我这里使用的是 Java 语言来实现的，其他主流的编程语言实现方式都是类似的。</p>
-<p>这段代码的实现采用了 Java 的 BigInteger 类及其 API 函数，我都加了代码注释，并且穿插一些解释，你应该可以看懂。</p>
-<p>首先，我们引入 BigInteger 包，通过它和 Integer 类的 API 函数进行二进制和十进制的互相转换。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">import java.math.BigInteger;</span><br><span class="line"> </span><br><span class="line">public class Lesson1_1 &#123;</span><br><span class="line">  </span><br><span class="line">   /**</span><br><span class="line"> </span><br><span class="line">    * @Description: 十进制转换成二进制</span><br><span class="line">    * @param decimalSource</span><br><span class="line">    * @return String</span><br><span class="line">    */</span><br><span class="line">    public static String decimalToBinary(int decimalSource) &#123;</span><br><span class="line">       // 转换成 BigInteger 类型，默认是十进制</span><br><span class="line">       BigInteger bi = new BigInteger(String.valueOf(decimalSource)); </span><br><span class="line">       return bi.toString(2); // 参数 2 指定的是转化成二进制</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    /**</span><br><span class="line">    * @Description: 二进制转换成十进制</span><br><span class="line">    * @param binarySource</span><br><span class="line">    * @return int</span><br><span class="line">    */</span><br><span class="line">    public static int binaryToDecimal(String binarySource) &#123;</span><br><span class="line">       // 转换为BigInteger 类型，参数 2 指定的是二进制 </span><br><span class="line">       BigInteger bi = new BigInteger(binarySource, 2); </span><br><span class="line">       return Integer.parseInt(bi.toString());     // 默认转换成十进制</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>然后，我们通过一个十进制数和一个二进制数，来验证一下上述代码的正确性。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">public static void main(String[] args) &#123;     </span><br><span class="line">     int a = 53;</span><br><span class="line">     String b = &quot;110101&quot;;</span><br><span class="line">     System.out.println(String.format(&quot; 数字 %d 的二进制是 %s&quot;, a, Lesson1_1.decimalToBinary(a))); // 获取十进制数 53 的二进制数</span><br><span class="line">     System.out.println(String.format(&quot; 数字 %s 的十进制是 %d&quot;, b, Lesson1_1.binaryToDecimal(b))); // 获取二进制数 110101 的十进制数</span><br><span class="line"></span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
-<p>这段代码运行的结果是：十进制数字 53 的二进制是 110101，二进制数字 110101 的十进制是 53。</p>
-<p>好了，关于十进制和二进制的概念以及进制之间的相互转换，你应该都很清楚了。既然有十进制，又有二进制，你可能就要问了，为啥计算机使用的是二进制而不是十进制呢？</p>
-<h2 id="计算机为什么使用二进制？"><a href="#计算机为什么使用二进制？" class="headerlink" title="计算机为什么使用二进制？"></a>计算机为什么使用二进制？</h2><p>我觉得，计算机使用二进制和现代计算机系统的硬件实现有关。组成计算机系统的逻辑电路通常只有两个状态，即开关的接通与断开。</p>
-<p>断开的状态我们用“0”来表示，接通的状态用“1”来表示。由于每位数据只有断开与接通两种状态，所以即便系统受到一定程度的干扰时，它仍然能够可靠地分辨出数字是“0”还是“1”。因此，在具体的系统实现中，二进制的数据表达具有抗干扰能力强、可靠性高的优点。</p>
-<p>相比之下，如果用十进制设计具有 10 种状态的电路，情况就会非常复杂，判断状态的时候出错的几率就会大大提高。</p>
-<p>另外，二进制也非常适合逻辑运算。逻辑运算中的“真”和“假”，正好与二进制的“0”和“1”两个数字相对应。逻辑运算中的加法（“或”运算）、乘法（“与”运算）以及否定（“非”运算）都可以通过“0”和“1”的加法、乘法和减法来实现。</p>
-<h2 id="二进制的位操作"><a href="#二进制的位操作" class="headerlink" title="二进制的位操作"></a>二进制的位操作</h2><p>了解了现代计算机是基于二进制的，我们就来看看，计算机语言中针对二进制的位操作。这里的<strong>位操作</strong>，也叫作<strong>位运算</strong>，就是直接对内存中的二进制位进行操作。常见的二进制位操作包括向左移位和向右移位的移位操作，以及“或”“与”“异或”的逻辑操作。下面我们一一来看。</p>
-<h3 id="向左移位"><a href="#向左移位" class="headerlink" title="向左移位"></a>向左移位</h3><p>我们先来看向左移位。</p>
-<p>二进制 110101 向左移一位，就是在末尾添加一位 0，因此 110101 就变成了 1101010。请注意，这里讨论的是数字没有溢出的情况。</p>
-<p>所谓<strong>数字溢出</strong>，就是二进制数的位数超过了系统所指定的位数。目前主流的系统都支持至少 32 位的整型数字，而 1101010 远未超过 32 位，所以不会溢出。如果进行左移操作的二进制已经超出了 32 位，左移后数字就会溢出，需要将溢出的位数去除。</p>
-<p><img src="https://static001.geekbang.org/resource/image/cd/76/cdbeb658035f275aa941a0d3f6eac876.jpg" alt="img"></p>
-<p>在这个例子中，如果将 1101010 换算为十进制，就是 106，你有没有发现，106 正好是 53 的 2 倍。所以，我们可以得出一个结论：<strong>二进制左移一位，其实就是将数字翻倍</strong>。</p>
-<h3 id="向右移位"><a href="#向右移位" class="headerlink" title="向右移位"></a>向右移位</h3><p>接下来我们来看向右移位。</p>
-<p>二进制 110101 向右移一位，就是去除末尾的那一位，因此 110101 就变成了 11010（最前面的 0 可以省略）。我们将 11010 换算为十进制，就是 26，正好是 53 除以 2 的整数商。所以<strong>二进制右移一位，就是将数字除以 2 并求整数商的操作</strong>。</p>
-<p><img src="https://static001.geekbang.org/resource/image/8d/34/8df282639b609d5269582c789796c334.jpg" alt="img"></p>
-<p>下面我们来看看，用代码如何进行移位操作。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">import java.math.BigInteger;</span><br><span class="line"> </span><br><span class="line">public class Lesson1_2 &#123;  </span><br><span class="line"> </span><br><span class="line">   /**</span><br><span class="line">    * @Description: 向左移位</span><br><span class="line">    * @param num- 等待移位的十进制数, m- 向左移的位数</span><br><span class="line">    * @return int- 移位后的十进制数</span><br><span class="line">    */</span><br><span class="line">   public static int leftShift(int num, int m) &#123;</span><br><span class="line">      return num &lt;&lt; m;</span><br><span class="line">   &#125;</span><br><span class="line">  </span><br><span class="line">   /**</span><br><span class="line">    * @Description: 向右移位</span><br><span class="line">    * @param num- 等待移位的十进制数, m- 向右移的位数</span><br><span class="line">    * @return int- 移位后的十进制数</span><br><span class="line">    */</span><br><span class="line">   public static int rightShift(int num, int m) &#123;</span><br><span class="line">      return num &gt;&gt;&gt; m;</span><br><span class="line">   &#125; </span><br><span class="line"> </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>然后，我们用一段测试代码验证下结果。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">public static void main(String[] args) &#123;     </span><br><span class="line"></span><br><span class="line">      int num = 53;</span><br><span class="line">      int m = 1;</span><br><span class="line">      System.out.println(String.format(&quot; 数字 %d 的二进制向左移 %d 位是 %d&quot;, num, m, Lesson1_2.leftShift(num, m)));   // 测试向左移位</span><br><span class="line">      System.out.println(String.format(&quot; 数字 %d 的二进制向右移 %d 位是 %d&quot;, num, m, Lesson1_2.rightShift(num, m)));   // 测试向右移位     </span><br><span class="line"></span><br><span class="line">      System.out.println();</span><br><span class="line">     </span><br><span class="line">      m = 3;</span><br><span class="line">      System.out.println(String.format(&quot; 数字 %d 的二进制向左移 %d 位是 %d&quot;, num, m, Lesson1_2.leftShift(num, m)));   // 测试向左移位</span><br><span class="line">      System.out.println(String.format(&quot; 数字 %d 的二进制向右移 %d 位是 %d&quot;, num, m, Lesson1_2.rightShift(num, m)));   // 测试向右移位 </span><br><span class="line"></span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
-<p>这段代码的运行结果是：数字 53 向左移 1 位是 106；数字 53 向右移 1 位是 26。数字 53 向左移 3 位是 424，数字 53 向右移 3 位是 6。</p>
-<p>我来解释一下。其中，移位 1 次相当于乘以或除以 2，而移位 3 次就相当于乘以或除以 8（即 2 的 3 次方）。细心的话，你可能已经发现，Java 中的左移位和右移位的表示是不太一样的。</p>
-<p><strong>左移位是 &lt;&lt;，那右移位为什么是 &gt;&gt;&gt; 而不是 &gt;&gt; 呢？</strong>实际上，&gt;&gt; 也是右移操作。简单来说，之所以有这两种表达方式，根本原因是 Java 的二进制数值中最高一位是符号位。这里我给你详细解释一下。</p>
-<p>当符号位为 0 时，表示该数值为正数；当符号位为 1 时，表示该数值为负数。我们以 32 位 Java 为例，数字 53 的二进制为 110101，从右往左数的第 32 位是 0，表示该数是正数，只是通常我们都将其省略。</p>
-<p><img src="https://static001.geekbang.org/resource/image/83/ef/831a21734048b1fc3e357609527175ef.jpg" alt="img"></p>
-<p>如果数字是 -53 呢？那么第 32 位就不是 0，而是 1。请注意我这里列出的是补码。</p>
-<p><img src="https://static001.geekbang.org/resource/image/85/1e/857248d65d7c4b746b3677d45b2a2c1e.jpg" alt="img"></p>
-<p>那么这个时候向右移位，就会产生一个问题：对于符号位（特别是符号位为 1 的时候），我们是否也需要将其右移呢？因此，Java 里定义了两种右移，<strong>逻辑右移</strong>和<strong>算术右移</strong>。逻辑右移 1 位，左边补 0 即可。</p>
-<p><img src="https://static001.geekbang.org/resource/image/74/c7/745a4880417a4dcb62f88bad7be800c7.jpg" alt="img"></p>
-<p>算术右移时保持符号位不变，除符号位之外的右移一位并补符号位 1。补的 1 仍然在符号位之后。</p>
-<p><img src="https://static001.geekbang.org/resource/image/b0/07/b00b38ba0e8e2349a64b52905852e107.jpg" alt="img"></p>
-<p>逻辑右移在 Java 和 Python 语言中使用 &gt;&gt;&gt; 表示，而算术右移使用 &gt;&gt; 表示。如果你有兴趣，可以自己编码尝试一下，看看这两种操作符输出的结果有何不同。</p>
-<p>在 C 或 C++ 语言中，逻辑右移和算数右移共享同一个运算符 &gt;&gt;。那么，编译器是如何决定使用逻辑右移还是算数右移呢？答案是，取决于运算数的类型。如果运算数类型是 unsigned，则采用逻辑右移；而是 signed，则采用算数右移。如果你针对 unsigned 类型的数据使用算数右移，或者针对 signed 类型的数据使用逻辑右移，那么你首先需要进行类型的转换。</p>
-<p>由于左移位无需考虑高位补 1 还是补 0（符号位可能为 1 或 0），所以不需要区分逻辑左移和算术左移。</p>
-<h3 id="位的“或”"><a href="#位的“或”" class="headerlink" title="位的“或”"></a>位的“或”</h3><p>我们刚才说了，二进制的“1”和“0”分别对应逻辑中的“真”和“假”，因此可以针对位进行逻辑操作。</p>
-<p>逻辑“或”的意思是，参与操作的位中只要有一个位是 1，那么最终结果就是 1，也就是“真”。如果我们将二进制 110101 和 100011 的每一位对齐，进行按位的“或”操作，就会得到 110111。</p>
-<p><img src="https://static001.geekbang.org/resource/image/83/15/8394b6daf1d9727069736506332c4915.jpg" alt="img"></p>
-<h3 id="位的“与”"><a href="#位的“与”" class="headerlink" title="位的“与”"></a>位的“与”</h3><p>同理，我们也可以针对位进行逻辑“与”的操作。“与”的意思是，参与操作的位中必须全都是 1，那么最终结果才是 1（真），否则就为 0（假）。如果我们将二进制 110101 和 100011 的每一位对齐，进行按位的“与”操作，就会得到 100001。</p>
-<p><img src="https://static001.geekbang.org/resource/image/b1/19/b1c520385f4e5a5b719c393f9e1d0019.jpg" alt="img"></p>
-<h3 id="位的“异或”"><a href="#位的“异或”" class="headerlink" title="位的“异或”"></a>位的“异或”</h3><p>逻辑“异或”和“或”有所不同，它具有排异性，也就是说如果参与操作的位相同，那么最终结果就为 0（假），否则为 1（真）。所以，如果要得到 1，参与操作的两个位必须不同，这就是此处“异”的含义。我们将二进制 110101 和 100011 的每一位对齐，进行按位的“异或”操作，可以得到结果是 10110。</p>
-<p><img src="https://static001.geekbang.org/resource/image/c7/87/c7ae84301b2742b6714c01a77e6a6b87.jpg" alt="img"></p>
-<p>我总结一下，“异或”操作的本质其实就是，所有数值和自身进行按位的“异或”操作之后都为 0。而且要通过“异或”操作得到 0，也必须通过两个相同的数值进行按位“异或”。这表明了两个数值按位“异或”结果为 0，是这两个数值相等的必要充分条件，可以作为判断两个变量是否相等的条件。</p>
-<p>接下来，我们来学习一下，在代码中如何实现二进制的逻辑操作。Java 中使用|表示按位的“或”，&amp; 表示按位“与”，^ 表示按位“异或”。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line">import java.math.BigInteger;</span><br><span class="line"> </span><br><span class="line">public class Lesson1_3 &#123;  </span><br><span class="line"> </span><br><span class="line">   /**</span><br><span class="line">    * @Description: 二进制按位“或”的操作</span><br><span class="line">    * @param num1- 第一个数字，num2- 第二个数字</span><br><span class="line">    * @return 二进制按位“或”的结果</span><br><span class="line">    */</span><br><span class="line">   public static int or(int num1, int num2) &#123;</span><br><span class="line">        </span><br><span class="line">      return (num1 | num2);</span><br><span class="line">     </span><br><span class="line">   &#125;  </span><br><span class="line"> </span><br><span class="line">   /**</span><br><span class="line">    * @Description: 二进制按位“与”的操作</span><br><span class="line">    * @param num1- 第一个数字，num2- 第二个数字</span><br><span class="line">    * @return 二进制按位“与”的结果</span><br><span class="line">    */</span><br><span class="line">   public static int and(int num1, int num2) &#123;     </span><br><span class="line">   </span><br><span class="line">      return (num1 &amp; num2);</span><br><span class="line">     </span><br><span class="line">   &#125; </span><br><span class="line"> </span><br><span class="line">   /**</span><br><span class="line"> </span><br><span class="line">    * @Description: 二进制按位“异或”的操作</span><br><span class="line">    * @param num1- 第一个数字，num2- 第二个数字</span><br><span class="line">    * @return 二进制按位“异或”的结果</span><br><span class="line">    */</span><br><span class="line"> </span><br><span class="line">   public static int xor(int num1, int num2) &#123;     </span><br><span class="line"> </span><br><span class="line">      return (num1 ^ num2);</span><br><span class="line">     </span><br><span class="line">   &#125;  </span><br><span class="line"> </span><br><span class="line"> </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>同样，我们写一段测试代码，验证一下上面三个函数。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">public static void main(String[] args) &#123;</span><br><span class="line"></span><br><span class="line">     int a = 53;</span><br><span class="line">     int b = 35;</span><br><span class="line"></span><br><span class="line">     System.out.println(String.format(&quot; 数字 %d(%s) 和数字 %d(%s) 的按位‘或’结果是 %d(%s)&quot;,</span><br><span class="line">           a, decimalToBinary(a), b, decimalToBinary(b), Lesson2_3.or(a, b), decimalToBinary(Lesson1_3.or(a, b)))); // 获取十进制数 53 和 35 的按位“或”     </span><br><span class="line"></span><br><span class="line">     System.out.println(String.format(&quot; 数字 %d(%s) 和数字 %d(%s) 的按位‘与’结果是 %d(%s)&quot;,</span><br><span class="line">           a, decimalToBinary(a), b, decimalToBinary(b), Lesson2_3.and(a, b), decimalToBinary(Lesson1_3.and(a, b))));  // 获取十进制数 53 和 35 的按位“与”     </span><br><span class="line"></span><br><span class="line">     System.out.println(String.format(&quot; 数字 %d(%s) 和数字 %d(%s) 的按位‘异或’结果是 %d(%s)&quot;,</span><br><span class="line">           a, decimalToBinary(a), a, decimalToBinary(a), Lesson2_3.xor(a, a), decimalToBinary(Lesson1_3.xor(a, a))));  // 获取十进制数 53 和 35 的按位“异或”     </span><br><span class="line"></span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
-<p>这段代码的运行结果是：数字 53(110101) 和数字 35(100011) 的按位‘或’结果是 55(110111)，数字 53(110101) 和数字 35(100011) 的按位‘与’结果是 33(100001)，数字 53(110101) 和数字 53(110101) 的按位‘异或’结果是 0(0)。</p>
-<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>今天我们聊了二进制，你可能会问：学习二进制究竟有什么用呢？平时的编程中，我们好像并没有使用相关的知识啊？确实，目前的高级语言可以帮助我们将人类的思维逻辑转换为使用 0 和 1 的机器语言，我们不用再为此操心了。但是，二进制作为现代计算机体系的基石，这些基础的概念和操作，你一定要非常了解。</p>
-<p>二进制贯穿在很多常用的概念和思想中，例如逻辑判断、二分法、二叉树等等。逻辑判断中的真假值就是用二进制的 1 和 0 来表示的；二分法和二叉树都是把要处理的问题一分为二，正好也可以通过二进制的 1 和 0 来表示。因此，理解了二进制，你就能更加容易地理解很多计算机的数据结构和算法，也为我们后面的学习打下基础。</p>
-<p><img src="https://static001.geekbang.org/resource/image/20/74/209f1b06efdf9a7413fb793571c7ed74.jpg" alt="img"></p>
-<h2 id="思考题"><a href="#思考题" class="headerlink" title="思考题"></a>思考题</h2><p>如果不使用 Java 语言自带的 BigInteger 类，我们还有什么方法来实现十进制到二进制的转换呢？（提示：可以使用二进制的移位和按位逻辑操作来实现。）</p>
-<p>极客时间版权所有: <a href="https://time.geekbang.org/column/article/71840" target="_blank" rel="noopener">https://time.geekbang.org/column/article/71840</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
 
 <nav id="pagination">
   
@@ -1000,13 +976,13 @@
   
     <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
   
-    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>4</small></li>
+    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>5</small></li>
   
     <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
   
     <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
   
-    <li><a href="/tags/MySQL实战/">MySQL实战</a><small>4</small></li>
+    <li><a href="/tags/MySQL实战/">MySQL实战</a><small>5</small></li>
   
     <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>4</small></li>
   
@@ -1042,15 +1018,15 @@
   
     <li><a href="/tags/数据库/">数据库</a><small>2</small></li>
   
-    <li><a href="/tags/数据结构与算法/">数据结构与算法</a><small>12</small></li>
+    <li><a href="/tags/数据结构与算法/">数据结构与算法</a><small>13</small></li>
   
-    <li><a href="/tags/程序员的数学基础课/">程序员的数学基础课</a><small>4</small></li>
+    <li><a href="/tags/程序员的数学基础课/">程序员的数学基础课</a><small>5</small></li>
   
     <li><a href="/tags/网络安全/">网络安全</a><small>8</small></li>
   
     <li><a href="/tags/计算机网络/">计算机网络</a><small>1</small></li>
   
-    <li><a href="/tags/趣谈网络协议/">趣谈网络协议</a><small>7</small></li>
+    <li><a href="/tags/趣谈网络协议/">趣谈网络协议</a><small>8</small></li>
   
   </ul>
 </div>
