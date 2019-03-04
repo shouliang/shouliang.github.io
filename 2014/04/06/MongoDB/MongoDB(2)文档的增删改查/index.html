@@ -1,6 +1,6 @@
 <!DOCTYPE HTML>
 <html>
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="utf-8">
   
   <title>二.文档的增删改查 | shouliang&#39;s blog</title>
@@ -11,11 +11,11 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
-  <meta property="og:title" content="二.文档的增删改查"/>
-  <meta property="og:site_name" content="shouliang&#39;s blog"/>
+  <meta property="og:title" content="二.文档的增删改查">
+  <meta property="og:site_name" content="shouliang&#39;s blog">
 
   
-    <meta property="og:image" content=""/>
+    <meta property="og:image" content>
   
 
   <link href="/favicon.png" rel="icon">
@@ -25,7 +25,7 @@
   
 
 </head>
-
+</html>
 
 <body>
   <header id="header" class="inner"><div class="alignleft">
@@ -64,7 +64,7 @@
       
         <h3 id="1-简单插入文档"><a href="#1-简单插入文档" class="headerlink" title="1.简单插入文档"></a>1.简单插入文档</h3><hr>
 <p>在数据库中，数据插入是最基本的操作，在MongoDB使用db.collection.insert(document)语句来插入文档，如下图：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkinsert1.png" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkinsert1.png" alt></p>
 <p>document是文档数据，collection是存放文档数据的集合。</p>
 <p>例如：所有用户的信息存放在users集合中，每个用户的信息为一个user文档，插入数据:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">db.users.insert(user);</span><br></pre></td></tr></table></figure></p>
 <p>如果collection存在，document会添加到collection目录下， 如果collection不存在，数据库会先创建collection，然后再保存document。</p>
@@ -76,7 +76,7 @@
 <h3 id="3-查询与投影"><a href="#3-查询与投影" class="headerlink" title="3.查询与投影"></a>3.查询与投影</h3><hr>
 <p>在MongoDB中，查询指向特定的文档集合，查询设定条件，指明MongoDB需要返回的文档；查询也可以包含一个投影，指定返回的字段。</p>
 <p>如下图，在查询过程指定了一个查询条件和一个排序修饰。</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkquery.jpg" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkquery.jpg" alt></p>
 <p>在关系型数据库中，投影指的是对列的筛选，类似的，在MongoDB中，投影指的是对出现在结果集中的对象属性的筛选。</p>
 <h3 id="4-find-方法"><a href="#4-find-方法" class="headerlink" title="4.find()方法"></a>4.find()方法</h3><hr>
 <p>MongoDB中查询检索数据时使用find命令，使用方法如下：</p>
@@ -84,7 +84,7 @@
 <p>projection– 返回的字段，文档类型，可选,若需返回所有字段，则忽略此参数。</p>
 <p>find命令两个可选参数，criteria为查询条件，projection为返回的字段，如果不传入条件数据库会返回该集合的所有文档。</p>
 <p>如下图简单示例：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkfind.jpg" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkfind.jpg" alt></p>
 <h3 id="5-修改文档-update命令"><a href="#5-修改文档-update命令" class="headerlink" title="5.修改文档 - update命令"></a>5.修改文档 - update命令</h3><hr>
 <p>update命令可以更新指定文档的特定字段值，也可以替换整个文档，如果更新操作会增加文档大小，MongoDB将重新分配空间并重新定位。</p>
 <p>语法：<br>db.collection.update(query,update,{upsert:boolean,multi:boolean});<br>参数：<br>query：查询条件，文档，和find中的查询条件写法一致。</p>
@@ -92,7 +92,7 @@
 <p>upsert(可选)：如果值为true，那么当集合中没有匹配文档时，创建文档。默认false。</p>
 <p>multi(可选)：如果值为true，那么将更新全部符合条件的文档，否则仅更新一个文档，默认false。</p>
 <p>如下示例：将users集合中所有符合条件”age&gt;18”文档的status字段更新为”A”。</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkupdate.jpg" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkupdate.jpg" alt></p>
 <h3 id="6-修改文档-save命令"><a href="#6-修改文档-save命令" class="headerlink" title="6.修改文档 - save命令"></a>6.修改文档 - save命令</h3><hr>
 <p>save命令可以更新或插入一个新文档，与update命令不同的是，save只能对一个文档进行操作。</p>
 <p>语法：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">db.collection.save();</span><br></pre></td></tr></table></figure></p>
@@ -105,9 +105,9 @@
 <p>下面是一个是将users集合中所有status=”D”的文档删除操作，对比一下MongoDB和传统SQL数据库删除的操作，看看有哪些不同之处。</p>
 <p>与传统SQL比较 - 删除文档</p>
 <p>MongoDB</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkremove.jpg" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkremove.jpg" alt></p>
 <p>传统SQL</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkremove-sql.jpg" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkremove-sql.jpg" alt></p>
 
       
     </div>
@@ -181,51 +181,21 @@
   <h3 class="title">标签</h3>
   <ul class="entry">
   
-    <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
-  
     <li><a href="/tags/Docker/">Docker</a><small>3</small></li>
   
-    <li><a href="/tags/ES6/">ES6</a><small>4</small></li>
-  
-    <li><a href="/tags/Express/">Express</a><small>2</small></li>
-  
     <li><a href="/tags/Git/">Git</a><small>7</small></li>
-  
-    <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
   
     <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>5</small></li>
   
     <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
   
-    <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
-  
     <li><a href="/tags/MySQL实战/">MySQL实战</a><small>5</small></li>
   
-    <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>4</small></li>
-  
-    <li><a href="/tags/Node-js-事件/">Node.js_事件</a><small>4</small></li>
-  
-    <li><a href="/tags/Node-js-入门/">Node.js_入门</a><small>9</small></li>
-  
-    <li><a href="/tags/Node-js-基础/">Node.js_基础</a><small>6</small></li>
-  
-    <li><a href="/tags/Node-js-异步/">Node.js_异步</a><small>3</small></li>
-  
-    <li><a href="/tags/Node-js-模块/">Node.js_模块</a><small>5</small></li>
-  
-    <li><a href="/tags/Node-js-测试/">Node.js_测试</a><small>5</small></li>
-  
-    <li><a href="/tags/Node-js-网络/">Node.js_网络</a><small>1</small></li>
-  
-    <li><a href="/tags/Node-js-进程/">Node.js_进程</a><small>2</small></li>
-  
-    <li><a href="/tags/Node-js-错误处理和调试/">Node.js_错误处理和调试</a><small>5</small></li>
+    <li><a href="/tags/Node-js/">Node.js</a><small>58</small></li>
   
     <li><a href="/tags/Redis/">Redis</a><small>2</small></li>
   
-    <li><a href="/tags/Shell/">Shell</a><small>1</small></li>
-  
-    <li><a href="/tags/Unix/">Unix</a><small>3</small></li>
+    <li><a href="/tags/Unix/">Unix</a><small>4</small></li>
   
     <li><a href="/tags/从0开始学大数据/">从0开始学大数据</a><small>2</small></li>
   

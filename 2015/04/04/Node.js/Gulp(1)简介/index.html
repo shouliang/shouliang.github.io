@@ -1,0 +1,220 @@
+<!DOCTYPE HTML>
+<html>
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  <title>一.gulp简介 | shouliang&#39;s blog</title>
+  <meta name="author" content="shouliang">
+  
+  <meta name="description" content="Node">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="一.gulp简介">
+  <meta property="og:site_name" content="shouliang&#39;s blog">
+
+  
+    <meta property="og:image" content>
+  
+
+  <link href="/favicon.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="shouliang&#39;s blog" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+
+</head>
+</html>
+
+<body>
+  <header id="header" class="inner"><div class="alignleft">
+  <h1><a href="/">shouliang&#39;s blog</a></h1>
+  <h2><a href="/"></a></h2>
+</div>
+<nav id="main-nav" class="alignright">
+  <ul>
+    
+      <li><a href="/">首页</a></li>
+    
+      <li><a href="/archives">归档</a></li>
+    
+      <li><a href="/about">关于</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+<div class="clearfix"></div></header>
+  <div id="content" class="inner">
+    <div id="main-col" class="alignleft"><div id="wrapper"><article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2015-04-04T06:45:23.000Z"><a href="/2015/04/04/Node.js/Gulp(1)简介/">2015-04-04</a></time>
+      
+      
+  
+    <h1 class="title">一.gulp简介</h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-什么是gulp"><a href="#1-什么是gulp" class="headerlink" title="1.什么是gulp"></a>1.什么是gulp</h3><hr>
+<p>gulp是前端开发过程中一种基于流的代码构建工具，是自动化项目的构建利器；她不仅能对网站资源进行优化，而且在开发过程中很多重复的任务能够使用正确的工具自动完成；使用她，不仅可以很愉快的编写代码，而且大大提高我们的工作效率。</p>
+<p>　　gulp是基于Nodejs的自动任务运行器， 她能自动化地完成 javascript、coffee、sass、less、html/image、css 等文件的测试、检查、合并、压缩、格式化、浏览器自动刷新、部署文件生成，并监听文件在改动后重复指定的这些步骤。在实现上，她借鉴了Unix操作系统的管道（pipe）思想，前一级的输出，直接变成后一级的输入，使得在操作上非常简单。</p>
+<h3 id="2-核心"><a href="#2-核心" class="headerlink" title="2.核心"></a>2.核心</h3><hr>
+<h4 id="流-stream"><a href="#流-stream" class="headerlink" title="流(stream)"></a>流(stream)</h4><p>流,简单来说就是建立在面向对象基础上的一种抽象的处理数据的工具。在流中，定义了一些处理数据的基本操作，如读取数据，写入数据等，程序员是对流进行所有操作的，而不用关心流的另一头数据的真正流向。流不但可以处理文件，还可以处理动态内存、网络数据等多种数据形式。</p>
+<p>　　而gulp正是通过流和代码优于配置的策略来尽量简化任务编写的工作。这看起来有点“像jQuery”的方法，把动作串起来创建构建任务。早在Unix的初期，流就已经存在了。流在Node.js生态系统中也扮演了重要的角色，类似于*nix将几乎所有设备抽象为文件一样，Node将几乎所有IO操作都抽象成了stream的操作。因此用gulp编写任务也可看作是用Node.js编写任务。当使用流时，gulp去除了中间文件，只将最后的输出写入磁盘，整个过程因此变得更快。</p>
+<h3 id="3-特点"><a href="#3-特点" class="headerlink" title="3.特点"></a>3.特点</h3><hr>
+<h4 id="易于使用"><a href="#易于使用" class="headerlink" title="易于使用"></a>易于使用</h4><p>　　通过代码优于配置的策略，gulp 让简单的任务简单，复杂的任务可管理。</p>
+<h4 id="构建快速"><a href="#构建快速" class="headerlink" title="构建快速"></a>构建快速</h4><p>　　利用 Node.js 流的威力，你可以快速构建项目并减少频繁的 IO 操作。</p>
+<h4 id="易于学习"><a href="#易于学习" class="headerlink" title="易于学习"></a>易于学习</h4><p>　　通过最少的 API，掌握 gulp 毫不费力，构建工作尽在掌握：如同一系列流管道。</p>
+<h4 id="插件高质"><a href="#插件高质" class="headerlink" title="插件高质"></a>插件高质</h4><p>　　gulp 严格的插件指南确保插件如你期望的那样简洁高质得工作。</p>
+<h3 id="4-安装"><a href="#4-安装" class="headerlink" title="4.安装"></a>4.安装</h3><hr>
+<p>首先确保你已经正确安装了nodejs环境。然后以全局方式安装gulp：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install -g gulp</span><br></pre></td></tr></table></figure></p>
+<p>　　全局安装gulp后，还需要在每个要使用gulp的项目中都单独安装一次。把目录切换到你的项目文件夹中，然后在命令行中执行：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install gulp</span><br></pre></td></tr></table></figure></p>
+<p>　　如果想在安装的时候把gulp写进项目package.json文件的依赖中，则可以加上–save-dev：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install --save-dev gulp</span><br></pre></td></tr></table></figure></p>
+<p>　　这样就完成了gulp的安装，接下来就可以在项目中应用gulp了。</p>
+<h3 id="5-使用"><a href="#5-使用" class="headerlink" title="5.使用"></a>5.使用</h3><hr>
+<p>1.建立gulpfile.js文件</p>
+<p>　　gulp也需要一个文件作为它的主文件，在gulp中这个文件叫做gulpfile.js。新建一个文件名为gulpfile.js的文件，然后放到你的项目目录中。之后要做的事情就是在gulpfile.js文件中定义我们的任务了。下面是一个最简单的gulpfile.js文件内容示例，它定义了一个默认的任务。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;);</span><br><span class="line">gulp.task(&apos;default&apos;,function()&#123;</span><br><span class="line">    console.log(&apos;hello world&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>2.运行gulp任务<br>　　要运行gulp任务，只需切换到存放gulpfile.js文件的目录(windows平台请使用cmd或者Power Shell等工具)，然后在命令行中执行gulp命令就行了，gulp后面可以加上要执行的任务名，例如gulp task1，如果没有指定任务名，则会执行任务名为default的默认任务。</p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+  
+  <div class="tags">
+    <a href="/tags/Node-js/">Node.js</a>
+  </div>
+
+        
+  <div class="addthis addthis_toolbox addthis_default_style">
+    
+      <a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+    
+    
+      <a class="addthis_button_tweet"></a>
+    
+    
+      <a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+    
+    
+      <a class="addthis_button_pinterest_pinit" pi:pinit:layout="horizontal"></a>
+    
+    <a class="addthis_counter addthis_pill_style"></a>
+  </div>
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js"></script>
+
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">留言</h1>
+
+  
+      <div id="fb-root"></div>
+<script>
+  (function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=shouliang0816";
+    fjs.parentNode.insertBefore(js, fjs);
+  }(document, 'script', 'facebook-jssdk'));
+</script>
+
+<div class="fb-comments" data-href="https://shouliang.github.io/2015/04/04/Node.js/Gulp(1)简介/index.html" data-num-posts="5" data-width="840" data-colorscheme="light"></div>
+      
+  
+</section>
+
+</div></div>
+    <aside id="sidebar" class="alignright">
+  <div class="search">
+  <form action="//google.com/search" method="get" accept-charset="utf-8">
+    <input type="search" name="q" results="0" placeholder="搜索">
+    <input type="hidden" name="q" value="site:shouliang.github.io">
+  </form>
+</div>
+
+  
+
+  
+<div class="widget tag">
+  <h3 class="title">标签</h3>
+  <ul class="entry">
+  
+    <li><a href="/tags/Docker/">Docker</a><small>3</small></li>
+  
+    <li><a href="/tags/Git/">Git</a><small>7</small></li>
+  
+    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>5</small></li>
+  
+    <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
+  
+    <li><a href="/tags/MySQL实战/">MySQL实战</a><small>5</small></li>
+  
+    <li><a href="/tags/Node-js/">Node.js</a><small>58</small></li>
+  
+    <li><a href="/tags/Redis/">Redis</a><small>2</small></li>
+  
+    <li><a href="/tags/Unix/">Unix</a><small>4</small></li>
+  
+    <li><a href="/tags/从0开始学大数据/">从0开始学大数据</a><small>2</small></li>
+  
+    <li><a href="/tags/区块链/">区块链</a><small>1</small></li>
+  
+    <li><a href="/tags/数据分析实战/">数据分析实战</a><small>3</small></li>
+  
+    <li><a href="/tags/数据库/">数据库</a><small>2</small></li>
+  
+    <li><a href="/tags/数据结构与算法/">数据结构与算法</a><small>13</small></li>
+  
+    <li><a href="/tags/程序员的数学基础课/">程序员的数学基础课</a><small>5</small></li>
+  
+    <li><a href="/tags/网络安全/">网络安全</a><small>8</small></li>
+  
+    <li><a href="/tags/计算机网络/">计算机网络</a><small>1</small></li>
+  
+    <li><a href="/tags/趣谈网络协议/">趣谈网络协议</a><small>8</small></li>
+  
+  </ul>
+</div>
+
+</aside>
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div class="alignleft">
+  
+  &copy; 2019 shouliang
+  
+</div>
+<div class="clearfix"></div></footer>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+</body>
+</html>

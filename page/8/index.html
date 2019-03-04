@@ -1,6 +1,6 @@
 <!DOCTYPE HTML>
 <html>
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="utf-8">
   
   <title>第 8 页 | shouliang&#39;s blog</title>
@@ -12,10 +12,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
   
-  <meta property="og:site_name" content="shouliang&#39;s blog"/>
+  <meta property="og:site_name" content="shouliang&#39;s blog">
 
   
-    <meta property="og:image" content=""/>
+    <meta property="og:image" content>
   
 
   <link href="/favicon.png" rel="icon">
@@ -25,7 +25,7 @@
   
 
 </head>
-
+</html>
 
 <body>
   <header id="header" class="inner"><div class="alignleft">
@@ -53,177 +53,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2016-07-27T06:45:23.000Z"><a href="/2016/07/27/ES6/箭头函数/">2016-07-27</a></time>
+        <time datetime="2016-06-29T06:45:23.000Z"><a href="/2016/06/29/Node.js/ES6—Set和Map数据结构/">2016-06-29</a></time>
       
       
   
-    <h1 class="title"><a href="/2016/07/27/ES6/箭头函数/">箭头函数</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h2 id="箭头函数"><a href="#箭头函数" class="headerlink" title="箭头函数"></a>箭头函数</h2><h3 id="基本用法"><a href="#基本用法" class="headerlink" title="基本用法"></a>基本用法</h3><p>ES6 允许使用“箭头”（<code>=&gt;</code>）定义函数。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> f = <span class="function"><span class="params">v</span> =&gt;</span> v;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 等同于</span></span><br><span class="line"><span class="keyword">var</span> f = <span class="function"><span class="keyword">function</span> (<span class="params">v</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> v;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>如果箭头函数不需要参数或需要多个参数，就使用一个圆括号代表参数部分。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> f = <span class="function"><span class="params">()</span> =&gt;</span> <span class="number">5</span>;</span><br><span class="line"><span class="comment">// 等同于</span></span><br><span class="line"><span class="keyword">var</span> f = <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123; <span class="keyword">return</span> <span class="number">5</span> &#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> sum = <span class="function">(<span class="params">num1, num2</span>) =&gt;</span> num1 + num2;</span><br><span class="line"><span class="comment">// 等同于</span></span><br><span class="line"><span class="keyword">var</span> sum = <span class="function"><span class="keyword">function</span>(<span class="params">num1, num2</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> num1 + num2;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>如果箭头函数的代码块部分多于一条语句，就要使用大括号将它们括起来，并且使用<code>return</code>语句返回。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> sum = <span class="function">(<span class="params">num1, num2</span>) =&gt;</span> &#123; <span class="keyword">return</span> num1 + num2; &#125;</span><br></pre></td></tr></table></figure>
-<p>由于大括号被解释为代码块，所以如果箭头函数直接返回一个对象，必须在对象外面加上括号，否则会报错。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 报错</span></span><br><span class="line"><span class="keyword">let</span> getTempItem = <span class="function"><span class="params">id</span> =&gt;</span> &#123; <span class="attr">id</span>: id, <span class="attr">name</span>: <span class="string">"Temp"</span> &#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 不报错</span></span><br><span class="line"><span class="keyword">let</span> getTempItem = <span class="function"><span class="params">id</span> =&gt;</span> (&#123; <span class="attr">id</span>: id, <span class="attr">name</span>: <span class="string">"Temp"</span> &#125;);</span><br></pre></td></tr></table></figure>
-<p>下面是一种特殊情况，虽然可以运行，但会得到错误的结果。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> foo = <span class="function"><span class="params">()</span> =&gt;</span> &#123; <span class="attr">a</span>: <span class="number">1</span> &#125;;</span><br><span class="line">foo() <span class="comment">// undefined</span></span><br></pre></td></tr></table></figure>
-<p>上面代码中，原始意图是返回一个对象<code>{ a: 1 }</code>，但是由于引擎认为大括号是代码块，所以执行了一行语句<code>a: 1</code>。这时，<code>a</code>可以被解释为语句的标签，因此实际执行的语句是<code>1;</code>，然后函数就结束了，没有返回值。</p>
-<p>如果箭头函数只有一行语句，且不需要返回值，可以采用下面的写法，就不用写大括号了。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> fn = <span class="function"><span class="params">()</span> =&gt;</span> <span class="keyword">void</span> doesNotReturn();</span><br></pre></td></tr></table></figure>
-<p>箭头函数可以与变量解构结合使用。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> full = <span class="function">(<span class="params">&#123; first, last &#125;</span>) =&gt;</span> first + <span class="string">' '</span> + last;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 等同于</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">full</span>(<span class="params">person</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> person.first + <span class="string">' '</span> + person.last;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>箭头函数使得表达更加简洁。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> isEven = <span class="function"><span class="params">n</span> =&gt;</span> n % <span class="number">2</span> == <span class="number">0</span>;</span><br><span class="line"><span class="keyword">const</span> square = <span class="function"><span class="params">n</span> =&gt;</span> n * n;</span><br></pre></td></tr></table></figure>
-<p>上面代码只用了两行，就定义了两个简单的工具函数。如果不用箭头函数，可能就要占用多行，而且还不如现在这样写醒目。</p>
-<p>箭头函数的一个用处是简化回调函数。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 正常函数写法</span></span><br><span class="line">[<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>].map(<span class="function"><span class="keyword">function</span> (<span class="params">x</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> x * x;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 箭头函数写法</span></span><br><span class="line">[<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>].map(<span class="function"><span class="params">x</span> =&gt;</span> x * x);</span><br></pre></td></tr></table></figure>
-<p>另一个例子是</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 正常函数写法</span></span><br><span class="line"><span class="keyword">var</span> result = values.sort(<span class="function"><span class="keyword">function</span> (<span class="params">a, b</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> a - b;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 箭头函数写法</span></span><br><span class="line"><span class="keyword">var</span> result = values.sort(<span class="function">(<span class="params">a, b</span>) =&gt;</span> a - b);</span><br></pre></td></tr></table></figure>
-<p>下面是 rest 参数与箭头函数结合的例子。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> numbers = <span class="function">(<span class="params">...nums</span>) =&gt;</span> nums;</span><br><span class="line"></span><br><span class="line">numbers(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>)</span><br><span class="line"><span class="comment">// [1,2,3,4,5]</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> headAndTail = <span class="function">(<span class="params">head, ...tail</span>) =&gt;</span> [head, tail];</span><br><span class="line"></span><br><span class="line">headAndTail(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>)</span><br><span class="line"><span class="comment">// [1,[2,3,4,5]]</span></span><br></pre></td></tr></table></figure>
-<h3 id="使用注意点"><a href="#使用注意点" class="headerlink" title="使用注意点"></a>使用注意点</h3><p>箭头函数有几个使用注意点。</p>
-<p>（1）函数体内的<code>this</code>对象，就是定义时所在的对象，而不是使用时所在的对象。</p>
-<p>（2）不可以当作构造函数，也就是说，不可以使用<code>new</code>命令，否则会抛出一个错误。</p>
-<p>（3）不可以使用<code>arguments</code>对象，该对象在函数体内不存在。如果要用，可以用 rest 参数代替。</p>
-<p>（4）不可以使用<code>yield</code>命令，因此箭头函数不能用作 Generator 函数。</p>
-<p>上面四点中，第一点尤其值得注意。<code>this</code>对象的指向是可变的，但是在箭头函数中，它是固定的。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'id:'</span>, <span class="keyword">this</span>.id);</span><br><span class="line">  &#125;, <span class="number">100</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> id = <span class="number">21</span>;</span><br><span class="line"></span><br><span class="line">foo.call(&#123; <span class="attr">id</span>: <span class="number">42</span> &#125;);</span><br><span class="line"><span class="comment">// id: 42</span></span><br></pre></td></tr></table></figure>
-<p>上面代码中，<code>setTimeout</code>的参数是一个箭头函数，这个箭头函数的定义生效是在<code>foo</code>函数生成时，而它的真正执行要等到 100 毫秒后。如果是普通函数，执行时<code>this</code>应该指向全局对象<code>window</code>，这时应该输出<code>21</code>。但是，箭头函数导致<code>this</code>总是指向函数定义生效时所在的对象（本例是<code>{id: 42}</code>），所以输出的是<code>42</code>。</p>
-<p>箭头函数可以让<code>setTimeout</code>里面的<code>this</code>，绑定定义时所在的作用域，而不是指向运行时所在的作用域。下面是另一个例子。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">Timer</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">this</span>.s1 = <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">this</span>.s2 = <span class="number">0</span>;</span><br><span class="line">  <span class="comment">// 箭头函数</span></span><br><span class="line">  setInterval(<span class="function"><span class="params">()</span> =&gt;</span> <span class="keyword">this</span>.s1++, <span class="number">1000</span>);</span><br><span class="line">  <span class="comment">// 普通函数</span></span><br><span class="line">  setInterval(<span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.s2++;</span><br><span class="line">  &#125;, <span class="number">1000</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> timer = <span class="keyword">new</span> Timer();</span><br><span class="line"></span><br><span class="line">setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> <span class="built_in">console</span>.log(<span class="string">'s1: '</span>, timer.s1), <span class="number">3100</span>);</span><br><span class="line">setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> <span class="built_in">console</span>.log(<span class="string">'s2: '</span>, timer.s2), <span class="number">3100</span>);</span><br><span class="line"><span class="comment">// s1: 3</span></span><br><span class="line"><span class="comment">// s2: 0</span></span><br></pre></td></tr></table></figure>
-<p>上面代码中，<code>Timer</code>函数内部设置了两个定时器，分别使用了箭头函数和普通函数。前者的<code>this</code>绑定定义时所在的作用域（即<code>Timer</code>函数），后者的<code>this</code>指向运行时所在的作用域（即全局对象）。所以，3100 毫秒之后，<code>timer.s1</code>被更新了 3 次，而<code>timer.s2</code>一次都没更新。</p>
-<p>箭头函数可以让<code>this</code>指向固定化，这种特性很有利于封装回调函数。下面是一个例子，DOM 事件的回调函数封装在一个对象里面。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> handler = &#123;</span><br><span class="line">  id: <span class="string">'123456'</span>,</span><br><span class="line"></span><br><span class="line">  init: <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="built_in">document</span>.addEventListener(<span class="string">'click'</span>,</span><br><span class="line">      event =&gt; <span class="keyword">this</span>.doSomething(event.type), <span class="literal">false</span>);</span><br><span class="line">  &#125;,</span><br><span class="line"></span><br><span class="line">  doSomething: <span class="function"><span class="keyword">function</span>(<span class="params">type</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'Handling '</span> + type  + <span class="string">' for '</span> + <span class="keyword">this</span>.id);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>上面代码的<code>init</code>方法中，使用了箭头函数，这导致这个箭头函数里面的<code>this</code>，总是指向<code>handler</code>对象。否则，回调函数运行时，<code>this.doSomething</code>这一行会报错，因为此时<code>this</code>指向<code>document</code>对象。</p>
-<p><code>this</code>指向的固定化，并不是因为箭头函数内部有绑定<code>this</code>的机制，实际原因是箭头函数根本没有自己的<code>this</code>，导致内部的<code>this</code>就是外层代码块的<code>this</code>。正是因为它没有<code>this</code>，所以也就不能用作构造函数。</p>
-<p>所以，箭头函数转成 ES5 的代码如下。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ES6</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'id:'</span>, <span class="keyword">this</span>.id);</span><br><span class="line">  &#125;, <span class="number">100</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ES5</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> _this = <span class="keyword">this</span>;</span><br><span class="line"></span><br><span class="line">  setTimeout(<span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'id:'</span>, _this.id);</span><br><span class="line">  &#125;, <span class="number">100</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>上面代码中，转换后的 ES5 版本清楚地说明了，箭头函数里面根本没有自己的<code>this</code>，而是引用外层的<code>this</code>。</p>
-<p>请问下面的代码之中有几个<code>this</code>？</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'id:'</span>, <span class="keyword">this</span>.id);</span><br><span class="line">      &#125;;</span><br><span class="line">    &#125;;</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> f = foo.call(&#123;<span class="attr">id</span>: <span class="number">1</span>&#125;);</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> t1 = f.call(&#123;<span class="attr">id</span>: <span class="number">2</span>&#125;)()(); <span class="comment">// id: 1</span></span><br><span class="line"><span class="keyword">var</span> t2 = f().call(&#123;<span class="attr">id</span>: <span class="number">3</span>&#125;)(); <span class="comment">// id: 1</span></span><br><span class="line"><span class="keyword">var</span> t3 = f()().call(&#123;<span class="attr">id</span>: <span class="number">4</span>&#125;); <span class="comment">// id: 1</span></span><br></pre></td></tr></table></figure>
-<p>上面代码之中，只有一个<code>this</code>，就是函数<code>foo</code>的<code>this</code>，所以<code>t1</code>、<code>t2</code>、<code>t3</code>都输出同样的结果。因为所有的内层函数都是箭头函数，都没有自己的<code>this</code>，它们的<code>this</code>其实都是最外层<code>foo</code>函数的<code>this</code>。</p>
-<p>除了<code>this</code>，以下三个变量在箭头函数之中也是不存在的，指向外层函数的对应变量：<code>arguments</code>、<code>super</code>、<code>new.target</code>。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'args:'</span>, <span class="built_in">arguments</span>);</span><br><span class="line">  &#125;, <span class="number">100</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">foo(<span class="number">2</span>, <span class="number">4</span>, <span class="number">6</span>, <span class="number">8</span>)</span><br><span class="line"><span class="comment">// args: [2, 4, 6, 8]</span></span><br></pre></td></tr></table></figure>
-<p>上面代码中，箭头函数内部的变量<code>arguments</code>，其实是函数<code>foo</code>的<code>arguments</code>变量。</p>
-<p>另外，由于箭头函数没有自己的<code>this</code>，所以当然也就不能用<code>call()</code>、<code>apply()</code>、<code>bind()</code>这些方法去改变<code>this</code>的指向。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">(<span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> [</span><br><span class="line">    (<span class="function"><span class="params">()</span> =&gt;</span> <span class="keyword">this</span>.x).bind(&#123; <span class="attr">x</span>: <span class="string">'inner'</span> &#125;)()</span><br><span class="line">  ];</span><br><span class="line">&#125;).call(&#123; <span class="attr">x</span>: <span class="string">'outer'</span> &#125;);</span><br><span class="line"><span class="comment">// ['outer']</span></span><br></pre></td></tr></table></figure>
-<p>上面代码中，箭头函数没有自己的<code>this</code>，所以<code>bind</code>方法无效，内部的<code>this</code>指向外部的<code>this</code>。</p>
-<p>长期以来，JavaScript 语言的<code>this</code>对象一直是一个令人头痛的问题，在对象方法中使用<code>this</code>，必须非常小心。箭头函数”绑定”<code>this</code>，很大程度上解决了这个困扰。</p>
-<h3 id="嵌套的箭头函数"><a href="#嵌套的箭头函数" class="headerlink" title="嵌套的箭头函数"></a>嵌套的箭头函数</h3><p>箭头函数内部，还可以再使用箭头函数。下面是一个 ES5 语法的多重嵌套函数。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">insert</span>(<span class="params">value</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> &#123;<span class="attr">into</span>: <span class="function"><span class="keyword">function</span> (<span class="params">array</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="attr">after</span>: <span class="function"><span class="keyword">function</span> (<span class="params">afterValue</span>) </span>&#123;</span><br><span class="line">      array.splice(array.indexOf(afterValue) + <span class="number">1</span>, <span class="number">0</span>, value);</span><br><span class="line">      <span class="keyword">return</span> array;</span><br><span class="line">    &#125;&#125;;</span><br><span class="line">  &#125;&#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">insert(<span class="number">2</span>).into([<span class="number">1</span>, <span class="number">3</span>]).after(<span class="number">1</span>); <span class="comment">//[1, 2, 3]</span></span><br></pre></td></tr></table></figure>
-<p>上面这个函数，可以使用箭头函数改写。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> insert = <span class="function">(<span class="params">value</span>) =&gt;</span> (&#123;<span class="attr">into</span>: <span class="function">(<span class="params">array</span>) =&gt;</span> (&#123;<span class="attr">after</span>: <span class="function">(<span class="params">afterValue</span>) =&gt;</span> &#123;</span><br><span class="line">  array.splice(array.indexOf(afterValue) + <span class="number">1</span>, <span class="number">0</span>, value);</span><br><span class="line">  <span class="keyword">return</span> array;</span><br><span class="line">&#125;&#125;)&#125;);</span><br><span class="line"></span><br><span class="line">insert(<span class="number">2</span>).into([<span class="number">1</span>, <span class="number">3</span>]).after(<span class="number">1</span>); <span class="comment">//[1, 2, 3]</span></span><br></pre></td></tr></table></figure>
-<p>下面是一个部署管道机制（pipeline）的例子，即前一个函数的输出是后一个函数的输入。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> pipeline = <span class="function">(<span class="params">...funcs</span>) =&gt;</span></span><br><span class="line">  val =&gt; funcs.reduce(<span class="function">(<span class="params">a, b</span>) =&gt;</span> b(a), val);</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> plus1 = <span class="function"><span class="params">a</span> =&gt;</span> a + <span class="number">1</span>;</span><br><span class="line"><span class="keyword">const</span> mult2 = <span class="function"><span class="params">a</span> =&gt;</span> a * <span class="number">2</span>;</span><br><span class="line"><span class="keyword">const</span> addThenMult = pipeline(plus1, mult2);</span><br><span class="line"></span><br><span class="line">addThenMult(<span class="number">5</span>)</span><br><span class="line"><span class="comment">// 12</span></span><br></pre></td></tr></table></figure>
-<p>如果觉得上面的写法可读性比较差，也可以采用下面的写法。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> plus1 = <span class="function"><span class="params">a</span> =&gt;</span> a + <span class="number">1</span>;</span><br><span class="line"><span class="keyword">const</span> mult2 = <span class="function"><span class="params">a</span> =&gt;</span> a * <span class="number">2</span>;</span><br><span class="line"></span><br><span class="line">mult2(plus1(<span class="number">5</span>))</span><br><span class="line"><span class="comment">// 12</span></span><br></pre></td></tr></table></figure>
-<p>箭头函数还有一个功能，就是可以很方便地改写 λ 演算。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// λ演算的写法</span></span><br><span class="line">fix = λf.(λx.f(λv.x(x)(v)))(λx.f(λv.x(x)(v)))</span><br><span class="line"></span><br><span class="line"><span class="comment">// ES6的写法</span></span><br><span class="line"><span class="keyword">var</span> fix = <span class="function"><span class="params">f</span> =&gt;</span> (<span class="function"><span class="params">x</span> =&gt;</span> f(<span class="function"><span class="params">v</span> =&gt;</span> x(x)(v)))</span><br><span class="line">               (<span class="function"><span class="params">x</span> =&gt;</span> f(<span class="function"><span class="params">v</span> =&gt;</span> x(x)(v)));</span><br></pre></td></tr></table></figure>
-<p>上面两种写法，几乎是一一对应的。由于 λ 演算对于计算机科学非常重要，这使得我们可以用 ES6 作为替代工具，探索计算机科学。</p>
-<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="https://github.com/ruanyf/es6tutorial/blob/gh-pages/docs/function.md" target="_blank" rel="noopener">https://github.com/ruanyf/es6tutorial/blob/gh-pages/docs/function.md</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2016-07-23T14:16:53.000Z"><a href="/2016/07/23/Node.js_进程/Nodejs编写守护进程/">2016-07-23</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2016/07/23/Node.js_进程/Nodejs编写守护进程/">Nodejs编写守护进程</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>目前Nodejs编写一个守护进程非常简单，在6.3.1版本中已经存在非常方便的API，这些API可以帮助我们更方便的创建一个守护进程。本文仅在描述守护进程的创建方式，而不会对守护进程所要执行的任务做任何描述。</p>
-<h3 id="守护进程的启动方式"><a href="#守护进程的启动方式" class="headerlink" title="守护进程的启动方式"></a>守护进程的启动方式</h3><p>如果不在Nodejs环境中，我们如何创建守护进程？过程如下：</p>
-<ol>
-<li>创建一个进程A。</li>
-<li>在进程A中创建进程B，我们可以使用fork方式，或者其他方法。</li>
-<li>对进程B执行 <code>setsid</code> 方法。</li>
-<li>进程A退出，进程B由init进程接管。此时进程B为守护进程。</li>
-</ol>
-<h3 id="Setsid详解"><a href="#Setsid详解" class="headerlink" title="Setsid详解"></a>Setsid详解</h3><p><code>setsid</code> 主要完成三件事：</p>
-<ol>
-<li>该进程变成一个新会话的会话领导。</li>
-<li>该进程变成一个新进程组的组长。</li>
-<li>该进程没有控制终端。</li>
-</ol>
-<p>然而，Nodejs中并没有对 <code>setsid</code> 方法的直接封装，翻阅文档发现有一个地方是可以调用该方法的。</p>
-<h3 id="Nodejs中启动子进程方法"><a href="#Nodejs中启动子进程方法" class="headerlink" title="Nodejs中启动子进程方法"></a>Nodejs中启动子进程方法</h3><p>借助 <code>clild_process</code> 中的 <code>spawn</code> 即可创建子进程，方法如下：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> spawn = <span class="built_in">require</span>(<span class="string">'child_process'</span>).spawn;</span><br><span class="line"><span class="keyword">var</span> process = <span class="built_in">require</span>(<span class="string">'process'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> p = spawn(<span class="string">'node'</span>,[<span class="string">'b.js'</span>]);</span><br><span class="line"><span class="built_in">console</span>.log(process.pid, p.pid);</span><br></pre></td></tr></table></figure>
-<p>注意，这里只打印当前进程的PID和子进程的PID，同时为了观察效果，我并没有将父进程退出。</p>
-<p><code>b.js</code> 中代码很简单，打开一个资源，并不停的写入数据。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> fs = <span class="built_in">require</span>(<span class="string">'fs'</span>);</span><br><span class="line"><span class="keyword">var</span> process = <span class="built_in">require</span>(<span class="string">'process'</span>);</span><br><span class="line"></span><br><span class="line">fs.open(<span class="string">"/Users/mebius/Desktop/log.txt"</span>,<span class="string">'w'</span>,<span class="function"><span class="keyword">function</span>(<span class="params">err, fd</span>)</span>&#123;</span><br><span class="line">	<span class="built_in">console</span>.log(fd);</span><br><span class="line">	<span class="keyword">while</span>(<span class="literal">true</span>)</span><br><span class="line">	&#123;</span><br><span class="line">		fs.write(fd,process.pid+<span class="string">"\n"</span>,<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;&#125;);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>运行后的效果如图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/fork01_180703.png" alt=""></p>
-<p>我们来看以下 <code>top</code> 命令下的进程情况。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/fork02_180703.png" alt=""></p>
-<p>看一看到，此时父进程PID为17055，子进程的PPID为17055，PID为17056.</p>
-<h3 id="Nodejs中Setsid的调用"><a href="#Nodejs中Setsid的调用" class="headerlink" title="Nodejs中Setsid的调用"></a>Nodejs中Setsid的调用</h3><p>到此为止，守护进程已经完成一半，下面要调用setsid方法，并且退出父进程。</p>
-<p>代码修改如下：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> spawn = <span class="built_in">require</span>(<span class="string">'child_process'</span>).spawn;</span><br><span class="line"><span class="keyword">var</span> process = <span class="built_in">require</span>(<span class="string">'process'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> p = spawn(<span class="string">'node'</span>,[<span class="string">'b.js'</span>],&#123;</span><br><span class="line">        detached : <span class="literal">true</span></span><br><span class="line">    &#125;);</span><br><span class="line"><span class="built_in">console</span>.log(process.pid, p.pid);</span><br><span class="line">process.exit(<span class="number">0</span>);</span><br></pre></td></tr></table></figure>
-<p>在 <code>spawn</code> 的第三个参数中，可以设置 <code>detached</code> 属性，如果该属性为true，则会调用 <code>setsid</code> 方法。这样就满足我们对守护进程的要求。</p>
-<p>在此运行命令。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/fork03_180703.png" alt=""></p>
-<p>查看 <code>top</code> 命令</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/fork04_180703.png" alt=""></p>
-<p>可以看到，当前仅存在一个PID为17062的进程，这个进程就是我们要的守护进程。</p>
-<blockquote>
-<p>由于每次运行PID都不同，所以此次子进程的PID于第一次不同。</p>
-</blockquote>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>守护进程最重要的是稳定，如果守护进程挂掉，那么其管理的子进程都将变为孤儿进程，同时被init进程接管，这是我们不愿意看到的。于此同时，守护进程对于子进程的管理也是有非常多的发挥余地的，例如PM2中，将一个进程同时启动4次，达到CPU多核使用的目的（很有可能你的进程在同一核中运行），进程挂掉后自动重启等等，这些事情等着我们去造轮子。</p>
-<p>普通的进程, 在用户退出终端之后就会直接关闭. 通过 &amp; 启动到后台的进程, 之后会由于会（session组）被回收而终止进程. 守护进程是不依赖终端（tty）的进程, 不会因为用户退出终端而停止运行的进程.</p>
-<p>总体来说，Nodejs启动守护进程方式比较简单，默认所暴露的API也屏蔽了很多系统级别API，使得大家使用上更加方便，但没有接触过Linux的人在理解上有一些复杂。推荐大家学习Nodejs的同时，多学习Linux系统调用的和系统内核的一些东西。</p>
-<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="https://ashan.org/archives/917" target="_blank" rel="noopener">https://ashan.org/archives/917</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2016-06-29T06:45:23.000Z"><a href="/2016/06/29/ES6/Set和Map数据结构/">2016-06-29</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2016/06/29/ES6/Set和Map数据结构/">set和Map数据结构</a></h1>
+    <h1 class="title"><a href="/2016/06/29/Node.js/ES6—Set和Map数据结构/">ES6—set和Map数据结构</a></h1>
   
 
     </header>
@@ -234,15 +68,15 @@
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> s = <span class="keyword">new</span> <span class="built_in">Set</span>();</span><br><span class="line"></span><br><span class="line">[<span class="number">2</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">2</span>, <span class="number">2</span>].forEach(<span class="function"><span class="params">x</span> =&gt;</span> s.add(x));</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> i <span class="keyword">of</span> s) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(i);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 2 3 5 4</span></span><br></pre></td></tr></table></figure>
 <p>上面代码通过<code>add</code>方法向 Set 结构加入成员，结果表明 Set 结构不会添加重复的值。</p>
 <p>Set 函数可以接受一个数组（或者具有 iterable 接口的其他数据结构）作为参数，用来初始化。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 例一</span></span><br><span class="line"><span class="keyword">const</span> set = <span class="keyword">new</span> <span class="built_in">Set</span>([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">4</span>]);</span><br><span class="line">[...set]</span><br><span class="line"><span class="comment">// [1, 2, 3, 4]</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 例二</span></span><br><span class="line"><span class="keyword">const</span> items = <span class="keyword">new</span> <span class="built_in">Set</span>([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">5</span>, <span class="number">5</span>, <span class="number">5</span>]);</span><br><span class="line">items.size <span class="comment">// 5</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 例三</span></span><br><span class="line"><span class="keyword">const</span> set = <span class="keyword">new</span> <span class="built_in">Set</span>(<span class="built_in">document</span>.querySelectorAll(<span class="string">'div'</span>));</span><br><span class="line">set.size <span class="comment">// 56</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 类似于</span></span><br><span class="line"><span class="keyword">const</span> set = <span class="keyword">new</span> <span class="built_in">Set</span>();</span><br><span class="line"><span class="built_in">document</span></span><br><span class="line"> .querySelectorAll(<span class="string">'div'</span>)</span><br><span class="line"> .forEach(<span class="function"><span class="params">div</span> =&gt;</span> set.add(div));</span><br><span class="line">set.size <span class="comment">// 56</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 例一</span></span><br><span class="line"><span class="keyword">const</span> <span class="keyword">set</span> = new Set([1, 2, 3, 4, 4]);</span><br><span class="line">[...<span class="keyword">set</span>]</span><br><span class="line">// [1, 2, 3, 4]</span><br><span class="line"></span><br><span class="line">// 例二</span><br><span class="line">const items = new Set([1, 2, 3, 4, 5, 5, 5, 5]);</span><br><span class="line">items.size // 5</span><br><span class="line"></span><br><span class="line">// 例三</span><br><span class="line">const <span class="keyword">set</span> = new Set(document.querySelectorAll('div'));</span><br><span class="line"><span class="keyword">set</span>.size // 56</span><br><span class="line"></span><br><span class="line">// 类似于</span><br><span class="line">const <span class="keyword">set</span> = new Set();</span><br><span class="line">document</span><br><span class="line"> .querySelectorAll('div')</span><br><span class="line"> .forEach(div =&gt; <span class="keyword">set</span>.add(div));</span><br><span class="line"><span class="keyword">set</span>.size // 56</span><br></pre></td></tr></table></figure>
 <p>上面代码中，例一和例二都是<code>Set</code>函数接受数组作为参数，例三是接受类似数组的对象作为参数。</p>
 <p>上面代码也展示了一种去除数组重复成员的方法。</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 去除数组的重复成员</span></span><br><span class="line">[...new <span class="built_in">Set</span>(array)]</span><br></pre></td></tr></table></figure>
 <p>向 Set 加入值的时候，不会发生类型转换，所以<code>5</code>和<code>&quot;5&quot;</code>是两个不同的值。Set 内部判断两个值是否不同，使用的算法叫做“Same-value-zero equality”，它类似于精确相等运算符（<code>===</code>），主要的区别是<code>NaN</code>等于自身，而精确相等运算符认为<code>NaN</code>不等于自身。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> set = <span class="keyword">new</span> <span class="built_in">Set</span>();</span><br><span class="line"><span class="keyword">let</span> a = <span class="literal">NaN</span>;</span><br><span class="line"><span class="keyword">let</span> b = <span class="literal">NaN</span>;</span><br><span class="line">set.add(a);</span><br><span class="line">set.add(b);</span><br><span class="line">set <span class="comment">// Set &#123;NaN&#125;</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="keyword">set</span> = new Set();</span><br><span class="line">let a = NaN;</span><br><span class="line">let b = NaN;</span><br><span class="line"><span class="keyword">set</span>.add(a);</span><br><span class="line"><span class="keyword">set</span>.add(b);</span><br><span class="line"><span class="keyword">set</span> // Set &#123;<span class="literal">NaN</span>&#125;</span><br></pre></td></tr></table></figure>
 <p>上面代码向 Set 实例添加了两个<code>NaN</code>，但是只能加入一个。这表明，在 Set 内部，两个<code>NaN</code>是相等。</p>
 <p>另外，两个对象总是不相等的。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> set = <span class="keyword">new</span> <span class="built_in">Set</span>();</span><br><span class="line"></span><br><span class="line">set.add(&#123;&#125;);</span><br><span class="line">set.size <span class="comment">// 1</span></span><br><span class="line"></span><br><span class="line">set.add(&#123;&#125;);</span><br><span class="line">set.size <span class="comment">// 2</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="keyword">set</span> = new Set();</span><br><span class="line"></span><br><span class="line"><span class="keyword">set</span>.add(&#123;&#125;);</span><br><span class="line"><span class="keyword">set</span>.size // 1</span><br><span class="line"></span><br><span class="line"><span class="keyword">set</span>.add(&#123;&#125;);</span><br><span class="line"><span class="keyword">set</span>.size // 2</span><br></pre></td></tr></table></figure>
 <p>上面代码表示，由于两个空对象不相等，所以它们被视为两个值。</p>
 <h3 id="Set-实例的属性和方法"><a href="#Set-实例的属性和方法" class="headerlink" title="Set 实例的属性和方法"></a>Set 实例的属性和方法</h3><p>Set 结构的实例有以下属性。</p>
 <ul>
@@ -274,28 +108,28 @@
 <p>需要特别指出的是，<code>Set</code>的遍历顺序就是插入顺序。这个特性有时非常有用，比如使用 Set 保存一个回调函数列表，调用时就能保证按照添加顺序调用。</p>
 <p><strong>（1）<code>keys()</code>，<code>values()</code>，<code>entries()</code></strong></p>
 <p><code>keys</code>方法、<code>values</code>方法、<code>entries</code>方法返回的都是遍历器对象（详见《Iterator 对象》一章）。由于 Set 结构没有键名，只有键值（或者说键名和键值是同一个值），所以<code>keys</code>方法和<code>values</code>方法的行为完全一致。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> set = <span class="keyword">new</span> <span class="built_in">Set</span>([<span class="string">'red'</span>, <span class="string">'green'</span>, <span class="string">'blue'</span>]);</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> item <span class="keyword">of</span> set.keys()) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(item);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// red</span></span><br><span class="line"><span class="comment">// green</span></span><br><span class="line"><span class="comment">// blue</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> item <span class="keyword">of</span> set.values()) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(item);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// red</span></span><br><span class="line"><span class="comment">// green</span></span><br><span class="line"><span class="comment">// blue</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> item <span class="keyword">of</span> set.entries()) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(item);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// ["red", "red"]</span></span><br><span class="line"><span class="comment">// ["green", "green"]</span></span><br><span class="line"><span class="comment">// ["blue", "blue"]</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="keyword">set</span> = new Set(['red', 'green', 'blue']);</span><br><span class="line"></span><br><span class="line">for (let item of <span class="keyword">set</span>.keys()) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(item);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// red</span></span><br><span class="line"><span class="comment">// green</span></span><br><span class="line"><span class="comment">// blue</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> item <span class="keyword">of</span> <span class="keyword">set</span>.values()) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(item);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// red</span></span><br><span class="line"><span class="comment">// green</span></span><br><span class="line"><span class="comment">// blue</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> item <span class="keyword">of</span> <span class="keyword">set</span>.entries()) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(item);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// ["red", "red"]</span></span><br><span class="line"><span class="comment">// ["green", "green"]</span></span><br><span class="line"><span class="comment">// ["blue", "blue"]</span></span><br></pre></td></tr></table></figure>
 <p>上面代码中，<code>entries</code>方法返回的遍历器，同时包括键名和键值，所以每次输出一个数组，它的两个成员完全相等。</p>
 <p>Set 结构的实例默认可遍历，它的默认遍历器生成函数就是它的<code>values</code>方法。</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">Set</span>.prototype[<span class="built_in">Symbol</span>.iterator] === <span class="built_in">Set</span>.prototype.values</span><br><span class="line"><span class="comment">// true</span></span><br></pre></td></tr></table></figure>
 <p>这意味着，可以省略<code>values</code>方法，直接用<code>for...of</code>循环遍历 Set。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> set = <span class="keyword">new</span> <span class="built_in">Set</span>([<span class="string">'red'</span>, <span class="string">'green'</span>, <span class="string">'blue'</span>]);</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> x <span class="keyword">of</span> set) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(x);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// red</span></span><br><span class="line"><span class="comment">// green</span></span><br><span class="line"><span class="comment">// blue</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="keyword">set</span> = new Set(['red', 'green', 'blue']);</span><br><span class="line"></span><br><span class="line">for (let x of <span class="keyword">set</span>) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(x);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// red</span></span><br><span class="line"><span class="comment">// green</span></span><br><span class="line"><span class="comment">// blue</span></span><br></pre></td></tr></table></figure>
 <p><strong>（2）<code>forEach()</code></strong></p>
 <p>Set 结构的实例与数组一样，也拥有<code>forEach</code>方法，用于对每个成员执行某种操作，没有返回值。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">set = <span class="keyword">new</span> <span class="built_in">Set</span>([<span class="number">1</span>, <span class="number">4</span>, <span class="number">9</span>]);</span><br><span class="line">set.forEach(<span class="function">(<span class="params">value, key</span>) =&gt;</span> <span class="built_in">console</span>.log(key + <span class="string">' : '</span> + value))</span><br><span class="line"><span class="comment">// 1 : 1</span></span><br><span class="line"><span class="comment">// 4 : 4</span></span><br><span class="line"><span class="comment">// 9 : 9</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> = new Set([1, 4, 9]);</span><br><span class="line"><span class="keyword">set</span>.forEach((value, key) =&gt; console.log(key + ' : ' + value))</span><br><span class="line">// 1 : 1</span><br><span class="line">// 4 : 4</span><br><span class="line">// 9 : 9</span><br></pre></td></tr></table></figure>
 <p>上面代码说明，<code>forEach</code>方法的参数就是一个处理函数。该函数的参数与数组的<code>forEach</code>一致，依次为键值、键名、集合本身（上例省略了该参数）。这里需要注意，Set 结构的键名就是键值（两者是同一个值），因此第一个参数与第二个参数的值永远都是一样的。</p>
 <p>另外，<code>forEach</code>方法还可以有第二个参数，表示绑定处理函数内部的<code>this</code>对象。</p>
 <p><strong>（3）遍历的应用</strong></p>
 <p>扩展运算符（<code>...</code>）内部使用<code>for...of</code>循环，所以也可以用于 Set 结构。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> set = <span class="keyword">new</span> <span class="built_in">Set</span>([<span class="string">'red'</span>, <span class="string">'green'</span>, <span class="string">'blue'</span>]);</span><br><span class="line"><span class="keyword">let</span> arr = [...set];</span><br><span class="line"><span class="comment">// ['red', 'green', 'blue']</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="keyword">set</span> = new Set(['red', 'green', 'blue']);</span><br><span class="line">let arr = [...<span class="keyword">set</span>];</span><br><span class="line">// ['red', 'green', 'blue']</span><br></pre></td></tr></table></figure>
 <p>扩展运算符和 Set 结构相结合，就可以去除数组的重复成员。</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> arr = [<span class="number">3</span>, <span class="number">5</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">5</span>, <span class="number">5</span>];</span><br><span class="line"><span class="keyword">let</span> unique = [...new <span class="built_in">Set</span>(arr)];</span><br><span class="line"><span class="comment">// [3, 5, 2]</span></span><br></pre></td></tr></table></figure>
 <p>而且，数组的<code>map</code>和<code>filter</code>方法也可以间接用于 Set 了。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> set = <span class="keyword">new</span> <span class="built_in">Set</span>([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]);</span><br><span class="line">set = <span class="keyword">new</span> <span class="built_in">Set</span>([...set].map(<span class="function"><span class="params">x</span> =&gt;</span> x * <span class="number">2</span>));</span><br><span class="line"><span class="comment">// 返回Set结构：&#123;2, 4, 6&#125;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> set = <span class="keyword">new</span> <span class="built_in">Set</span>([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>]);</span><br><span class="line">set = <span class="keyword">new</span> <span class="built_in">Set</span>([...set].filter(<span class="function"><span class="params">x</span> =&gt;</span> (x % <span class="number">2</span>) == <span class="number">0</span>));</span><br><span class="line"><span class="comment">// 返回Set结构：&#123;2, 4&#125;</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="keyword">set</span> = new Set([1, 2, 3]);</span><br><span class="line"><span class="keyword">set</span> = new Set([...<span class="keyword">set</span>].map(x =&gt; x * 2));</span><br><span class="line">// 返回Set结构：&#123;<span class="number">2</span>, <span class="number">4</span>, <span class="number">6</span>&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> <span class="keyword">set</span> = new Set([1, 2, 3, 4, 5]);</span><br><span class="line"><span class="keyword">set</span> = new Set([...<span class="keyword">set</span>].filter(x =&gt; (x % 2) == 0));</span><br><span class="line">// 返回Set结构：&#123;<span class="number">2</span>, <span class="number">4</span>&#125;</span><br></pre></td></tr></table></figure>
 <p>因此使用 Set 可以很容易地实现并集（Union）、交集（Intersect）和差集（Difference）。</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> a = <span class="keyword">new</span> <span class="built_in">Set</span>([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]);</span><br><span class="line"><span class="keyword">let</span> b = <span class="keyword">new</span> <span class="built_in">Set</span>([<span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>]);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 并集</span></span><br><span class="line"><span class="keyword">let</span> union = <span class="keyword">new</span> <span class="built_in">Set</span>([...a, ...b]);</span><br><span class="line"><span class="comment">// Set &#123;1, 2, 3, 4&#125;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 交集</span></span><br><span class="line"><span class="keyword">let</span> intersect = <span class="keyword">new</span> <span class="built_in">Set</span>([...a].filter(<span class="function"><span class="params">x</span> =&gt;</span> b.has(x)));</span><br><span class="line"><span class="comment">// set &#123;2, 3&#125;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 差集</span></span><br><span class="line"><span class="keyword">let</span> difference = <span class="keyword">new</span> <span class="built_in">Set</span>([...a].filter(<span class="function"><span class="params">x</span> =&gt;</span> !b.has(x)));</span><br><span class="line"><span class="comment">// Set &#123;1&#125;</span></span><br></pre></td></tr></table></figure>
 <p>如果想在遍历操作中，同步改变原来的 Set 结构，目前没有直接的方法，但有两种变通方法。一种是利用原 Set 结构映射出一个新的结构，然后赋值给原来的 Set 结构；另一种是利用<code>Array.from</code>方法。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 方法一</span></span><br><span class="line"><span class="keyword">let</span> set = <span class="keyword">new</span> <span class="built_in">Set</span>([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]);</span><br><span class="line">set = <span class="keyword">new</span> <span class="built_in">Set</span>([...set].map(<span class="function"><span class="params">val</span> =&gt;</span> val * <span class="number">2</span>));</span><br><span class="line"><span class="comment">// set的值是2, 4, 6</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 方法二</span></span><br><span class="line"><span class="keyword">let</span> set = <span class="keyword">new</span> <span class="built_in">Set</span>([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]);</span><br><span class="line">set = <span class="keyword">new</span> <span class="built_in">Set</span>(<span class="built_in">Array</span>.from(set, val =&gt; val * <span class="number">2</span>));</span><br><span class="line"><span class="comment">// set的值是2, 4, 6</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 方法一</span></span><br><span class="line"><span class="keyword">let</span> <span class="keyword">set</span> = new Set([1, 2, 3]);</span><br><span class="line"><span class="keyword">set</span> = new Set([...<span class="keyword">set</span>].map(val =&gt; val * 2));</span><br><span class="line">// <span class="keyword">set</span>的值是2, 4, 6</span><br><span class="line"></span><br><span class="line">// 方法二</span><br><span class="line">let <span class="keyword">set</span> = new Set([1, 2, 3]);</span><br><span class="line"><span class="keyword">set</span> = new Set(Array.from(<span class="keyword">set</span>, val =&gt; val * 2));</span><br><span class="line">// <span class="keyword">set</span>的值是2, 4, 6</span><br></pre></td></tr></table></figure>
 <p>上面代码提供了两种方法，直接在遍历操作中改变原来的 Set 结构。</p>
 <h2 id="Map"><a href="#Map" class="headerlink" title="Map"></a>Map</h2><h3 id="含义和基本用法"><a href="#含义和基本用法" class="headerlink" title="含义和基本用法"></a>含义和基本用法</h3><p>JavaScript 的对象（Object），本质上是键值对的集合（Hash 结构），但是传统上只能用字符串当作键。这给它的使用带来了很大的限制。</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> data = &#123;&#125;;</span><br><span class="line"><span class="keyword">const</span> element = <span class="built_in">document</span>.getElementById(<span class="string">'myDiv'</span>);</span><br><span class="line"></span><br><span class="line">data[element] = <span class="string">'metadata'</span>;</span><br><span class="line">data[<span class="string">'[object HTMLDivElement]'</span>] <span class="comment">// "metadata"</span></span><br></pre></td></tr></table></figure>
@@ -309,7 +143,7 @@
 <p><code>Map</code>构造函数接受数组作为参数，实际上执行的是下面的算法。</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> items = [</span><br><span class="line">  [<span class="string">'name'</span>, <span class="string">'张三'</span>],</span><br><span class="line">  [<span class="string">'title'</span>, <span class="string">'Author'</span>]</span><br><span class="line">];</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> map = <span class="keyword">new</span> <span class="built_in">Map</span>();</span><br><span class="line"></span><br><span class="line">items.forEach(</span><br><span class="line">  ([key, value]) =&gt; map.set(key, value)</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
 <p>事实上，不仅仅是数组，任何具有 Iterator 接口、且每个成员都是一个双元素的数组的数据结构（详见《Iterator》一章）都可以当作<code>Map</code>构造函数的参数。这就是说，<code>Set</code>和<code>Map</code>都可以用来生成新的 Map。</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> set = <span class="keyword">new</span> <span class="built_in">Set</span>([</span><br><span class="line">  [<span class="string">'foo'</span>, <span class="number">1</span>],</span><br><span class="line">  [<span class="string">'bar'</span>, <span class="number">2</span>]</span><br><span class="line">]);</span><br><span class="line"><span class="keyword">const</span> m1 = <span class="keyword">new</span> <span class="built_in">Map</span>(set);</span><br><span class="line">m1.get(<span class="string">'foo'</span>) <span class="comment">// 1</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> m2 = <span class="keyword">new</span> <span class="built_in">Map</span>([[<span class="string">'baz'</span>, <span class="number">3</span>]]);</span><br><span class="line"><span class="keyword">const</span> m3 = <span class="keyword">new</span> <span class="built_in">Map</span>(m2);</span><br><span class="line">m3.get(<span class="string">'baz'</span>) <span class="comment">// 3</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> <span class="keyword">set</span> = new Set([</span><br><span class="line">  ['foo', 1],</span><br><span class="line">  ['bar', 2]</span><br><span class="line">]);</span><br><span class="line">const m1 = new Map(<span class="keyword">set</span>);</span><br><span class="line">m1.<span class="keyword">get</span>('foo') // 1</span><br><span class="line"></span><br><span class="line">const m2 = new Map([['baz', 3]]);</span><br><span class="line">const m3 = new Map(m2);</span><br><span class="line">m3.<span class="keyword">get</span>('baz') // 3</span><br></pre></td></tr></table></figure>
 <p>上面代码中，我们分别使用 Set 对象和 Map 对象，当作<code>Map</code>构造函数的参数，结果都生成了新的 Map 对象。</p>
 <p>如果对同一个键多次赋值，后面的值将覆盖前面的值。</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> map = <span class="keyword">new</span> <span class="built_in">Map</span>();</span><br><span class="line"></span><br><span class="line">map</span><br><span class="line">.set(<span class="number">1</span>, <span class="string">'aaa'</span>)</span><br><span class="line">.set(<span class="number">1</span>, <span class="string">'bbb'</span>);</span><br><span class="line"></span><br><span class="line">map.get(<span class="number">1</span>) <span class="comment">// "bbb"</span></span><br></pre></td></tr></table></figure>
@@ -411,11 +245,228 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2016-06-23T14:16:53.000Z"><a href="/2016/06/23/Node.js_JS基础/Node.js项目的配置文件/">2016-06-23</a></time>
+        <time datetime="2016-06-26T10:45:47.000Z"><a href="/2016/06/26/Node.js/Node.js单元测试、集成测试、基准测试以及代码覆盖率测试/">2016-06-26</a></time>
       
       
   
-    <h1 class="title"><a href="/2016/06/23/Node.js_JS基础/Node.js项目的配置文件/">Node.js 项目的配置文件</a></h1>
+    <h1 class="title"><a href="/2016/06/26/Node.js/Node.js单元测试、集成测试、基准测试以及代码覆盖率测试/"></a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>title:Node.js单元测试、集成测试、基准测试以及代码覆盖率测试<br>date:2017-06-05 22:16:53</p>
+<h2 id="tags-Node-js"><a href="#tags-Node-js" class="headerlink" title="tags:[Node.js]"></a>tags:[Node.js]</h2><h3 id="黑盒测试"><a href="#黑盒测试" class="headerlink" title="黑盒测试"></a>黑盒测试</h3><p>黑盒测试 (Black-box Testing), 测试应用程序的功能, 而不是其内部结构或运作. 测试者不需了解代码、内部结构等, 只需知道什么是应用应该做的事, 即当键入特定的输入, 可得到一定的输出. 测试者通过选择<code>有效输入</code>和<code>无效输入</code>来验证是否正确的输出. 此测试方法可适合大部分的软件测试, 例如集成测试 (Integration Testing) 以及系统测试 (System Testing).</p>
+<h3 id="白盒测试"><a href="#白盒测试" class="headerlink" title="白盒测试"></a>白盒测试</h3><p>白盒测试 (White-box Testing) 测试应用程序的内部结构或运作, 而不是测试应用程序的功能 (即黑盒测试). 在白盒测试时, 以编程语言的角度来设计测试案例. 白盒测试可以应用于单元测试 (Unit Testing)、集成测试 (Integration Testing) 和系统的软件测试流程, 可测试在集成过程中每一单元之间的路径, 或者主系统跟子系统中的测试.</p>
+<h2 id="单元测试"><a href="#单元测试" class="headerlink" title="单元测试"></a>单元测试</h2><p>单元测试，又称模块测试，针对程序中的最小执行单元进行正确性测试。常见的开发模式包括 TDD 和 BDD 两类。</p>
+<p>TDD（Test-driven development，测试驱动开发），先编写测试用例，然后针对测试用例开发模块，当测试用例不足时，补充测试用例；当模块无法通过测试时，持续更新模块代码，直到完全通过测试用例。其开发核心围绕测试用例展开，即测试用例的完整性决定了开发模块的健壮性和正确性，这容易由边界条件引发单元测试覆盖度不够的问题。</p>
+<p>BDD（Behavior-driven development，行为驱动开发），用语义化的编程语言开发紧贴业务需求的测试用例，继而驱动相关模块的开发。</p>
+<p><a href="https://github.com/sindresorhus/ava" target="_blank" rel="noopener">AVA</a> 是 JavaScript 生态中最新潮的测试框架，其内置了 Babel，可以直接使用 ES6 语法，具有轻量高效、并发执行、强制隔离等优点，安装方法：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install --save-dev ava</span><br></pre></td></tr></table></figure>
+<p>设置 <code>package.json</code> 中的 <code>scripts</code> 字段：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="string">"scripts"</span>: &#123;</span><br><span class="line">        <span class="string">"test"</span>: <span class="string">"ava"</span>,</span><br><span class="line">        <span class="string">"test:watch"</span>: <span class="string">"ava --watch"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>运行：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">npm test</span><br><span class="line"></span><br><span class="line"># or</span><br><span class="line">npm test:watch</span><br></pre></td></tr></table></figure>
+<p>下面是一个基本的测试代码：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> test <span class="keyword">from</span> <span class="string">'ava'</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> fibonacci = <span class="function">(<span class="params">n</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (n === <span class="number">0</span> || n === <span class="number">1</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> n;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> fibonacci(n - <span class="number">1</span>) + fibonacci(n - <span class="number">2</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">test(<span class="string">'Test Fibonacci(0)'</span>, t =&gt; &#123;</span><br><span class="line">    t.is(fibonacci(<span class="number">0</span>), <span class="number">0</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">test(<span class="string">'Test Fibonacci(1)'</span>, t =&gt; &#123;</span><br><span class="line">    t.is(fibonacci(<span class="number">1</span>), <span class="number">1</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// HOOK CALLS</span></span><br><span class="line">test.before(<span class="string">'Before'</span>, t =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'before'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">test.after(<span class="string">'After'</span>, t =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'after'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">test.beforeEach(<span class="string">'BeforeEach'</span>, t =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'   beforeEach'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">test.afterEach(<span class="string">'AfterEach'</span>, t =&gt; &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'   afterEach'</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>在上面的代码中，我们首先引入了 AVA 模块，然后创建了待测试的 <code>fibonacci</code> 函数，接下来是两个测试用例，最后是四个钩子方法：before() / after() / beforeEach() / afterEach()。</p>
+<p>AVA 提供了一下修饰方法来指定测试的执行方式：</p>
+<ul>
+<li><p><code>skip()</code>，跳过添加了 <code>skip()</code> 的测试用例</p>
+</li>
+<li><p><code>only()</code>，只执行添加了 <code>only()</code> 的测试用例</p>
+</li>
+<li><p><code>todo()</code>，占位标识符，表示将来需要添加的测试用例</p>
+</li>
+<li><p><code>serial()</code>，串行执行测试用例，默认情况下 AVA 会以并行的方式执行测试用例</p>
+</li>
+</ul>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">test(<span class="string">'Test Fibonacci(0)'</span>, t =&gt; &#123;</span><br><span class="line">    t.is(fibonacci(<span class="number">0</span>), <span class="number">0</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>在上面代码回调函数中的 <code>t</code>，称为断言执行对象，该对象包含以下方法：</p>
+<ul>
+<li><p><code>t.end()</code>，结束测试，只在 <code>test.cb()</code> 中有效</p>
+</li>
+<li><p><code>t.plan(count)</code>，指定执行次数</p>
+</li>
+<li><p><code>t.pass([message])</code>，测试通过</p>
+</li>
+<li><p><code>t.fail([message])</code>，测试失败</p>
+</li>
+<li><p><code>t.ok(value, [message])</code>，断言 <code>value</code> 的值为真值</p>
+</li>
+<li><p><code>t.notOK(value, [message])</code>，断言 <code>value</code> 的值为假值</p>
+</li>
+<li><p><code>t.true(value, [message])</code>，断言 <code>value</code> 的值为 <code>true</code></p>
+</li>
+<li><p><code>t.false(value, [message])</code>，断言 <code>value</code> 的值为 <code>false</code></p>
+</li>
+<li><p><code>t.is(value, expected, [message])</code>，断言 <code>value === expected</code></p>
+</li>
+<li><p><code>t.not(value, expected, [message])</code>，断言 <code>value !== expected</code></p>
+</li>
+<li><p><code>t.same(value, expected, [message])</code>，断言 <code>value</code> 和 <code>expected</code> 深度相等</p>
+</li>
+<li><p><code>t.notSame(value, expected, [message])</code>，断言 <code>value</code> 和 <code>expected</code> 深度不等</p>
+</li>
+<li><p><code>t.throws(function | promise, [error, [message]])</code>，断言 <code>function</code> 抛出异常或 <code>promise</code>reject 错误</p>
+</li>
+<li><p><code>t.notThrows(function | promise, [message])</code>，断言 <code>function</code> 不会异常或 <code>promise</code> resolve</p>
+</li>
+<li><p><code>t.regex(contents, regex, [message])</code>，断言 <code>contents</code> 匹配 <code>regex</code></p>
+</li>
+<li><p><code>t.ifError(error, [message])</code>，断言 <code>error</code> 是假值</p>
+</li>
+</ul>
+<h3 id="Mock"><a href="#Mock" class="headerlink" title="Mock"></a>Mock</h3><p>Mock 主要用于单元测试中. 当一个测试的对象可能依赖其他 (也许复杂/多个) 的对象. 为了确保其行为不受其他对象的影响, 你可以通过模拟其他对象的行为来隔离你要测试的对象.</p>
+<p>当你要测试的单元依赖了一些很难纳入单元测试的情况时 (例如要测试的单元依赖数据库/文件操作/第三方服务 等情况的返回时), 使用 mock 是非常有用的. 简而言之, Mock 是模拟其他依赖的 behaviour.</p>
+<h3 id="常见测试工具"><a href="#常见测试工具" class="headerlink" title="常见测试工具"></a>常见测试工具</h3><ul>
+<li><a href="https://github.com/mochajs/mocha" target="_blank" rel="noopener">Mocha</a></li>
+<li><a href="https://github.com/avajs/ava" target="_blank" rel="noopener">ava</a></li>
+<li><a href="https://github.com/facebook/jest" target="_blank" rel="noopener">Jest</a></li>
+</ul>
+<h2 id="集成测试"><a href="#集成测试" class="headerlink" title="集成测试"></a>集成测试</h2><p>相对于专注微观模块的单元测试，集成测试是从宏观整体的角度发现问题，所以也称为组装测试和联合测试。<a href="https://travis-ci.org/" target="_blank" rel="noopener">Travis CI</a> 是一款优秀的持续集成工具，可以监听 Github 项目的更新，便于开源软件的集成测试。使用 Travis CI 需要在项目的根目录下创建 <code>.travis.yml</code> 配置文件（以 Node.js 为例）：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">language: node_js</span><br><span class="line"></span><br><span class="line">node_js:</span><br><span class="line">    - <span class="string">"6"</span></span><br><span class="line">    - <span class="string">"5"</span></span><br><span class="line"></span><br><span class="line">before_script:</span><br><span class="line"></span><br><span class="line">script:</span><br><span class="line">    - npm test</span><br><span class="line">    - node benchmark/index.js</span><br><span class="line"></span><br><span class="line">after_script:</span><br></pre></td></tr></table></figure>
+<p>默认情况下，Travis CI 会自动安装依赖并执行 <code>npm test</code> 命令，通过 <code>script</code> 字段可以自定义需要执行的命令，其完整的生命周期包括：</p>
+<ol>
+<li>Install <code>apt addons</code></li>
+<li><code>before_install</code></li>
+<li><code>install</code></li>
+<li><code>before_script</code></li>
+<li><code>script</code></li>
+<li><code>after_success</code> or <code>after_failure</code></li>
+<li>OPTIONAL <code>before_deploy</code></li>
+<li>OPTIONAL <code>deploy</code></li>
+<li>OPTIONAL <code>after_deploy</code></li>
+<li><code>after_script</code></li>
+</ol>
+<h2 id="基准测试"><a href="#基准测试" class="headerlink" title="基准测试"></a>基准测试</h2><p>基准测试使用严谨的测试方法、测试工具或测试系统评估目标模块的性能，常用于观测软硬件环境发生变化后的性能表现，其结果具有可复现性。在 Node.js 环境中最常用的基准测试工具是 <a href="https://benchmarkjs.com/docs" target="_blank" rel="noopener">Benchmark.js</a>，安装方式：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install --save-dev benchmark</span><br></pre></td></tr></table></figure></p>
+<p>基本示例：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> Benchmark = <span class="built_in">require</span>(<span class="string">'benchmark'</span>);</span><br><span class="line"><span class="keyword">const</span> suite = <span class="keyword">new</span> Benchmark.Suite;</span><br><span class="line"></span><br><span class="line">suite.add(<span class="string">'RegExp#test'</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    /o/.test(<span class="string">'Hello World!'</span>);</span><br><span class="line">&#125;)</span><br><span class="line">.add(<span class="string">'String#indexOf'</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="string">'Hello World!'</span>.indexOf(<span class="string">'o'</span>) &gt; <span class="number">-1</span>;</span><br><span class="line">&#125;)</span><br><span class="line">.on(<span class="string">'cycle'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">event</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="built_in">String</span>(event.target));</span><br><span class="line">&#125;)</span><br><span class="line">.on(<span class="string">'complete'</span>, <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'Fastest is '</span> + <span class="keyword">this</span>.filter(<span class="string">'fastest'</span>).map(<span class="string">'name'</span>));</span><br><span class="line">&#125;)</span><br><span class="line"><span class="comment">// run async</span></span><br><span class="line">.run(&#123; <span class="string">'async'</span>: <span class="literal">true</span> &#125;);</span><br></pre></td></tr></table></figure></p>
+<p>你可以将同一个功能的不同实现基于同一个标准来比较不同实现的速度, 从而得到最优解.</p>
+<p>黑盒级别的基准测试, 则推荐 <a href="https://httpd.apache.org/docs/2.4/programs/ab.html" target="_blank" rel="noopener">Apache ab</a> 以及 <a href="https://github.com/wg/wrk" target="_blank" rel="noopener">wrk</a> 等。:</p>
+<h2 id="代码覆盖率"><a href="#代码覆盖率" class="headerlink" title="代码覆盖率"></a>代码覆盖率</h2><p>  测试覆盖率 (Test Coverage) 是指代码中各项逻辑被测试覆盖到的比率, 比如 90% 的覆盖率, 是指代码中 90% 的情况都被测试覆盖到了.</p>
+<p>  覆盖率通常由四个维度贡献:</p>
+<ul>
+<li><p>行覆盖率 (line coverage) 是否每一行都执行了？</p>
+</li>
+<li><p>函数覆盖率 (function coverage) 是否每个函数都调用了？</p>
+</li>
+<li><p>分支覆盖率 (branch coverage) 是否每个if代码块都执行了？</p>
+</li>
+<li><p>语句覆盖率 (statement coverage) 是否每个语句都执行了？</p>
+</li>
+</ul>
+<p>常用的测试覆盖率框架 <a href="https://github.com/gotwarlost/istanbul" target="_blank" rel="noopener">istanbul</a>.</p>
+<p>覆盖率工具根据测试用例覆盖的代码行数和分支数来判断模块的完整性。AVA 推荐使用 <code>nyc</code> 测试代码覆盖率，安装 nyc：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install nyc --save-dev</span><br></pre></td></tr></table></figure>
+<p>修改 <code>.gitignore</code> 忽略相关文件：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">node_modules</span><br><span class="line">coverage</span><br><span class="line">.nyc_output</span><br></pre></td></tr></table></figure></p>
+<p>修改 <code>package.json</code> 中的 <code>test</code> 字段：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="string">"scripts"</span>: &#123;</span><br><span class="line">        <span class="string">"test"</span>: <span class="string">"nyc ava"</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>执行 <code>npm test</code>，得到：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">➜  test-in-action (master) ✔ npm test</span><br><span class="line"></span><br><span class="line">&gt; test-in-action@1.0.0 test /Users/sean/Desktop/test-in-action</span><br><span class="line">&gt; nyc ava</span><br><span class="line"></span><br><span class="line">   2 passed</span><br><span class="line">----------|----------|----------|----------|----------|----------------|</span><br><span class="line">File      |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovered Lines |</span><br><span class="line">----------|----------|----------|----------|----------|----------------|</span><br><span class="line">----------|----------|----------|----------|----------|----------------|</span><br><span class="line">All files |      100 |      100 |      100 |      100 |                |</span><br><span class="line">----------|----------|----------|----------|----------|----------------|</span><br></pre></td></tr></table></figure></p>
+<h2 id="压力测试"><a href="#压力测试" class="headerlink" title="压力测试"></a>压力测试</h2><p>压力测试 (Stress testing), 是保证系统稳定性的一种测试方法. 通过预估系统所需要承载的 QPS, TPS 等指标, 然后通过如 <a href="http://jmeter.apache.org/" target="_blank" rel="noopener">Jmeter</a> 等压测工具模拟相应的请求情况, 来验证当前应能能否达到目标.</p>
+<p>对于比较重要, 流量较高或者后期业务量会持续增长的系统, 进行压力测试是保证项目品质的重要环节. 常见的如负载是否均衡, 带宽是否合理, 以及磁盘 IO 网络 IO 等问题都可以通过比较极限的压力测试暴露出来.</p>
+<h2 id="Assert"><a href="#Assert" class="headerlink" title="Assert"></a>Assert</h2><p>断言 (Assert) 是快速判断并对不符合预期的情况进行报错的模块. 是将:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">if (condition) &#123;</span><br><span class="line">  throw new Error(&apos;Sth wrong&apos;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>写成:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">assert(!condition, &apos;Sth wrong&apos;);</span><br></pre></td></tr></table></figure>
+<p>等等情况的一种简化. 并且提供了丰富了 <code>equal</code> 判断, 对于对象类型也有深度/严格判断等情况支持.</p>
+<p>Node.js 中内置的 <code>assert</code> 模块也是属于断言模块的一种, 但是官方在文档中有注明, 该内置模块主要是用于内置代码编写时的基本断言需求, 并不是一个通用的断言库 (<strong>not intended to be used as a general purpose assertion library</strong>)</p>
+<h3 id="常见断言工具"><a href="#常见断言工具" class="headerlink" title="常见断言工具"></a>常见断言工具</h3><ul>
+<li><a href="https://github.com/chaijs/chai" target="_blank" rel="noopener">Chai</a></li>
+<li><a href="https://github.com/shouldjs/should.js" target="_blank" rel="noopener">should.js</a></li>
+</ul>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="http://ourjs.com/detail/5738493888feaf2d031d24fa" target="_blank" rel="noopener">http://ourjs.com/detail/5738493888feaf2d031d24fa</a><br><a href="https://elemefe.github.io/node-interview/#/sections/zh-cn/test?id=mock" target="_blank" rel="noopener">https://elemefe.github.io/node-interview/#/sections/zh-cn/test?id=mock</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2016-06-26T10:13:24.000Z"><a href="/2016/06/26/Node.js/错误处理和调试—CPU profiling/">2016-06-26</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2016/06/26/Node.js/错误处理和调试—CPU profiling/"></a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>title:错误处理和调试—CPU profiling<br>date:2016-04-10 22:16:53</p>
+<h2 id="tags-Node-js"><a href="#tags-Node-js" class="headerlink" title="tags:[Node.js]"></a>tags:[Node.js]</h2><p>There are many third party tools available for profiling Node.js applications but, in many cases, the easiest option is to use the Node.js built in profiler. The built in profiler uses the <a href="https://developers.google.com/v8/profiler_example" target="_blank" rel="noopener">profiler inside V8</a> which samples the stack at regular intervals during program execution. It records the results of these samples, along with important optimization events such as jit compiles, as a series of ticks:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">code-creation,LazyCompile,0,0x2d5000a337a0,396,&quot;bp native array.js:1153:16&quot;,0x289f644df68,~</span><br><span class="line">code-creation,LazyCompile,0,0x2d5000a33940,716,&quot;hasOwnProperty native v8natives.js:198:30&quot;,0x289f64438d0,~</span><br><span class="line">code-creation,LazyCompile,0,0x2d5000a33c20,284,&quot;ToName native runtime.js:549:16&quot;,0x289f643bb28,~</span><br><span class="line">code-creation,Stub,2,0x2d5000a33d40,182,&quot;DoubleToIStub&quot;</span><br><span class="line">code-creation,Stub,2,0x2d5000a33e00,507,&quot;NumberToStringStub&quot;</span><br></pre></td></tr></table></figure>
+<p>In the past you need the V8 source code to be able to interpret the ticks. Luckily, tools have recently been introduced into Node.js 4.4.0 that facilitate the consumption of this information without separately building V8 from source. Let’s see how the built-in profiler can help provide insight into application performance.</p>
+<p>To illustrate the use of the tick profiler, we will work with a simple Express application. Our application will have two handlers, one for adding new users to our system:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">app.get(<span class="string">'/newUser'</span>, (req, res) =&gt; &#123;</span><br><span class="line">  <span class="keyword">let</span> username = req.query.username || <span class="string">''</span>;</span><br><span class="line">  <span class="keyword">const</span> password = req.query.password || <span class="string">''</span>;</span><br><span class="line"></span><br><span class="line">  username = username.replace(<span class="regexp">/[!@#$%^&amp;*]/g</span>, <span class="string">''</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!username || !password || users.username) &#123;</span><br><span class="line">    <span class="keyword">return</span> res.sendStatus(<span class="number">400</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> salt = crypto.randomBytes(<span class="number">128</span>).toString(<span class="string">'base64'</span>);</span><br><span class="line">  <span class="keyword">const</span> hash = crypto.pbkdf2Sync(password, salt, <span class="number">10000</span>, <span class="number">512</span>);</span><br><span class="line"></span><br><span class="line">  users[username] = &#123; salt, hash &#125;;</span><br><span class="line"></span><br><span class="line">  res.sendStatus(<span class="number">200</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>and another for validating user authentication attempts:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">app.get(<span class="string">'/auth'</span>, (req, res) =&gt; &#123;</span><br><span class="line">  <span class="keyword">let</span> username = req.query.username || <span class="string">''</span>;</span><br><span class="line">  <span class="keyword">const</span> password = req.query.password || <span class="string">''</span>;</span><br><span class="line"></span><br><span class="line">  username = username.replace(<span class="regexp">/[!@#$%^&amp;*]/g</span>, <span class="string">''</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!username || !password || !users[username]) &#123;</span><br><span class="line">    <span class="keyword">return</span> res.sendStatus(<span class="number">400</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> hash = crypto.pbkdf2Sync(password, users[username].salt, <span class="number">10000</span>, <span class="number">512</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (users[username].hash.toString() === hash.toString()) &#123;</span><br><span class="line">    res.sendStatus(<span class="number">200</span>);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    res.sendStatus(<span class="number">401</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p><em>Please note that these are NOT recommended handlers for authenticating users in your Node.js applications and are used purely for illustration purposes. You should not be trying to design your own cryptographic authentication mechanisms in general. It is much better to use existing, proven authentication solutions.</em></p>
+<p>Now assume that we’ve deployed our application and users are complaining about high latency on requests. We can easily run the app with the built in profiler:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">NODE_ENV=production node --prof app.js</span><br></pre></td></tr></table></figure>
+<p>and put some load on the server using <code>ab</code> (ApacheBench):</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">curl -X GET &quot;http://localhost:8080/newUser?username=matt&amp;password=password&quot;</span><br><span class="line">ab -k -c 20 -n 250 &quot;http://localhost:8080/auth?username=matt&amp;password=password&quot;</span><br></pre></td></tr></table></figure>
+<p>and get an ab output of:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">Concurrency Level:      20</span><br><span class="line">Time taken for tests:   46.932 seconds</span><br><span class="line">Complete requests:      250</span><br><span class="line">Failed requests:        0</span><br><span class="line">Keep-Alive requests:    250</span><br><span class="line">Total transferred:      50250 bytes</span><br><span class="line">HTML transferred:       500 bytes</span><br><span class="line">Requests per second:    5.33 [#/sec] (mean)</span><br><span class="line">Time per request:       3754.556 [ms] (mean)</span><br><span class="line">Time per request:       187.728 [ms] (mean, across all concurrent requests)</span><br><span class="line">Transfer rate:          1.05 [Kbytes/sec] received</span><br><span class="line"></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">Percentage of the requests served within a certain time (ms)</span><br><span class="line">  50%   3755</span><br><span class="line">  66%   3804</span><br><span class="line">  75%   3818</span><br><span class="line">  80%   3825</span><br><span class="line">  90%   3845</span><br><span class="line">  95%   3858</span><br><span class="line">  98%   3874</span><br><span class="line">  99%   3875</span><br><span class="line"> 100%   4225 (longest request)</span><br></pre></td></tr></table></figure>
+<p>From this output, we see that we’re only managing to serve about 5 requests per second and that the average request takes just under 4 seconds round trip. In a real world example, we could be doing lots of work in many functions on behalf of a user request but even in our simple example, time could be lost compiling regular expressions, generating random salts, generating unique hashes from user passwords, or inside the Express framework itself.</p>
+<p>Since we ran our application using the <code>--prof</code> option, a tick file was generated in the same directory as your local run of the application. It should have the form <code>isolate-0xnnnnnnnnnnnn-v8.log</code> (where <code>n</code> is a digit).</p>
+<p>In order to make sense of this file, we need to use the tick processor bundled with the Node.js binary. To run the processor, use the <code>--prof-process</code> flag:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">node --prof-process isolate-0xnnnnnnnnnnnn-v8.log &gt; processed.txt</span><br></pre></td></tr></table></figure>
+<p>Opening processed.txt in your favorite text editor will give you a few different types of information. The file is broken up into sections which are again broken up by language. First, we look at the summary section and see:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[Summary]:</span><br><span class="line">  ticks  total  nonlib   name</span><br><span class="line">    79    0.2%    0.2%  JavaScript</span><br><span class="line"> 36703   97.2%   99.2%  C++</span><br><span class="line">     7    0.0%    0.0%  GC</span><br><span class="line">   767    2.0%          Shared libraries</span><br><span class="line">   215    0.6%          Unaccounted</span><br></pre></td></tr></table></figure>
+<p>This tells us that 97% of all samples gathered occurred in C++ code and that when viewing other sections of the processed output we should pay most attention to work being done in C++ (as opposed to Javascript). With this in mind, we next find the [C++] section which contains information about which C++ functions are taking the most CPU time and see:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[C++]:</span><br><span class="line">  ticks  total  nonlib   name</span><br><span class="line"> 19557   51.8%   52.9%  node::crypto::PBKDF2(v8::FunctionCallbackInfo&lt;v8::Value&gt; const&amp;)</span><br><span class="line">  4510   11.9%   12.2%  _sha1_block_data_order</span><br><span class="line">  3165    8.4%    8.6%  _malloc_zone_malloc</span><br></pre></td></tr></table></figure>
+<p>We see that the top 3 entries account for 72.1% of CPU time taken by the program. From this output, we immediately see that at least 51.8% of CPU time is taken up by a function called PBKDF2 which corresponds to our hash generation from a user’s password. However, it may not be immediately obvious how the lower two entries factor into our application (or if it is we will pretend otherwise for the sake of example). To better understand the relationship between these functions, we will next look at the [Bottom up (heavy) profile] section which provides information about the primary callers of each function. Examining this section, we find:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"> ticks parent  name</span><br><span class="line">19557   51.8%  node::crypto::PBKDF2(v8::FunctionCallbackInfo&lt;v8::Value&gt; const&amp;)</span><br><span class="line">19557  100.0%    v8::internal::Builtins::~Builtins()</span><br><span class="line">19557  100.0%      LazyCompile: ~pbkdf2 crypto.js:557:16</span><br><span class="line"></span><br><span class="line"> 4510   11.9%  _sha1_block_data_order</span><br><span class="line"> 4510  100.0%    LazyCompile: *pbkdf2 crypto.js:557:16</span><br><span class="line"> 4510  100.0%      LazyCompile: *exports.pbkdf2Sync crypto.js:552:30</span><br><span class="line"></span><br><span class="line"> 3165    8.4%  _malloc_zone_malloc</span><br><span class="line"> 3161   99.9%    LazyCompile: *pbkdf2 crypto.js:557:16</span><br><span class="line"> 3161  100.0%      LazyCompile: *exports.pbkdf2Sync crypto.js:552:30</span><br></pre></td></tr></table></figure>
+<p>Parsing this section takes a little more work than the raw tick counts above. Within each of the “call stacks” above, the percentage in the parent column tells you the percentage of samples for which the function in the row above was called by the function in the current row. For example, in the middle “call stack” above for _sha1_block_data_order, we see that _sha1_block_data_order occurred in 11.9% of samples, which we knew from the raw counts above. However, here, we can also tell that it was always called by the pbkdf2 function inside the Node.js crypto module. We see that similarly, _malloc_zone_malloc was called almost exclusively by the same pbkdf2 function. Thus, using the information in this view, we can tell that our hash computation from the user’s password accounts not only for the 51.8% from above but also for all CPU time in the top 3 most sampled functions since the calls to _sha1_block_data_order and _malloc_zone_malloc were made on behalf of the pbkdf2 function.</p>
+<p>At this point, it is very clear that the password based hash generation should be the target of our optimization. Thankfully, you’ve fully internalized the <a href="https://nodesource.com/blog/why-asynchronous" target="_blank" rel="noopener">benefits of asynchronous programming</a> and you realize that the work to generate a hash from the user’s password is being done in a synchronous way and thus tying down the event loop. This prevents us from working on other incoming requests while computing a hash.</p>
+<p>To remedy this issue, you make a small modification to the above handlers to use the asynchronous version of the pbkdf2 function:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">app.get(<span class="string">'/auth'</span>, (req, res) =&gt; &#123;</span><br><span class="line">  <span class="keyword">let</span> username = req.query.username || <span class="string">''</span>;</span><br><span class="line">  <span class="keyword">const</span> password = req.query.password || <span class="string">''</span>;</span><br><span class="line"></span><br><span class="line">  username = username.replace(<span class="regexp">/[!@#$%^&amp;*]/g</span>, <span class="string">''</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!username || !password || !users[username]) &#123;</span><br><span class="line">    <span class="keyword">return</span> res.sendStatus(<span class="number">400</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  crypto.pbkdf2(password, users[username].salt, <span class="number">10000</span>, <span class="number">512</span>, (err, hash) =&gt; &#123;</span><br><span class="line">    <span class="keyword">if</span> (users[username].hash.toString() === hash.toString()) &#123;</span><br><span class="line">      res.sendStatus(<span class="number">200</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      res.sendStatus(<span class="number">401</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>A new run of the ab benchmark above with the asynchronous version of your app yields:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">Concurrency Level:      20</span><br><span class="line">Time taken for tests:   12.846 seconds</span><br><span class="line">Complete requests:      250</span><br><span class="line">Failed requests:        0</span><br><span class="line">Keep-Alive requests:    250</span><br><span class="line">Total transferred:      50250 bytes</span><br><span class="line">HTML transferred:       500 bytes</span><br><span class="line">Requests per second:    19.46 [#/sec] (mean)</span><br><span class="line">Time per request:       1027.689 [ms] (mean)</span><br><span class="line">Time per request:       51.384 [ms] (mean, across all concurrent requests)</span><br><span class="line">Transfer rate:          3.82 [Kbytes/sec] received</span><br><span class="line"></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">Percentage of the requests served within a certain time (ms)</span><br><span class="line">  50%   1018</span><br><span class="line">  66%   1035</span><br><span class="line">  75%   1041</span><br><span class="line">  80%   1043</span><br><span class="line">  90%   1049</span><br><span class="line">  95%   1063</span><br><span class="line">  98%   1070</span><br><span class="line">  99%   1071</span><br><span class="line"> 100%   1079 (longest request)</span><br></pre></td></tr></table></figure>
+<p>Yay! Your app is now serving about 20 requests per second, roughly 4 times more than it was with the synchronous hash generation. Additionally, the average latency is down from the 4 seconds before to just over 1 second.</p>
+<p>Hopefully, through the performance investigation of this (admittedly contrived) example, you’ve seen how the V8 tick processor can help you gain a better understanding of the performance of your Node.js applications.</p>
+<p>原文：<a href="https://nodejs.org/en/docs/guides/simple-profiling/" target="_blank" rel="noopener">https://nodejs.org/en/docs/guides/simple-profiling/</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2016-06-23T14:16:53.000Z"><a href="/2016/06/23/Node.js/基础—Node.js项目的配置文件/">2016-06-23</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2016/06/23/Node.js/基础—Node.js项目的配置文件/">基础—Node.js 项目的配置文件</a></h1>
   
 
     </header>
@@ -515,11 +566,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2016-06-05T14:16:53.000Z"><a href="/2016/06/05/Node.js_JS基础/判断JS数据类型的四种方法/">2016-06-05</a></time>
+        <time datetime="2016-06-05T14:16:53.000Z"><a href="/2016/06/05/Node.js/基础—判断JS数据类型的四种方法/">2016-06-05</a></time>
       
       
   
-    <h1 class="title"><a href="/2016/06/05/Node.js_JS基础/判断JS数据类型的四种方法/">判断JS数据类型的四种方法</a></h1>
+    <h1 class="title"><a href="/2016/06/05/Node.js/基础—判断JS数据类型的四种方法/">基础—判断JS数据类型的四种方法</a></h1>
   
 
     </header>
@@ -546,7 +597,7 @@
 <p>我们发现，虽然 instanceof 能够判断出 [ ] 是Array的实例，但它认为 [ ] 也是Object的实例，为什么呢？</p>
 <p>我们来分析一下 [ ]、Array、Object 三者之间的关系：</p>
 <p>从 instanceof 能够判断出 [ ].<strong>proto</strong>  指向 Array.prototype，而 Array.prototype.<strong>proto</strong> 又指向了Object.prototype，最终 Object.prototype.<strong>proto</strong> 指向了null，标志着原型链的结束。因此，[]、Array、Object 就在内部形成了一条原型链：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/prototype01_180723.png" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/prototype01_180723.png" alt></p>
 <p>从原型链可以看出，[] 的 <strong>proto</strong>  直接指向Array.prototype，间接指向 Object.prototype，所以按照 instanceof 的判断规则，[] 就是Object的实例。依次类推，类似的 new Date()、new Person() 也会形成一条对应的原型链 。因此，<strong>instanceof 只能用来判断两个对象是否属于实例关系**</strong>， 而不能判断一个对象实例具体属于哪种类型。**</p>
 <p>Array.isArray() 本质上检测的是对象的 [[Class]] 值，[[Class]] 是对象的一个内部属性，里面包含了对象的类型信息，其格式为 [object Xxx] ，Xxx 就是对应的具体类型 。对于数组而言，[[Class]] 的值就是 [object Array] 。</p>
 <h3 id="3、constructor"><a href="#3、constructor" class="headerlink" title="3、constructor"></a><strong>3、constructor</strong></h3><p>当一个函数 F被定义时，JS引擎会为F添加 prototype 原型，然后再在 prototype上添加一个 constructor 属性，并让其指向 F 的引用。如下所示：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">F</span>(<span class="params"></span>)</span>&#123;&#125;</span><br></pre></td></tr></table></figure></p>
@@ -590,11 +641,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2016-05-29T06:45:23.000Z"><a href="/2016/05/29/ES6/let和const命令/">2016-05-29</a></time>
+        <time datetime="2016-05-29T06:45:23.000Z"><a href="/2016/05/29/Node.js/ES6—let和const命令/">2016-05-29</a></time>
       
       
   
-    <h1 class="title"><a href="/2016/05/29/ES6/let和const命令/">let和const命令</a></h1>
+    <h1 class="title"><a href="/2016/05/29/Node.js/ES6—let和const命令/">ES6—let和const命令</a></h1>
   
 
     </header>
@@ -763,11 +814,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2016-05-21T06:45:23.000Z"><a href="/2016/05/21/ES6/Symbol类型及使用案例/">2016-05-21</a></time>
+        <time datetime="2016-05-21T06:45:23.000Z"><a href="/2016/05/21/Node.js/ES6—Symbol类型及使用案例/">2016-05-21</a></time>
       
       
   
-    <h1 class="title"><a href="/2016/05/21/ES6/Symbol类型及使用案例/">Symbol类型及使用案例</a></h1>
+    <h1 class="title"><a href="/2016/05/21/Node.js/ES6—Symbol类型及使用案例/">ES6—Symbol类型及使用案例</a></h1>
   
 
     </header>
@@ -841,11 +892,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2016-04-15T14:16:53.000Z"><a href="/2016/04/15/Node.js_IO/Buffer那些事儿/">2016-04-15</a></time>
+        <time datetime="2016-04-15T14:16:53.000Z"><a href="/2016/04/15/Node.js/IO—Buffer那些事儿/">2016-04-15</a></time>
       
       
   
-    <h1 class="title"><a href="/2016/04/15/Node.js_IO/Buffer那些事儿/">Buffer那些事儿</a></h1>
+    <h1 class="title"><a href="/2016/04/15/Node.js/IO—Buffer那些事儿/">IO—Buffer那些事儿</a></h1>
   
 
     </header>
@@ -908,11 +959,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2016-04-15T14:16:53.000Z"><a href="/2016/04/15/Node.js_错误处理和调试/heapdump简介/">2016-04-15</a></time>
+        <time datetime="2016-04-15T14:16:53.000Z"><a href="/2016/04/15/Node.js/错误处理和调试—heapdump简介/">2016-04-15</a></time>
       
       
   
-    <h1 class="title"><a href="/2016/04/15/Node.js_错误处理和调试/heapdump简介/">heapdump简介</a></h1>
+    <h1 class="title"><a href="/2016/04/15/Node.js/错误处理和调试—heapdump简介/">错误处理和调试—heapdump简介</a></h1>
   
 
     </header>
@@ -935,12 +986,12 @@
 <h3 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h3><p>在以前的实现中,在生成块照时, <code>heapdump</code> 会fork一个新的node进程异步将老的内存快照信息写入文件. 通过这种方式生成的快照信息不能再chrome的开发者工具中进行比较, 并且和node.js v0.12 版本完全不兼容. 如果你确实想通过这种方式生成快照信息,可以通过添加参数来实现:</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">env NODE_HEAPDUMP_OPTIONS=fork node script.js</span><br></pre></td></tr></table></figure>
 <h3 id="分析快照信息"><a href="#分析快照信息" class="headerlink" title="分析快照信息"></a>分析快照信息</h3><ol>
-<li><p>打开chrome控制台<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/chrome-devtool-profile.png" alt=""></p>
+<li><p>打开chrome控制台<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/chrome-devtool-profile.png" alt></p>
 </li>
 <li><p>加载快照文件</p>
 </li>
 </ol>
-<p>点击<code>load</code>按钮, 选择文件就可以加载快照文件了.<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/chrome-nodejs-heapdump.png" alt=""></p>
+<p>点击<code>load</code>按钮, 选择文件就可以加载快照文件了.<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/chrome-nodejs-heapdump.png" alt></p>
 <h3 id="配套工具-memwatch-next"><a href="#配套工具-memwatch-next" class="headerlink" title="配套工具 memwatch-next"></a>配套工具 memwatch-next</h3><p>线上运行的程序我们不会时不时的主动生产堆快照信息的, 如果能在发生内存泄露的时候生成快照信息,这样就最好了. 幸运的是有这种运行时内存<br>监控包:<code>memwatch-next</code></p>
 <h3 id="安装-memwatch"><a href="#安装-memwatch" class="headerlink" title="安装 memwatch"></a>安装 memwatch</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install memwatch-next --save</span><br></pre></td></tr></table></figure>
 <h3 id="使用-memwatch"><a href="#使用-memwatch" class="headerlink" title="使用 memwatch"></a>使用 memwatch</h3><h4 id="内存泄露监听"><a href="#内存泄露监听" class="headerlink" title="内存泄露监听"></a>内存泄露监听</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> memwatch = <span class="built_in">require</span>(<span class="string">'memwatch-next'</span>);</span><br><span class="line">memwatch.on(<span class="string">'leak'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">info</span>) </span>&#123; </span><br><span class="line">    <span class="comment">// 发生内存泄露时的回调函数</span></span><br><span class="line">    <span class="built_in">console</span>.error(<span class="string">'Memory leak detected: '</span>, info);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
@@ -980,11 +1031,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2016-04-12T14:16:53.000Z"><a href="/2016/04/12/Node.js_错误处理和调试/动态修改NodeJS程序中的变量值/">2016-04-12</a></time>
+        <time datetime="2016-04-12T14:16:53.000Z"><a href="/2016/04/12/Node.js/错误处理和调试—动态修改NodeJS程序中的变量值/">2016-04-12</a></time>
       
       
   
-    <h1 class="title"><a href="/2016/04/12/Node.js_错误处理和调试/动态修改NodeJS程序中的变量值/">动态修改Node程序中的变量值</a></h1>
+    <h1 class="title"><a href="/2016/04/12/Node.js/错误处理和调试—动态修改NodeJS程序中的变量值/">错误处理和调试—动态修改Node程序中的变量值</a></h1>
   
 
     </header>
@@ -1078,51 +1129,21 @@
   <h3 class="title">标签</h3>
   <ul class="entry">
   
-    <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
-  
     <li><a href="/tags/Docker/">Docker</a><small>3</small></li>
   
-    <li><a href="/tags/ES6/">ES6</a><small>4</small></li>
-  
-    <li><a href="/tags/Express/">Express</a><small>2</small></li>
-  
     <li><a href="/tags/Git/">Git</a><small>7</small></li>
-  
-    <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
   
     <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>5</small></li>
   
     <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
   
-    <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
-  
     <li><a href="/tags/MySQL实战/">MySQL实战</a><small>5</small></li>
   
-    <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>4</small></li>
-  
-    <li><a href="/tags/Node-js-事件/">Node.js_事件</a><small>4</small></li>
-  
-    <li><a href="/tags/Node-js-入门/">Node.js_入门</a><small>9</small></li>
-  
-    <li><a href="/tags/Node-js-基础/">Node.js_基础</a><small>6</small></li>
-  
-    <li><a href="/tags/Node-js-异步/">Node.js_异步</a><small>3</small></li>
-  
-    <li><a href="/tags/Node-js-模块/">Node.js_模块</a><small>5</small></li>
-  
-    <li><a href="/tags/Node-js-测试/">Node.js_测试</a><small>5</small></li>
-  
-    <li><a href="/tags/Node-js-网络/">Node.js_网络</a><small>1</small></li>
-  
-    <li><a href="/tags/Node-js-进程/">Node.js_进程</a><small>2</small></li>
-  
-    <li><a href="/tags/Node-js-错误处理和调试/">Node.js_错误处理和调试</a><small>5</small></li>
+    <li><a href="/tags/Node-js/">Node.js</a><small>58</small></li>
   
     <li><a href="/tags/Redis/">Redis</a><small>2</small></li>
   
-    <li><a href="/tags/Shell/">Shell</a><small>1</small></li>
-  
-    <li><a href="/tags/Unix/">Unix</a><small>3</small></li>
+    <li><a href="/tags/Unix/">Unix</a><small>4</small></li>
   
     <li><a href="/tags/从0开始学大数据/">从0开始学大数据</a><small>2</small></li>
   

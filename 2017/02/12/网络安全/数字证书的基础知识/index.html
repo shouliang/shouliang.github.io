@@ -1,6 +1,6 @@
 <!DOCTYPE HTML>
 <html>
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="utf-8">
   
   <title>数字证书的基础知识 | shouliang&#39;s blog</title>
@@ -11,11 +11,11 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
-  <meta property="og:title" content="数字证书的基础知识"/>
-  <meta property="og:site_name" content="shouliang&#39;s blog"/>
+  <meta property="og:title" content="数字证书的基础知识">
+  <meta property="og:site_name" content="shouliang&#39;s blog">
 
   
-    <meta property="og:image" content=""/>
+    <meta property="og:image" content>
   
 
   <link href="/favicon.png" rel="icon">
@@ -25,7 +25,7 @@
   
 
 </head>
-
+</html>
 
 <body>
   <header id="header" class="inner"><div class="alignleft">
@@ -105,7 +105,7 @@
 <p>应用场景，如发件人生成邮件的散列值并加密它，然后将它与邮件本身一起发送。而收件人同时解密邮件和散列值，并由接收到的邮件产生另外一个散列值，然后将两个散列值进行比较。如果两者相同，邮件极有可能在传输期间没有发生任何改变。</p>
 <h3 id="数字签名"><a href="#数字签名" class="headerlink" title="数字签名"></a>数字签名</h3><p>数字签名就是对非对称加密和摘要算法的一种应用，能够确保信息在发布后不会被篡改（摘要算法特性），保证数据的完整性和可信性；同时也可以防止数据被他人伪造（非对称加密算法特性）；列如，我们有一段授权文本需要发布时，为了防止中途篡改发布的内容，保证发布文本的完整性，以及文本是由指定的发布者发布的。那么，可以通过摘要算法得到发布内容的摘要，得到摘要之后，发布者使用私钥加密得到密文（签名），这时候将源文本、密文（签名）以及公钥一起发布出去即可。</p>
 <p>验证过程为：首先验证公钥是否是发布者的公钥，然后用公钥对密文进行解密，得到摘要，使用发布者对文本同样的摘要算法得到摘要文本，比对摘要是否一致即可确认信息是否被篡改或者是指定发布者发布的。</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/ditialSig.jpg" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/ditialSig.jpg" alt></p>
 <p>数字签名可以快速验证文本的完整性和合法性，已广泛应用于各个领域。</p>
 <p>公钥的验证在后续数字证书的授权链中提到验证方法。</p>
 <h3 id="数字证书"><a href="#数字证书" class="headerlink" title="数字证书"></a>数字证书</h3><h4 id="现实生活中的证书"><a href="#现实生活中的证书" class="headerlink" title="现实生活中的证书"></a>现实生活中的证书</h4><p>在现实生活中，证书顾名思义，就是权限机构颁发的证明。比如英语6级证书，就是教育部门颁发给通过了6级考核的个人的证明，证明这个人的英语能力。我们来看一下这个证书的组成：</p>
@@ -206,51 +206,21 @@
   <h3 class="title">标签</h3>
   <ul class="entry">
   
-    <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
-  
     <li><a href="/tags/Docker/">Docker</a><small>3</small></li>
   
-    <li><a href="/tags/ES6/">ES6</a><small>4</small></li>
-  
-    <li><a href="/tags/Express/">Express</a><small>2</small></li>
-  
     <li><a href="/tags/Git/">Git</a><small>7</small></li>
-  
-    <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
   
     <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>5</small></li>
   
     <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
   
-    <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
-  
     <li><a href="/tags/MySQL实战/">MySQL实战</a><small>5</small></li>
   
-    <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>4</small></li>
-  
-    <li><a href="/tags/Node-js-事件/">Node.js_事件</a><small>4</small></li>
-  
-    <li><a href="/tags/Node-js-入门/">Node.js_入门</a><small>9</small></li>
-  
-    <li><a href="/tags/Node-js-基础/">Node.js_基础</a><small>6</small></li>
-  
-    <li><a href="/tags/Node-js-异步/">Node.js_异步</a><small>3</small></li>
-  
-    <li><a href="/tags/Node-js-模块/">Node.js_模块</a><small>5</small></li>
-  
-    <li><a href="/tags/Node-js-测试/">Node.js_测试</a><small>5</small></li>
-  
-    <li><a href="/tags/Node-js-网络/">Node.js_网络</a><small>1</small></li>
-  
-    <li><a href="/tags/Node-js-进程/">Node.js_进程</a><small>2</small></li>
-  
-    <li><a href="/tags/Node-js-错误处理和调试/">Node.js_错误处理和调试</a><small>5</small></li>
+    <li><a href="/tags/Node-js/">Node.js</a><small>58</small></li>
   
     <li><a href="/tags/Redis/">Redis</a><small>2</small></li>
   
-    <li><a href="/tags/Shell/">Shell</a><small>1</small></li>
-  
-    <li><a href="/tags/Unix/">Unix</a><small>3</small></li>
+    <li><a href="/tags/Unix/">Unix</a><small>4</small></li>
   
     <li><a href="/tags/从0开始学大数据/">从0开始学大数据</a><small>2</small></li>
   

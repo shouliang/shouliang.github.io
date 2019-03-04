@@ -1,6 +1,6 @@
 <!DOCTYPE HTML>
 <html>
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="utf-8">
   
   <title>五.分支管理 | shouliang&#39;s blog</title>
@@ -11,11 +11,11 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
-  <meta property="og:title" content="五.分支管理"/>
-  <meta property="og:site_name" content="shouliang&#39;s blog"/>
+  <meta property="og:title" content="五.分支管理">
+  <meta property="og:site_name" content="shouliang&#39;s blog">
 
   
-    <meta property="og:image" content=""/>
+    <meta property="og:image" content>
   
 
   <link href="/favicon.png" rel="icon">
@@ -25,7 +25,7 @@
   
 
 </head>
-
+</html>
 
 <body>
   <header id="header" class="inner"><div class="alignleft">
@@ -64,17 +64,17 @@
       
         <h3 id="1-分支管理图文详解一"><a href="#1-分支管理图文详解一" class="headerlink" title="1.分支管理图文详解一"></a>1.分支管理图文详解一</h3><hr>
 <p>在版本回退里，你已经知道，每次提交，Git都把它们串成一条时间线，这条时间线就是一个分支。截止到目前，只有一条时间线，在Git里，这个分支叫主分支，即master分支。HEAD严格来说不是指向提交，而是指向master，master才是指向提交的，所以，HEAD指向的就是当前分支。</p>
-<p>　　一开始的时候，master分支是一条线，Git用master指向最新的提交，再用HEAD指向master，就能确定当前分支，以及当前分支的提交点：<br>　　<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbranch01.png" alt=""></p>
+<p>　　一开始的时候，master分支是一条线，Git用master指向最新的提交，再用HEAD指向master，就能确定当前分支，以及当前分支的提交点：<br>　　<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbranch01.png" alt></p>
 <p>每次提交，master分支都会向前移动一步，这样，随着你不断提交，master分支的线也越来越长，当我们创建新的分支，例如dev时，Git新建了一个指针叫dev，指向master相同的提交，再把HEAD指向dev，就表示当前分支在dev上：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbranch02.png" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbranch02.png" alt></p>
 <p>你看，Git创建一个分支很快，因为除了增加一个dev指针，改改HEAD的指向，工作区的文件都没有任何变化！</p>
 <h3 id="2-分支管理图文详解二"><a href="#2-分支管理图文详解二" class="headerlink" title="2.分支管理图文详解二"></a>2.分支管理图文详解二</h3><hr>
-<p>接着分支管理图文详解一，现在对工作区的修改和提交就是针对dev分支了，比如新提交一次后，dev指针往前移动一步，而master指针不变：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbranch03.png" alt=""></p>
+<p>接着分支管理图文详解一，现在对工作区的修改和提交就是针对dev分支了，比如新提交一次后，dev指针往前移动一步，而master指针不变：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbranch03.png" alt></p>
 <p>假如我们在dev上的工作完成了，就可以把dev合并到master上。Git怎么合并呢？最简单的方法，就是直接把master指向dev的当前提交，就完成了合并：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbranch04.png" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbranch04.png" alt></p>
 <p>所以Git合并分支也很快！就改改指针，工作区内容也不变！</p>
 <p>合并完分支后，甚至可以删除dev分支。删除dev分支就是把dev指针给删掉，删掉后，我们就剩下了一条master分支：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbranch05.png" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbranch05.png" alt></p>
 <h3 id="3-创建分支"><a href="#3-创建分支" class="headerlink" title="3.创建分支"></a>3.创建分支</h3><hr>
 <p>首先，我们创建dev分支，然后切换到dev分支：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout -b dev</span><br><span class="line">Switched to a new branch &apos;dev&apos;</span><br></pre></td></tr></table></figure></p>
 <p>git checkout命令加上-b参数表示创建并切换，相当于以下两条命令：</p>
@@ -89,7 +89,7 @@
 <p>现在，dev分支的工作完成，我们就可以切换回master分支：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout master</span><br><span class="line">Switched to branch &apos;master&apos;</span><br></pre></td></tr></table></figure>
 <p>切换回master分支后，再查看一个readme.txt文件，刚才添加的内容不见了！因为那个提交是在dev分支上，而master分支此刻的提交点并没有变：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkdev.png" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkdev.png" alt></p>
 <h3 id="4-合并分支"><a href="#4-合并分支" class="headerlink" title="4.合并分支"></a>4.合并分支</h3><hr>
 <p>我们把前面dev分支的工作成果合并到master分支上：</p>
 <p>$ git merge dev<br>Updating d17efd8..fec145a<br>Fast-forward<br> readme.txt |    1 +<br> 1 file changed, 1 insertion(+)</p>
@@ -117,11 +117,11 @@
 <p>在master分支上把readme.txt文件的最后一行改为Creating a new branch is quick &amp; simple.提交：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git add readme.txt </span><br><span class="line">$ git commit -m &quot;&amp; simple&quot;</span><br></pre></td></tr></table></figure></p>
 <h3 id="7-解决冲突"><a href="#7-解决冲突" class="headerlink" title="7.解决冲突"></a>7.解决冲突</h3><hr>
 <p>在上节中master分支和feature1分支各自都分别有新的提交，变成了这样：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkresolve01.png" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkresolve01.png" alt></p>
 <p>这种情况下，Git无法执行“快速合并”，只能试图把各自的修改合并起来，但这种合并就可能会有冲突，执行git merge feature1,在看readme.txt：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span><br><span class="line">Creating a new branch is quick &amp; simple.</span><br><span class="line">=======</span><br><span class="line">Creating a new branch is quick AND simple.</span><br><span class="line">&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature1</span><br></pre></td></tr></table></figure></p>
 <p>我们把冲突的内容修改为Creating a new branch is quick and simple.，提交：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git add readme.txt </span><br><span class="line">$ git commit -m &quot;conflict fixed&quot;</span><br></pre></td></tr></table></figure></p>
 <p>现在，master分支和feature1分支变成了下图所示：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkresolve02.png" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkresolve02.png" alt></p>
 <p>用带参数的git log也可以看到分支的合并情况：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git log --graph --pretty=oneline --abbrev-commit</span><br></pre></td></tr></table></figure></p>
 <p>最后，删除feature1分支：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git branch -d feature1</span><br><span class="line">Deleted branch feature1.</span><br></pre></td></tr></table></figure></p>
 <p>冲突解决，最后，删除feature1分支 git branch -d feature1。当Git无法自动合并分支时，就必须首先解决冲突。解决冲突后，再提交，合并完成。</p>
@@ -243,51 +243,21 @@
   <h3 class="title">标签</h3>
   <ul class="entry">
   
-    <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
-  
     <li><a href="/tags/Docker/">Docker</a><small>3</small></li>
   
-    <li><a href="/tags/ES6/">ES6</a><small>4</small></li>
-  
-    <li><a href="/tags/Express/">Express</a><small>2</small></li>
-  
     <li><a href="/tags/Git/">Git</a><small>7</small></li>
-  
-    <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
   
     <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>5</small></li>
   
     <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
   
-    <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
-  
     <li><a href="/tags/MySQL实战/">MySQL实战</a><small>5</small></li>
   
-    <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>4</small></li>
-  
-    <li><a href="/tags/Node-js-事件/">Node.js_事件</a><small>4</small></li>
-  
-    <li><a href="/tags/Node-js-入门/">Node.js_入门</a><small>9</small></li>
-  
-    <li><a href="/tags/Node-js-基础/">Node.js_基础</a><small>6</small></li>
-  
-    <li><a href="/tags/Node-js-异步/">Node.js_异步</a><small>3</small></li>
-  
-    <li><a href="/tags/Node-js-模块/">Node.js_模块</a><small>5</small></li>
-  
-    <li><a href="/tags/Node-js-测试/">Node.js_测试</a><small>5</small></li>
-  
-    <li><a href="/tags/Node-js-网络/">Node.js_网络</a><small>1</small></li>
-  
-    <li><a href="/tags/Node-js-进程/">Node.js_进程</a><small>2</small></li>
-  
-    <li><a href="/tags/Node-js-错误处理和调试/">Node.js_错误处理和调试</a><small>5</small></li>
+    <li><a href="/tags/Node-js/">Node.js</a><small>58</small></li>
   
     <li><a href="/tags/Redis/">Redis</a><small>2</small></li>
   
-    <li><a href="/tags/Shell/">Shell</a><small>1</small></li>
-  
-    <li><a href="/tags/Unix/">Unix</a><small>3</small></li>
+    <li><a href="/tags/Unix/">Unix</a><small>4</small></li>
   
     <li><a href="/tags/从0开始学大数据/">从0开始学大数据</a><small>2</small></li>
   

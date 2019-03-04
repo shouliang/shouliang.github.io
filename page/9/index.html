@@ -1,6 +1,6 @@
 <!DOCTYPE HTML>
 <html>
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="utf-8">
   
   <title>第 9 页 | shouliang&#39;s blog</title>
@@ -12,10 +12,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
   
-  <meta property="og:site_name" content="shouliang&#39;s blog"/>
+  <meta property="og:site_name" content="shouliang&#39;s blog">
 
   
-    <meta property="og:image" content=""/>
+    <meta property="og:image" content>
   
 
   <link href="/favicon.png" rel="icon">
@@ -25,7 +25,7 @@
   
 
 </head>
-
+</html>
 
 <body>
   <header id="header" class="inner"><div class="alignleft">
@@ -53,76 +53,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2016-04-10T14:16:53.000Z"><a href="/2016/04/10/Node.js_错误处理和调试/CPU profiling/">2016-04-10</a></time>
+        <time datetime="2016-04-05T14:16:53.000Z"><a href="/2016/04/05/Node.js/错误处理和调试—Node出现uncaughtException之后的优雅退出方案/">2016-04-05</a></time>
       
       
   
-    <h1 class="title"><a href="/2016/04/10/Node.js_错误处理和调试/CPU profiling/">CPU profiling</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <p>There are many third party tools available for profiling Node.js applications but, in many cases, the easiest option is to use the Node.js built in profiler. The built in profiler uses the <a href="https://developers.google.com/v8/profiler_example" target="_blank" rel="noopener">profiler inside V8</a> which samples the stack at regular intervals during program execution. It records the results of these samples, along with important optimization events such as jit compiles, as a series of ticks:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">code-creation,LazyCompile,0,0x2d5000a337a0,396,&quot;bp native array.js:1153:16&quot;,0x289f644df68,~</span><br><span class="line">code-creation,LazyCompile,0,0x2d5000a33940,716,&quot;hasOwnProperty native v8natives.js:198:30&quot;,0x289f64438d0,~</span><br><span class="line">code-creation,LazyCompile,0,0x2d5000a33c20,284,&quot;ToName native runtime.js:549:16&quot;,0x289f643bb28,~</span><br><span class="line">code-creation,Stub,2,0x2d5000a33d40,182,&quot;DoubleToIStub&quot;</span><br><span class="line">code-creation,Stub,2,0x2d5000a33e00,507,&quot;NumberToStringStub&quot;</span><br></pre></td></tr></table></figure>
-<p>In the past you need the V8 source code to be able to interpret the ticks. Luckily, tools have recently been introduced into Node.js 4.4.0 that facilitate the consumption of this information without separately building V8 from source. Let’s see how the built-in profiler can help provide insight into application performance.</p>
-<p>To illustrate the use of the tick profiler, we will work with a simple Express application. Our application will have two handlers, one for adding new users to our system:</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">app.get(<span class="string">'/newUser'</span>, (req, res) =&gt; &#123;</span><br><span class="line">  <span class="keyword">let</span> username = req.query.username || <span class="string">''</span>;</span><br><span class="line">  <span class="keyword">const</span> password = req.query.password || <span class="string">''</span>;</span><br><span class="line"></span><br><span class="line">  username = username.replace(<span class="regexp">/[!@#$%^&amp;*]/g</span>, <span class="string">''</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!username || !password || users.username) &#123;</span><br><span class="line">    <span class="keyword">return</span> res.sendStatus(<span class="number">400</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> salt = crypto.randomBytes(<span class="number">128</span>).toString(<span class="string">'base64'</span>);</span><br><span class="line">  <span class="keyword">const</span> hash = crypto.pbkdf2Sync(password, salt, <span class="number">10000</span>, <span class="number">512</span>);</span><br><span class="line"></span><br><span class="line">  users[username] = &#123; salt, hash &#125;;</span><br><span class="line"></span><br><span class="line">  res.sendStatus(<span class="number">200</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>and another for validating user authentication attempts:</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">app.get(<span class="string">'/auth'</span>, (req, res) =&gt; &#123;</span><br><span class="line">  <span class="keyword">let</span> username = req.query.username || <span class="string">''</span>;</span><br><span class="line">  <span class="keyword">const</span> password = req.query.password || <span class="string">''</span>;</span><br><span class="line"></span><br><span class="line">  username = username.replace(<span class="regexp">/[!@#$%^&amp;*]/g</span>, <span class="string">''</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!username || !password || !users[username]) &#123;</span><br><span class="line">    <span class="keyword">return</span> res.sendStatus(<span class="number">400</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> hash = crypto.pbkdf2Sync(password, users[username].salt, <span class="number">10000</span>, <span class="number">512</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (users[username].hash.toString() === hash.toString()) &#123;</span><br><span class="line">    res.sendStatus(<span class="number">200</span>);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    res.sendStatus(<span class="number">401</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p><em>Please note that these are NOT recommended handlers for authenticating users in your Node.js applications and are used purely for illustration purposes. You should not be trying to design your own cryptographic authentication mechanisms in general. It is much better to use existing, proven authentication solutions.</em></p>
-<p>Now assume that we’ve deployed our application and users are complaining about high latency on requests. We can easily run the app with the built in profiler:</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">NODE_ENV=production node --prof app.js</span><br></pre></td></tr></table></figure>
-<p>and put some load on the server using <code>ab</code> (ApacheBench):</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">curl -X GET &quot;http://localhost:8080/newUser?username=matt&amp;password=password&quot;</span><br><span class="line">ab -k -c 20 -n 250 &quot;http://localhost:8080/auth?username=matt&amp;password=password&quot;</span><br></pre></td></tr></table></figure>
-<p>and get an ab output of:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">Concurrency Level:      20</span><br><span class="line">Time taken for tests:   46.932 seconds</span><br><span class="line">Complete requests:      250</span><br><span class="line">Failed requests:        0</span><br><span class="line">Keep-Alive requests:    250</span><br><span class="line">Total transferred:      50250 bytes</span><br><span class="line">HTML transferred:       500 bytes</span><br><span class="line">Requests per second:    5.33 [#/sec] (mean)</span><br><span class="line">Time per request:       3754.556 [ms] (mean)</span><br><span class="line">Time per request:       187.728 [ms] (mean, across all concurrent requests)</span><br><span class="line">Transfer rate:          1.05 [Kbytes/sec] received</span><br><span class="line"></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">Percentage of the requests served within a certain time (ms)</span><br><span class="line">  50%   3755</span><br><span class="line">  66%   3804</span><br><span class="line">  75%   3818</span><br><span class="line">  80%   3825</span><br><span class="line">  90%   3845</span><br><span class="line">  95%   3858</span><br><span class="line">  98%   3874</span><br><span class="line">  99%   3875</span><br><span class="line"> 100%   4225 (longest request)</span><br></pre></td></tr></table></figure>
-<p>From this output, we see that we’re only managing to serve about 5 requests per second and that the average request takes just under 4 seconds round trip. In a real world example, we could be doing lots of work in many functions on behalf of a user request but even in our simple example, time could be lost compiling regular expressions, generating random salts, generating unique hashes from user passwords, or inside the Express framework itself.</p>
-<p>Since we ran our application using the <code>--prof</code> option, a tick file was generated in the same directory as your local run of the application. It should have the form <code>isolate-0xnnnnnnnnnnnn-v8.log</code> (where <code>n</code> is a digit).</p>
-<p>In order to make sense of this file, we need to use the tick processor bundled with the Node.js binary. To run the processor, use the <code>--prof-process</code> flag:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">node --prof-process isolate-0xnnnnnnnnnnnn-v8.log &gt; processed.txt</span><br></pre></td></tr></table></figure>
-<p>Opening processed.txt in your favorite text editor will give you a few different types of information. The file is broken up into sections which are again broken up by language. First, we look at the summary section and see:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[Summary]:</span><br><span class="line">  ticks  total  nonlib   name</span><br><span class="line">    79    0.2%    0.2%  JavaScript</span><br><span class="line"> 36703   97.2%   99.2%  C++</span><br><span class="line">     7    0.0%    0.0%  GC</span><br><span class="line">   767    2.0%          Shared libraries</span><br><span class="line">   215    0.6%          Unaccounted</span><br></pre></td></tr></table></figure>
-<p>This tells us that 97% of all samples gathered occurred in C++ code and that when viewing other sections of the processed output we should pay most attention to work being done in C++ (as opposed to Javascript). With this in mind, we next find the [C++] section which contains information about which C++ functions are taking the most CPU time and see:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[C++]:</span><br><span class="line">  ticks  total  nonlib   name</span><br><span class="line"> 19557   51.8%   52.9%  node::crypto::PBKDF2(v8::FunctionCallbackInfo&lt;v8::Value&gt; const&amp;)</span><br><span class="line">  4510   11.9%   12.2%  _sha1_block_data_order</span><br><span class="line">  3165    8.4%    8.6%  _malloc_zone_malloc</span><br></pre></td></tr></table></figure>
-<p>We see that the top 3 entries account for 72.1% of CPU time taken by the program. From this output, we immediately see that at least 51.8% of CPU time is taken up by a function called PBKDF2 which corresponds to our hash generation from a user’s password. However, it may not be immediately obvious how the lower two entries factor into our application (or if it is we will pretend otherwise for the sake of example). To better understand the relationship between these functions, we will next look at the [Bottom up (heavy) profile] section which provides information about the primary callers of each function. Examining this section, we find:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"> ticks parent  name</span><br><span class="line">19557   51.8%  node::crypto::PBKDF2(v8::FunctionCallbackInfo&lt;v8::Value&gt; const&amp;)</span><br><span class="line">19557  100.0%    v8::internal::Builtins::~Builtins()</span><br><span class="line">19557  100.0%      LazyCompile: ~pbkdf2 crypto.js:557:16</span><br><span class="line"></span><br><span class="line"> 4510   11.9%  _sha1_block_data_order</span><br><span class="line"> 4510  100.0%    LazyCompile: *pbkdf2 crypto.js:557:16</span><br><span class="line"> 4510  100.0%      LazyCompile: *exports.pbkdf2Sync crypto.js:552:30</span><br><span class="line"></span><br><span class="line"> 3165    8.4%  _malloc_zone_malloc</span><br><span class="line"> 3161   99.9%    LazyCompile: *pbkdf2 crypto.js:557:16</span><br><span class="line"> 3161  100.0%      LazyCompile: *exports.pbkdf2Sync crypto.js:552:30</span><br></pre></td></tr></table></figure>
-<p>Parsing this section takes a little more work than the raw tick counts above. Within each of the “call stacks” above, the percentage in the parent column tells you the percentage of samples for which the function in the row above was called by the function in the current row. For example, in the middle “call stack” above for _sha1_block_data_order, we see that _sha1_block_data_order occurred in 11.9% of samples, which we knew from the raw counts above. However, here, we can also tell that it was always called by the pbkdf2 function inside the Node.js crypto module. We see that similarly, _malloc_zone_malloc was called almost exclusively by the same pbkdf2 function. Thus, using the information in this view, we can tell that our hash computation from the user’s password accounts not only for the 51.8% from above but also for all CPU time in the top 3 most sampled functions since the calls to _sha1_block_data_order and _malloc_zone_malloc were made on behalf of the pbkdf2 function.</p>
-<p>At this point, it is very clear that the password based hash generation should be the target of our optimization. Thankfully, you’ve fully internalized the <a href="https://nodesource.com/blog/why-asynchronous" target="_blank" rel="noopener">benefits of asynchronous programming</a> and you realize that the work to generate a hash from the user’s password is being done in a synchronous way and thus tying down the event loop. This prevents us from working on other incoming requests while computing a hash.</p>
-<p>To remedy this issue, you make a small modification to the above handlers to use the asynchronous version of the pbkdf2 function:</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">app.get(<span class="string">'/auth'</span>, (req, res) =&gt; &#123;</span><br><span class="line">  <span class="keyword">let</span> username = req.query.username || <span class="string">''</span>;</span><br><span class="line">  <span class="keyword">const</span> password = req.query.password || <span class="string">''</span>;</span><br><span class="line"></span><br><span class="line">  username = username.replace(<span class="regexp">/[!@#$%^&amp;*]/g</span>, <span class="string">''</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!username || !password || !users[username]) &#123;</span><br><span class="line">    <span class="keyword">return</span> res.sendStatus(<span class="number">400</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  crypto.pbkdf2(password, users[username].salt, <span class="number">10000</span>, <span class="number">512</span>, (err, hash) =&gt; &#123;</span><br><span class="line">    <span class="keyword">if</span> (users[username].hash.toString() === hash.toString()) &#123;</span><br><span class="line">      res.sendStatus(<span class="number">200</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      res.sendStatus(<span class="number">401</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>A new run of the ab benchmark above with the asynchronous version of your app yields:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">Concurrency Level:      20</span><br><span class="line">Time taken for tests:   12.846 seconds</span><br><span class="line">Complete requests:      250</span><br><span class="line">Failed requests:        0</span><br><span class="line">Keep-Alive requests:    250</span><br><span class="line">Total transferred:      50250 bytes</span><br><span class="line">HTML transferred:       500 bytes</span><br><span class="line">Requests per second:    19.46 [#/sec] (mean)</span><br><span class="line">Time per request:       1027.689 [ms] (mean)</span><br><span class="line">Time per request:       51.384 [ms] (mean, across all concurrent requests)</span><br><span class="line">Transfer rate:          3.82 [Kbytes/sec] received</span><br><span class="line"></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">Percentage of the requests served within a certain time (ms)</span><br><span class="line">  50%   1018</span><br><span class="line">  66%   1035</span><br><span class="line">  75%   1041</span><br><span class="line">  80%   1043</span><br><span class="line">  90%   1049</span><br><span class="line">  95%   1063</span><br><span class="line">  98%   1070</span><br><span class="line">  99%   1071</span><br><span class="line"> 100%   1079 (longest request)</span><br></pre></td></tr></table></figure>
-<p>Yay! Your app is now serving about 20 requests per second, roughly 4 times more than it was with the synchronous hash generation. Additionally, the average latency is down from the 4 seconds before to just over 1 second.</p>
-<p>Hopefully, through the performance investigation of this (admittedly contrived) example, you’ve seen how the V8 tick processor can help you gain a better understanding of the performance of your Node.js applications.</p>
-<p>原文：<a href="https://nodejs.org/en/docs/guides/simple-profiling/" target="_blank" rel="noopener">https://nodejs.org/en/docs/guides/simple-profiling/</a></p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2016-04-05T14:16:53.000Z"><a href="/2016/04/05/Node.js_错误处理和调试/Node出现uncaughtException之后的优雅退出方案/">2016-04-05</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2016/04/05/Node.js_错误处理和调试/Node出现uncaughtException之后的优雅退出方案/">Node出现uncaughtException之后的优雅退出方案</a></h1>
+    <h1 class="title"><a href="/2016/04/05/Node.js/错误处理和调试—Node出现uncaughtException之后的优雅退出方案/">错误处理和调试—Node出现uncaughtException之后的优雅退出方案</a></h1>
   
 
     </header>
@@ -206,11 +141,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2016-04-04T14:16:53.000Z"><a href="/2016/04/04/Node.js_错误处理和调试/JavaScript错误处理机制/">2016-04-04</a></time>
+        <time datetime="2016-04-04T14:16:53.000Z"><a href="/2016/04/04/Node.js/错误处理和调试—JavaScript错误处理机制/">2016-04-04</a></time>
       
       
   
-    <h1 class="title"><a href="/2016/04/04/Node.js_错误处理和调试/JavaScript错误处理机制/">JavaScript错误处理机制</a></h1>
+    <h1 class="title"><a href="/2016/04/04/Node.js/错误处理和调试—JavaScript错误处理机制/">错误处理和调试—JavaScript错误处理机制</a></h1>
   
 
     </header>
@@ -317,11 +252,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2016-03-12T06:45:23.000Z"><a href="/2016/03/12/Node.js_JS基础/JavaScript中的作用域和上下文/">2016-03-12</a></time>
+        <time datetime="2016-03-12T06:45:23.000Z"><a href="/2016/03/12/Node.js/基础—JavaScript中的作用域和上下文/">2016-03-12</a></time>
       
       
   
-    <h1 class="title"><a href="/2016/03/12/Node.js_JS基础/JavaScript中的作用域和上下文/">JavaScript中的作用域和上下文</a></h1>
+    <h1 class="title"><a href="/2016/03/12/Node.js/基础—JavaScript中的作用域和上下文/">基础—JavaScript中的作用域和上下文</a></h1>
   
 
     </header>
@@ -346,7 +281,7 @@
 <h3 id="作用域链（The-Scope-Chain）"><a href="#作用域链（The-Scope-Chain）" class="headerlink" title="作用域链（The Scope Chain）"></a>作用域链（The Scope Chain）</h3><p>当代码在一个环境中执行时，会创建变量对象的一个作用域链（scope chain）。作用域链的用途是保证对执行环境有权访问的所有变量和函数的有序访问。 作用域链包含了在环境栈中的每个执行环境对应的变量对象。通过作用域链，可以决定变量的访问和标识符的解析。 注意，全局执行环境的变量对象始终都是作用域链的最后一个对象。我们来看一个例子：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">var color = &quot;blue&quot;;</span><br><span class="line"></span><br><span class="line">function changeColor()&#123;</span><br><span class="line">  var anotherColor = &quot;red&quot;;</span><br><span class="line"></span><br><span class="line">  function swapColors()&#123;</span><br><span class="line">    var tempColor = anotherColor;</span><br><span class="line">    anotherColor = color;</span><br><span class="line">    color = tempColor;</span><br><span class="line"></span><br><span class="line">    // 这里可以访问color, anotherColor, 和 tempColor</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  // 这里可以访问color 和 anotherColor，但是不能访问 tempColor</span><br><span class="line">  swapColors();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">changeColor();</span><br><span class="line"></span><br><span class="line">// 这里只能访问color</span><br><span class="line">console.log(&quot;Color is now &quot; + color);</span><br></pre></td></tr></table></figure>
 <p>上述代码一共包括三个执行环境：全局环境、changeColor()的局部环境、swapColors()的局部环境。 上述程序的作用域链如下图所示：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/imgscope-chain.png" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/imgscope-chain.png" alt></p>
 <p>从上图发现。内部环境可以通过作用域链访问所有的外部环境，但是外部环境不能访问内部环境中的任何变量和函数。 这些环境之间的联系是线性的、有次序的。</p>
 <p>对于标识符解析（变量名或函数名搜索）是沿着作用域链一级一级地搜索标识符的过程。搜索过程始终从作用域链的前端开始， 然后逐级地向后（全局执行环境）回溯，直到找到标识符为止。</p>
 <h3 id="闭包"><a href="#闭包" class="headerlink" title="闭包"></a>闭包</h3><p>闭包是指有权访问另一函数作用域中的变量的函数。换句话说，在函数内定义一个嵌套的函数时，就构成了一个闭包， 它允许嵌套函数访问外层函数的变量。通过返回嵌套函数，允许你维护对外部函数中局部变量、参数、和内函数声明的访问。 这种封装允许你在外部作用域中隐藏和保护执行环境，并且暴露公共接口，进而通过公共接口执行进一步的操作。可以看个简单的例子：</p>
@@ -397,11 +332,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2016-03-09T06:45:23.000Z"><a href="/2016/03/09/Node.js_JS基础/Javascript面对对象/">2016-03-09</a></time>
+        <time datetime="2016-03-09T06:45:23.000Z"><a href="/2016/03/09/Node.js/基础—Javascript面对对象/">2016-03-09</a></time>
       
       
   
-    <h1 class="title"><a href="/2016/03/09/Node.js_JS基础/Javascript面对对象/">Javascipt面对对象</a></h1>
+    <h1 class="title"><a href="/2016/03/09/Node.js/基础—Javascript面对对象/">基础—Javascipt面对对象</a></h1>
   
 
     </header>
@@ -440,7 +375,7 @@
 <p>只要创建了一个新函数，就会根据一组特定的规则为该函数创建一个prototype属性，这个属性指向函数的原型对象。 在默认情况下，所有原型对象都会自动获得一个constructor属性，这个属性包含一个指向prototype属性所在函数的指针。 也就是说：Person.prototype.constructor指向Person构造函数。</p>
 <p>创建了自定义的构造函数之后，其原型对象默认只会取得constructor属性；至于其他方法，则都是从Object继承而来的。 当调用构造函数创建一个新实例后，该实例内部将包含一个指针（内部属性），指向构造函数的原型对象。ES5中称这个指针为[[Prototype]]， 在Firefox、Safari和Chrome在每个对象上都支持一个属性<strong>proto</strong>（目前已被废弃）；而在其他实现中，这个属性对脚本则是完全不可见的。 要注意，这个链接存在于实例与构造函数的原型对象之间，而不是实例与构造函数之间。</p>
 <p>这三者关系的示意图如下：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/imgprototype-graph-1.jpg" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/imgprototype-graph-1.jpg" alt></p>
 <p>上图展示了Person构造函数、Person的原型对象以及Person现有的两个实例之间的关系。</p>
 <ul>
 <li>Person.prototype指向了原型对象</li>
@@ -468,7 +403,7 @@
 <p>在上面的代码中，原型链继承的核心语句是Child.prototype = new Father()，它实现了Child对Father的继承， 而继承是通过创建Father的实例，并将该实例赋给Child.prototype实现的。</p>
 <p>实现的本质是重写原型对象，代之以一个新类型的实例。也就是说，原来存在于Father的实例中的所有属性和方法， 现在也存在于Child.prototype中了。</p>
 <p>这个例子中的实例以及构造函数和原型之间的关系如下图所示：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/imgprototype-chain-inheritance.jpg" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/imgprototype-chain-inheritance.jpg" alt></p>
 <p>在上面的代码中，我们没有使用Child默认提供的原型，而是给它换了一个新原型；这个新原型就是Father的实例。 于是，新原型不仅具有了作为一个Father的实例所拥有的全部属性和方法。而且其内部还有一个指针[[Prototype]]，指向了Father的原型。</p>
 <ul>
 <li>instance指向Child的原型对象</li>
@@ -530,11 +465,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2015-11-08T14:16:53.000Z"><a href="/2015/11/08/Node.js_进程/当我们谈论cluster时我们在谈论什么/">2015-11-08</a></time>
+        <time datetime="2015-11-08T14:16:53.000Z"><a href="/2015/11/08/Node.js/进程—当我们谈论cluster时我们在谈论什么/">2015-11-08</a></time>
       
       
   
-    <h1 class="title"><a href="/2015/11/08/Node.js_进程/当我们谈论cluster时我们在谈论什么/">当我们谈论 cluster 时我们在谈论什么</a></h1>
+    <h1 class="title"><a href="/2015/11/08/Node.js/进程—当我们谈论cluster时我们在谈论什么/">进程—当我们谈论 cluster 时我们在谈论什么</a></h1>
   
 
     </header>
@@ -553,10 +488,10 @@
 <p>fork() creates a new process by duplicating the calling process. The new process is referred to as the child process. The calling process is referred to as the parent process.</p>
 <p>The child process and the parent process run in separate memory spaces. At the time of fork() both memory spaces have the same content. Memory writes, file mappings (mmap(2)), and unmappings (munmap(2)) performed by one of the processes do not affect the other.</p>
 <p>本文中要讲解的 fork 是 cluster 模块中非常重要的一个方法，当然了，底层也是依赖上面提到的 fork 函数实现。 多个子进程便是通过在master进程中不断的调用 cluster.fork 方法构造出来。下面的结构图大家应该非常熟悉了。</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/cluster01_180703.png" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/cluster01_180703.png" alt></p>
 <p>上面的图非常粗糙， 并没有告诉我们 master 与 worker 到底是如何分工协作的。Node.js 在这块做过比较大的改动，下面就细细的剖析开来。</p>
 <h3 id="多进程监听同一端口"><a href="#多进程监听同一端口" class="headerlink" title="多进程监听同一端口"></a>多进程监听同一端口</h3><p>最初的 Node.js 多进程模型就是这样实现的，master 进程创建 socket，绑定到某个地址以及端口后，自身不调用 listen 来监听连接以及 accept 连接，而是将该 socket 的 fd 传递到 fork 出来的 worker 进程，worker 接收到 fd 后再调用 listen，accept 新的连接。但实际一个新到来的连接最终只能被某一个 worker 进程 accpet 再做处理，至于是哪个 worker 能够 accept 到，开发者完全无法预知以及干预。这势必就导致了当一个新连接到来时，多个 worker 进程会产生竞争，最终由胜出的 worker 获取连接。</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/cluster02_180703.png" alt=""><br>为了进一步加深对这种模型的理解，我编写了一个非常简单的 demo。</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/cluster02_180703.png" alt><br>为了进一步加深对这种模型的理解，我编写了一个非常简单的 demo。</p>
 <p>master 进程</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">const net = require(&apos;net&apos;);</span><br><span class="line">const fork = require(&apos;child_process&apos;).fork;</span><br><span class="line"></span><br><span class="line">var handle = net._createServerHandle(&apos;0.0.0.0&apos;, 3000);</span><br><span class="line"></span><br><span class="line">for(var i=0;i&lt;4;i++) &#123;</span><br><span class="line">   fork(&apos;./worker&apos;).send(&#123;&#125;, handle);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>worker 进程</p>
@@ -580,7 +515,7 @@
 <p><a href="http://taobaofed.org/blog/2015/11/03/nodejs-cluster/" target="_blank" rel="noopener">上篇文章</a>讲解了 Node.js 中多进程部署时遇到的各种问题，那么实际的线上项目中到底是如何利用多进程，如何保障各个 worker 进程稳定性的呢，又是如何利用 cluster 模块 fork 子进程，父子进程间又是如何实现通信的呢？本篇就来一一揭晓。</p>
 <h2 id="负载均衡"><a href="#负载均衡" class="headerlink" title="负载均衡"></a>负载均衡</h2><p>回忆一下上篇中提到的最初 Node.js 多进程模型，多个进程绑定同一端口，相互竞争 accpet 新到来的连接。由于无法控制一个新的连接由哪个进程来处理，导致各 worker 进程之间的负载非常不均衡。</p>
 <p>于是后面就出现了基于 round-robin 算法的另一种模型。主要思路是 master 进程创建 socket，绑定地址以及端口后再进行监听。该 socket 的 fd 不传递到各个 worker 进程。当 master 进程获取到新的连接时，再决定将 accept 到的客户端连接分发给指定的 worker 处理。这里使用了<strong>指定</strong>, 所以如何传递以及传递给哪个 worker 完全是可控的。round-robin 只是其中的某种算法而已，当然可以换成其他的。</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/cluster03_180703.png" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/cluster03_180703.png" alt></p>
 <p>同样基于这种模型也给出一个简单的 demo。</p>
 <p>master 进程</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">const net = require(&apos;net&apos;);</span><br><span class="line">const fork = require(&apos;child_process&apos;).fork;</span><br><span class="line"></span><br><span class="line">var workers = [];</span><br><span class="line">for (var i = 0; i &lt; 4; i++) &#123;</span><br><span class="line">   workers.push(fork(&apos;./worker&apos;));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var handle = net._createServerHandle(&apos;0.0.0.0&apos;, 3000);</span><br><span class="line">handle.listen();</span><br><span class="line">handle.onconnection = function (err,handle) &#123;</span><br><span class="line">    var worker = workers.pop();</span><br><span class="line">    worker.send(&#123;&#125;,handle);</span><br><span class="line">    workers.unshift(worker);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -666,11 +601,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2015-11-05T14:16:53.000Z"><a href="/2015/11/05/Node.js_事件/初识单线程的Node.js/">2015-11-05</a></time>
+        <time datetime="2015-11-05T14:16:53.000Z"><a href="/2015/11/05/Node.js/事件—初识单线程的Node.js/">2015-11-05</a></time>
       
       
   
-    <h1 class="title"><a href="/2015/11/05/Node.js_事件/初识单线程的Node.js/">初识单线程的Node.js</a></h1>
+    <h1 class="title"><a href="/2015/11/05/Node.js/事件—初识单线程的Node.js/">事件—初识单线程的Node.js</a></h1>
   
 
     </header>
@@ -693,7 +628,7 @@
 <li><p><strong>Node.js 这么厉害，难道没有它不适合的事情吗？</strong><br>看到这些问题，是否有点头大，别急，带着这些问题我们来慢慢看这篇文章。</p>
 </li>
 </ul>
-<h3 id="Node-js-结构"><a href="#Node-js-结构" class="headerlink" title="Node.js 结构"></a>Node.js 结构</h3><p>从 Node.js 本身入手，先来看看 Node.js 的结构。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/nodestandard.jpeg" alt=""></p>
+<h3 id="Node-js-结构"><a href="#Node-js-结构" class="headerlink" title="Node.js 结构"></a>Node.js 结构</h3><p>从 Node.js 本身入手，先来看看 Node.js 的结构。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/nodestandard.jpeg" alt></p>
 <p>我们可以看到，Node.js 的结构大致分为三个层次：</p>
 <p> Node.js 标准库，这部分是由 Javascript 编写的，即我们使用过程中直接能调用的 API。在源码中的 <a href="https://github.com/nodejs/node/tree/master/lib" target="_blank" rel="noopener">lib</a> 目录下可以看到。</p>
 <ul>
@@ -708,14 +643,14 @@
 </ul>
 <h3 id="Libuv"><a href="#Libuv" class="headerlink" title="Libuv"></a>Libuv</h3><p>Libuv 是 Node.js 关键的一个组成部分，它为上层的 Node.js 提供了统一的 API 调用，使其不用考虑平台差距，隐藏了底层实现。</p>
 <p>具体它能做什么，官网的这张图体现的很好：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/1807041754libuv.png" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/1807041754libuv.png" alt></p>
 <p>可以看出，它是一个对开发者友好的工具集，包含定时器，非阻塞的网络 I/O，异步文件系统访问，子进程等功能。它封装了 Libev、Libeio 以及 IOCP，保证了跨平台的通用性。</p>
 <p>我们只要先知道它本身是异步和事件驱动的，记住这点，下面的问题就有了答案，我们一一来看。</p>
 <p> 与操作系统交互</p>
 <p>举个简单的例子，我们想要打开一个文件，并进行一些操作，可以写下面这样一段代码：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">var fs = require(&apos;fs&apos;);</span><br><span class="line">fs.open(&apos;./test.txt&apos;, &quot;w&quot;, function(err, fd) &#123;</span><br><span class="line">	//..do something</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
 <p>这段代码的调用过程大致可描述为：<a href="https://github.com/nodejs/node/blob/master/lib/fs.js" target="_blank" rel="noopener">lib/fs.js</a> → <a href="https://github.com/nodejs/node/blob/master/src/node_file.cc" target="_blank" rel="noopener">src/node_file.cc</a> → <a href="https://github.com/nodejs/node/tree/master/deps/uv/src" target="_blank" rel="noopener">uv_fs</a></p>
-<p>Node.js 深入浅出上的一幅图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/nodelib_180701.png" alt=""></p>
+<p>Node.js 深入浅出上的一幅图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/nodelib_180701.png" alt></p>
 <p>具体来说，当我们调用 <code>fs.open</code> 时，Node.js 通过 <code>process.binding</code> 调用 C/C++ 层面的 <code>Open</code> 函数，然后通过它调用 Libuv 中的具体方法 <code>uv_fs_open</code>，最后执行的结果通过回调的方式传回，完成流程。在图中，可以看到平台判断的流程，需要说明的是，这一步是在编译的时候已经决定好的，并不是在运行时中。</p>
 <p>总体来说，我们在 Javascript 中调用的方法，最终都会通过 <code>process.binding</code> 传递到 C/C++ 层面，最终由他们来执行真正的操作。Node.js 即这样与操作系统进行互动。</p>
 <p>通过这个过程，我们可以发现，实际上，Node.js 虽然说是用的 Javascript，但只是在开发时使用 Javascript 的语法来编写程序。真正的执行过程还是由 V8 将 Javascript 解释，然后由 C/C++ 来执行真正的系统调用，所以并不需要过分担心 Javascript 执行效率的问题。可以看出，Node.js 并不是一门语言，而是一个 <strong>平台</strong>，这点一定要分清楚。</p>
@@ -737,11 +672,11 @@
 </ol>
 </li>
 </ul>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/updateloop_180701.png" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/updateloop_180701.png" alt></p>
 <p>这里面涉及到了 Libuv 本身的一个设计理念，事件循环（Event Loop），它是一个类似于 <code>while true</code> 的无限循环，其核心函数是 <code>uv_run</code>，下文会用到。</p>
 <p>从这里，我们可以看到，我们其实对 Node.js 的单线程一直有个误会。事实上，它的单线程指的是自身 Javascript 运行环境的单线程，Node.js 并没有给 Javascript 执行时创建新线程的能力，最终的实际操作，还是通过 Libuv 以及它的事件循环来执行的。这也就是为什么 Javascript 一个单线程的语言，能在 Node.js 里面实现异步操作的原因，两者并不冲突。</p>
 <h3 id="事件驱动"><a href="#事件驱动" class="headerlink" title="事件驱动"></a>事件驱动</h3><p>说到，事件驱动，对于前端来说，并不陌生。事件，是一个在 GUI 开发时很常用的一个概念，常见的有鼠标事件，键盘事件等等。在异步的多种实现中，事件是一种比较容易理解和实现的方式。</p>
-<p>说到事件，一定会想到回调，当我们写了一大堆事件处理函数后，Libuv 如何来执行这些回调呢？这就提到了我们之前说到的 <code>uv_run</code>，先看一张它的执行流程图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/loopalive_180701.png" alt=""></p>
+<p>说到事件，一定会想到回调，当我们写了一大堆事件处理函数后，Libuv 如何来执行这些回调呢？这就提到了我们之前说到的 <code>uv_run</code>，先看一张它的执行流程图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/loopalive_180701.png" alt></p>
 <p>在 <code>uv_run</code> 函数中，会维护一系列的监视器：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">typedef struct uv_loop_s uv_loop_t;</span><br><span class="line">typedef struct uv_err_s uv_err_t;</span><br><span class="line">typedef struct uv_handle_s uv_handle_t;</span><br><span class="line">typedef struct uv_stream_s uv_stream_t;</span><br><span class="line">typedef struct uv_tcp_s uv_tcp_t;</span><br><span class="line">typedef struct uv_udp_s uv_udp_t;</span><br><span class="line">typedef struct uv_pipe_s uv_pipe_t;</span><br><span class="line">typedef struct uv_tty_s uv_tty_t;</span><br><span class="line">typedef struct uv_poll_s uv_poll_t;</span><br><span class="line">typedef struct uv_timer_s uv_timer_t;</span><br><span class="line">typedef struct uv_prepare_s uv_prepare_t;</span><br><span class="line">typedef struct uv_check_s uv_check_t;</span><br><span class="line">typedef struct uv_idle_s uv_idle_t;</span><br><span class="line">typedef struct uv_async_s uv_async_t;</span><br><span class="line">typedef struct uv_process_s uv_process_t;</span><br><span class="line">typedef struct uv_fs_event_s uv_fs_event_t;</span><br><span class="line">typedef struct uv_fs_poll_s uv_fs_poll_t;</span><br><span class="line">typedef struct uv_signal_s uv_signal_t;</span><br></pre></td></tr></table></figure>
 <p>这些监视器都有对应着一种异步操作，它们通过 <code>uv_TYPE_start</code>，来注册事件监听以及相应的回调。</p>
@@ -800,11 +735,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2015-06-07T06:45:23.000Z"><a href="/2015/06/07/Node.js_模块/Node.js中的循环依赖/">2015-06-07</a></time>
+        <time datetime="2015-06-07T06:45:23.000Z"><a href="/2015/06/07/Node.js/模块—Node.js中的循环依赖/">2015-06-07</a></time>
       
       
   
-    <h1 class="title"><a href="/2015/06/07/Node.js_模块/Node.js中的循环依赖/">Node.js 中的循环依赖</a></h1>
+    <h1 class="title"><a href="/2015/06/07/Node.js/模块—Node.js中的循环依赖/">模块—Node.js 中的循环依赖</a></h1>
   
 
     </header>
@@ -1010,6 +945,55 @@
 
 
 
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2015-04-12T11:45:23.000Z"><a href="/2015/04/12/Node.js/Gulp(4)写自己的gulp/">2015-04-12</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2015/04/12/Node.js/Gulp(4)写自己的gulp/">四.写自己的gulp</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-项目需求"><a href="#1-项目需求" class="headerlink" title="1.项目需求"></a>1.项目需求</h3><hr>
+<p>我们将创建一个自己的gulp，具体的需求是通过gulp把我们自己所编写的JS文件合并压缩、CSS文件进行压缩后，并且生成新的文件。我们所需要的插件为：gulp-minify-css gulp-concat gulp-uglify gulp-rename del 如下图所示，完成后的项目目录结构：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgulp_project.gif" alt></p>
+<h3 id="2-创建项目"><a href="#2-创建项目" class="headerlink" title="2.创建项目"></a>2.创建项目</h3><hr>
+<p>首先我们先来创建一个名为project的目录，然后进入到该目录下面，再将gulp安装到我们项目的目录中，然后在该目录下新建一个名称为gulpfile.js的文件。安装好后的目录结构为：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgulp_project_create.gif" alt><br>在该目录下再创建一个src目录，来存放源JS与CSS文件。建立完成后，再src目录分别建立两个js文件与一个CSS文件。完成后的目录结构为：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgulp_project_create1.gif" alt></p>
+<h3 id="3-安装插件"><a href="#3-安装插件" class="headerlink" title="3.安装插件"></a>3.安装插件</h3><hr>
+<p>　　根据我们项目的需求，安装所需要的插件，可以通过”npm install 插件名” 来安装插件。安装完成后的目录结构如图所示。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgulp_project_plugin.gif" alt><br>然后打开gulpfile.js，将我们所用到的插件引用到我们项目中，代码如下:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    minifycss = require(&apos;gulp-minify-css&apos;),  //CSS压缩</span><br><span class="line">    concat = require(&apos;gulp-concat&apos;),         // 文件合并</span><br><span class="line">    uglify = require(&apos;gulp-uglify&apos;),         //js压缩插件</span><br><span class="line">    rename = require(&apos;gulp-rename&apos;),         // 重命名</span><br><span class="line">    del = require(&apos;del&apos;);                    // 文件删除</span><br></pre></td></tr></table></figure></p>
+<h3 id="4-编写代码"><a href="#4-编写代码" class="headerlink" title="4.编写代码"></a>4.编写代码</h3><hr>
+<p>上一节中已经完成了对插件的引用，下面就开始我们的代码编写，可以通过gulp.start()方法来开始执行我们的任务。</p>
+<p>1.gulp默认的执行任务是 “default”，当然你也可以指定别的名称，然后通过”gulp 任务名称” 来运行。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;default&apos;,  function() &#123;</span><br><span class="line">    gulp.start(&apos;clean&apos;,&apos;minifycss&apos;, &apos;minifyjs&apos;);  // 要执行的任务</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>2.CSS压缩<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;minifycss&apos;, function() &#123;</span><br><span class="line">    return gulp.src(&apos;src/*.css&apos;)                  //压缩的文件</span><br><span class="line">         .pipe(minifycss())                       //执行压缩</span><br><span class="line">         .pipe(gulp.dest(&apos;minified/css&apos;));        //输出文件夹</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>3.JS 合并压缩<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;minifyjs&apos;, function() &#123;</span><br><span class="line">    return gulp.src(&apos;src/*.js&apos;)</span><br><span class="line">        .pipe(concat(&apos;main.js&apos;))                  //合并所有js到main.js</span><br><span class="line">        .pipe(gulp.dest(&apos;minified/js&apos;))           //输出main.js到文件夹</span><br><span class="line">        .pipe(rename(&#123;suffix: &apos;.min&apos;&#125;))           //rename压缩后的文件名</span><br><span class="line">        .pipe(uglify())                           //压缩</span><br><span class="line">        .pipe(gulp.dest(&apos;minified/js&apos;));          //输出</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>4.执行压缩前，先删除目录里的内容<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">gulp.task(&apos;clean&apos;, function(cb) &#123;</span><br><span class="line">    del([&apos;minified/css&apos;, &apos;minified/js&apos;], cb)</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>好了，这样我们的代码就完成了。</p>
+<h3 id="5-运行项目"><a href="#5-运行项目" class="headerlink" title="5.运行项目"></a>5.运行项目</h3><hr>
+<p>前面我们已经编写完成了代码，在命令行中先转到project目录下，就可以输入gulp命令来运行本项目了，刷新project目录看看会出现什么结果呢。运行完成后的目录如下图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgulp_project1.gif" alt></p>
+<p>运行过程中的消息如下图所示：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkgulp_task_process.gif" alt></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
 
 <nav id="pagination">
   
@@ -1035,51 +1019,21 @@
   <h3 class="title">标签</h3>
   <ul class="entry">
   
-    <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
-  
     <li><a href="/tags/Docker/">Docker</a><small>3</small></li>
   
-    <li><a href="/tags/ES6/">ES6</a><small>4</small></li>
-  
-    <li><a href="/tags/Express/">Express</a><small>2</small></li>
-  
     <li><a href="/tags/Git/">Git</a><small>7</small></li>
-  
-    <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
   
     <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>5</small></li>
   
     <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
   
-    <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
-  
     <li><a href="/tags/MySQL实战/">MySQL实战</a><small>5</small></li>
   
-    <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>4</small></li>
-  
-    <li><a href="/tags/Node-js-事件/">Node.js_事件</a><small>4</small></li>
-  
-    <li><a href="/tags/Node-js-入门/">Node.js_入门</a><small>9</small></li>
-  
-    <li><a href="/tags/Node-js-基础/">Node.js_基础</a><small>6</small></li>
-  
-    <li><a href="/tags/Node-js-异步/">Node.js_异步</a><small>3</small></li>
-  
-    <li><a href="/tags/Node-js-模块/">Node.js_模块</a><small>5</small></li>
-  
-    <li><a href="/tags/Node-js-测试/">Node.js_测试</a><small>5</small></li>
-  
-    <li><a href="/tags/Node-js-网络/">Node.js_网络</a><small>1</small></li>
-  
-    <li><a href="/tags/Node-js-进程/">Node.js_进程</a><small>2</small></li>
-  
-    <li><a href="/tags/Node-js-错误处理和调试/">Node.js_错误处理和调试</a><small>5</small></li>
+    <li><a href="/tags/Node-js/">Node.js</a><small>58</small></li>
   
     <li><a href="/tags/Redis/">Redis</a><small>2</small></li>
   
-    <li><a href="/tags/Shell/">Shell</a><small>1</small></li>
-  
-    <li><a href="/tags/Unix/">Unix</a><small>3</small></li>
+    <li><a href="/tags/Unix/">Unix</a><small>4</small></li>
   
     <li><a href="/tags/从0开始学大数据/">从0开始学大数据</a><small>2</small></li>
   

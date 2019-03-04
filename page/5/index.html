@@ -1,6 +1,6 @@
 <!DOCTYPE HTML>
 <html>
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="utf-8">
   
   <title>第 5 页 | shouliang&#39;s blog</title>
@@ -12,10 +12,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
   
-  <meta property="og:site_name" content="shouliang&#39;s blog"/>
+  <meta property="og:site_name" content="shouliang&#39;s blog">
 
   
-    <meta property="og:image" content=""/>
+    <meta property="og:image" content>
   
 
   <link href="/favicon.png" rel="icon">
@@ -25,7 +25,7 @@
   
 
 </head>
-
+</html>
 
 <body>
   <header id="header" class="inner"><div class="alignleft">
@@ -411,11 +411,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2018-03-25T14:16:53.000Z"><a href="/2018/03/25/Node.js_IO/Node源码解析_buffer/">2018-03-25</a></time>
+        <time datetime="2018-03-25T14:16:53.000Z"><a href="/2018/03/25/Node.js/IO—Node源码解析_buffer/">2018-03-25</a></time>
       
       
   
-    <h1 class="title"><a href="/2018/03/25/Node.js_IO/Node源码解析_buffer/">Node源码解析_buffer</a></h1>
+    <h1 class="title"><a href="/2018/03/25/Node.js/IO—Node源码解析_buffer/">IO—Node源码解析_buffer</a></h1>
   
 
     </header>
@@ -431,7 +431,7 @@
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 本来只想申请一块内存，但是里面却存在旧数据</span></span><br><span class="line"><span class="keyword">const</span> buf1 = <span class="keyword">new</span> Buffer(<span class="number">10</span>) <span class="comment">// &lt;Buffer 90 09 70 6b bf 7f 00 00 50 3a&gt;</span></span><br><span class="line"><span class="comment">// 不小心，旧数据就被读取出来了</span></span><br><span class="line">buf1.toString()  <span class="comment">// '�\tpk�\u0000\u0000P:'</span></span><br></pre></td></tr></table></figure>
 <p>为了解决上述问题，Buffer提供了<code>Buffer.from</code>、<code>Buffer.alloc</code>、<code>Buffer.allocUnsafe</code>、<code>Buffer.allocUnsafeSlow</code>四个方法来申请内存。</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 申请10个字节的内存</span></span><br><span class="line"><span class="keyword">const</span> buf2 = Buffer.alloc(<span class="number">10</span>) <span class="comment">// &lt;Buffer 00 00 00 00 00 00 00 00 00 00&gt;</span></span><br><span class="line"><span class="comment">// 默认情况下，用0进行填充</span></span><br><span class="line">buf2.toString() <span class="comment">//'\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000'</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 上述操作就相当于</span></span><br><span class="line"><span class="keyword">const</span> buf1 = <span class="keyword">new</span> Buffer(<span class="number">10</span>);</span><br><span class="line">buf.fill(<span class="number">0</span>);</span><br><span class="line">buf.toString(); <span class="comment">// '\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000'</span></span><br></pre></td></tr></table></figure>
-<h2 id="2-buffer的结构"><a href="#2-buffer的结构" class="headerlink" title="2. buffer的结构"></a>2. buffer的结构</h2><p>buffer是一个典型的javascript与c++结合的模块，其性能部分用c++实现，非性能部分用javascript来实现。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/buffer01_180710.png" alt=""></p>
+<h2 id="2-buffer的结构"><a href="#2-buffer的结构" class="headerlink" title="2. buffer的结构"></a>2. buffer的结构</h2><p>buffer是一个典型的javascript与c++结合的模块，其性能部分用c++实现，非性能部分用javascript来实现。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/buffer01_180710.png" alt></p>
 <p>下面看看buffer模块的内部结构:</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">exports.Buffer = Buffer;</span><br><span class="line">exports.SlowBuffer = SlowBuffer;</span><br><span class="line">exports.INSPECT_MAX_BYTES = 50;</span><br><span class="line">exports.kMaxLength = binding.kMaxLength;</span><br></pre></td></tr></table></figure>
 <p>buffer模块提供了4个接口:</p>
@@ -444,7 +444,7 @@
 <p>其中，由于Buffer经常使用，所以node在启动的时候，就已经加载了Buffer，而其他三个，仍然需要使用<code>require(&#39;buffer&#39;).***</code>。</p>
 <p>关于buffer的内存申请、填充、修改等涉及性能问题的操作，均通过c++里面的node_buffer.cc来实现:</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">// c++里面的node_buffer</span><br><span class="line">namespace node &#123;</span><br><span class="line">  bool zero_fill_all_buffers = false;</span><br><span class="line">  namespace Buffer &#123;</span><br><span class="line">    ...</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">NODE_MODULE_CONTEXT_AWARE_BUILTIN(buffer, node::Buffer::Initialize)</span><br></pre></td></tr></table></figure>
-<h2 id="3-内存分配的策略"><a href="#3-内存分配的策略" class="headerlink" title="3. 内存分配的策略"></a>3. 内存分配的策略</h2><p>Node中Buffer内存分配太过常见，从系统性能考虑出发，Buffer采用了如下的管理策略。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/buffer02_180710.png" alt=""></p>
+<h2 id="3-内存分配的策略"><a href="#3-内存分配的策略" class="headerlink" title="3. 内存分配的策略"></a>3. 内存分配的策略</h2><p>Node中Buffer内存分配太过常见，从系统性能考虑出发，Buffer采用了如下的管理策略。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/buffer02_180710.png" alt></p>
 <h3 id="3-1-Buffer-from"><a href="#3-1-Buffer-from" class="headerlink" title="3.1 Buffer.from"></a>3.1 Buffer.from</h3><p><code>Buffer.from(value, ...)</code>用于申请内存，并将内容写入刚刚申请的内存中，value值是多样的，Buffer是如何处理的呢？让我们一起看看源码:</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">Buffer.from = <span class="function"><span class="keyword">function</span>(<span class="params">value, encodingOrOffset, length</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">typeof</span> value === <span class="string">'number'</span>)</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">TypeError</span>(<span class="string">'"value" argument must not be a number'</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (value <span class="keyword">instanceof</span> <span class="built_in">ArrayBuffer</span>)</span><br><span class="line">    <span class="keyword">return</span> fromArrayBuffer(value, encodingOrOffset, length);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">typeof</span> value === <span class="string">'string'</span>)</span><br><span class="line">    <span class="keyword">return</span> fromString(value, encodingOrOffset);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> fromObject(value);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
 <p>value可以分成三类:</p>
@@ -507,11 +507,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2018-03-07T06:45:23.000Z"><a href="/2018/03/07/Node.js_模块/浅析Node.js的vm模块以及运行不信任代码/">2018-03-07</a></time>
+        <time datetime="2018-03-07T06:45:23.000Z"><a href="/2018/03/07/Node.js/模块—浅析Node.js的vm模块以及运行不信任代码/">2018-03-07</a></time>
       
       
   
-    <h1 class="title"><a href="/2018/03/07/Node.js_模块/浅析Node.js的vm模块以及运行不信任代码/">浅析Node.js的vm模块以及运行不信任代码</a></h1>
+    <h1 class="title"><a href="/2018/03/07/Node.js/模块—浅析Node.js的vm模块以及运行不信任代码/">模块—浅析Node.js的vm模块以及运行不信任代码</a></h1>
   
 
     </header>
@@ -563,11 +563,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2018-02-25T14:16:53.000Z"><a href="/2018/02/25/Node.js_IO/console模块解读之实现一个console.log/">2018-02-25</a></time>
+        <time datetime="2018-02-25T14:16:53.000Z"><a href="/2018/02/25/Node.js/IO—console模块解读之实现一个console.log/">2018-02-25</a></time>
       
       
   
-    <h1 class="title"><a href="/2018/02/25/Node.js_IO/console模块解读之实现一个console.log/">console模块解读之实现一个console.log</a></h1>
+    <h1 class="title"><a href="/2018/02/25/Node.js/IO—console模块解读之实现一个console.log/">IO—console模块解读之实现一个console.log</a></h1>
   
 
     </header>
@@ -625,11 +625,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2018-01-25T14:16:53.000Z"><a href="/2018/01/25/Node.js_事件/事件循环机制-实例/">2018-01-25</a></time>
+        <time datetime="2018-01-25T14:16:53.000Z"><a href="/2018/01/25/Node.js/事件—事件循环机制-实例/">2018-01-25</a></time>
       
       
   
-    <h1 class="title"><a href="/2018/01/25/Node.js_事件/事件循环机制-实例/">事件循环机制-实例</a></h1>
+    <h1 class="title"><a href="/2018/01/25/Node.js/事件—事件循环机制-实例/">事件—事件循环机制-实例</a></h1>
   
 
     </header>
@@ -637,8 +637,8 @@
       
         <p>在node服务器端运行以下代码会出现什么输出结果？</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">setTimeout(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'setTimeout'</span>);</span><br><span class="line">    process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'nextTick1'</span>);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'main1'</span>);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">say</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'hello! '</span>);</span><br><span class="line">    process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'nextTick2'</span>);</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function"><span class="keyword">function</span>(<span class="params">resolve</span>)</span>&#123;</span><br><span class="line">    process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'nextTick3'</span>);</span><br><span class="line">    &#125;)</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'promise 1'</span>);</span><br><span class="line">    resolve(<span class="string">'promise then'</span>)</span><br><span class="line">&#125;).then(<span class="function"><span class="keyword">function</span>(<span class="params">data</span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(data);</span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'main2'</span>);</span><br><span class="line"></span><br><span class="line">process.nextTick(<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'nextTick4'</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">say();</span><br></pre></td></tr></table></figure>
-<p>下面就结合这个原理图，根据问题，来一步一步分析：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/micro_macro_180703" alt=""></p>
-<p>也可参考下图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/runtime_180703.png" alt=""></p>
+<p>下面就结合这个原理图，根据问题，来一步一步分析：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/micro_macro_180703" alt></p>
+<p>也可参考下图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/runtime_180703.png" alt></p>
 <p>我们经常会听到引擎和runtime，它们的区别是什么呢？</p>
 <ul>
 <li>引擎：解释并编译代码，让它变成能交给机器运行的代码（runnable commands）。</li>
@@ -694,11 +694,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2017-12-05T14:16:53.000Z"><a href="/2017/12/05/Node.js_事件/理解事件循环机制/">2017-12-05</a></time>
+        <time datetime="2017-12-05T14:16:53.000Z"><a href="/2017/12/05/Node.js/事件—理解事件循环机制/">2017-12-05</a></time>
       
       
   
-    <h1 class="title"><a href="/2017/12/05/Node.js_事件/理解事件循环机制/">理解事件循环机制</a></h1>
+    <h1 class="title"><a href="/2017/12/05/Node.js/事件—理解事件循环机制/">事件—理解事件循环机制</a></h1>
   
 
     </header>
@@ -710,7 +710,7 @@
 <h3 id="线程"><a href="#线程" class="headerlink" title="线程"></a>线程</h3><blockquote>
 <p>Node.js的单线程含义, 实际上说的是执行同步代码的主线程. 一个Node程序的启动, 不止是分配了一个线程，而是我们只能在一个线程执行代码. 当出现I/O资源调用, TCP连接等外部资源申请的时候, 不会阻塞主线程, 而是委托给I/O线程进行处理,并且进入等待队列. 一旦主线程执行完成，将会消费事件队列(Event Queue). 因为只有一个主线程, 只占用CPU内核处理逻辑计算, 因此不适合在CPU密集型进行使用.</p>
 </blockquote>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/180701NodeSystem.png" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/180701NodeSystem.png" alt></p>
 <p><strong>注意，上图的EVENT_QUEUE 给人看起来是只有一个队列, 根据Node.js官方介绍, EventLoop有6个阶段, 同时每个阶段都有对应的一个先进先出的回调队列.</strong></p>
 <h3 id="什么是事件循环-EventLoop"><a href="#什么是事件循环-EventLoop" class="headerlink" title="什么是事件循环(EventLoop) ?"></a>什么是事件循环(EventLoop) ?</h3><blockquote>
 <p>In computer science, the event loop, message dispatcher, message loop, message pump, or run loop is a programming construct that waits for and dispatches events or messages in a program. – <a href="https://en.wikipedia.org/wiki/Event_loop" target="_blank" rel="noopener">from wiki</a></p>
@@ -723,7 +723,7 @@
 <h3 id="事件循环阶段"><a href="#事件循环阶段" class="headerlink" title="事件循环阶段"></a>事件循环阶段</h3><p><a href="https://en.wikipedia.org/wiki/Node.js" target="_blank" rel="noopener">Node.js</a>采用V8作为js的解析引擎，而I/O处理方面使用了自己设计的libuv，libuv是一个基于事件驱动的跨平台抽象层，封装了不同操作系统一些底层特性，对外提供统一的API，事件循环机制也是它里面的实现<a href="https://github.com/libuv/libuv/blob/v1.x/src/unix/core.c#L348-L397" target="_blank" rel="noopener">核心源码参考</a>：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">int uv_run(uv_loop_t* loop, uv_run_mode mode) &#123;</span><br><span class="line">  int timeout;</span><br><span class="line">  int r;</span><br><span class="line">  int ran_pending;</span><br><span class="line"></span><br><span class="line">  r = uv__loop_alive(loop);</span><br><span class="line">  if (!r)</span><br><span class="line">    uv__update_time(loop);</span><br><span class="line"></span><br><span class="line">  while (r != 0 &amp;&amp; loop-&gt;stop_flag == 0) &#123;</span><br><span class="line">    uv__update_time(loop);</span><br><span class="line">    // timers阶段</span><br><span class="line">    uv__run_timers(loop);</span><br><span class="line">    // I/O callbacks阶段</span><br><span class="line">    ran_pending = uv__run_pending(loop);</span><br><span class="line">    // idle阶段</span><br><span class="line">    uv__run_idle(loop);</span><br><span class="line">    // prepare阶段</span><br><span class="line">    uv__run_prepare(loop);</span><br><span class="line"></span><br><span class="line">    timeout = 0;</span><br><span class="line">    if ((mode == UV_RUN_ONCE &amp;&amp; !ran_pending) || mode == UV_RUN_DEFAULT)</span><br><span class="line">      timeout = uv_backend_timeout(loop);</span><br><span class="line">    // poll阶段</span><br><span class="line">    uv__io_poll(loop, timeout);</span><br><span class="line">    // check阶段</span><br><span class="line">    uv__run_check(loop);</span><br><span class="line">    // close callbacks阶段</span><br><span class="line">    uv__run_closing_handles(loop);</span><br><span class="line"></span><br><span class="line">    if (mode == UV_RUN_ONCE) &#123;</span><br><span class="line">      uv__update_time(loop);</span><br><span class="line">      uv__run_timers(loop);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    r = uv__loop_alive(loop);</span><br><span class="line">    if (mode == UV_RUN_ONCE || mode == UV_RUN_NOWAIT)</span><br><span class="line">      break;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  if (loop-&gt;stop_flag != 0)</span><br><span class="line">    loop-&gt;stop_flag = 0;</span><br><span class="line"></span><br><span class="line">  return r;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>根据<a href="https://nodejs.org/en/docs/guides/event-loop-timers-and-nexttick/" target="_blank" rel="noopener">Node.js</a>官方介绍，每次事件循环都包含了6个阶段，对应到 libuv 源码中的实现，如下图所示</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/node-libuv_180703.png" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/node-libuv_180703.png" alt></p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">   ┌───────────────────────┐</span><br><span class="line">┌─&gt;│        timers         │</span><br><span class="line">│  └──────────┬────────────┘</span><br><span class="line">│  ┌──────────┴────────────┐</span><br><span class="line">│  │     I/O callbacks     │</span><br><span class="line">│  └──────────┬────────────┘</span><br><span class="line">│  ┌──────────┴────────────┐</span><br><span class="line">│  │     idle, prepare     │</span><br><span class="line">│  └──────────┬────────────┘      ┌───────────────┐</span><br><span class="line">│  ┌──────────┴────────────┐      │   incoming:   │</span><br><span class="line">│  │         poll          │&lt;─────┤  connections, │</span><br><span class="line">│  └──────────┬────────────┘      │   data, etc.  │</span><br><span class="line">│  ┌──────────┴────────────┐      └───────────────┘</span><br><span class="line">│  │        check          │</span><br><span class="line">│  └──────────┬────────────┘</span><br><span class="line">│  ┌──────────┴────────────┐</span><br><span class="line">└──┤    close callbacks    │</span><br><span class="line">   └───────────────────────┘</span><br></pre></td></tr></table></figure>
 <p><strong>每一个阶段都有一个FIFO的callbacks队列, 每个阶段都有自己的事件处理方式. 当事件循环进入某个阶段时, 将会在该阶段内执行回调，直到队列耗尽或者回调的最大数量已执行, 那么将进入下一个处理阶段.</strong></p>
 <ul>
@@ -797,11 +797,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2017-09-11T14:16:53.000Z"><a href="/2017/09/11/Node.js_IO/深入理解Node.js中Stream内部机制/">2017-09-11</a></time>
+        <time datetime="2017-09-11T14:16:53.000Z"><a href="/2017/09/11/Node.js/IO—深入理解Node.js中Stream内部机制/">2017-09-11</a></time>
       
       
   
-    <h1 class="title"><a href="/2017/09/11/Node.js_IO/深入理解Node.js中Stream内部机制/">深入理解Node.js Stream内部机制</a></h1>
+    <h1 class="title"><a href="/2017/09/11/Node.js/IO—深入理解Node.js中Stream内部机制/">IO—深入理解Node.js Stream内部机制</a></h1>
   
 
     </header>
@@ -821,7 +821,7 @@
 <p>把 <code>Readable</code> 和 <code>Writable</code> 看明白，Tranform 和 Duplex 就不难理解了。</p>
 <h3 id="Readable-Stream"><a href="#Readable-Stream" class="headerlink" title="Readable Stream"></a>Readable Stream</h3><p>Readable Stream 存在两种模式，一种是叫做 <code>Flowing Mode</code>，流动模式，在 Stream 上绑定 ondata 方法就会自动触发这个模式，比如：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">const readable = getReadableStreamSomehow();</span><br><span class="line">readable.on(&apos;data&apos;, (chunk) =&gt; &#123;</span><br><span class="line">  console.log(`Received $&#123;chunk.length&#125; bytes of data.`);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-<p>这个模式的流程图如下：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream01_180706.png" alt=""></p>
+<p>这个模式的流程图如下：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream01_180706.png" alt></p>
 <p>资源的数据流并不是直接流向消费者，而是先 push 到缓存池，缓存池有一个水位标记 <code>highWatermark</code>，超过这个标记阈值，push 的时候会返回 <code>false</code>，什么场景下会出现这种情况呢？</p>
 <ul>
 <li>消费者主动执行了 <code>.pause()</code></li>
@@ -838,7 +838,7 @@
 </ul>
 <p>当我们监听了 onreadable 事件后，会进入这种模式，比如：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">const myReadable = new MyReadable(dataSource);</span><br><span class="line">myReadable.setEncoding(&apos;utf8&apos;);</span><br><span class="line">myReadable.on(&apos;readable&apos;, () =&gt; &#123;&#125;);</span><br></pre></td></tr></table></figure>
-<p>监听 <code>readable</code> 的回调函数第一个参数不会传递内容，需要我们通过 <code>myReadable.read()</code> 主动读取，为啥呢，可以看看下面这张图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream02_180706.png" alt=""></p>
+<p>监听 <code>readable</code> 的回调函数第一个参数不会传递内容，需要我们通过 <code>myReadable.read()</code> 主动读取，为啥呢，可以看看下面这张图：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream02_180706.png" alt></p>
 <p>资源池会不断地往缓存池输送数据，直到 highWaterMark 阈值，消费者监听了 readable 事件并不会消费数据，需要主动调用 <code>.read([size])</code> 函数才会从缓存池取出，并且可以带上 size 参数，用多少就取多少：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">const myReadable = new MyReadable(dataSource);</span><br><span class="line">myReadable.setEncoding(&apos;utf8&apos;);</span><br><span class="line">myReadable.on(&apos;readable&apos;, () =&gt; &#123;</span><br><span class="line">  let chunk;</span><br><span class="line">  while (null !== (chunk = myReadable.read())) &#123;</span><br><span class="line">    console.log(`Received $&#123;chunk.length&#125; bytes of data.`);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
 <p>这里需要注意一点，只要数据达到缓存池都会触发一次 readable 事件，有可能出现「消费者正在消费数据的时候，又触发了一次 readable 事件，那么下次回调中 read 到的数据可能为空」的情况。我们可以通过 <code>_readableState.buffer</code> 来查看缓存池到底缓存了多少资源：</p>
@@ -846,7 +846,7 @@
 <p>上面的代码我们只消费一次缓存池的数据，那么在消费后，缓存池又收到了一次资源池的 push 操作，此时还会触发一次 readable 事件，我们可以看看这次存了多大的 buffer。</p>
 <p>需要注意的是，buffer 大小也是有上限的，默认设置为 16kb，也就是 16384 个字节长度，它最大可设置为 8Mb，没记错的话，这个值好像是 Node 的 new space memory 的大小。</p>
 <p>上面介绍了 Readable Stream 大概的机制，还有很多细节部分没有提到，比如 <code>Flowing Mode</code> 在不同 Node 版本中的 Stream 实现不太一样，实际上，它有三个版本，上面提到的是第 2 和 第 3 个版本的实现；再比如 <code>Mixins Mode</code> 模式，一般我们只推荐（允许）使用 ondata 和 onreadable 的一种来处理 Readable Stream，但是如果要求在 <code>Non-Flowing Mode</code> 的情况下使用 ondata 如何实现呢？那么就可以考虑 <code>Mixins Mode</code> 了。</p>
-<h3 id="Writable-Stream"><a href="#Writable-Stream" class="headerlink" title="Writable Stream"></a>Writable Stream</h3><p>原理与 Readable Stream 是比较相似的，数据流过来的时候，会直接写入到资源池，当写入速度比较缓慢或者写入暂停时，数据流会进入队列池缓存起来，如下图所示：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream03_180706.png" alt=""></p>
+<h3 id="Writable-Stream"><a href="#Writable-Stream" class="headerlink" title="Writable Stream"></a>Writable Stream</h3><p>原理与 Readable Stream 是比较相似的，数据流过来的时候，会直接写入到资源池，当写入速度比较缓慢或者写入暂停时，数据流会进入队列池缓存起来，如下图所示：<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream03_180706.png" alt></p>
 <p>当生产者写入速度过快，把队列池装满了之后，就会出现「背压」，这个时候是需要告诉生产者暂停生产的，当队列释放之后，Writable Stream 会给生产者发送一个 <code>drain</code> 消息，让它恢复生产。下面是一个写入一百万条数据的 Demo：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">function writeOneMillionTimes(writer, data, encoding, callback) &#123;</span><br><span class="line">  let i = 10000;</span><br><span class="line">  write();</span><br><span class="line">  function write() &#123;</span><br><span class="line">    let ok = true;</span><br><span class="line">    while(i-- &gt; 0 &amp;&amp; ok) &#123;</span><br><span class="line">      // 写入结束时回调</span><br><span class="line">      ok = writer.write(data, encoding, i === 0 ? callback : null);</span><br><span class="line">    &#125;</span><br><span class="line">    if (i &gt; 0) &#123;</span><br><span class="line">      // 这里提前停下了，&apos;drain&apos; 事件触发后才可以继续写入  </span><br><span class="line">      console.log(&apos;drain&apos;, i);</span><br><span class="line">      writer.once(&apos;drain&apos;, write);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>我们构造一个 Writable Stream，在写入到资源池的时候，我们稍作处理，让它效率低一点：</p>
@@ -867,7 +867,7 @@
 <li><code>return writable</code>，支持链式调用</li>
 </ul>
 <p>当然，上面只是最简单的逻辑，还有很多异常和临界判断没有加入，具体可以去看看 Node.js 的代码（ <a href="https://github.com/nodejs/node/blob/master/lib/_stream_readable.js#L541-L684" target="_blank" rel="noopener">/lib/_stream_readable.js</a>）。</p>
-<h3 id="Duplex-Stream"><a href="#Duplex-Stream" class="headerlink" title="Duplex Stream"></a>Duplex Stream</h3><p>Duplex，双工的意思，它的输入和输出可以没有任何关系，<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream04_180706.png" alt=""></p>
+<h3 id="Duplex-Stream"><a href="#Duplex-Stream" class="headerlink" title="Duplex Stream"></a>Duplex Stream</h3><p>Duplex，双工的意思，它的输入和输出可以没有任何关系，<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream04_180706.png" alt></p>
 <p>Duplex Stream 实现特别简单，不到一百行代码，它继承了 Readable Stream，并拥有 Writable Stream 的方法（<a href="https://github.com/nodejs/node/blob/master/lib/_stream_duplex.js#L31-L42" target="_blank" rel="noopener">源码地址</a>）：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">const util = require(&apos;util&apos;);</span><br><span class="line">const Readable = require(&apos;_stream_readable&apos;);</span><br><span class="line">const Writable = require(&apos;_stream_writable&apos;);</span><br><span class="line"></span><br><span class="line">util.inherits(Duplex, Readable);</span><br><span class="line"></span><br><span class="line">var keys = Object.keys(Writable.prototype);</span><br><span class="line">for (var v = 0; v &lt; keys.length; v++) &#123;</span><br><span class="line">  var method = keys[v];</span><br><span class="line">  if (!Duplex.prototype[method])</span><br><span class="line">    Duplex.prototype[method] = Writable.prototype[method];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>我们可以通过 options 参数来配置它为只可读、只可写或者半工模式，一个简单的 Demo：</p>
@@ -875,7 +875,7 @@
 <p>输出的结果为：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">write</span><br><span class="line">read 1</span><br><span class="line">read 0</span><br></pre></td></tr></table></figure>
 <p>可以看出，两个管道是相互之间不干扰的。</p>
-<h3 id="Transform-Stream"><a href="#Transform-Stream" class="headerlink" title="Transform Stream"></a>Transform Stream</h3><p>Transform Stream 集成了 Duplex Stream，它同样具备 Readable 和 Writable 的能力，只不过它的输入和输出是存在相互关联的，中间做了一次转换处理。常见的处理有 Gzip 压缩、解压等。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream05_180706.png" alt=""></p>
+<h3 id="Transform-Stream"><a href="#Transform-Stream" class="headerlink" title="Transform Stream"></a>Transform Stream</h3><p>Transform Stream 集成了 Duplex Stream，它同样具备 Readable 和 Writable 的能力，只不过它的输入和输出是存在相互关联的，中间做了一次转换处理。常见的处理有 Gzip 压缩、解压等。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/stream05_180706.png" alt></p>
 <p>Transform 的处理就是通过 <code>_transform</code> 函数将 Duplex 的 Readable 连接到 Writable，由于 Readable 的生产效率与 Writable 的消费效率是一样的，所以这里 Transform 内部不存在「背压」问题，背压问题的源头是外部的生产者和消费者速度差造成的。</p>
 <p>关于 Transfrom Stream，我写了一个简单的 Demo：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">const Transform = require(&apos;stream&apos;).Transform;</span><br><span class="line">const MAP = &#123;</span><br><span class="line">  &apos;Barret&apos;: &apos;靖&apos;,</span><br><span class="line">  &apos;Lee&apos;: &apos;李&apos;</span><br><span class="line">&#125;;</span><br><span class="line">  </span><br><span class="line">class Translate extends Transform &#123;</span><br><span class="line">  constructor(dataSource, options) &#123;</span><br><span class="line">    super(options);</span><br><span class="line">  &#125;</span><br><span class="line">  _transform(buf, enc, next) &#123;</span><br><span class="line">    const key = buf.toString();</span><br><span class="line">    const data = MAP[key];</span><br><span class="line">    this.push(data);</span><br><span class="line">    next();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">var transform = new Translate();</span><br><span class="line">transform.on(&apos;data&apos;, data =&gt; console.log(data.toString()));</span><br><span class="line">transform.write(&apos;Lee&apos;);</span><br><span class="line">transform.write(&apos;Barret&apos;);</span><br><span class="line">transform.end();</span><br></pre></td></tr></table></figure>
@@ -1011,51 +1011,21 @@
   <h3 class="title">标签</h3>
   <ul class="entry">
   
-    <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
-  
     <li><a href="/tags/Docker/">Docker</a><small>3</small></li>
   
-    <li><a href="/tags/ES6/">ES6</a><small>4</small></li>
-  
-    <li><a href="/tags/Express/">Express</a><small>2</small></li>
-  
     <li><a href="/tags/Git/">Git</a><small>7</small></li>
-  
-    <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
   
     <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>5</small></li>
   
     <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
   
-    <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
-  
     <li><a href="/tags/MySQL实战/">MySQL实战</a><small>5</small></li>
   
-    <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>4</small></li>
-  
-    <li><a href="/tags/Node-js-事件/">Node.js_事件</a><small>4</small></li>
-  
-    <li><a href="/tags/Node-js-入门/">Node.js_入门</a><small>9</small></li>
-  
-    <li><a href="/tags/Node-js-基础/">Node.js_基础</a><small>6</small></li>
-  
-    <li><a href="/tags/Node-js-异步/">Node.js_异步</a><small>3</small></li>
-  
-    <li><a href="/tags/Node-js-模块/">Node.js_模块</a><small>5</small></li>
-  
-    <li><a href="/tags/Node-js-测试/">Node.js_测试</a><small>5</small></li>
-  
-    <li><a href="/tags/Node-js-网络/">Node.js_网络</a><small>1</small></li>
-  
-    <li><a href="/tags/Node-js-进程/">Node.js_进程</a><small>2</small></li>
-  
-    <li><a href="/tags/Node-js-错误处理和调试/">Node.js_错误处理和调试</a><small>5</small></li>
+    <li><a href="/tags/Node-js/">Node.js</a><small>58</small></li>
   
     <li><a href="/tags/Redis/">Redis</a><small>2</small></li>
   
-    <li><a href="/tags/Shell/">Shell</a><small>1</small></li>
-  
-    <li><a href="/tags/Unix/">Unix</a><small>3</small></li>
+    <li><a href="/tags/Unix/">Unix</a><small>4</small></li>
   
     <li><a href="/tags/从0开始学大数据/">从0开始学大数据</a><small>2</small></li>
   

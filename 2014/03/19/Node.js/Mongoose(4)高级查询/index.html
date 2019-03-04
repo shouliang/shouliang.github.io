@@ -1,0 +1,232 @@
+<!DOCTYPE HTML>
+<html>
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  <title>Mongoose四.高级查询 | shouliang&#39;s blog</title>
+  <meta name="author" content="shouliang">
+  
+  <meta name="description" content="Node">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="Mongoose四.高级查询">
+  <meta property="og:site_name" content="shouliang&#39;s blog">
+
+  
+    <meta property="og:image" content>
+  
+
+  <link href="/favicon.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="shouliang&#39;s blog" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+
+</head>
+</html>
+
+<body>
+  <header id="header" class="inner"><div class="alignleft">
+  <h1><a href="/">shouliang&#39;s blog</a></h1>
+  <h2><a href="/"></a></h2>
+</div>
+<nav id="main-nav" class="alignright">
+  <ul>
+    
+      <li><a href="/">首页</a></li>
+    
+      <li><a href="/archives">归档</a></li>
+    
+      <li><a href="/about">关于</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+<div class="clearfix"></div></header>
+  <div id="content" class="inner">
+    <div id="main-col" class="alignleft"><div id="wrapper"><article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2014-03-19T00:45:23.000Z"><a href="/2014/03/19/Node.js/Mongoose(4)高级查询/">2014-03-19</a></time>
+      
+      
+  
+    <h1 class="title">Mongoose四.高级查询</h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-条件查询"><a href="#1-条件查询" class="headerlink" title="1.条件查询"></a>1.条件查询</h3><hr>
+<p>接下来我们来看一些在查询时会用的常用操作符，通过操作符的使用，我们就可对数据进行更细致性的查询，一起来看一下吧。</p>
+<p>“$lt”(小于)，”$lte”(小于等于),”$gt”(大于)，”$gte”(大于等于)，”$ne”(不等于)，”$in”(可单值和多个值的匹配)，”$or”(查询多个键值的任意给定值)，”$exists”(表示是否存在的意思)”$all”。</p>
+<h3 id="2-大、小于"><a href="#2-大、小于" class="headerlink" title="2.大、小于"></a>2.大、小于</h3><hr>
+<h4 id="gt、-lt简述"><a href="#gt、-lt简述" class="headerlink" title="$gt、$lt简述"></a>$gt、$lt简述</h4><p>查询时我们经常会碰到要根据某些字段进行条件筛选查询，比如说Number类型，怎么办呢，我们就可以使用$gt(&gt;)、$lt(&lt;)、$lte(&lt;=)、$gte(&gt;=)操作符进行排除性的查询，如下示例：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">Model.find(&#123;&quot;age&quot;:&#123;&quot;$gt&quot;:18&#125;&#125;,function(error,docs)&#123;</span><br><span class="line">   //查询所有nage大于18的数据</span><br><span class="line">&#125;);</span><br><span class="line">Model.find(&#123;&quot;age&quot;:&#123;&quot;$lt&quot;:60&#125;&#125;,function(error,docs)&#123;</span><br><span class="line">   //查询所有nage小于60的数据</span><br><span class="line">&#125;);</span><br><span class="line">Model.find(&#123;&quot;age&quot;:&#123;&quot;$gt&quot;:18,&quot;$lt&quot;:60&#125;&#125;,function(error,docs)&#123;</span><br><span class="line">   //查询所有nage大于18小于60的数据</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>如果我们要对类似age字段的数据进行筛选，使用$gt、$lt是不是很方便快捷呢！</p>
+<h3 id="3-不匹配"><a href="#3-不匹配" class="headerlink" title="3.不匹配"></a>3.不匹配</h3><hr>
+<h4 id="ne简述"><a href="#ne简述" class="headerlink" title="$ne简述"></a>$ne简述</h4><p>$ne(!=)操作符的含义相当于不等于、不包含，查询时我们可通过它进行条件判定，具体使用方法如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Model.find(&#123; age:&#123; $ne:24&#125;&#125;,function(error,docs)&#123;</span><br><span class="line">    //查询age不等于24的所有数据</span><br><span class="line">&#125;);</span><br><span class="line">Model.find(&#123;name:&#123;$ne:&quot;tom&quot;&#125;,age:&#123;$gte:18&#125;&#125;,function(error,docs)&#123;</span><br><span class="line">  //查询name不等于tom、age&gt;=18的所有数据</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>$ne可以匹配单个值，也可以匹配不同类型的值。</p>
+<h3 id="4-匹配"><a href="#4-匹配" class="headerlink" title="4.匹配"></a>4.匹配</h3><hr>
+<h4 id="in简述"><a href="#in简述" class="headerlink" title="$in简述"></a>$in简述</h4><p>和$ne操作符相反，$in相当于包含、等于，查询时查找包含于指定字段条件的数据。具体使用方法如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Model.find(&#123; age:&#123; $in: 20&#125;&#125;,function(error,docs)&#123;</span><br><span class="line">   //查询age等于20的所有数据</span><br><span class="line">&#125;);</span><br><span class="line">Model.find(&#123; age:&#123;$in:[20,30]&#125;&#125;,function(error,docs)&#123;</span><br><span class="line">  //可以把多个值组织成一个数组</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>$in和$ne除了条件判定不同，用法是不是很相似呀！</p>
+<h3 id="5-或者"><a href="#5-或者" class="headerlink" title="5.或者"></a>5.或者</h3><hr>
+<h4 id="or"><a href="#or" class="headerlink" title="$or"></a>$or</h4><p>$or操作符，可以查询多个键值的任意给定值，只要满足其中一个就可返回，用于存在多个条件判定的情况下使用，如下示例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Model.find(&#123;&quot;$or&quot;:[&#123;&quot;name&quot;:&quot;yaya&quot;&#125;,&#123;&quot;age&quot;:28&#125;]&#125;,function(error,docs)&#123;</span><br><span class="line">  //查询name为yaya或age为28的全部文档</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<h3 id="6-存在"><a href="#6-存在" class="headerlink" title="6.存在"></a>6.存在</h3><hr>
+<h4 id="exists"><a href="#exists" class="headerlink" title="$exists"></a>$exists</h4><p>$exists操作符，可用于判断某些关键字段是否存在来进行条件查询。如下示例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Model.find(&#123;name: &#123;$exists: true&#125;&#125;,function(error,docs)&#123;</span><br><span class="line">  //查询所有存在name属性的文档</span><br><span class="line">&#125;);</span><br><span class="line">Model.find(&#123;telephone: &#123;$exists: false&#125;&#125;,function(error,docs)&#123;</span><br><span class="line">  //查询所有不存在telephone属性的文档</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<h3 id="7-小结"><a href="#7-小结" class="headerlink" title="7.小结"></a>7.小结</h3><hr>
+<p>简单回顾：</p>
+<ol>
+<li><p>$gt(&gt;),$lt(&lt;),$lte(&lt;=),$gte(&gt;=)操作符：针对Number类型的查询具体超强的排除性。</p>
+</li>
+<li><p>$ne(!=)操作符：相当于不等于、不包含，查询时可根据单个或多个属性进行结果排除。</p>
+</li>
+<li><p>$in操作符：和$ne操作符用法相同，但意义相反。</p>
+</li>
+<li><p>$or操作符：可查询多个条件，只要满足其中一个就可返回结果值。</p>
+</li>
+<li><p>$exists操作符：主要用于判断某些属性是否存在。</p>
+</li>
+</ol>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+  
+  <div class="tags">
+    <a href="/tags/Node-js/">Node.js</a>
+  </div>
+
+        
+  <div class="addthis addthis_toolbox addthis_default_style">
+    
+      <a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+    
+    
+      <a class="addthis_button_tweet"></a>
+    
+    
+      <a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+    
+    
+      <a class="addthis_button_pinterest_pinit" pi:pinit:layout="horizontal"></a>
+    
+    <a class="addthis_counter addthis_pill_style"></a>
+  </div>
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js"></script>
+
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">留言</h1>
+
+  
+      <div id="fb-root"></div>
+<script>
+  (function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=shouliang0816";
+    fjs.parentNode.insertBefore(js, fjs);
+  }(document, 'script', 'facebook-jssdk'));
+</script>
+
+<div class="fb-comments" data-href="https://shouliang.github.io/2014/03/19/Node.js/Mongoose(4)高级查询/index.html" data-num-posts="5" data-width="840" data-colorscheme="light"></div>
+      
+  
+</section>
+
+</div></div>
+    <aside id="sidebar" class="alignright">
+  <div class="search">
+  <form action="//google.com/search" method="get" accept-charset="utf-8">
+    <input type="search" name="q" results="0" placeholder="搜索">
+    <input type="hidden" name="q" value="site:shouliang.github.io">
+  </form>
+</div>
+
+  
+
+  
+<div class="widget tag">
+  <h3 class="title">标签</h3>
+  <ul class="entry">
+  
+    <li><a href="/tags/Docker/">Docker</a><small>3</small></li>
+  
+    <li><a href="/tags/Git/">Git</a><small>7</small></li>
+  
+    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>5</small></li>
+  
+    <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
+  
+    <li><a href="/tags/MySQL实战/">MySQL实战</a><small>5</small></li>
+  
+    <li><a href="/tags/Node-js/">Node.js</a><small>58</small></li>
+  
+    <li><a href="/tags/Redis/">Redis</a><small>2</small></li>
+  
+    <li><a href="/tags/Unix/">Unix</a><small>4</small></li>
+  
+    <li><a href="/tags/从0开始学大数据/">从0开始学大数据</a><small>2</small></li>
+  
+    <li><a href="/tags/区块链/">区块链</a><small>1</small></li>
+  
+    <li><a href="/tags/数据分析实战/">数据分析实战</a><small>3</small></li>
+  
+    <li><a href="/tags/数据库/">数据库</a><small>2</small></li>
+  
+    <li><a href="/tags/数据结构与算法/">数据结构与算法</a><small>13</small></li>
+  
+    <li><a href="/tags/程序员的数学基础课/">程序员的数学基础课</a><small>5</small></li>
+  
+    <li><a href="/tags/网络安全/">网络安全</a><small>8</small></li>
+  
+    <li><a href="/tags/计算机网络/">计算机网络</a><small>1</small></li>
+  
+    <li><a href="/tags/趣谈网络协议/">趣谈网络协议</a><small>8</small></li>
+  
+  </ul>
+</div>
+
+</aside>
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div class="alignleft">
+  
+  &copy; 2019 shouliang
+  
+</div>
+<div class="clearfix"></div></footer>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+</body>
+</html>

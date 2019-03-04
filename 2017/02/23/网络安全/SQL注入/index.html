@@ -1,6 +1,6 @@
 <!DOCTYPE HTML>
 <html>
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="utf-8">
   
   <title>SQL注入 | shouliang&#39;s blog</title>
@@ -11,11 +11,11 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
-  <meta property="og:title" content="SQL注入"/>
-  <meta property="og:site_name" content="shouliang&#39;s blog"/>
+  <meta property="og:title" content="SQL注入">
+  <meta property="og:site_name" content="shouliang&#39;s blog">
 
   
-    <meta property="og:image" content=""/>
+    <meta property="og:image" content>
   
 
   <link href="/favicon.png" rel="icon">
@@ -25,7 +25,7 @@
   
 
 </head>
-
+</html>
 
 <body>
   <header id="header" class="inner"><div class="alignleft">
@@ -91,7 +91,7 @@
 <h3 id="SQL盲注"><a href="#SQL盲注" class="headerlink" title="SQL盲注"></a>SQL盲注</h3><h4 id="布尔型注入"><a href="#布尔型注入" class="headerlink" title="布尔型注入"></a>布尔型注入</h4><p>例如：在参数后面加上or 1=1，可返回所有数据，因为 or 1=1永远为真</p>
 <h4 id="联合查询注入"><a href="#联合查询注入" class="headerlink" title="联合查询注入"></a>联合查询注入</h4><p>在参数后面加上：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UNION <span class="keyword">select</span> <span class="keyword">column</span><span class="number">-1</span> <span class="keyword">column</span><span class="number">-2</span> <span class="keyword">from</span> <span class="keyword">table</span><span class="number">-2</span></span><br></pre></td></tr></table></figure></p>
 <h4 id="多语句注入"><a href="#多语句注入" class="headerlink" title="多语句注入"></a>多语句注入</h4><p>在参数后面加上：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">;<span class="keyword">drop</span> <span class="keyword">table</span> a; <span class="keyword">select</span> * <span class="keyword">from</span> tableb;</span><br></pre></td></tr></table></figure></p>
-<h4 id="字符串注册"><a href="#字符串注册" class="headerlink" title="字符串注册"></a>字符串注册</h4><p>‘#’：’#’后所有的字符串都会被当成注释来处理用户名输入：user’#（单引号闭合user左边的单引号），密码随意输入，如：111，然后点击提交按钮。等价于SQL语句：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> <span class="keyword">user</span> <span class="keyword">WHERE</span> username = <span class="string">'user'</span>#<span class="string">'ADN password = '</span><span class="number">111</span><span class="string">'</span></span><br></pre></td></tr></table></figure></p>
+<h4 id="字符串注册"><a href="#字符串注册" class="headerlink" title="字符串注册"></a>字符串注册</h4><p>‘#’：’#’后所有的字符串都会被当成注释来处理用户名输入：user’#（单引号闭合user左边的单引号），密码随意输入，如：111，然后点击提交按钮。等价于SQL语句：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> <span class="keyword">user</span> <span class="keyword">WHERE</span> username = <span class="string">'user'</span><span class="comment">#'ADN password = '111'</span></span><br></pre></td></tr></table></figure></p>
 <h3 id="如何预防SQL注入"><a href="#如何预防SQL注入" class="headerlink" title="如何预防SQL注入"></a>如何预防SQL注入</h3><ol>
 <li>严格检查输入变量的类型和格式<br> 对于整数参数，加判断条件：不能为空、参数类型必须为数字<br> 对于字符串参数，可以使用正则表达式进行过滤：如：必须为[0-9a-zA-Z]范围内的字符串</li>
 <li>对URL进行编码</li>
@@ -174,51 +174,21 @@
   <h3 class="title">标签</h3>
   <ul class="entry">
   
-    <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
-  
     <li><a href="/tags/Docker/">Docker</a><small>3</small></li>
   
-    <li><a href="/tags/ES6/">ES6</a><small>4</small></li>
-  
-    <li><a href="/tags/Express/">Express</a><small>2</small></li>
-  
     <li><a href="/tags/Git/">Git</a><small>7</small></li>
-  
-    <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
   
     <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>5</small></li>
   
     <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
   
-    <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
-  
     <li><a href="/tags/MySQL实战/">MySQL实战</a><small>5</small></li>
   
-    <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>4</small></li>
-  
-    <li><a href="/tags/Node-js-事件/">Node.js_事件</a><small>4</small></li>
-  
-    <li><a href="/tags/Node-js-入门/">Node.js_入门</a><small>9</small></li>
-  
-    <li><a href="/tags/Node-js-基础/">Node.js_基础</a><small>6</small></li>
-  
-    <li><a href="/tags/Node-js-异步/">Node.js_异步</a><small>3</small></li>
-  
-    <li><a href="/tags/Node-js-模块/">Node.js_模块</a><small>5</small></li>
-  
-    <li><a href="/tags/Node-js-测试/">Node.js_测试</a><small>5</small></li>
-  
-    <li><a href="/tags/Node-js-网络/">Node.js_网络</a><small>1</small></li>
-  
-    <li><a href="/tags/Node-js-进程/">Node.js_进程</a><small>2</small></li>
-  
-    <li><a href="/tags/Node-js-错误处理和调试/">Node.js_错误处理和调试</a><small>5</small></li>
+    <li><a href="/tags/Node-js/">Node.js</a><small>58</small></li>
   
     <li><a href="/tags/Redis/">Redis</a><small>2</small></li>
   
-    <li><a href="/tags/Shell/">Shell</a><small>1</small></li>
-  
-    <li><a href="/tags/Unix/">Unix</a><small>3</small></li>
+    <li><a href="/tags/Unix/">Unix</a><small>4</small></li>
   
     <li><a href="/tags/从0开始学大数据/">从0开始学大数据</a><small>2</small></li>
   

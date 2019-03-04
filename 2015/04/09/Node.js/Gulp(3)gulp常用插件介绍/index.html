@@ -1,0 +1,224 @@
+<!DOCTYPE HTML>
+<html>
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  <title>三.gulp 常用插件 | shouliang&#39;s blog</title>
+  <meta name="author" content="shouliang">
+  
+  <meta name="description" content="Node">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="三.gulp 常用插件">
+  <meta property="og:site_name" content="shouliang&#39;s blog">
+
+  
+    <meta property="og:image" content>
+  
+
+  <link href="/favicon.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="shouliang&#39;s blog" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+
+</head>
+</html>
+
+<body>
+  <header id="header" class="inner"><div class="alignleft">
+  <h1><a href="/">shouliang&#39;s blog</a></h1>
+  <h2><a href="/"></a></h2>
+</div>
+<nav id="main-nav" class="alignright">
+  <ul>
+    
+      <li><a href="/">首页</a></li>
+    
+      <li><a href="/archives">归档</a></li>
+    
+      <li><a href="/about">关于</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+<div class="clearfix"></div></header>
+  <div id="content" class="inner">
+    <div id="main-col" class="alignleft"><div id="wrapper"><article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2015-04-09T07:45:23.000Z"><a href="/2015/04/09/Node.js/Gulp(3)gulp常用插件介绍/">2015-04-09</a></time>
+      
+      
+  
+    <h1 class="title">三.gulp 常用插件</h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-插件安装"><a href="#1-插件安装" class="headerlink" title="1.插件安装"></a>1.插件安装</h3><hr>
+<p>在我们编写gulp代码时候，需要用到一些gulp的插件，可以通过npm install –save-dev 插件名称 来安装。如下代码来安装自动加载插件：</p>
+<p>npm install –save-dev gulp-load-plugins<br>　　要使用gulp的插件，首先得用require来把插件加载进来。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">var gulp=require(&apos;gulp&apos;),</span><br><span class="line">    plugins=require(&apos;gulp-load-plugins&apos;)(),</span><br><span class="line">    uglify = require(&apos;gulp-uglify&apos;),</span><br><span class="line">    minifyHtml = require(&apos;gulp-minify-html&apos;),</span><br><span class="line">    rename = require(&apos;gulp-rename&apos;);</span><br></pre></td></tr></table></figure></p>
+<p>　　gulp的插件有很多种，后面介绍几个插件的用法。如还想了解更多插件，请查阅相关资料。</p>
+<h3 id="2-自动加载"><a href="#2-自动加载" class="headerlink" title="2.自动加载"></a>2.自动加载</h3><hr>
+<p>ulp-load-plugins这个插件能自动帮你加载package.json文件里的gulp插件。例如假设你的package.json文件里的依赖是这样的:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;devDependencies&quot;: &#123;</span><br><span class="line">    &quot;gulp&quot;: &quot;~3.6.0&quot;,</span><br><span class="line">    &quot;gulp-rename&quot;: &quot;~1.2.0&quot;,</span><br><span class="line">    &quot;gulp-ruby-sass&quot;: &quot;~0.4.3&quot;,</span><br><span class="line">    &quot;gulp-load-plugins&quot;: &quot;~0.5.1&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>然后我们可以在gulpfile.js中使用gulp-load-plugins来帮我们加载插件：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;);</span><br><span class="line">//加载gulp-load-plugins插件，并马上运行它</span><br><span class="line">var plugins = require(&apos;gulp-load-plugins&apos;)();</span><br></pre></td></tr></table></figure></p>
+<p>　　然后我们要使用gulp-rename和gulp-ruby-sass这两个插件的时候，就可以使用plugins.rename和plugins.rubySass来代替了,也就是原始插件名去掉gulp-前缀，之后再转换为驼峰命名。</p>
+<h3 id="3-重命名"><a href="#3-重命名" class="headerlink" title="3.重命名"></a>3.重命名</h3><hr>
+<p>gulp-rename插件用来重命名文件流中的文件。用gulp.dest()方法写入文件时，文件名使用的是文件流中的文件名，如果要想改变文件名，那可以在之前用gulp-rename插件来改变文件流中的文件名。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    rename = require(&apos;gulp-rename&apos;),</span><br><span class="line">    uglify = require(&quot;gulp-uglify&quot;); </span><br><span class="line">gulp.task(&apos;rename&apos;, function () &#123;</span><br><span class="line">    gulp.src(&apos;src/1.js&apos;)</span><br><span class="line">    .pipe(uglify())           //压缩</span><br><span class="line">    .pipe(rename(&apos;1.min.js&apos;)) //会将1.js重命名为1.min.js</span><br><span class="line">    .pipe(gulp.dest(&apos;js&apos;));</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="4-js文件压缩"><a href="#4-js文件压缩" class="headerlink" title="4.js文件压缩"></a>4.js文件压缩</h3><hr>
+<p>gulp-uglify插件用来压缩js文件。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    uglify = require(&quot;gulp-uglify&quot;); </span><br><span class="line">gulp.task(&apos;minify-js&apos;, function () &#123;</span><br><span class="line">    gulp.src(&apos;src/*.js&apos;)          // 要压缩的js文件</span><br><span class="line">    .pipe(uglify())              //使用uglify进行压缩</span><br><span class="line">    .pipe(gulp.dest(&apos;dist/js&apos;)); //压缩后的路径</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="5-css文件压缩"><a href="#5-css文件压缩" class="headerlink" title="5.css文件压缩"></a>5.css文件压缩</h3><hr>
+<p>gulp-minify-css插件用来压缩css文件。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    minifyCss = require(&quot;gulp-minify-css&quot;);</span><br><span class="line">gulp.task(&apos;minify-css&apos;, function () &#123;</span><br><span class="line">    gulp.src(&apos;src/*.css&apos;) // 要压缩的css文件</span><br><span class="line">    .pipe(minifyCss())    //压缩css</span><br><span class="line">    .pipe(gulp.dest(&apos;dist/css&apos;));</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="6-html文件压缩"><a href="#6-html文件压缩" class="headerlink" title="6.html文件压缩"></a>6.html文件压缩</h3><hr>
+<p>gulp-minify-html插件用来压缩html文件。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    minifyHtml = require(&quot;gulp-minify-html&quot;); </span><br><span class="line">gulp.task(&apos;minify-html&apos;, function () &#123;</span><br><span class="line">    gulp.src(&apos;src/*.html&apos;) // 要压缩的html文件</span><br><span class="line">    .pipe(minifyHtml())    //压缩</span><br><span class="line">    .pipe(gulp.dest(&apos;dist/html&apos;));</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="7-js代码检查"><a href="#7-js代码检查" class="headerlink" title="7.js代码检查"></a>7.js代码检查</h3><hr>
+<p>使用gulp-jshint插件，用来检查js代码。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    jshint = require(&quot;gulp-jshint&quot;);</span><br><span class="line">gulp.task(&apos;jsLint&apos;, function () &#123;</span><br><span class="line">    gulp.src(&apos;src/*.js&apos;)</span><br><span class="line">    .pipe(jshint())</span><br><span class="line">    .pipe(jshint.reporter()); // 输出检查结果</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="8-文件合并"><a href="#8-文件合并" class="headerlink" title="8.文件合并"></a>8.文件合并</h3><hr>
+<p>使用gulp-concat插件，用来把多个文件合并为一个文件,我们可以用它来合并js或css文件等。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    concat = require(&quot;gulp-concat&quot;);</span><br><span class="line">gulp.task(&apos;concat&apos;, function () &#123;</span><br><span class="line">    gulp.src(&apos;src/*.js&apos;)     //要合并的文件</span><br><span class="line">    .pipe(concat(&apos;all.js&apos;))  // 合并匹配到的js文件并命名为 &quot;all.js&quot;</span><br><span class="line">    .pipe(gulp.dest(&apos;dist/js&apos;));</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="9-图片压缩"><a href="#9-图片压缩" class="headerlink" title="9.图片压缩"></a>9.图片压缩</h3><hr>
+<p>可以使用gulp-imagemin插件来压缩jpg、png、gif等图片。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;);</span><br><span class="line">var imagemin = require(&apos;gulp-imagemin&apos;);</span><br><span class="line">var pngquant = require(&apos;imagemin-pngquant&apos;); //png图片压缩插件</span><br><span class="line">gulp.task(&apos;default&apos;, function () &#123;</span><br><span class="line">    return gulp.src(&apos;src/images/*&apos;)</span><br><span class="line">        .pipe(imagemin(&#123;</span><br><span class="line">            progressive: true,</span><br><span class="line">            use: [pngquant()] //使用pngquant来压缩png图片</span><br><span class="line">        &#125;))</span><br><span class="line">        .pipe(gulp.dest(&apos;dist&apos;));</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="10-自动刷新"><a href="#10-自动刷新" class="headerlink" title="10.自动刷新"></a>10.自动刷新</h3><hr>
+<p>使用gulp-livereload插件，当代码变化时，它可以帮我们自动刷新页面。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">var gulp = require(&apos;gulp&apos;),</span><br><span class="line">    less = require(&apos;gulp-less&apos;),</span><br><span class="line">    livereload = require(&apos;gulp-livereload&apos;);</span><br><span class="line">gulp.task(&apos;less&apos;, function() &#123;</span><br><span class="line">  gulp.src(&apos;less/\*.less&apos;)</span><br><span class="line">    .pipe(less())</span><br><span class="line">    .pipe(gulp.dest(&apos;css&apos;))</span><br><span class="line">    .pipe(livereload());</span><br><span class="line">&#125;);</span><br><span class="line">gulp.task(&apos;watch&apos;, function() &#123;</span><br><span class="line">  livereload.listen(); //要在这里调用listen()方法</span><br><span class="line">  gulp.watch(&apos;less/*.less&apos;, [&apos;less&apos;]);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+  
+  <div class="tags">
+    <a href="/tags/Node-js/">Node.js</a>
+  </div>
+
+        
+  <div class="addthis addthis_toolbox addthis_default_style">
+    
+      <a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+    
+    
+      <a class="addthis_button_tweet"></a>
+    
+    
+      <a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+    
+    
+      <a class="addthis_button_pinterest_pinit" pi:pinit:layout="horizontal"></a>
+    
+    <a class="addthis_counter addthis_pill_style"></a>
+  </div>
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js"></script>
+
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">留言</h1>
+
+  
+      <div id="fb-root"></div>
+<script>
+  (function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=shouliang0816";
+    fjs.parentNode.insertBefore(js, fjs);
+  }(document, 'script', 'facebook-jssdk'));
+</script>
+
+<div class="fb-comments" data-href="https://shouliang.github.io/2015/04/09/Node.js/Gulp(3)gulp常用插件介绍/index.html" data-num-posts="5" data-width="840" data-colorscheme="light"></div>
+      
+  
+</section>
+
+</div></div>
+    <aside id="sidebar" class="alignright">
+  <div class="search">
+  <form action="//google.com/search" method="get" accept-charset="utf-8">
+    <input type="search" name="q" results="0" placeholder="搜索">
+    <input type="hidden" name="q" value="site:shouliang.github.io">
+  </form>
+</div>
+
+  
+
+  
+<div class="widget tag">
+  <h3 class="title">标签</h3>
+  <ul class="entry">
+  
+    <li><a href="/tags/Docker/">Docker</a><small>3</small></li>
+  
+    <li><a href="/tags/Git/">Git</a><small>7</small></li>
+  
+    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>5</small></li>
+  
+    <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
+  
+    <li><a href="/tags/MySQL实战/">MySQL实战</a><small>5</small></li>
+  
+    <li><a href="/tags/Node-js/">Node.js</a><small>58</small></li>
+  
+    <li><a href="/tags/Redis/">Redis</a><small>2</small></li>
+  
+    <li><a href="/tags/Unix/">Unix</a><small>4</small></li>
+  
+    <li><a href="/tags/从0开始学大数据/">从0开始学大数据</a><small>2</small></li>
+  
+    <li><a href="/tags/区块链/">区块链</a><small>1</small></li>
+  
+    <li><a href="/tags/数据分析实战/">数据分析实战</a><small>3</small></li>
+  
+    <li><a href="/tags/数据库/">数据库</a><small>2</small></li>
+  
+    <li><a href="/tags/数据结构与算法/">数据结构与算法</a><small>13</small></li>
+  
+    <li><a href="/tags/程序员的数学基础课/">程序员的数学基础课</a><small>5</small></li>
+  
+    <li><a href="/tags/网络安全/">网络安全</a><small>8</small></li>
+  
+    <li><a href="/tags/计算机网络/">计算机网络</a><small>1</small></li>
+  
+    <li><a href="/tags/趣谈网络协议/">趣谈网络协议</a><small>8</small></li>
+  
+  </ul>
+</div>
+
+</aside>
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div class="alignleft">
+  
+  &copy; 2019 shouliang
+  
+</div>
+<div class="clearfix"></div></footer>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+</body>
+</html>

@@ -1,6 +1,6 @@
 <!DOCTYPE HTML>
 <html>
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="utf-8">
   
   <title>三.操作Git | shouliang&#39;s blog</title>
@@ -11,11 +11,11 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
-  <meta property="og:title" content="三.操作Git"/>
-  <meta property="og:site_name" content="shouliang&#39;s blog"/>
+  <meta property="og:title" content="三.操作Git">
+  <meta property="og:site_name" content="shouliang&#39;s blog">
 
   
-    <meta property="og:image" content=""/>
+    <meta property="og:image" content>
   
 
   <link href="/favicon.png" rel="icon">
@@ -25,7 +25,7 @@
   
 
 </head>
-
+</html>
 
 <body>
   <header id="header" class="inner"><div class="alignleft">
@@ -89,8 +89,8 @@
 <p>　　版本号没必要写全，前几位就可以了，Git会自动去找。当然也不能只写前一两位，因为Git可能会找到多个版本号，就无法确定是哪一个了。</p>
 <p>　　可以查看readme.txt的内容$ cat readme.txt.</p>
 <p>　　Git的版本回退速度非常快，因为Git在内部有个指向当前版本的HEAD指针，当你回退版本的时候，Git仅仅是把HEAD从指向append GPL：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkback01.jpg" alt=""><br>改为指向add distributed：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkback02.jpg" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkback01.jpg" alt><br>改为指向add distributed：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkback02.jpg" alt></p>
 <h3 id="4-git-reflog命令"><a href="#4-git-reflog命令" class="headerlink" title="4.git reflog命令"></a>4.git reflog命令</h3><hr>
 <p>现在，你回退到了某个版本，当想恢复到新版本怎么办？找不到新版本的commit id怎么办？</p>
 <p>　　在Git中可以放心下。当你用$ git reset –hard HEAD^回退到add distributed版本时，再想恢复到append GPL，就必须找到append GPL的commit id。Git提供了一个命令git reflog用来记录你的每一次命令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ git reflog</span><br><span class="line">ea34578 HEAD@&#123;0&#125;: reset: moving to HEAD^</span><br><span class="line">3628164 HEAD@&#123;1&#125;: commit: append GPL</span><br><span class="line">ea34578 HEAD@&#123;2&#125;: commit: add distributed</span><br><span class="line">cb926e7 HEAD@&#123;3&#125;: commit (initial): wrote a readme file</span><br></pre></td></tr></table></figure></p>
@@ -99,20 +99,20 @@
 <p>HEAD指向的版本就是当前版本，因此，Git允许我们在版本的历史之间穿梭，使用命令git reset –hard commit_id。<br>穿梭前，用git log可以查看提交历史，以便确定要回退到哪个版本。<br>要重返未来，用git reflog查看命令历史，以便确定要回到未来的哪个版本。</p>
 <h3 id="5-工作区"><a href="#5-工作区" class="headerlink" title="5.工作区"></a>5.工作区</h3><hr>
 <p><strong>工作区</strong>：就是你在电脑里能看到的目录,learngit文件夹就是一个工作区，比如我们环境中当前的目录。</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkworkArea.png" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkworkArea.png" alt></p>
 <h3 id="6-暂存区"><a href="#6-暂存区" class="headerlink" title="6.暂存区"></a>6.暂存区</h3><hr>
 <p><strong>版本库:</strong>工作区有一个隐藏目录.git 这个不算工作区，而是Git的版本库。</p>
 <p><strong>暂存区:</strong>英文叫stage,或index。一般存放在git 目录下的index文件(.git/index)中，所以我们把暂存区时也叫作索引(index).</p>
 <p>Git的版本库里存了很多东西，其中最重要的就是称为stage（或者叫index）的暂存区，还有Git为我们自动创建的第一个分支master，以及指向master的一个指针叫HEAD。</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkstage.jpg" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkstage.jpg" alt></p>
 <h3 id="7-暂存区实践"><a href="#7-暂存区实践" class="headerlink" title="7.暂存区实践"></a>7.暂存区实践</h3><hr>
 <p>现在我们对readme.txt做个修改，比如追加一行内容：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">echo &quot;Git has a mutable index called stage.&quot; &gt;&gt; readme.txt</span><br></pre></td></tr></table></figure></p>
 <p>然后，在工作区新增一个LICENSE文本文件<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">echo &quot;LICENSE is a new file.&quot; &gt; LICENSE</span><br></pre></td></tr></table></figure></p>
 <p>用git status查看一下状态，Git显示结果，readme.txt被修改了，而LICENSE还从来没有被添加过，所以它的状态是Untracked。</p>
 <p>现在，使用两次命令git add，把readme.txt和LICENSE都添加后，用git status再查看一下，通过图可以理解为</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkstorageArea01.jpg" alt=""><br>所以，git add命令实际上就是把要提交的所有修改放到暂存区（Stage），然后，执行git commit就可以一次性把暂存区的所有修改提交到分支。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git commit -m &quot;understand how stage works&quot;</span><br></pre></td></tr></table></figure></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkstorageArea01.jpg" alt><br>所以，git add命令实际上就是把要提交的所有修改放到暂存区（Stage），然后，执行git commit就可以一次性把暂存区的所有修改提交到分支。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git commit -m &quot;understand how stage works&quot;</span><br></pre></td></tr></table></figure></p>
 <p>一旦提交后，如果你又没有对工作区做任何修改，用git status查看下，没有任何内容，现在版本库变成了这样，暂存区就没有任何内容了：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkstorageArea02.jpg" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkstorageArea02.jpg" alt></p>
 <h3 id="8-管理修改"><a href="#8-管理修改" class="headerlink" title="8.管理修改"></a>8.管理修改</h3><hr>
 <p>Git与其他版本控制系统相比，Git跟踪并管理的是修改，而非文件。</p>
 <p>　　为什么说Git管理的是修改，而不是文件。接下来做测试，我们对readme.txt修改，追加一行内容：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">echo &quot;Git tracks changes.&quot; &gt;&gt; readme.txt</span><br></pre></td></tr></table></figure></p>
@@ -217,51 +217,21 @@
   <h3 class="title">标签</h3>
   <ul class="entry">
   
-    <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
-  
     <li><a href="/tags/Docker/">Docker</a><small>3</small></li>
   
-    <li><a href="/tags/ES6/">ES6</a><small>4</small></li>
-  
-    <li><a href="/tags/Express/">Express</a><small>2</small></li>
-  
     <li><a href="/tags/Git/">Git</a><small>7</small></li>
-  
-    <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
   
     <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>5</small></li>
   
     <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
   
-    <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
-  
     <li><a href="/tags/MySQL实战/">MySQL实战</a><small>5</small></li>
   
-    <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>4</small></li>
-  
-    <li><a href="/tags/Node-js-事件/">Node.js_事件</a><small>4</small></li>
-  
-    <li><a href="/tags/Node-js-入门/">Node.js_入门</a><small>9</small></li>
-  
-    <li><a href="/tags/Node-js-基础/">Node.js_基础</a><small>6</small></li>
-  
-    <li><a href="/tags/Node-js-异步/">Node.js_异步</a><small>3</small></li>
-  
-    <li><a href="/tags/Node-js-模块/">Node.js_模块</a><small>5</small></li>
-  
-    <li><a href="/tags/Node-js-测试/">Node.js_测试</a><small>5</small></li>
-  
-    <li><a href="/tags/Node-js-网络/">Node.js_网络</a><small>1</small></li>
-  
-    <li><a href="/tags/Node-js-进程/">Node.js_进程</a><small>2</small></li>
-  
-    <li><a href="/tags/Node-js-错误处理和调试/">Node.js_错误处理和调试</a><small>5</small></li>
+    <li><a href="/tags/Node-js/">Node.js</a><small>58</small></li>
   
     <li><a href="/tags/Redis/">Redis</a><small>2</small></li>
   
-    <li><a href="/tags/Shell/">Shell</a><small>1</small></li>
-  
-    <li><a href="/tags/Unix/">Unix</a><small>3</small></li>
+    <li><a href="/tags/Unix/">Unix</a><small>4</small></li>
   
     <li><a href="/tags/从0开始学大数据/">从0开始学大数据</a><small>2</small></li>
   

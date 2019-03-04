@@ -1,6 +1,6 @@
 <!DOCTYPE HTML>
 <html>
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="utf-8">
   
   <title>从概念到底层技术，一文看懂区块链架构设计（附知识图谱） | shouliang&#39;s blog</title>
@@ -11,11 +11,11 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
-  <meta property="og:title" content="从概念到底层技术，一文看懂区块链架构设计（附知识图谱）"/>
-  <meta property="og:site_name" content="shouliang&#39;s blog"/>
+  <meta property="og:title" content="从概念到底层技术，一文看懂区块链架构设计（附知识图谱）">
+  <meta property="og:site_name" content="shouliang&#39;s blog">
 
   
-    <meta property="og:image" content=""/>
+    <meta property="og:image" content>
   
 
   <link href="/favicon.png" rel="icon">
@@ -25,7 +25,7 @@
   
 
 </head>
-
+</html>
 
 <body>
   <header id="header" class="inner"><div class="alignleft">
@@ -67,7 +67,7 @@
 <p>区块链作为比特币背后的技术，无需中心服务器，可实现各类存储数据公开、透明、可追溯。原本是比特币等加密货币存储数据的一种独特方式，是一种自引用的数据结构，用来存储大量交易信息，每条记录从后向前有序链接起来，具备公开透明、无法篡改、方便追溯的特点。实际上，这种特性也直接体现了整个比特币的特点，因此使用区块链来概括加密货币背后的技术实现是非常直观和恰当的。区块链是一项技术，加密货币是其开发实现的一类产品（含有代币，也有不含代币的区块链产品），不能等同或混淆。与加密货币相比，区块链这个名字抛开了代币的概念，更加形象化、技术化、去政治化，更适合作为一门技术去研究、去推广。</p>
 <p>所以，目前当大家单独说到区块链的时候，就是指的区块链技术，是实现了数据公开、透明、可追溯的产品的架构设计方法，算作广义的区块链。而当在具体产品中谈到区块链的时候，可以指类似比特币的数据存储方式，或许是数据库设计，或许是文件形式的设计，这算作狭义的区块链。广义的区块链技术，必须包含点对点网络设计、加密技术应用、分布式算法的实现、数据存储技术的使用等4个方面，其他的可能涉及到分布式存储、机器学习、VR、物联网、大数据等。狭义的区块链仅仅涉及到数据存储技术，数据库或文件操作等。本文的区块链，指的是广义的区块链。</p>
 <h2 id="架构图"><a href="#架构图" class="headerlink" title="架构图"></a>架构图</h2><p>从架构设计上来说，区块链可以简单的分为三个层次，协议层、扩展层和应用层。其中，协议层又可以分为存储层和网络层，它们相互独立但又不可分割。如图：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/blockchain01_180723.png" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/blockchain01_180723.png" alt></p>
 <h2 id="协议层"><a href="#协议层" class="headerlink" title="协议层"></a>协议层</h2><p>所谓的协议层，就是指代最底层的技术。这个层次通常是一个完整的区块链产品，类似于我们电脑的操作系统，它维护着网络节点，仅提供Api供调用。通常官方会提供简单的客户端（通称为钱包），这个客户端钱包功能也很简单，只能建立地址、验证签名、转账支付、查看余额等。这个层次是一切的基础，构建了网络环境、搭建了交易通道、制定了节点奖励规则，至于你要交易什么，想干什么，它一概不过问，也过问不了。典型的例子，自然是比特币，还有各种二代币，比如莱特币等，本书介绍的亿书币也是。这个层次，是现阶段开发者聚集的地方，这说明加密货币仍在起步当中。</p>
 <p>从用到的技术来说，协议层主要包括网络编程、分布式算法、加密签名、数据存储技术等4个方面，其中网络编程能力是大家选择编程语言的主要考虑因素，因为分布式算法基本上属于业务逻辑上的实现，什么语言都可以做到，加密签名技术是直接简单的使用（请看书中相关的加密解密文章，不建议自由发挥，没有过多的编码逻辑），数据库技术也主要在使用层面，只有点对点网络的实现和并发处理才是开发的难点，所以对于那些网络编程能力强，对并发处理简单的语言，人们就特别偏爱。也因此，Nodejs开发区块链应用，逐渐变得更加流行，Go语言也在逐渐兴起。</p>
 <p>上面的架构设计图里，我把这个层面进一步分成了存储层和网络层。数据存储可以相对独立，选择自由度大一些，可以单独来讨论。选择的原则无非是性能和易用性。我们知道，系统的整体性能，主要取决于网络或数据存储的I/O性能，网络I/O优化空间不大，但是本地数据存储的I/O是可以优化的。比如，比特币选择的是谷歌的LevelDB，据说这个数据库读写性能很好，但是很多功能需要开发者自己实现。目前，困扰业界的一个重大问题是，加密货币交易处理量远不如现在中心化的支付系统（银行等），除了I/O，需要全方位的突破。</p>
@@ -96,7 +96,7 @@
 <p>源码库：<a href="https://github.com/hyperledger" target="_blank" rel="noopener">https://github.com/hyperledger</a></p>
 <p>其他编程语言，比如：C#等，也有具体实例，这里就不再列举。总之，针对不同的编程语言，在具体的编码或架构设计上可能有所差别，甚至很大，但是协议层所使用的技术并没有太大的变化。其中，网络编程是重点和难点，多数没有现成的框架可用，都是使用编程语言自身提供的库来设计开发，所以比较底层，非常考验开发者的编码功底。</p>
 <h2 id="知识图谱"><a href="#知识图谱" class="headerlink" title="知识图谱"></a>知识图谱</h2><p>循着上面的分析，我们已经可以了解区块链是什么，并知道怎么实现了，顺便梳理一下其中的编程技术知识，自然也就清晰多了。</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/blockchain02_180723.png" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/blockchain02_180723.png" alt></p>
 <p>根据个人的理解，我把与区块链相关的知识分为下面5个方面：</p>
 <p>（1）基础知识</p>
 <p>区块链是新技术，与之相关的是其背后大量的新概念、新理论。这些知识，虽然不直接体现在编码里，但却是理解区块链，掌握区块链技术的基本知识。所以，理当成为区块链技术不可或缺的一部分。这部分从基本概念入手，到工作原理的描述，就能够把区块链基础知识全部覆盖。</p>
@@ -186,51 +186,21 @@
   <h3 class="title">标签</h3>
   <ul class="entry">
   
-    <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
-  
     <li><a href="/tags/Docker/">Docker</a><small>3</small></li>
   
-    <li><a href="/tags/ES6/">ES6</a><small>4</small></li>
-  
-    <li><a href="/tags/Express/">Express</a><small>2</small></li>
-  
     <li><a href="/tags/Git/">Git</a><small>7</small></li>
-  
-    <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
   
     <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>5</small></li>
   
     <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
   
-    <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
-  
     <li><a href="/tags/MySQL实战/">MySQL实战</a><small>5</small></li>
   
-    <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>4</small></li>
-  
-    <li><a href="/tags/Node-js-事件/">Node.js_事件</a><small>4</small></li>
-  
-    <li><a href="/tags/Node-js-入门/">Node.js_入门</a><small>9</small></li>
-  
-    <li><a href="/tags/Node-js-基础/">Node.js_基础</a><small>6</small></li>
-  
-    <li><a href="/tags/Node-js-异步/">Node.js_异步</a><small>3</small></li>
-  
-    <li><a href="/tags/Node-js-模块/">Node.js_模块</a><small>5</small></li>
-  
-    <li><a href="/tags/Node-js-测试/">Node.js_测试</a><small>5</small></li>
-  
-    <li><a href="/tags/Node-js-网络/">Node.js_网络</a><small>1</small></li>
-  
-    <li><a href="/tags/Node-js-进程/">Node.js_进程</a><small>2</small></li>
-  
-    <li><a href="/tags/Node-js-错误处理和调试/">Node.js_错误处理和调试</a><small>5</small></li>
+    <li><a href="/tags/Node-js/">Node.js</a><small>58</small></li>
   
     <li><a href="/tags/Redis/">Redis</a><small>2</small></li>
   
-    <li><a href="/tags/Shell/">Shell</a><small>1</small></li>
-  
-    <li><a href="/tags/Unix/">Unix</a><small>3</small></li>
+    <li><a href="/tags/Unix/">Unix</a><small>4</small></li>
   
     <li><a href="/tags/从0开始学大数据/">从0开始学大数据</a><small>2</small></li>
   

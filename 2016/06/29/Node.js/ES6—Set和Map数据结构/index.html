@@ -1,0 +1,360 @@
+<!DOCTYPE HTML>
+<html>
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  <title>ES6—set和Map数据结构 | shouliang&#39;s blog</title>
+  <meta name="author" content="shouliang">
+  
+  <meta name="description" content="Node">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="ES6—set和Map数据结构">
+  <meta property="og:site_name" content="shouliang&#39;s blog">
+
+  
+    <meta property="og:image" content>
+  
+
+  <link href="/favicon.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="shouliang&#39;s blog" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+
+</head>
+</html>
+
+<body>
+  <header id="header" class="inner"><div class="alignleft">
+  <h1><a href="/">shouliang&#39;s blog</a></h1>
+  <h2><a href="/"></a></h2>
+</div>
+<nav id="main-nav" class="alignright">
+  <ul>
+    
+      <li><a href="/">首页</a></li>
+    
+      <li><a href="/archives">归档</a></li>
+    
+      <li><a href="/about">关于</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+<div class="clearfix"></div></header>
+  <div id="content" class="inner">
+    <div id="main-col" class="alignleft"><div id="wrapper"><article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2016-06-29T06:45:23.000Z"><a href="/2016/06/29/Node.js/ES6—Set和Map数据结构/">2016-06-29</a></time>
+      
+      
+  
+    <h1 class="title">ES6—set和Map数据结构</h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h2 id="Set"><a href="#Set" class="headerlink" title="Set"></a>Set</h2><h3 id="基本用法"><a href="#基本用法" class="headerlink" title="基本用法"></a>基本用法</h3><p>ES6 提供了新的数据结构 Set。它类似于数组，但是成员的值都是唯一的，没有重复的值。</p>
+<p>Set 本身是一个构造函数，用来生成 Set 数据结构。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> s = <span class="keyword">new</span> <span class="built_in">Set</span>();</span><br><span class="line"></span><br><span class="line">[<span class="number">2</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">2</span>, <span class="number">2</span>].forEach(<span class="function"><span class="params">x</span> =&gt;</span> s.add(x));</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> i <span class="keyword">of</span> s) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(i);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 2 3 5 4</span></span><br></pre></td></tr></table></figure>
+<p>上面代码通过<code>add</code>方法向 Set 结构加入成员，结果表明 Set 结构不会添加重复的值。</p>
+<p>Set 函数可以接受一个数组（或者具有 iterable 接口的其他数据结构）作为参数，用来初始化。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 例一</span></span><br><span class="line"><span class="keyword">const</span> <span class="keyword">set</span> = new Set([1, 2, 3, 4, 4]);</span><br><span class="line">[...<span class="keyword">set</span>]</span><br><span class="line">// [1, 2, 3, 4]</span><br><span class="line"></span><br><span class="line">// 例二</span><br><span class="line">const items = new Set([1, 2, 3, 4, 5, 5, 5, 5]);</span><br><span class="line">items.size // 5</span><br><span class="line"></span><br><span class="line">// 例三</span><br><span class="line">const <span class="keyword">set</span> = new Set(document.querySelectorAll('div'));</span><br><span class="line"><span class="keyword">set</span>.size // 56</span><br><span class="line"></span><br><span class="line">// 类似于</span><br><span class="line">const <span class="keyword">set</span> = new Set();</span><br><span class="line">document</span><br><span class="line"> .querySelectorAll('div')</span><br><span class="line"> .forEach(div =&gt; <span class="keyword">set</span>.add(div));</span><br><span class="line"><span class="keyword">set</span>.size // 56</span><br></pre></td></tr></table></figure>
+<p>上面代码中，例一和例二都是<code>Set</code>函数接受数组作为参数，例三是接受类似数组的对象作为参数。</p>
+<p>上面代码也展示了一种去除数组重复成员的方法。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 去除数组的重复成员</span></span><br><span class="line">[...new <span class="built_in">Set</span>(array)]</span><br></pre></td></tr></table></figure>
+<p>向 Set 加入值的时候，不会发生类型转换，所以<code>5</code>和<code>&quot;5&quot;</code>是两个不同的值。Set 内部判断两个值是否不同，使用的算法叫做“Same-value-zero equality”，它类似于精确相等运算符（<code>===</code>），主要的区别是<code>NaN</code>等于自身，而精确相等运算符认为<code>NaN</code>不等于自身。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="keyword">set</span> = new Set();</span><br><span class="line">let a = NaN;</span><br><span class="line">let b = NaN;</span><br><span class="line"><span class="keyword">set</span>.add(a);</span><br><span class="line"><span class="keyword">set</span>.add(b);</span><br><span class="line"><span class="keyword">set</span> // Set &#123;<span class="literal">NaN</span>&#125;</span><br></pre></td></tr></table></figure>
+<p>上面代码向 Set 实例添加了两个<code>NaN</code>，但是只能加入一个。这表明，在 Set 内部，两个<code>NaN</code>是相等。</p>
+<p>另外，两个对象总是不相等的。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="keyword">set</span> = new Set();</span><br><span class="line"></span><br><span class="line"><span class="keyword">set</span>.add(&#123;&#125;);</span><br><span class="line"><span class="keyword">set</span>.size // 1</span><br><span class="line"></span><br><span class="line"><span class="keyword">set</span>.add(&#123;&#125;);</span><br><span class="line"><span class="keyword">set</span>.size // 2</span><br></pre></td></tr></table></figure>
+<p>上面代码表示，由于两个空对象不相等，所以它们被视为两个值。</p>
+<h3 id="Set-实例的属性和方法"><a href="#Set-实例的属性和方法" class="headerlink" title="Set 实例的属性和方法"></a>Set 实例的属性和方法</h3><p>Set 结构的实例有以下属性。</p>
+<ul>
+<li><code>Set.prototype.constructor</code>：构造函数，默认就是<code>Set</code>函数。</li>
+<li><code>Set.prototype.size</code>：返回<code>Set</code>实例的成员总数。</li>
+</ul>
+<p>Set 实例的方法分为两大类：操作方法（用于操作数据）和遍历方法（用于遍历成员）。下面先介绍四个操作方法。</p>
+<ul>
+<li><code>add(value)</code>：添加某个值，返回 Set 结构本身。</li>
+<li><code>delete(value)</code>：删除某个值，返回一个布尔值，表示删除是否成功。</li>
+<li><code>has(value)</code>：返回一个布尔值，表示该值是否为<code>Set</code>的成员。</li>
+<li><code>clear()</code>：清除所有成员，没有返回值。</li>
+</ul>
+<p>上面这些属性和方法的实例如下。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">s.add(<span class="number">1</span>).add(<span class="number">2</span>).add(<span class="number">2</span>);</span><br><span class="line"><span class="comment">// 注意2被加入了两次</span></span><br><span class="line"></span><br><span class="line">s.size <span class="comment">// 2</span></span><br><span class="line"></span><br><span class="line">s.has(<span class="number">1</span>) <span class="comment">// true</span></span><br><span class="line">s.has(<span class="number">2</span>) <span class="comment">// true</span></span><br><span class="line">s.has(<span class="number">3</span>) <span class="comment">// false</span></span><br><span class="line"></span><br><span class="line">s.delete(<span class="number">2</span>);</span><br><span class="line">s.has(<span class="number">2</span>) <span class="comment">// false</span></span><br></pre></td></tr></table></figure>
+<p>下面是一个对比，看看在判断是否包括一个键上面，<code>Object</code>结构和<code>Set</code>结构的写法不同。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 对象的写法</span></span><br><span class="line"><span class="keyword">const</span> properties = &#123;</span><br><span class="line">  <span class="string">'width'</span>: <span class="number">1</span>,</span><br><span class="line">  <span class="string">'height'</span>: <span class="number">1</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (properties[someName]) &#123;</span><br><span class="line">  <span class="comment">// do something</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Set的写法</span></span><br><span class="line"><span class="keyword">const</span> properties = <span class="keyword">new</span> <span class="built_in">Set</span>();</span><br><span class="line"></span><br><span class="line">properties.add(<span class="string">'width'</span>);</span><br><span class="line">properties.add(<span class="string">'height'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (properties.has(someName)) &#123;</span><br><span class="line">  <span class="comment">// do something</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>Array.from</code>方法可以将 Set 结构转为数组。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> items = <span class="keyword">new</span> <span class="built_in">Set</span>([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>]);</span><br><span class="line"><span class="keyword">const</span> array = <span class="built_in">Array</span>.from(items);</span><br></pre></td></tr></table></figure>
+<p>这就提供了去除数组重复成员的另一种方法。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">dedupe</span>(<span class="params">array</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">Array</span>.from(<span class="keyword">new</span> <span class="built_in">Set</span>(array));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">dedupe([<span class="number">1</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]) <span class="comment">// [1, 2, 3]</span></span><br></pre></td></tr></table></figure>
+<h3 id="遍历操作"><a href="#遍历操作" class="headerlink" title="遍历操作"></a>遍历操作</h3><p>Set 结构的实例有四个遍历方法，可以用于遍历成员。</p>
+<ul>
+<li><code>keys()</code>：返回键名的遍历器</li>
+<li><code>values()</code>：返回键值的遍历器</li>
+<li><code>entries()</code>：返回键值对的遍历器</li>
+<li><code>forEach()</code>：使用回调函数遍历每个成员</li>
+</ul>
+<p>需要特别指出的是，<code>Set</code>的遍历顺序就是插入顺序。这个特性有时非常有用，比如使用 Set 保存一个回调函数列表，调用时就能保证按照添加顺序调用。</p>
+<p><strong>（1）<code>keys()</code>，<code>values()</code>，<code>entries()</code></strong></p>
+<p><code>keys</code>方法、<code>values</code>方法、<code>entries</code>方法返回的都是遍历器对象（详见《Iterator 对象》一章）。由于 Set 结构没有键名，只有键值（或者说键名和键值是同一个值），所以<code>keys</code>方法和<code>values</code>方法的行为完全一致。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="keyword">set</span> = new Set(['red', 'green', 'blue']);</span><br><span class="line"></span><br><span class="line">for (let item of <span class="keyword">set</span>.keys()) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(item);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// red</span></span><br><span class="line"><span class="comment">// green</span></span><br><span class="line"><span class="comment">// blue</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> item <span class="keyword">of</span> <span class="keyword">set</span>.values()) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(item);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// red</span></span><br><span class="line"><span class="comment">// green</span></span><br><span class="line"><span class="comment">// blue</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> item <span class="keyword">of</span> <span class="keyword">set</span>.entries()) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(item);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// ["red", "red"]</span></span><br><span class="line"><span class="comment">// ["green", "green"]</span></span><br><span class="line"><span class="comment">// ["blue", "blue"]</span></span><br></pre></td></tr></table></figure>
+<p>上面代码中，<code>entries</code>方法返回的遍历器，同时包括键名和键值，所以每次输出一个数组，它的两个成员完全相等。</p>
+<p>Set 结构的实例默认可遍历，它的默认遍历器生成函数就是它的<code>values</code>方法。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">Set</span>.prototype[<span class="built_in">Symbol</span>.iterator] === <span class="built_in">Set</span>.prototype.values</span><br><span class="line"><span class="comment">// true</span></span><br></pre></td></tr></table></figure>
+<p>这意味着，可以省略<code>values</code>方法，直接用<code>for...of</code>循环遍历 Set。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="keyword">set</span> = new Set(['red', 'green', 'blue']);</span><br><span class="line"></span><br><span class="line">for (let x of <span class="keyword">set</span>) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(x);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// red</span></span><br><span class="line"><span class="comment">// green</span></span><br><span class="line"><span class="comment">// blue</span></span><br></pre></td></tr></table></figure>
+<p><strong>（2）<code>forEach()</code></strong></p>
+<p>Set 结构的实例与数组一样，也拥有<code>forEach</code>方法，用于对每个成员执行某种操作，没有返回值。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">set</span> = new Set([1, 4, 9]);</span><br><span class="line"><span class="keyword">set</span>.forEach((value, key) =&gt; console.log(key + ' : ' + value))</span><br><span class="line">// 1 : 1</span><br><span class="line">// 4 : 4</span><br><span class="line">// 9 : 9</span><br></pre></td></tr></table></figure>
+<p>上面代码说明，<code>forEach</code>方法的参数就是一个处理函数。该函数的参数与数组的<code>forEach</code>一致，依次为键值、键名、集合本身（上例省略了该参数）。这里需要注意，Set 结构的键名就是键值（两者是同一个值），因此第一个参数与第二个参数的值永远都是一样的。</p>
+<p>另外，<code>forEach</code>方法还可以有第二个参数，表示绑定处理函数内部的<code>this</code>对象。</p>
+<p><strong>（3）遍历的应用</strong></p>
+<p>扩展运算符（<code>...</code>）内部使用<code>for...of</code>循环，所以也可以用于 Set 结构。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="keyword">set</span> = new Set(['red', 'green', 'blue']);</span><br><span class="line">let arr = [...<span class="keyword">set</span>];</span><br><span class="line">// ['red', 'green', 'blue']</span><br></pre></td></tr></table></figure>
+<p>扩展运算符和 Set 结构相结合，就可以去除数组的重复成员。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> arr = [<span class="number">3</span>, <span class="number">5</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">5</span>, <span class="number">5</span>];</span><br><span class="line"><span class="keyword">let</span> unique = [...new <span class="built_in">Set</span>(arr)];</span><br><span class="line"><span class="comment">// [3, 5, 2]</span></span><br></pre></td></tr></table></figure>
+<p>而且，数组的<code>map</code>和<code>filter</code>方法也可以间接用于 Set 了。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="keyword">set</span> = new Set([1, 2, 3]);</span><br><span class="line"><span class="keyword">set</span> = new Set([...<span class="keyword">set</span>].map(x =&gt; x * 2));</span><br><span class="line">// 返回Set结构：&#123;<span class="number">2</span>, <span class="number">4</span>, <span class="number">6</span>&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> <span class="keyword">set</span> = new Set([1, 2, 3, 4, 5]);</span><br><span class="line"><span class="keyword">set</span> = new Set([...<span class="keyword">set</span>].filter(x =&gt; (x % 2) == 0));</span><br><span class="line">// 返回Set结构：&#123;<span class="number">2</span>, <span class="number">4</span>&#125;</span><br></pre></td></tr></table></figure>
+<p>因此使用 Set 可以很容易地实现并集（Union）、交集（Intersect）和差集（Difference）。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> a = <span class="keyword">new</span> <span class="built_in">Set</span>([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]);</span><br><span class="line"><span class="keyword">let</span> b = <span class="keyword">new</span> <span class="built_in">Set</span>([<span class="number">4</span>, <span class="number">3</span>, <span class="number">2</span>]);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 并集</span></span><br><span class="line"><span class="keyword">let</span> union = <span class="keyword">new</span> <span class="built_in">Set</span>([...a, ...b]);</span><br><span class="line"><span class="comment">// Set &#123;1, 2, 3, 4&#125;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 交集</span></span><br><span class="line"><span class="keyword">let</span> intersect = <span class="keyword">new</span> <span class="built_in">Set</span>([...a].filter(<span class="function"><span class="params">x</span> =&gt;</span> b.has(x)));</span><br><span class="line"><span class="comment">// set &#123;2, 3&#125;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 差集</span></span><br><span class="line"><span class="keyword">let</span> difference = <span class="keyword">new</span> <span class="built_in">Set</span>([...a].filter(<span class="function"><span class="params">x</span> =&gt;</span> !b.has(x)));</span><br><span class="line"><span class="comment">// Set &#123;1&#125;</span></span><br></pre></td></tr></table></figure>
+<p>如果想在遍历操作中，同步改变原来的 Set 结构，目前没有直接的方法，但有两种变通方法。一种是利用原 Set 结构映射出一个新的结构，然后赋值给原来的 Set 结构；另一种是利用<code>Array.from</code>方法。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 方法一</span></span><br><span class="line"><span class="keyword">let</span> <span class="keyword">set</span> = new Set([1, 2, 3]);</span><br><span class="line"><span class="keyword">set</span> = new Set([...<span class="keyword">set</span>].map(val =&gt; val * 2));</span><br><span class="line">// <span class="keyword">set</span>的值是2, 4, 6</span><br><span class="line"></span><br><span class="line">// 方法二</span><br><span class="line">let <span class="keyword">set</span> = new Set([1, 2, 3]);</span><br><span class="line"><span class="keyword">set</span> = new Set(Array.from(<span class="keyword">set</span>, val =&gt; val * 2));</span><br><span class="line">// <span class="keyword">set</span>的值是2, 4, 6</span><br></pre></td></tr></table></figure>
+<p>上面代码提供了两种方法，直接在遍历操作中改变原来的 Set 结构。</p>
+<h2 id="Map"><a href="#Map" class="headerlink" title="Map"></a>Map</h2><h3 id="含义和基本用法"><a href="#含义和基本用法" class="headerlink" title="含义和基本用法"></a>含义和基本用法</h3><p>JavaScript 的对象（Object），本质上是键值对的集合（Hash 结构），但是传统上只能用字符串当作键。这给它的使用带来了很大的限制。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> data = &#123;&#125;;</span><br><span class="line"><span class="keyword">const</span> element = <span class="built_in">document</span>.getElementById(<span class="string">'myDiv'</span>);</span><br><span class="line"></span><br><span class="line">data[element] = <span class="string">'metadata'</span>;</span><br><span class="line">data[<span class="string">'[object HTMLDivElement]'</span>] <span class="comment">// "metadata"</span></span><br></pre></td></tr></table></figure>
+<p>上面代码原意是将一个 DOM 节点作为对象<code>data</code>的键，但是由于对象只接受字符串作为键名，所以<code>element</code>被自动转为字符串<code>[object HTMLDivElement]</code>。</p>
+<p>为了解决这个问题，ES6 提供了 Map 数据结构。它类似于对象，也是键值对的集合，但是“键”的范围不限于字符串，各种类型的值（包括对象）都可以当作键。也就是说，Object 结构提供了“字符串—值”的对应，Map 结构提供了“值—值”的对应，是一种更完善的 Hash 结构实现。如果你需要“键值对”的数据结构，Map 比 Object 更合适。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> m = <span class="keyword">new</span> <span class="built_in">Map</span>();</span><br><span class="line"><span class="keyword">const</span> o = &#123;<span class="attr">p</span>: <span class="string">'Hello World'</span>&#125;;</span><br><span class="line"></span><br><span class="line">m.set(o, <span class="string">'content'</span>)</span><br><span class="line">m.get(o) <span class="comment">// "content"</span></span><br><span class="line"></span><br><span class="line">m.has(o) <span class="comment">// true</span></span><br><span class="line">m.delete(o) <span class="comment">// true</span></span><br><span class="line">m.has(o) <span class="comment">// false</span></span><br></pre></td></tr></table></figure>
+<p>上面代码使用 Map 结构的<code>set</code>方法，将对象<code>o</code>当作<code>m</code>的一个键，然后又使用<code>get</code>方法读取这个键，接着使用<code>delete</code>方法删除了这个键。</p>
+<p>上面的例子展示了如何向 Map 添加成员。作为构造函数，Map 也可以接受一个数组作为参数。该数组的成员是一个个表示键值对的数组。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> map = <span class="keyword">new</span> <span class="built_in">Map</span>([</span><br><span class="line">  [<span class="string">'name'</span>, <span class="string">'张三'</span>],</span><br><span class="line">  [<span class="string">'title'</span>, <span class="string">'Author'</span>]</span><br><span class="line">]);</span><br><span class="line"></span><br><span class="line">map.size <span class="comment">// 2</span></span><br><span class="line">map.has(<span class="string">'name'</span>) <span class="comment">// true</span></span><br><span class="line">map.get(<span class="string">'name'</span>) <span class="comment">// "张三"</span></span><br><span class="line">map.has(<span class="string">'title'</span>) <span class="comment">// true</span></span><br><span class="line">map.get(<span class="string">'title'</span>) <span class="comment">// "Author"</span></span><br></pre></td></tr></table></figure>
+<p>上面代码在新建 Map 实例时，就指定了两个键<code>name</code>和<code>title</code>。</p>
+<p><code>Map</code>构造函数接受数组作为参数，实际上执行的是下面的算法。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> items = [</span><br><span class="line">  [<span class="string">'name'</span>, <span class="string">'张三'</span>],</span><br><span class="line">  [<span class="string">'title'</span>, <span class="string">'Author'</span>]</span><br><span class="line">];</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> map = <span class="keyword">new</span> <span class="built_in">Map</span>();</span><br><span class="line"></span><br><span class="line">items.forEach(</span><br><span class="line">  ([key, value]) =&gt; map.set(key, value)</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+<p>事实上，不仅仅是数组，任何具有 Iterator 接口、且每个成员都是一个双元素的数组的数据结构（详见《Iterator》一章）都可以当作<code>Map</code>构造函数的参数。这就是说，<code>Set</code>和<code>Map</code>都可以用来生成新的 Map。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> <span class="keyword">set</span> = new Set([</span><br><span class="line">  ['foo', 1],</span><br><span class="line">  ['bar', 2]</span><br><span class="line">]);</span><br><span class="line">const m1 = new Map(<span class="keyword">set</span>);</span><br><span class="line">m1.<span class="keyword">get</span>('foo') // 1</span><br><span class="line"></span><br><span class="line">const m2 = new Map([['baz', 3]]);</span><br><span class="line">const m3 = new Map(m2);</span><br><span class="line">m3.<span class="keyword">get</span>('baz') // 3</span><br></pre></td></tr></table></figure>
+<p>上面代码中，我们分别使用 Set 对象和 Map 对象，当作<code>Map</code>构造函数的参数，结果都生成了新的 Map 对象。</p>
+<p>如果对同一个键多次赋值，后面的值将覆盖前面的值。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> map = <span class="keyword">new</span> <span class="built_in">Map</span>();</span><br><span class="line"></span><br><span class="line">map</span><br><span class="line">.set(<span class="number">1</span>, <span class="string">'aaa'</span>)</span><br><span class="line">.set(<span class="number">1</span>, <span class="string">'bbb'</span>);</span><br><span class="line"></span><br><span class="line">map.get(<span class="number">1</span>) <span class="comment">// "bbb"</span></span><br></pre></td></tr></table></figure>
+<p>上面代码对键<code>1</code>连续赋值两次，后一次的值覆盖前一次的值。</p>
+<p>如果读取一个未知的键，则返回<code>undefined</code>。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">new</span> <span class="built_in">Map</span>().get(<span class="string">'asfddfsasadf'</span>)</span><br><span class="line"><span class="comment">// undefined</span></span><br></pre></td></tr></table></figure>
+<p>注意，只有对同一个对象的引用，Map 结构才将其视为同一个键。这一点要非常小心。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> map = <span class="keyword">new</span> <span class="built_in">Map</span>();</span><br><span class="line"></span><br><span class="line">map.set([<span class="string">'a'</span>], <span class="number">555</span>);</span><br><span class="line">map.get([<span class="string">'a'</span>]) <span class="comment">// undefined</span></span><br></pre></td></tr></table></figure>
+<p>上面代码的<code>set</code>和<code>get</code>方法，表面是针对同一个键，但实际上这是两个值，内存地址是不一样的，因此<code>get</code>方法无法读取该键，返回<code>undefined</code>。</p>
+<p>同理，同样的值的两个实例，在 Map 结构中被视为两个键。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> map = <span class="keyword">new</span> <span class="built_in">Map</span>();</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> k1 = [<span class="string">'a'</span>];</span><br><span class="line"><span class="keyword">const</span> k2 = [<span class="string">'a'</span>];</span><br><span class="line"></span><br><span class="line">map</span><br><span class="line">.set(k1, <span class="number">111</span>)</span><br><span class="line">.set(k2, <span class="number">222</span>);</span><br><span class="line"></span><br><span class="line">map.get(k1) <span class="comment">// 111</span></span><br><span class="line">map.get(k2) <span class="comment">// 222</span></span><br></pre></td></tr></table></figure>
+<p>上面代码中，变量<code>k1</code>和<code>k2</code>的值是一样的，但是它们在 Map 结构中被视为两个键。</p>
+<p>由上可知，Map 的键实际上是跟内存地址绑定的，只要内存地址不一样，就视为两个键。这就解决了同名属性碰撞（clash）的问题，我们扩展别人的库的时候，如果使用对象作为键名，就不用担心自己的属性与原作者的属性同名。</p>
+<p>如果 Map 的键是一个简单类型的值（数字、字符串、布尔值），则只要两个值严格相等，Map 将其视为一个键，比如<code>0</code>和<code>-0</code>就是一个键，布尔值<code>true</code>和字符串<code>true</code>则是两个不同的键。另外，<code>undefined</code>和<code>null</code>也是两个不同的键。虽然<code>NaN</code>不严格相等于自身，但 Map 将其视为同一个键。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> map = <span class="keyword">new</span> <span class="built_in">Map</span>();</span><br><span class="line"></span><br><span class="line">map.set(<span class="number">-0</span>, <span class="number">123</span>);</span><br><span class="line">map.get(+<span class="number">0</span>) <span class="comment">// 123</span></span><br><span class="line"></span><br><span class="line">map.set(<span class="literal">true</span>, <span class="number">1</span>);</span><br><span class="line">map.set(<span class="string">'true'</span>, <span class="number">2</span>);</span><br><span class="line">map.get(<span class="literal">true</span>) <span class="comment">// 1</span></span><br><span class="line"></span><br><span class="line">map.set(<span class="literal">undefined</span>, <span class="number">3</span>);</span><br><span class="line">map.set(<span class="literal">null</span>, <span class="number">4</span>);</span><br><span class="line">map.get(<span class="literal">undefined</span>) <span class="comment">// 3</span></span><br><span class="line"></span><br><span class="line">map.set(<span class="literal">NaN</span>, <span class="number">123</span>);</span><br><span class="line">map.get(<span class="literal">NaN</span>) <span class="comment">// 123</span></span><br></pre></td></tr></table></figure>
+<h3 id="实例的属性和操作方法"><a href="#实例的属性和操作方法" class="headerlink" title="实例的属性和操作方法"></a>实例的属性和操作方法</h3><p>Map 结构的实例有以下属性和操作方法。</p>
+<p><strong>（1）size 属性</strong></p>
+<p><code>size</code>属性返回 Map 结构的成员总数。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> map = <span class="keyword">new</span> <span class="built_in">Map</span>();</span><br><span class="line">map.set(<span class="string">'foo'</span>, <span class="literal">true</span>);</span><br><span class="line">map.set(<span class="string">'bar'</span>, <span class="literal">false</span>);</span><br><span class="line"></span><br><span class="line">map.size <span class="comment">// 2</span></span><br></pre></td></tr></table></figure>
+<p><strong>（2）set(key, value)</strong></p>
+<p><code>set</code>方法设置键名<code>key</code>对应的键值为<code>value</code>，然后返回整个 Map 结构。如果<code>key</code>已经有值，则键值会被更新，否则就新生成该键。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> m = <span class="keyword">new</span> <span class="built_in">Map</span>();</span><br><span class="line"></span><br><span class="line">m.set(<span class="string">'edition'</span>, <span class="number">6</span>)        <span class="comment">// 键是字符串</span></span><br><span class="line">m.set(<span class="number">262</span>, <span class="string">'standard'</span>)     <span class="comment">// 键是数值</span></span><br><span class="line">m.set(<span class="literal">undefined</span>, <span class="string">'nah'</span>)    <span class="comment">// 键是 undefined</span></span><br></pre></td></tr></table></figure>
+<p><code>set</code>方法返回的是当前的<code>Map</code>对象，因此可以采用链式写法。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> map = <span class="keyword">new</span> <span class="built_in">Map</span>()</span><br><span class="line">  .set(<span class="number">1</span>, <span class="string">'a'</span>)</span><br><span class="line">  .set(<span class="number">2</span>, <span class="string">'b'</span>)</span><br><span class="line">  .set(<span class="number">3</span>, <span class="string">'c'</span>);</span><br></pre></td></tr></table></figure>
+<p><strong>（3）get(key)</strong></p>
+<p><code>get</code>方法读取<code>key</code>对应的键值，如果找不到<code>key</code>，返回<code>undefined</code>。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> m = <span class="keyword">new</span> <span class="built_in">Map</span>();</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> hello = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;<span class="built_in">console</span>.log(<span class="string">'hello'</span>);&#125;;</span><br><span class="line">m.set(hello, <span class="string">'Hello ES6!'</span>) <span class="comment">// 键是函数</span></span><br><span class="line"></span><br><span class="line">m.get(hello)  <span class="comment">// Hello ES6!</span></span><br></pre></td></tr></table></figure>
+<p><strong>（4）has(key)</strong></p>
+<p><code>has</code>方法返回一个布尔值，表示某个键是否在当前 Map 对象之中。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> m = <span class="keyword">new</span> <span class="built_in">Map</span>();</span><br><span class="line"></span><br><span class="line">m.set(<span class="string">'edition'</span>, <span class="number">6</span>);</span><br><span class="line">m.set(<span class="number">262</span>, <span class="string">'standard'</span>);</span><br><span class="line">m.set(<span class="literal">undefined</span>, <span class="string">'nah'</span>);</span><br><span class="line"></span><br><span class="line">m.has(<span class="string">'edition'</span>)     <span class="comment">// true</span></span><br><span class="line">m.has(<span class="string">'years'</span>)       <span class="comment">// false</span></span><br><span class="line">m.has(<span class="number">262</span>)           <span class="comment">// true</span></span><br><span class="line">m.has(<span class="literal">undefined</span>)     <span class="comment">// true</span></span><br></pre></td></tr></table></figure>
+<p><strong>（5）delete(key)</strong></p>
+<p><code>delete</code>方法删除某个键，返回<code>true</code>。如果删除失败，返回<code>false</code>。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> m = <span class="keyword">new</span> <span class="built_in">Map</span>();</span><br><span class="line">m.set(<span class="literal">undefined</span>, <span class="string">'nah'</span>);</span><br><span class="line">m.has(<span class="literal">undefined</span>)     <span class="comment">// true</span></span><br><span class="line"></span><br><span class="line">m.delete(<span class="literal">undefined</span>)</span><br><span class="line">m.has(<span class="literal">undefined</span>)       <span class="comment">// false</span></span><br></pre></td></tr></table></figure>
+<p><strong>（6）clear()</strong></p>
+<p><code>clear</code>方法清除所有成员，没有返回值。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> map = <span class="keyword">new</span> <span class="built_in">Map</span>();</span><br><span class="line">map.set(<span class="string">'foo'</span>, <span class="literal">true</span>);</span><br><span class="line">map.set(<span class="string">'bar'</span>, <span class="literal">false</span>);</span><br><span class="line"></span><br><span class="line">map.size <span class="comment">// 2</span></span><br><span class="line">map.clear()</span><br><span class="line">map.size <span class="comment">// 0</span></span><br></pre></td></tr></table></figure>
+<h3 id="遍历方法"><a href="#遍历方法" class="headerlink" title="遍历方法"></a>遍历方法</h3><p>Map 结构原生提供三个遍历器生成函数和一个遍历方法。</p>
+<ul>
+<li><code>keys()</code>：返回键名的遍历器。</li>
+<li><code>values()</code>：返回键值的遍历器。</li>
+<li><code>entries()</code>：返回所有成员的遍历器。</li>
+<li><code>forEach()</code>：遍历 Map 的所有成员。</li>
+</ul>
+<p>需要特别注意的是，Map 的遍历顺序就是插入顺序。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> map = <span class="keyword">new</span> <span class="built_in">Map</span>([</span><br><span class="line">  [<span class="string">'F'</span>, <span class="string">'no'</span>],</span><br><span class="line">  [<span class="string">'T'</span>,  <span class="string">'yes'</span>],</span><br><span class="line">]);</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> key <span class="keyword">of</span> map.keys()) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(key);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// "F"</span></span><br><span class="line"><span class="comment">// "T"</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> value <span class="keyword">of</span> map.values()) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(value);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// "no"</span></span><br><span class="line"><span class="comment">// "yes"</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> item <span class="keyword">of</span> map.entries()) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(item[<span class="number">0</span>], item[<span class="number">1</span>]);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// "F" "no"</span></span><br><span class="line"><span class="comment">// "T" "yes"</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 或者</span></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> [key, value] <span class="keyword">of</span> map.entries()) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(key, value);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// "F" "no"</span></span><br><span class="line"><span class="comment">// "T" "yes"</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 等同于使用map.entries()</span></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">let</span> [key, value] <span class="keyword">of</span> map) &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(key, value);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// "F" "no"</span></span><br><span class="line"><span class="comment">// "T" "yes"</span></span><br></pre></td></tr></table></figure>
+<p>上面代码最后的那个例子，表示 Map 结构的默认遍历器接口（<code>Symbol.iterator</code>属性），就是<code>entries</code>方法。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">map[<span class="built_in">Symbol</span>.iterator] === map.entries</span><br><span class="line"><span class="comment">// true</span></span><br></pre></td></tr></table></figure>
+<p>Map 结构转为数组结构，比较快速的方法是使用扩展运算符（<code>...</code>）。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> map = <span class="keyword">new</span> <span class="built_in">Map</span>([</span><br><span class="line">  [<span class="number">1</span>, <span class="string">'one'</span>],</span><br><span class="line">  [<span class="number">2</span>, <span class="string">'two'</span>],</span><br><span class="line">  [<span class="number">3</span>, <span class="string">'three'</span>],</span><br><span class="line">]);</span><br><span class="line"></span><br><span class="line">[...map.keys()]</span><br><span class="line"><span class="comment">// [1, 2, 3]</span></span><br><span class="line"></span><br><span class="line">[...map.values()]</span><br><span class="line"><span class="comment">// ['one', 'two', 'three']</span></span><br><span class="line"></span><br><span class="line">[...map.entries()]</span><br><span class="line"><span class="comment">// [[1,'one'], [2, 'two'], [3, 'three']]</span></span><br><span class="line"></span><br><span class="line">[...map]</span><br><span class="line"><span class="comment">// [[1,'one'], [2, 'two'], [3, 'three']]</span></span><br></pre></td></tr></table></figure>
+<p>结合数组的<code>map</code>方法、<code>filter</code>方法，可以实现 Map 的遍历和过滤（Map 本身没有<code>map</code>和<code>filter</code>方法）。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> map0 = <span class="keyword">new</span> <span class="built_in">Map</span>()</span><br><span class="line">  .set(<span class="number">1</span>, <span class="string">'a'</span>)</span><br><span class="line">  .set(<span class="number">2</span>, <span class="string">'b'</span>)</span><br><span class="line">  .set(<span class="number">3</span>, <span class="string">'c'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> map1 = <span class="keyword">new</span> <span class="built_in">Map</span>(</span><br><span class="line">  [...map0].filter(<span class="function">(<span class="params">[k, v]</span>) =&gt;</span> k &lt; <span class="number">3</span>)</span><br><span class="line">);</span><br><span class="line"><span class="comment">// 产生 Map 结构 &#123;1 =&gt; 'a', 2 =&gt; 'b'&#125;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> map2 = <span class="keyword">new</span> <span class="built_in">Map</span>(</span><br><span class="line">  [...map0].map(<span class="function">(<span class="params">[k, v]</span>) =&gt;</span> [k * <span class="number">2</span>, <span class="string">'_'</span> + v])</span><br><span class="line">    );</span><br><span class="line"><span class="comment">// 产生 Map 结构 &#123;2 =&gt; '_a', 4 =&gt; '_b', 6 =&gt; '_c'&#125;</span></span><br></pre></td></tr></table></figure>
+<p>此外，Map 还有一个<code>forEach</code>方法，与数组的<code>forEach</code>方法类似，也可以实现遍历。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">map.forEach(<span class="function"><span class="keyword">function</span>(<span class="params">value, key, map</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">"Key: %s, Value: %s"</span>, key, value);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p><code>forEach</code>方法还可以接受第二个参数，用来绑定<code>this</code>。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> reporter = &#123;</span><br><span class="line">  report: <span class="function"><span class="keyword">function</span>(<span class="params">key, value</span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">"Key: %s, Value: %s"</span>, key, value);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">map.forEach(<span class="function"><span class="keyword">function</span>(<span class="params">value, key, map</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">this</span>.report(key, value);</span><br><span class="line">&#125;, reporter);</span><br></pre></td></tr></table></figure>
+<p>上面代码中，<code>forEach</code>方法的回调函数的<code>this</code>，就指向<code>reporter</code>。</p>
+<h3 id="与其他数据结构的互相转换"><a href="#与其他数据结构的互相转换" class="headerlink" title="与其他数据结构的互相转换"></a>与其他数据结构的互相转换</h3><p><strong>（1）Map 转为数组</strong></p>
+<p>前面已经提过，Map 转为数组最方便的方法，就是使用扩展运算符（<code>...</code>）。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> myMap = <span class="keyword">new</span> <span class="built_in">Map</span>()</span><br><span class="line">  .set(<span class="literal">true</span>, <span class="number">7</span>)</span><br><span class="line">  .set(&#123;<span class="attr">foo</span>: <span class="number">3</span>&#125;, [<span class="string">'abc'</span>]);</span><br><span class="line">[...myMap]</span><br><span class="line"><span class="comment">// [ [ true, 7 ], [ &#123; foo: 3 &#125;, [ 'abc' ] ] ]</span></span><br></pre></td></tr></table></figure>
+<p><strong>（2）数组 转为 Map</strong></p>
+<p>将数组传入 Map 构造函数，就可以转为 Map。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">new</span> <span class="built_in">Map</span>([</span><br><span class="line">  [<span class="literal">true</span>, <span class="number">7</span>],</span><br><span class="line">  [&#123;<span class="attr">foo</span>: <span class="number">3</span>&#125;, [<span class="string">'abc'</span>]]</span><br><span class="line">])</span><br><span class="line"><span class="comment">// Map &#123;</span></span><br><span class="line"><span class="comment">//   true =&gt; 7,</span></span><br><span class="line"><span class="comment">//   Object &#123;foo: 3&#125; =&gt; ['abc']</span></span><br><span class="line"><span class="comment">// &#125;</span></span><br></pre></td></tr></table></figure>
+<p><strong>（3）Map 转为对象</strong></p>
+<p>如果所有 Map 的键都是字符串，它可以无损地转为对象。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">strMapToObj</span>(<span class="params">strMap</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">let</span> obj = <span class="built_in">Object</span>.create(<span class="literal">null</span>);</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">let</span> [k,v] <span class="keyword">of</span> strMap) &#123;</span><br><span class="line">    obj[k] = v;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> obj;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> myMap = <span class="keyword">new</span> <span class="built_in">Map</span>()</span><br><span class="line">  .set(<span class="string">'yes'</span>, <span class="literal">true</span>)</span><br><span class="line">  .set(<span class="string">'no'</span>, <span class="literal">false</span>);</span><br><span class="line">strMapToObj(myMap)</span><br><span class="line"><span class="comment">// &#123; yes: true, no: false &#125;</span></span><br></pre></td></tr></table></figure>
+<p>如果有非字符串的键名，那么这个键名会被转成字符串，再作为对象的键名。</p>
+<p><strong>（4）对象转为 Map</strong></p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">objToStrMap</span>(<span class="params">obj</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">let</span> strMap = <span class="keyword">new</span> <span class="built_in">Map</span>();</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">let</span> k <span class="keyword">of</span> <span class="built_in">Object</span>.keys(obj)) &#123;</span><br><span class="line">    strMap.set(k, obj[k]);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> strMap;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">objToStrMap(&#123;<span class="attr">yes</span>: <span class="literal">true</span>, <span class="attr">no</span>: <span class="literal">false</span>&#125;)</span><br><span class="line"><span class="comment">// Map &#123;"yes" =&gt; true, "no" =&gt; false&#125;</span></span><br></pre></td></tr></table></figure>
+<p><strong>（5）Map 转为 JSON</strong></p>
+<p>Map 转为 JSON 要区分两种情况。一种情况是，Map 的键名都是字符串，这时可以选择转为对象 JSON。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">strMapToJson</span>(<span class="params">strMap</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">JSON</span>.stringify(strMapToObj(strMap));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> myMap = <span class="keyword">new</span> <span class="built_in">Map</span>().set(<span class="string">'yes'</span>, <span class="literal">true</span>).set(<span class="string">'no'</span>, <span class="literal">false</span>);</span><br><span class="line">strMapToJson(myMap)</span><br><span class="line"><span class="comment">// '&#123;"yes":true,"no":false&#125;'</span></span><br></pre></td></tr></table></figure>
+<p>另一种情况是，Map 的键名有非字符串，这时可以选择转为数组 JSON。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">mapToArrayJson</span>(<span class="params">map</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">JSON</span>.stringify([...map]);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> myMap = <span class="keyword">new</span> <span class="built_in">Map</span>().set(<span class="literal">true</span>, <span class="number">7</span>).set(&#123;<span class="attr">foo</span>: <span class="number">3</span>&#125;, [<span class="string">'abc'</span>]);</span><br><span class="line">mapToArrayJson(myMap)</span><br><span class="line"><span class="comment">// '[[true,7],[&#123;"foo":3&#125;,["abc"]]]'</span></span><br></pre></td></tr></table></figure>
+<p><strong>（6）JSON 转为 Map</strong></p>
+<p>JSON 转为 Map，正常情况下，所有键名都是字符串。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">jsonToStrMap</span>(<span class="params">jsonStr</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> objToStrMap(<span class="built_in">JSON</span>.parse(jsonStr));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">jsonToStrMap(<span class="string">'&#123;"yes": true, "no": false&#125;'</span>)</span><br><span class="line"><span class="comment">// Map &#123;'yes' =&gt; true, 'no' =&gt; false&#125;</span></span><br></pre></td></tr></table></figure>
+<p>但是，有一种特殊情况，整个 JSON 就是一个数组，且每个数组成员本身，又是一个有两个成员的数组。这时，它可以一一对应地转为 Map。这往往是 Map 转为数组 JSON 的逆操作。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">jsonToMap</span>(<span class="params">jsonStr</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">Map</span>(<span class="built_in">JSON</span>.parse(jsonStr));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">jsonToMap(<span class="string">'[[true,7],[&#123;"foo":3&#125;,["abc"]]]'</span>)</span><br><span class="line"><span class="comment">// Map &#123;true =&gt; 7, Object &#123;foo: 3&#125; =&gt; ['abc']&#125;</span></span><br></pre></td></tr></table></figure>
+<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="https://github.com/ruanyf/es6tutorial/blob/gh-pages/docs/set-map.md" target="_blank" rel="noopener">https://github.com/ruanyf/es6tutorial/blob/gh-pages/docs/set-map.md</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+  
+  <div class="tags">
+    <a href="/tags/Node-js/">Node.js</a>
+  </div>
+
+        
+  <div class="addthis addthis_toolbox addthis_default_style">
+    
+      <a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+    
+    
+      <a class="addthis_button_tweet"></a>
+    
+    
+      <a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+    
+    
+      <a class="addthis_button_pinterest_pinit" pi:pinit:layout="horizontal"></a>
+    
+    <a class="addthis_counter addthis_pill_style"></a>
+  </div>
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js"></script>
+
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">留言</h1>
+
+  
+      <div id="fb-root"></div>
+<script>
+  (function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=shouliang0816";
+    fjs.parentNode.insertBefore(js, fjs);
+  }(document, 'script', 'facebook-jssdk'));
+</script>
+
+<div class="fb-comments" data-href="https://shouliang.github.io/2016/06/29/Node.js/ES6—Set和Map数据结构/index.html" data-num-posts="5" data-width="840" data-colorscheme="light"></div>
+      
+  
+</section>
+
+</div></div>
+    <aside id="sidebar" class="alignright">
+  <div class="search">
+  <form action="//google.com/search" method="get" accept-charset="utf-8">
+    <input type="search" name="q" results="0" placeholder="搜索">
+    <input type="hidden" name="q" value="site:shouliang.github.io">
+  </form>
+</div>
+
+  
+
+  
+<div class="widget tag">
+  <h3 class="title">标签</h3>
+  <ul class="entry">
+  
+    <li><a href="/tags/Docker/">Docker</a><small>3</small></li>
+  
+    <li><a href="/tags/Git/">Git</a><small>7</small></li>
+  
+    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>5</small></li>
+  
+    <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
+  
+    <li><a href="/tags/MySQL实战/">MySQL实战</a><small>5</small></li>
+  
+    <li><a href="/tags/Node-js/">Node.js</a><small>58</small></li>
+  
+    <li><a href="/tags/Redis/">Redis</a><small>2</small></li>
+  
+    <li><a href="/tags/Unix/">Unix</a><small>4</small></li>
+  
+    <li><a href="/tags/从0开始学大数据/">从0开始学大数据</a><small>2</small></li>
+  
+    <li><a href="/tags/区块链/">区块链</a><small>1</small></li>
+  
+    <li><a href="/tags/数据分析实战/">数据分析实战</a><small>3</small></li>
+  
+    <li><a href="/tags/数据库/">数据库</a><small>2</small></li>
+  
+    <li><a href="/tags/数据结构与算法/">数据结构与算法</a><small>13</small></li>
+  
+    <li><a href="/tags/程序员的数学基础课/">程序员的数学基础课</a><small>5</small></li>
+  
+    <li><a href="/tags/网络安全/">网络安全</a><small>8</small></li>
+  
+    <li><a href="/tags/计算机网络/">计算机网络</a><small>1</small></li>
+  
+    <li><a href="/tags/趣谈网络协议/">趣谈网络协议</a><small>8</small></li>
+  
+  </ul>
+</div>
+
+</aside>
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div class="alignleft">
+  
+  &copy; 2019 shouliang
+  
+</div>
+<div class="clearfix"></div></footer>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+</body>
+</html>

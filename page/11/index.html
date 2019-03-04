@@ -1,6 +1,6 @@
 <!DOCTYPE HTML>
 <html>
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="utf-8">
   
   <title>第 11 页 | shouliang&#39;s blog</title>
@@ -12,10 +12,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
   
-  <meta property="og:site_name" content="shouliang&#39;s blog"/>
+  <meta property="og:site_name" content="shouliang&#39;s blog">
 
   
-    <meta property="og:image" content=""/>
+    <meta property="og:image" content>
   
 
   <link href="/favicon.png" rel="icon">
@@ -25,7 +25,7 @@
   
 
 </head>
-
+</html>
 
 <body>
   <header id="header" class="inner"><div class="alignleft">
@@ -47,120 +47,6 @@
 <div class="clearfix"></div></header>
   <div id="content" class="inner">
     <div id="main-col" class="alignleft"><div id="wrapper">
-  <article class="post">
-  
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2014-06-20T06:45:23.000Z"><a href="/2014/06/20/Git/Git(3)操作Git/">2014-06-20</a></time>
-      
-      
-  
-    <h1 class="title"><a href="/2014/06/20/Git/Git(3)操作Git/">三.操作Git</a></h1>
-  
-
-    </header>
-    <div class="entry">
-      
-        <h3 id="1-status命令与diff命令"><a href="#1-status命令与diff命令" class="headerlink" title="1.status命令与diff命令"></a>1.status命令与diff命令</h3><hr>
-<p>前面我们已经成功地添加并提交了一个readme.txt文件，修改readme.txt如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">echo &quot;Git is a distributed version control system. &quot; &gt; readme.txt</span><br><span class="line">echo &quot;Git is free software.&quot; &gt;&gt; readme.txt</span><br></pre></td></tr></table></figure></p>
-<p>　　运行git status命令看看结果：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git status</span><br><span class="line">...</span><br><span class="line">no changes added to commit (use &quot;git add&quot; and/or &quot;git commit -a&quot;)</span><br></pre></td></tr></table></figure></p>
-<p>　　git status命令可以让我们时刻掌握仓库当前的状态，上面显示，readme.txt被修改过了，但还没有准备提交的修改。</p>
-<p>　　git diff这个命令看看：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ git diff readme.txt </span><br><span class="line">...</span><br><span class="line">-Git is version control system.                                             </span><br><span class="line">+Git is a distributed version control system.</span><br><span class="line"> Git is free software</span><br></pre></td></tr></table></figure></p>
-<p>　　git diff顾名思义就是查看difference，显示的格式正是Unix通用的diff格式，可以从上面的命令输出看到，我们在第一行添加了一个“distributed”单词。</p>
-<p>　　readme.txt作了什么修改后，再把它提交到仓库，提交修改和提交新文件是一样的两步，git add和git commit：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git add readme.txt</span><br><span class="line">$ git commit -m &quot;add distributed&quot;</span><br></pre></td></tr></table></figure></p>
-<p>注意</p>
-<ul>
-<li>要随时掌握工作区的状态，使用git status命令。</li>
-<li>如果git status告诉你有文件被修改过，用git diff可以查看修改内容。</li>
-</ul>
-<h3 id="2-版本回退"><a href="#2-版本回退" class="headerlink" title="2.版本回退"></a>2.版本回退</h3><hr>
-<p>现在，再练习一次，修改readme.txt文件如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">echo &quot;Git is a distributed version control system.&quot; &gt; readme.txt</span><br><span class="line">echo &quot;Git is free software distributed under the GPL.&quot; &gt;&gt; readme.txt</span><br></pre></td></tr></table></figure></p>
-<p>　　我们再次提交一次readme.txt<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git add readme.txt</span><br><span class="line">$ git commit -m &quot;append GPL&quot;</span><br></pre></td></tr></table></figure></p>
-<p>　　我们现在已经提交多次文件，想看看有那些？版本控制系统肯定有某个命令可以告诉我们历史记录，在Git中，我们用git log命令查看：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$ git log</span><br><span class="line">commit 3628164fb26d48395383f8f31179f24e0882e1e0</span><br><span class="line">Date:   Tue Oct 25 15:11:49 2015 +0000</span><br><span class="line">    append GPL</span><br><span class="line">commit ea34578d5496d7dd233c827ed32a8cd576c5ee85</span><br><span class="line">Date:   Tue Oct 25 14:53:12 2015 +0000</span><br><span class="line">    add distributed</span><br><span class="line">commit cb926e7ea50ad11b8f9e909c05226233bf755030</span><br><span class="line">Date:   Mon Oct 24 17:51:55 2015 +0000</span><br><span class="line">    wrote a readme file</span><br></pre></td></tr></table></figure></p>
-<p>　　git log命令显示从最近到最远的提交日志，我们可以看到3次提交，最近的一次是append GPL，上一次是add distributed，最早的一次是wrote a readme file。commit 36281**2e1e0是commit id（版本号）。如果嫌输出信息太多，可以使用$ git log –pretty=oneline，此时你看到的一大串类似3628164…882e1e0的是commit id（版本号）。</p>
-<p>　　每提交一个新版本，实际上Git就会把它们自动串成一条时间线。现在准备把readme.txt回退到上一个版本，也就是“add distributed”的那个版本，怎么做呢？</p>
-<p>　　首先，Git必须知道当前版本是哪个版本，在Git中，用HEAD表示当前版本，也就是最新的提交3628164…882e1e0（注意我的提交ID和你的肯定不一样），上一个版本就是HEAD^，上上一个版本就是HEAD^^，当然往上100个版本写100个^比较容易数不过来，所以写成HEAD~100。</p>
-<p>　　现在，我们要把当前版本“append GPL”回退到上一个版本“add distributed”，就可以使用git reset命令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git reset --hard HEAD^</span><br><span class="line">HEAD is now at ea34578 add distributed</span><br></pre></td></tr></table></figure></p>
-<h3 id="3-重新恢复到新版本"><a href="#3-重新恢复到新版本" class="headerlink" title="3.重新恢复到新版本"></a>3.重新恢复到新版本</h3><hr>
-<p>接着上节版本回退，还可以继续回退到上一个版本wrote a readme file，不过我们现在看看版本库的状态git log：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git log</span><br></pre></td></tr></table></figure></p>
-<p>　　最新的那个版本append GPL已经看不到了！好比你从21世纪坐时光穿梭机来到了19世纪，想再回去已经回不去了，肿么办？</p>
-<p>　　只要之前的命令行结果还在，就可以找到那个append GPL的commit id是3628164…，于是就可以指定回到未来的某个版本：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git reset --hard 3628164</span><br><span class="line">HEAD is now at 3628164 append GPL</span><br></pre></td></tr></table></figure></p>
-<p>　　版本号没必要写全，前几位就可以了，Git会自动去找。当然也不能只写前一两位，因为Git可能会找到多个版本号，就无法确定是哪一个了。</p>
-<p>　　可以查看readme.txt的内容$ cat readme.txt.</p>
-<p>　　Git的版本回退速度非常快，因为Git在内部有个指向当前版本的HEAD指针，当你回退版本的时候，Git仅仅是把HEAD从指向append GPL：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkback01.jpg" alt=""><br>改为指向add distributed：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkback02.jpg" alt=""></p>
-<h3 id="4-git-reflog命令"><a href="#4-git-reflog命令" class="headerlink" title="4.git reflog命令"></a>4.git reflog命令</h3><hr>
-<p>现在，你回退到了某个版本，当想恢复到新版本怎么办？找不到新版本的commit id怎么办？</p>
-<p>　　在Git中可以放心下。当你用$ git reset –hard HEAD^回退到add distributed版本时，再想恢复到append GPL，就必须找到append GPL的commit id。Git提供了一个命令git reflog用来记录你的每一次命令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ git reflog</span><br><span class="line">ea34578 HEAD@&#123;0&#125;: reset: moving to HEAD^</span><br><span class="line">3628164 HEAD@&#123;1&#125;: commit: append GPL</span><br><span class="line">ea34578 HEAD@&#123;2&#125;: commit: add distributed</span><br><span class="line">cb926e7 HEAD@&#123;3&#125;: commit (initial): wrote a readme file</span><br></pre></td></tr></table></figure></p>
-<p>　　这样可以看到，第二行显示append GPL的commit id是3628164，这样我们就可以重新找到了。</p>
-<p>　　注意，我们从这两节中可以了解到：</p>
-<p>HEAD指向的版本就是当前版本，因此，Git允许我们在版本的历史之间穿梭，使用命令git reset –hard commit_id。<br>穿梭前，用git log可以查看提交历史，以便确定要回退到哪个版本。<br>要重返未来，用git reflog查看命令历史，以便确定要回到未来的哪个版本。</p>
-<h3 id="5-工作区"><a href="#5-工作区" class="headerlink" title="5.工作区"></a>5.工作区</h3><hr>
-<p><strong>工作区</strong>：就是你在电脑里能看到的目录,learngit文件夹就是一个工作区，比如我们环境中当前的目录。</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkworkArea.png" alt=""></p>
-<h3 id="6-暂存区"><a href="#6-暂存区" class="headerlink" title="6.暂存区"></a>6.暂存区</h3><hr>
-<p><strong>版本库:</strong>工作区有一个隐藏目录.git 这个不算工作区，而是Git的版本库。</p>
-<p><strong>暂存区:</strong>英文叫stage,或index。一般存放在git 目录下的index文件(.git/index)中，所以我们把暂存区时也叫作索引(index).</p>
-<p>Git的版本库里存了很多东西，其中最重要的就是称为stage（或者叫index）的暂存区，还有Git为我们自动创建的第一个分支master，以及指向master的一个指针叫HEAD。</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkstage.jpg" alt=""></p>
-<h3 id="7-暂存区实践"><a href="#7-暂存区实践" class="headerlink" title="7.暂存区实践"></a>7.暂存区实践</h3><hr>
-<p>现在我们对readme.txt做个修改，比如追加一行内容：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">echo &quot;Git has a mutable index called stage.&quot; &gt;&gt; readme.txt</span><br></pre></td></tr></table></figure></p>
-<p>然后，在工作区新增一个LICENSE文本文件<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">echo &quot;LICENSE is a new file.&quot; &gt; LICENSE</span><br></pre></td></tr></table></figure></p>
-<p>用git status查看一下状态，Git显示结果，readme.txt被修改了，而LICENSE还从来没有被添加过，所以它的状态是Untracked。</p>
-<p>现在，使用两次命令git add，把readme.txt和LICENSE都添加后，用git status再查看一下，通过图可以理解为</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkstorageArea01.jpg" alt=""><br>所以，git add命令实际上就是把要提交的所有修改放到暂存区（Stage），然后，执行git commit就可以一次性把暂存区的所有修改提交到分支。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git commit -m &quot;understand how stage works&quot;</span><br></pre></td></tr></table></figure></p>
-<p>一旦提交后，如果你又没有对工作区做任何修改，用git status查看下，没有任何内容，现在版本库变成了这样，暂存区就没有任何内容了：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkstorageArea02.jpg" alt=""></p>
-<h3 id="8-管理修改"><a href="#8-管理修改" class="headerlink" title="8.管理修改"></a>8.管理修改</h3><hr>
-<p>Git与其他版本控制系统相比，Git跟踪并管理的是修改，而非文件。</p>
-<p>　　为什么说Git管理的是修改，而不是文件。接下来做测试，我们对readme.txt修改，追加一行内容：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">echo &quot;Git tracks changes.&quot; &gt;&gt; readme.txt</span><br></pre></td></tr></table></figure></p>
-<p>　　然后通过git add添加<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ git add readme.txt</span><br><span class="line">$ git status</span><br></pre></td></tr></table></figure></p>
-<p>　　接下来，我们再次修改readme.txt内容，把最后一行内容修改为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Git tracks changes of files.</span><br></pre></td></tr></table></figure></p>
-<p>　　git commit提交<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git commit -m &quot;git tracks changes&quot;</span><br><span class="line">[master d4f25b6] git tracks changes</span><br><span class="line"> 1 file changed, 1 insertion(+)</span><br></pre></td></tr></table></figure></p>
-<p>　　通过git status查看每次操作的状态，可以看出第二次修改 -&gt; git commit，没有被提交。</p>
-<p>　　Git管理的是修改，当你用git add命令后，在工作区的第一次修改被放入暂存区，准备提交，但是，在工作区的第二次修改并没有放入暂存区，所以，git commit只负责把暂存区的修改提交了，也就是第一次的修改被提交了，第二次的修改不会被提交。</p>
-<p>Git是如何跟踪修改的，每次修改，如果不add到暂存区，那就不会加入到commit中。</p>
-<h3 id="9-撤销修改"><a href="#9-撤销修改" class="headerlink" title="9.撤销修改"></a>9.撤销修改</h3><hr>
-<p>如果你在readme.txt中加入了一行文件，又感觉不好，你可以删除新加的，恢复到原来的。</p>
-<p>Git会告诉你，git checkout – file可以丢弃工作区的修改：<br> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout -- readme.txt</span><br></pre></td></tr></table></figure></p>
-<p>命令git checkout – readme.txt意思就是，把readme.txt文件在工作区的修改全部撤销，这里有两种情况：</p>
-<ul>
-<li>一种是readme.txt自修改后还没有被放到暂存区，现在，撤销修改就回到和版本库一模一样的状态；</li>
-<li>一种是readme.txt已经添加到暂存区后，又作了修改，现在，撤销修改就回到添加到暂存区后的状态。<br>总之，就是让这个文件回到最近一次git commit或git add时的状态。</li>
-</ul>
-<p>现在，看看readme.txt的文件内容：<br> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ cat readme.txt</span><br><span class="line">Git is a distributed version control system.</span><br><span class="line">Git is free software distributed under the GPL.</span><br><span class="line">Git has a mutable index called stage.</span><br><span class="line">Git tracks changes of files.</span><br></pre></td></tr></table></figure></p>
-<p>现在来看几种情况，如何撤销修改</p>
-<p>1：当你改乱了工作区某个文件的内容，想直接丢弃工作区的修改时，用命令git checkout – file。</p>
-<p>2：当你不但改乱了工作区某个文件的内容，还添加到了暂存区时，想丢弃修改，分两步：</p>
-<p>第一步用命令git reset HEAD file，就回到了1；<br>第二步按1操作。<br>3：已经提交了不合适的修改到版本库时，想要撤销本次提交，参考版本回退一节，不过前提是没有推送到远程库。</p>
-<h3 id="10-删除文件"><a href="#10-删除文件" class="headerlink" title="10.删除文件"></a>10.删除文件</h3><hr>
-<p>在Git中，删除也是一个修改操作，先添加一个新文件test.txt到Git并且提交：<br> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ git add test.txt</span><br><span class="line">$ git commit -m &quot;add test.txt&quot;</span><br><span class="line">[master 94cdc44] add test.txt</span><br><span class="line"> 1 file changed, 1 insertion(+)</span><br><span class="line"> create mode 100644 test.txt</span><br></pre></td></tr></table></figure></p>
-<p>一般情况下，你通常直接在文件管理器中把没用的文件删了，或者用rm命令删了：<br> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ rm test.txt</span><br></pre></td></tr></table></figure></p>
-<p>这个时候，Git知道你删除了文件，因此，工作区和版本库就不一致了，git status命令会立刻告诉你哪些文件被删除了：<br> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git status</span><br><span class="line">...</span><br><span class="line">no changes added to commit (use &quot;git add&quot; and/or &quot;git commit -a&quot;)</span><br></pre></td></tr></table></figure></p>
-<p>现在你有两个选择，一是确实要从版本库中删除该文件，那就用命令git rm删掉，并且git commit：<br> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$ git rm test.txt</span><br><span class="line">rm &apos;test.txt&apos;</span><br><span class="line">$ git commit -m &quot;remove test.txt&quot;</span><br></pre></td></tr></table></figure></p>
-<p>现在，文件就从版本库中被删除了。</p>
-<p>另一种情况是删错了，因为版本库里还有呢，所以可以很轻松地把误删的文件恢复到最新版本：<br> <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ git checkout -- test.txt</span><br></pre></td></tr></table></figure></p>
-<p>git checkout其实是用版本库里的版本替换工作区的版本，无论工作区是修改还是删除，都可以“一键还原”。</p>
-<p>　　命令git rm用于删除一个文件。如果一个文件已经被提交到版本库，那么你永远不用担心误删，但是要小心，你只能恢复文件到最新版本，你会丢失最近一次提交后你修改的内容。</p>
-
-      
-    </div>
-    <footer>
-      
-        
-        
-      
-      <div class="clearfix"></div>
-    </footer>
-  </div>
-</article>
-
-
-
-
   <article class="post">
   
   <div class="post-content">
@@ -245,7 +131,7 @@
 <h3 id="2-Git介绍"><a href="#2-Git介绍" class="headerlink" title="2.Git介绍"></a>2.Git介绍</h3><hr>
 <p>Git是一款免费、开源的分布式版本控制系统，用于敏捷高效地处理任何或小或大的项目。</p>
 <p>　　Git是一个开源的分布式版本控制系统，用以有效、高速的处理从很小到非常大的项目版本管理。Git 是 Linus Torvalds 为了帮助管理 Linux 内核开发而开发的一个开放源码的版本控制软件。</p>
-<p>　　最原始的版本控制是纯手工的版本控制：修改文件，保存文件副本。有时候偷懒省事，保存副本时命名比较随意，时间长了就不知道哪个是新的，哪个是老的了，即使知道新旧，可能也不知道每个版本是什么内容，相对上一版作了什么修改了，当几个版本过去后，很可能就是下面的样子了：<br>　　<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkold_version.jpg" alt=""></p>
+<p>　　最原始的版本控制是纯手工的版本控制：修改文件，保存文件副本。有时候偷懒省事，保存副本时命名比较随意，时间长了就不知道哪个是新的，哪个是老的了，即使知道新旧，可能也不知道每个版本是什么内容，相对上一版作了什么修改了，当几个版本过去后，很可能就是下面的样子了：<br>　　<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkold_version.jpg" alt></p>
 <h3 id="3-Git特点"><a href="#3-Git特点" class="headerlink" title="3.Git特点"></a>3.Git特点</h3><hr>
 <p>分布式相比于集中式的最大区别在于开发者可以提交到本地，每个开发者通过克隆（git clone），在本地机器上拷贝一个完整的Git仓库。</p>
 <ul>
@@ -254,17 +140,17 @@
 <li>时刻保持数据完整性 ：在保存到 Git 之前，所有数据都要进行内容的校验和（checksum）计算，并将此结果作为数据的唯一标识和索引。</li>
 <li>多数操作仅添加数据 ：常用的 Git 操作大多仅仅是把数据添加到数据库。<br>开发流程示意图：</li>
 </ul>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkdevelop.jpg" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkdevelop.jpg" alt></p>
 <h3 id="4-集中式"><a href="#4-集中式" class="headerlink" title="4.集中式"></a>4.集中式</h3><hr>
 <p>CVS及SVN都是集中式的版本控制系统，而Git是分布式版本控制系统。</p>
-<p>　　集中式版本控制系统，版本库是集中存放在中央服务器的，一起工作的人需要用自己的电脑从服务器上同步更新或上传自己的修改。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkfos.jpg" alt="">　　</p>
+<p>　　集中式版本控制系统，版本库是集中存放在中央服务器的，一起工作的人需要用自己的电脑从服务器上同步更新或上传自己的修改。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkfos.jpg" alt>　　</p>
 <p>但是，所有的版本数据都存在服务器上，用户的本地设备就只有自己以前所同步的版本，如果不连网的话，用户就看不到历史版本，也无法切换版本验证问题，或在不同分支工作。。</p>
 <p>　　而且，所有数据都保存在单一的服务器上，有很大的风险这个服务器会损坏，这样就会丢失所有的数据，当然可以定期备份。　　</p>
 <h3 id="5-分布式"><a href="#5-分布式" class="headerlink" title="5.分布式"></a>5.分布式</h3><hr>
 <p>那分布式版本控制系统与集中式版本控制系统有何不同呢？</p>
 <p>　分布式版本控制系统根本没有“中央服务器”，每个人的电脑上都是一个完整的版本库，不需要联网就可以工作。既然每个人电脑上都有一个完整的版本库，那多个人如何协作呢？比方说你和同事在各自电脑修改相同文件，这时，你们俩之间只需把各自的修改推送给对方，就可以互相看到对方的修改了。</p>
 <p>　　分布式版本控制系统的安全性要高很多，因为每个人电脑里都有完整的版本库。大家之间可以相互复制。</p>
-<p>　　分布式版本控制系统通常也有一台充当“中央服务器”的电脑，但这个服务器的作用仅仅是用来方便“交换”大家的修改，没有它大家也一样干活，只是交换修改不方便而已。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkdis.jpg" alt=""></p>
+<p>　　分布式版本控制系统通常也有一台充当“中央服务器”的电脑，但这个服务器的作用仅仅是用来方便“交换”大家的修改，没有它大家也一样干活，只是交换修改不方便而已。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkdis.jpg" alt></p>
 <h3 id="6-Git安装"><a href="#6-Git安装" class="headerlink" title="6.Git安装"></a>6.Git安装</h3><hr>
 <p>最早Git是在Linux上开发的，很长一段时间内，Git也只能在Linux和Unix系统上跑。不过，慢慢地有人把它移植到了Windows上。现在，Git可以在Linux、Unix、Mac和Windows这几大平台上正常运行了。</p>
 <p>　　在Linux上安装Git</p>
@@ -297,11 +183,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2014-06-13T11:45:23.000Z"><a href="/2014/06/13/Node.js_测试/Mocha(4)为项目开发一个BDD测试/">2014-06-13</a></time>
+        <time datetime="2014-06-13T11:45:23.000Z"><a href="/2014/06/13/Node.js/Mocha—Mocha(4)为项目开发一个BDD测试/">2014-06-13</a></time>
       
       
   
-    <h1 class="title"><a href="/2014/06/13/Node.js_测试/Mocha(4)为项目开发一个BDD测试/">四.为项目开发一个BDD测试</a></h1>
+    <h1 class="title"><a href="/2014/06/13/Node.js/Mocha—Mocha(4)为项目开发一个BDD测试/">Mocha—四.为项目开发一个BDD测试</a></h1>
   
 
     </header>
@@ -346,11 +232,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2014-06-10T08:45:23.000Z"><a href="/2014/06/10/Node.js_测试/Mocha(3)hook机制和测试技巧/">2014-06-10</a></time>
+        <time datetime="2014-06-10T08:45:23.000Z"><a href="/2014/06/10/Node.js/Mocha—Mocha(3)hook机制和测试技巧/">2014-06-10</a></time>
       
       
   
-    <h1 class="title"><a href="/2014/06/10/Node.js_测试/Mocha(3)hook机制和测试技巧/">三.hook机制和测试技巧</a></h1>
+    <h1 class="title"><a href="/2014/06/10/Node.js/Mocha—Mocha(3)hook机制和测试技巧/">Mocha—三.hook机制和测试技巧</a></h1>
   
 
     </header>
@@ -406,11 +292,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2014-06-08T07:45:23.000Z"><a href="/2014/06/08/Node.js_测试/Mocha(2)mocha接口/">2014-06-08</a></time>
+        <time datetime="2014-06-08T07:45:23.000Z"><a href="/2014/06/08/Node.js/Mocha—Mocha(2)mocha接口/">2014-06-08</a></time>
       
       
   
-    <h1 class="title"><a href="/2014/06/08/Node.js_测试/Mocha(2)mocha接口/">二.mocha接口</a></h1>
+    <h1 class="title"><a href="/2014/06/08/Node.js/Mocha—Mocha(2)mocha接口/">Mocha—二.mocha接口</a></h1>
   
 
     </header>
@@ -482,11 +368,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2014-06-05T06:45:23.000Z"><a href="/2014/06/05/Node.js_测试/Mocha(1)快速开始/">2014-06-05</a></time>
+        <time datetime="2014-06-05T06:45:23.000Z"><a href="/2014/06/05/Node.js/Mocha—Mocha(1)快速开始/">2014-06-05</a></time>
       
       
   
-    <h1 class="title"><a href="/2014/06/05/Node.js_测试/Mocha(1)快速开始/">一.快速开始</a></h1>
+    <h1 class="title"><a href="/2014/06/05/Node.js/Mocha—Mocha(1)快速开始/">Mocha—一.快速开始</a></h1>
   
 
     </header>
@@ -563,11 +449,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2014-05-07T07:45:23.000Z"><a href="/2014/05/07/Express/express(2)示例准备登陆/">2014-05-07</a></time>
+        <time datetime="2014-05-07T07:45:23.000Z"><a href="/2014/05/07/Node.js/express(2)示例准备登陆/">2014-05-07</a></time>
       
       
   
-    <h1 class="title"><a href="/2014/05/07/Express/express(2)示例准备登陆/">二.准备登陆</a></h1>
+    <h1 class="title"><a href="/2014/05/07/Node.js/express(2)示例准备登陆/">二.准备登陆</a></h1>
   
 
     </header>
@@ -633,11 +519,11 @@
     <header>
       
         <div class="icon"></div>
-        <time datetime="2014-05-04T06:45:23.000Z"><a href="/2014/05/04/Express/express(1)基础知识/">2014-05-04</a></time>
+        <time datetime="2014-05-04T06:45:23.000Z"><a href="/2014/05/04/Node.js/express(1)基础知识/">2014-05-04</a></time>
       
       
   
-    <h1 class="title"><a href="/2014/05/04/Express/express(1)基础知识/">一.基础知识</a></h1>
+    <h1 class="title"><a href="/2014/05/04/Node.js/express(1)基础知识/">一.基础知识</a></h1>
   
 
     </header>
@@ -749,7 +635,7 @@
       
         <h3 id="1-简单插入文档"><a href="#1-简单插入文档" class="headerlink" title="1.简单插入文档"></a>1.简单插入文档</h3><hr>
 <p>在数据库中，数据插入是最基本的操作，在MongoDB使用db.collection.insert(document)语句来插入文档，如下图：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkinsert1.png" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkinsert1.png" alt></p>
 <p>document是文档数据，collection是存放文档数据的集合。</p>
 <p>例如：所有用户的信息存放在users集合中，每个用户的信息为一个user文档，插入数据:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">db.users.insert(user);</span><br></pre></td></tr></table></figure></p>
 <p>如果collection存在，document会添加到collection目录下， 如果collection不存在，数据库会先创建collection，然后再保存document。</p>
@@ -761,7 +647,7 @@
 <h3 id="3-查询与投影"><a href="#3-查询与投影" class="headerlink" title="3.查询与投影"></a>3.查询与投影</h3><hr>
 <p>在MongoDB中，查询指向特定的文档集合，查询设定条件，指明MongoDB需要返回的文档；查询也可以包含一个投影，指定返回的字段。</p>
 <p>如下图，在查询过程指定了一个查询条件和一个排序修饰。</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkquery.jpg" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkquery.jpg" alt></p>
 <p>在关系型数据库中，投影指的是对列的筛选，类似的，在MongoDB中，投影指的是对出现在结果集中的对象属性的筛选。</p>
 <h3 id="4-find-方法"><a href="#4-find-方法" class="headerlink" title="4.find()方法"></a>4.find()方法</h3><hr>
 <p>MongoDB中查询检索数据时使用find命令，使用方法如下：</p>
@@ -769,7 +655,7 @@
 <p>projection– 返回的字段，文档类型，可选,若需返回所有字段，则忽略此参数。</p>
 <p>find命令两个可选参数，criteria为查询条件，projection为返回的字段，如果不传入条件数据库会返回该集合的所有文档。</p>
 <p>如下图简单示例：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkfind.jpg" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkfind.jpg" alt></p>
 <h3 id="5-修改文档-update命令"><a href="#5-修改文档-update命令" class="headerlink" title="5.修改文档 - update命令"></a>5.修改文档 - update命令</h3><hr>
 <p>update命令可以更新指定文档的特定字段值，也可以替换整个文档，如果更新操作会增加文档大小，MongoDB将重新分配空间并重新定位。</p>
 <p>语法：<br>db.collection.update(query,update,{upsert:boolean,multi:boolean});<br>参数：<br>query：查询条件，文档，和find中的查询条件写法一致。</p>
@@ -777,7 +663,7 @@
 <p>upsert(可选)：如果值为true，那么当集合中没有匹配文档时，创建文档。默认false。</p>
 <p>multi(可选)：如果值为true，那么将更新全部符合条件的文档，否则仅更新一个文档，默认false。</p>
 <p>如下示例：将users集合中所有符合条件”age&gt;18”文档的status字段更新为”A”。</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkupdate.jpg" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkupdate.jpg" alt></p>
 <h3 id="6-修改文档-save命令"><a href="#6-修改文档-save命令" class="headerlink" title="6.修改文档 - save命令"></a>6.修改文档 - save命令</h3><hr>
 <p>save命令可以更新或插入一个新文档，与update命令不同的是，save只能对一个文档进行操作。</p>
 <p>语法：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">db.collection.save();</span><br></pre></td></tr></table></figure></p>
@@ -790,9 +676,51 @@
 <p>下面是一个是将users集合中所有status=”D”的文档删除操作，对比一下MongoDB和传统SQL数据库删除的操作，看看有哪些不同之处。</p>
 <p>与传统SQL比较 - 删除文档</p>
 <p>MongoDB</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkremove.jpg" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkremove.jpg" alt></p>
 <p>传统SQL</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkremove-sql.jpg" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkremove-sql.jpg" alt></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+  <article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2014-04-03T06:45:23.000Z"><a href="/2014/04/03/MongoDB/MongoDB(1)简单介绍/">2014-04-03</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/2014/04/03/MongoDB/MongoDB(1)简单介绍/">一.简单介绍</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-什么是MongoDB"><a href="#1-什么是MongoDB" class="headerlink" title="1.什么是MongoDB"></a>1.什么是MongoDB</h3><hr>
+<p>MongoDB是一个基于分布式文件存储的数据库，由C++语言编写，旨在为WEB应用提供可扩展的高性能数据存储解决方案。</p>
+<p>MongoDB是一个高性能，开源，无模式的文档型数据库，官方给自己的定义是Key-value存储(高性能和高扩展)和传统RDBMS(丰富的查询和功能)之间的一座桥梁。</p>
+<h3 id="2-Document和BSON"><a href="#2-Document和BSON" class="headerlink" title="2.Document和BSON"></a>2.Document和BSON</h3><hr>
+<p>MongoDB中保存的数据格式为BSON，如：</p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkbson.jpg" alt></p>
+<p>MongoDB中数据的基本单元称为文档(Document)，它是MongoDB的核心概念，由多个键极其关联的值有序的放置在一起组成，数据库中它对应于关系型数据库的行。</p>
+<p>数据在MongoDB中以BSON（Binary-JSON）文档的格式存储在磁盘上。</p>
+<p>BSON（Binary Serialized Document Format）是一种类json的一种二进制形式的存储格式，简称Binary JSON，BSON和JSON一样，支持内嵌的文档对象和数组对象，但是BSON有JSON没有的一些数据类型，如Date和BinData类型。</p>
+<p>BSON的优点是灵活性高，但它的缺点是空间利用率不是很理想，BSON有三个特点：轻量性、可遍历性、高效性。</p>
 
       
     </div>
@@ -834,51 +762,21 @@
   <h3 class="title">标签</h3>
   <ul class="entry">
   
-    <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
-  
     <li><a href="/tags/Docker/">Docker</a><small>3</small></li>
   
-    <li><a href="/tags/ES6/">ES6</a><small>4</small></li>
-  
-    <li><a href="/tags/Express/">Express</a><small>2</small></li>
-  
     <li><a href="/tags/Git/">Git</a><small>7</small></li>
-  
-    <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
   
     <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>5</small></li>
   
     <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
   
-    <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
-  
     <li><a href="/tags/MySQL实战/">MySQL实战</a><small>5</small></li>
   
-    <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>4</small></li>
-  
-    <li><a href="/tags/Node-js-事件/">Node.js_事件</a><small>4</small></li>
-  
-    <li><a href="/tags/Node-js-入门/">Node.js_入门</a><small>9</small></li>
-  
-    <li><a href="/tags/Node-js-基础/">Node.js_基础</a><small>6</small></li>
-  
-    <li><a href="/tags/Node-js-异步/">Node.js_异步</a><small>3</small></li>
-  
-    <li><a href="/tags/Node-js-模块/">Node.js_模块</a><small>5</small></li>
-  
-    <li><a href="/tags/Node-js-测试/">Node.js_测试</a><small>5</small></li>
-  
-    <li><a href="/tags/Node-js-网络/">Node.js_网络</a><small>1</small></li>
-  
-    <li><a href="/tags/Node-js-进程/">Node.js_进程</a><small>2</small></li>
-  
-    <li><a href="/tags/Node-js-错误处理和调试/">Node.js_错误处理和调试</a><small>5</small></li>
+    <li><a href="/tags/Node-js/">Node.js</a><small>58</small></li>
   
     <li><a href="/tags/Redis/">Redis</a><small>2</small></li>
   
-    <li><a href="/tags/Shell/">Shell</a><small>1</small></li>
-  
-    <li><a href="/tags/Unix/">Unix</a><small>3</small></li>
+    <li><a href="/tags/Unix/">Unix</a><small>4</small></li>
   
     <li><a href="/tags/从0开始学大数据/">从0开始学大数据</a><small>2</small></li>
   

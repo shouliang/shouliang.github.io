@@ -1,0 +1,264 @@
+<!DOCTYPE HTML>
+<html>
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  <title>IO—Node源码解析_buffer | shouliang&#39;s blog</title>
+  <meta name="author" content="shouliang">
+  
+  <meta name="description" content="Node">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="IO—Node源码解析_buffer">
+  <meta property="og:site_name" content="shouliang&#39;s blog">
+
+  
+    <meta property="og:image" content>
+  
+
+  <link href="/favicon.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="shouliang&#39;s blog" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+
+</head>
+</html>
+
+<body>
+  <header id="header" class="inner"><div class="alignleft">
+  <h1><a href="/">shouliang&#39;s blog</a></h1>
+  <h2><a href="/"></a></h2>
+</div>
+<nav id="main-nav" class="alignright">
+  <ul>
+    
+      <li><a href="/">首页</a></li>
+    
+      <li><a href="/archives">归档</a></li>
+    
+      <li><a href="/about">关于</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+<div class="clearfix"></div></header>
+  <div id="content" class="inner">
+    <div id="main-col" class="alignleft"><div id="wrapper"><article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2018-03-25T14:16:53.000Z"><a href="/2018/03/25/Node.js/IO—Node源码解析_buffer/">2018-03-25</a></time>
+      
+      
+  
+    <h1 class="title">IO—Node源码解析_buffer</h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>在Node、ES2015出现之前，前端工程师只需要进行一些简单的字符串或DOM操作就可以满足业务需要，所以对二进制数据是比较陌生。node出现以后，前端面对的技术场景发生了变化，可以深入到网络传输、文件操作、图片处理等领域，而这些操作都与二进制数据紧密相关。</p>
+<p>Node里面的buffer，是一个二进制数据容器，数据结构类似与数组，数组里面的方法在buffer都存在(slice操作的结果不一样)。下面就从源码(v6.0版本)层面分析，揭开buffer操作的面纱。</p>
+<h2 id="1-buffer的基本使用"><a href="#1-buffer的基本使用" class="headerlink" title="1. buffer的基本使用"></a>1. buffer的基本使用</h2><p>在Node 6.0以前，直接使用<code>new Buffer</code>，但是这种方式存在两个问题:</p>
+<ul>
+<li>参数复杂: 内存分配，还是内存分配+内容写入，需要根据参数来确定</li>
+<li>安全隐患: 分配到的内存可能还存储着旧数据，这样就存在安全隐患</li>
+</ul>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 本来只想申请一块内存，但是里面却存在旧数据</span></span><br><span class="line"><span class="keyword">const</span> buf1 = <span class="keyword">new</span> Buffer(<span class="number">10</span>) <span class="comment">// &lt;Buffer 90 09 70 6b bf 7f 00 00 50 3a&gt;</span></span><br><span class="line"><span class="comment">// 不小心，旧数据就被读取出来了</span></span><br><span class="line">buf1.toString()  <span class="comment">// '�\tpk�\u0000\u0000P:'</span></span><br></pre></td></tr></table></figure>
+<p>为了解决上述问题，Buffer提供了<code>Buffer.from</code>、<code>Buffer.alloc</code>、<code>Buffer.allocUnsafe</code>、<code>Buffer.allocUnsafeSlow</code>四个方法来申请内存。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 申请10个字节的内存</span></span><br><span class="line"><span class="keyword">const</span> buf2 = Buffer.alloc(<span class="number">10</span>) <span class="comment">// &lt;Buffer 00 00 00 00 00 00 00 00 00 00&gt;</span></span><br><span class="line"><span class="comment">// 默认情况下，用0进行填充</span></span><br><span class="line">buf2.toString() <span class="comment">//'\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000'</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 上述操作就相当于</span></span><br><span class="line"><span class="keyword">const</span> buf1 = <span class="keyword">new</span> Buffer(<span class="number">10</span>);</span><br><span class="line">buf.fill(<span class="number">0</span>);</span><br><span class="line">buf.toString(); <span class="comment">// '\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000'</span></span><br></pre></td></tr></table></figure>
+<h2 id="2-buffer的结构"><a href="#2-buffer的结构" class="headerlink" title="2. buffer的结构"></a>2. buffer的结构</h2><p>buffer是一个典型的javascript与c++结合的模块，其性能部分用c++实现，非性能部分用javascript来实现。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/buffer01_180710.png" alt></p>
+<p>下面看看buffer模块的内部结构:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">exports.Buffer = Buffer;</span><br><span class="line">exports.SlowBuffer = SlowBuffer;</span><br><span class="line">exports.INSPECT_MAX_BYTES = 50;</span><br><span class="line">exports.kMaxLength = binding.kMaxLength;</span><br></pre></td></tr></table></figure>
+<p>buffer模块提供了4个接口:</p>
+<ul>
+<li>Buffer: 二进制数据容器类，node启动时默认加载</li>
+<li>SlowBuffer: 同样也是二进制数据容器类，不过直接进行内存申请</li>
+<li>INSPECT_MAX_BYTES: 限制<code>bufObject.inspect()</code>输出的长度</li>
+<li>kMaxLength: 一次性内存分配的上限，大小为(2^31 - 1)</li>
+</ul>
+<p>其中，由于Buffer经常使用，所以node在启动的时候，就已经加载了Buffer，而其他三个，仍然需要使用<code>require(&#39;buffer&#39;).***</code>。</p>
+<p>关于buffer的内存申请、填充、修改等涉及性能问题的操作，均通过c++里面的node_buffer.cc来实现:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">// c++里面的node_buffer</span><br><span class="line">namespace node &#123;</span><br><span class="line">  bool zero_fill_all_buffers = false;</span><br><span class="line">  namespace Buffer &#123;</span><br><span class="line">    ...</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">NODE_MODULE_CONTEXT_AWARE_BUILTIN(buffer, node::Buffer::Initialize)</span><br></pre></td></tr></table></figure>
+<h2 id="3-内存分配的策略"><a href="#3-内存分配的策略" class="headerlink" title="3. 内存分配的策略"></a>3. 内存分配的策略</h2><p>Node中Buffer内存分配太过常见，从系统性能考虑出发，Buffer采用了如下的管理策略。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/buffer02_180710.png" alt></p>
+<h3 id="3-1-Buffer-from"><a href="#3-1-Buffer-from" class="headerlink" title="3.1 Buffer.from"></a>3.1 Buffer.from</h3><p><code>Buffer.from(value, ...)</code>用于申请内存，并将内容写入刚刚申请的内存中，value值是多样的，Buffer是如何处理的呢？让我们一起看看源码:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">Buffer.from = <span class="function"><span class="keyword">function</span>(<span class="params">value, encodingOrOffset, length</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">typeof</span> value === <span class="string">'number'</span>)</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">TypeError</span>(<span class="string">'"value" argument must not be a number'</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (value <span class="keyword">instanceof</span> <span class="built_in">ArrayBuffer</span>)</span><br><span class="line">    <span class="keyword">return</span> fromArrayBuffer(value, encodingOrOffset, length);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">typeof</span> value === <span class="string">'string'</span>)</span><br><span class="line">    <span class="keyword">return</span> fromString(value, encodingOrOffset);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> fromObject(value);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>value可以分成三类:</p>
+<ul>
+<li>ArrayBuffer的实例: ArrayBuffer是ES2015里面引入的，用于在浏览器端直接操作二进制数据，这样Node就与ES2015关联起来，同时，新创建的Buffer与ArrayBuffer内存是共享的</li>
+<li>string: 该方法实现了将字符串转变为Buffer</li>
+<li>Buffer/TypeArray/Array: 会进行值的copy</li>
+</ul>
+<h4 id="3-1-1-ArrayBuffer的实例"><a href="#3-1-1-ArrayBuffer的实例" class="headerlink" title="3.1.1 ArrayBuffer的实例"></a>3.1.1 ArrayBuffer的实例</h4><p>Node v6与时俱进，将浏览器、node中对二进制数据的操作关联起来，同时二者会进行内存的共享。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> b = <span class="keyword">new</span> <span class="built_in">ArrayBuffer</span>(<span class="number">4</span>);</span><br><span class="line"><span class="keyword">var</span> v1 = <span class="keyword">new</span> <span class="built_in">Uint8Array</span>(b);</span><br><span class="line"><span class="keyword">var</span> buf = Buffer.from(b)</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'first, typeArray: '</span>, v1) <span class="comment">// first, typeArray:  Uint8Array [ 0, 0, 0, 0 ]</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'first, Buffer: '</span>, buf) <span class="comment">// first, Buffer:  &lt;Buffer 00 00 00 00&gt;</span></span><br><span class="line">v1[<span class="number">0</span>] = <span class="number">12</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'second, typeArray: '</span>, v1) <span class="comment">// second, typeArray:  Uint8Array [ 12, 0, 0, 0 ]</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'second, Buffer: '</span>, buf) <span class="comment">// second, Buffer:  &lt;Buffer 0c 00 00 00&gt;</span></span><br></pre></td></tr></table></figure>
+<p>在上述操作中，对ArrayBuffer的操作，引起Buffer值的修改，说明二者在内存上是同享的，再从源码层面了解下这个过程:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// buffer.js Buffer.from(arrayBuffer, ...)进入的分支:</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fromArrayBuffer</span>(<span class="params">obj, byteOffset, length</span>) </span>&#123;</span><br><span class="line">  byteOffset &gt;&gt;&gt;= <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">typeof</span> length === <span class="string">'undefined'</span>)</span><br><span class="line">    <span class="keyword">return</span> binding.createFromArrayBuffer(obj, byteOffset);</span><br><span class="line"></span><br><span class="line">  length &gt;&gt;&gt;= <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">return</span> binding.createFromArrayBuffer(obj, byteOffset, length);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// c++ 模块中的node_buffer:</span></span><br><span class="line"><span class="keyword">void</span> CreateFromArrayBuffer(<span class="keyword">const</span> FunctionCallbackInfo&lt;Value&gt;&amp; args) &#123;</span><br><span class="line">  ...</span><br><span class="line">  Local&lt;<span class="built_in">ArrayBuffer</span>&gt; ab = args[<span class="number">0</span>].As&lt;<span class="built_in">ArrayBuffer</span>&gt;();</span><br><span class="line">  ...</span><br><span class="line">  Local&lt;<span class="built_in">Uint8Array</span>&gt; ui = <span class="built_in">Uint8Array</span>::New(ab, offset, max_length);</span><br><span class="line">  ...</span><br><span class="line">  args.GetReturnValue().Set(ui);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="3-1-2-string"><a href="#3-1-2-string" class="headerlink" title="3.1.2 string"></a>3.1.2 string</h4><p>可以实现字符串与Buffer之间的转换，同时考虑到操作的性能，采用了一些优化策略避免频繁进行内存分配:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fromString</span>(<span class="params">string, encoding</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  <span class="keyword">var</span> length = byteLength(string, encoding);</span><br><span class="line">  <span class="keyword">if</span> (length === <span class="number">0</span>)</span><br><span class="line">    <span class="keyword">return</span> Buffer.alloc(<span class="number">0</span>);</span><br><span class="line">  <span class="comment">// 当字符所需要的字节数大于4KB时: 直接进行内存分配</span></span><br><span class="line">  <span class="keyword">if</span> (length &gt;= (Buffer.poolSize &gt;&gt;&gt; <span class="number">1</span>))</span><br><span class="line">    <span class="keyword">return</span> binding.createFromString(string, encoding);</span><br><span class="line">  <span class="comment">// 当字符所需字节数小于4KB: 借助allocPool先申请、后分配的策略</span></span><br><span class="line">  <span class="keyword">if</span> (length &gt; (poolSize - poolOffset))</span><br><span class="line">    createPool();</span><br><span class="line">  <span class="keyword">var</span> actual = allocPool.write(string, poolOffset, encoding);</span><br><span class="line">  <span class="keyword">var</span> b = allocPool.slice(poolOffset, poolOffset + actual);</span><br><span class="line">  poolOffset += actual;</span><br><span class="line">  alignPool();</span><br><span class="line">  <span class="keyword">return</span> b;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><em>a. 直接内存分配</em></p>
+<p>当字符串所需要的字节大于4KB时，如何还从8KB的buffer pool中进行申请，那么就可能存在内存浪费，例如:</p>
+<p>poolSize - poolOffset &lt; 4KB: 这样就要重新申请一个8KB的pool，刚才那个pool剩余空间就会被浪费掉</p>
+<p>看看c++是如何进行内存分配的:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// c++</span></span><br><span class="line"><span class="keyword">void</span> CreateFromString(<span class="keyword">const</span> FunctionCallbackInfo&lt;Value&gt;&amp; args) &#123;</span><br><span class="line">  ...</span><br><span class="line">  Local&lt;<span class="built_in">Object</span>&gt; buf;</span><br><span class="line">  <span class="keyword">if</span> (New(args.GetIsolate(), args[<span class="number">0</span>].As&lt;<span class="built_in">String</span>&gt;(), enc).ToLocal(&amp;buf))</span><br><span class="line">    args.GetReturnValue().Set(buf);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><em>b. 借助于pool管理</em></p>
+<p>用一个pool来管理频繁的行为，在计算机中是非常常见的行为，例如http模块中，关于tcp连接的建立，就设置了一个tcp pool。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fromString</span>(<span class="params">string, encoding</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  <span class="comment">// 当字符所需字节数小于4KB: 借助allocPool先申请、后分配的策略</span></span><br><span class="line">  <span class="comment">// pool的空间不够用，重新分配8kb的内存</span></span><br><span class="line">  <span class="keyword">if</span> (length &gt; (poolSize - poolOffset))</span><br><span class="line">    createPool();</span><br><span class="line">  <span class="comment">// 在buffer pool中进行分配</span></span><br><span class="line">  <span class="keyword">var</span> actual = allocPool.write(string, poolOffset, encoding);</span><br><span class="line">  <span class="comment">// 得到一个内存的视图view, 特殊说明: slice不进行copy，仅仅创建view</span></span><br><span class="line">  <span class="keyword">var</span> b = allocPool.slice(poolOffset, poolOffset + actual);</span><br><span class="line">  poolOffset += actual;</span><br><span class="line">  <span class="comment">// 校验poolOffset是8的整数倍</span></span><br><span class="line">  alignPool();</span><br><span class="line">  <span class="keyword">return</span> b;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// pool的申请</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">createPool</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  poolSize = Buffer.poolSize;</span><br><span class="line">  allocPool = createBuffer(poolSize, <span class="literal">true</span>);</span><br><span class="line">  poolOffset = <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// node加载的时候，就会创建第一个buffer pool</span></span><br><span class="line">createPool();</span><br><span class="line"><span class="comment">// 校验poolOffset是8的整数倍</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">alignPool</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="comment">// Ensure aligned slices</span></span><br><span class="line">  <span class="keyword">if</span> (poolOffset &amp; <span class="number">0x7</span>) &#123;</span><br><span class="line">    poolOffset |= <span class="number">0x7</span>;</span><br><span class="line">    poolOffset++;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="3-1-3-Buffer-TypeArray-Array"><a href="#3-1-3-Buffer-TypeArray-Array" class="headerlink" title="3.1.3 Buffer/TypeArray/Array"></a>3.1.3 Buffer/TypeArray/Array</h4><p>可用从一个现有的Buffer、TypeArray或Array中创建Buffer，内存不会共享，仅仅进行值的copy。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> buf1 = <span class="keyword">new</span> Buffer([<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>]);</span><br><span class="line"><span class="keyword">var</span> buf2 = <span class="keyword">new</span> Buffer(buf1);</span><br><span class="line"><span class="built_in">console</span>.log(buf1); <span class="comment">// &lt;Buffer 01 02 03 04 05&gt;</span></span><br><span class="line"><span class="built_in">console</span>.log(buf2); <span class="comment">// &lt;Buffer 01 02 03 04 05&gt;</span></span><br><span class="line">buf1[<span class="number">0</span>] = <span class="number">16</span></span><br><span class="line"><span class="built_in">console</span>.log(buf1); <span class="comment">// &lt;Buffer 10 02 03 04 05&gt;</span></span><br><span class="line"><span class="built_in">console</span>.log(buf2); <span class="comment">// &lt;Buffer 01 02 03 04 05&gt;</span></span><br></pre></td></tr></table></figure>
+<p>上述示例就证明了buf1、buf2没有进行内存的共享，仅仅是值的copy，再从源码层面进行分析:</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fromObject</span>(<span class="params">obj</span>) </span>&#123;</span><br><span class="line">  <span class="comment">// 当obj为Buffer时</span></span><br><span class="line">  <span class="keyword">if</span> (obj <span class="keyword">instanceof</span> Buffer) &#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">const</span> b = allocate(obj.length);</span><br><span class="line">    obj.copy(b, <span class="number">0</span>, <span class="number">0</span>, obj.length);</span><br><span class="line">    <span class="keyword">return</span> b;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 当obj为TypeArray或Array时</span></span><br><span class="line">  <span class="keyword">if</span> (obj) &#123;</span><br><span class="line">    <span class="keyword">if</span> (obj.buffer <span class="keyword">instanceof</span> <span class="built_in">ArrayBuffer</span> || <span class="string">'length'</span> <span class="keyword">in</span> obj) &#123;</span><br><span class="line">      ...</span><br><span class="line">      <span class="keyword">return</span> fromArrayLike(obj);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (obj.type === <span class="string">'Buffer'</span> &amp;&amp; <span class="built_in">Array</span>.isArray(obj.data)) &#123;</span><br><span class="line">      <span class="keyword">return</span> fromArrayLike(obj.data);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">throw</span> <span class="keyword">new</span> <span class="built_in">TypeError</span>(kFromErrorMsg);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 数组或类数组，逐个进行值的copy</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fromArrayLike</span>(<span class="params">obj</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">const</span> length = obj.length;</span><br><span class="line">  <span class="keyword">const</span> b = allocate(length);</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">var</span> i = <span class="number">0</span>; i &lt; length; i++)</span><br><span class="line">    b[i] = obj[i] &amp; <span class="number">255</span>;</span><br><span class="line">  <span class="keyword">return</span> b;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="3-2-Buffer-alloc"><a href="#3-2-Buffer-alloc" class="headerlink" title="3.2 Buffer.alloc"></a>3.2 Buffer.alloc</h3><p>Buffer.alloc用于内存的分配，同时会对内存的旧数据进行覆盖，避免安全隐患的产生。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">Buffer.alloc = <span class="function"><span class="keyword">function</span>(<span class="params">size, fill, encoding</span>) </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">  <span class="keyword">if</span> (size &lt;= <span class="number">0</span>)</span><br><span class="line">    <span class="keyword">return</span> createBuffer(size);</span><br><span class="line">  <span class="keyword">if</span> (fill !== <span class="literal">undefined</span>) &#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">typeof</span> encoding === <span class="string">'string'</span> ?</span><br><span class="line">        createBuffer(size, <span class="literal">true</span>).fill(fill, encoding) :</span><br><span class="line">        createBuffer(size, <span class="literal">true</span>).fill(fill);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> createBuffer(size);</span><br><span class="line">&#125;;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">createBuffer</span>(<span class="params">size, noZeroFill</span>) </span>&#123;</span><br><span class="line">  flags[kNoZeroFill] = noZeroFill ? <span class="number">1</span> : <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">const</span> ui8 = <span class="keyword">new</span> <span class="built_in">Uint8Array</span>(size);</span><br><span class="line">    <span class="built_in">Object</span>.setPrototypeOf(ui8, Buffer.prototype);</span><br><span class="line">    <span class="keyword">return</span> ui8;</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    flags[kNoZeroFill] = <span class="number">0</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上述代码有几个需要注意的点:</p>
+<h4 id="3-2-1-先申请后填充"><a href="#3-2-1-先申请后填充" class="headerlink" title="3.2.1 先申请后填充"></a>3.2.1 先申请后填充</h4><p>alloc先通过<code>createBuffer</code>申请一块内存，然后再进行填充，保证申请的内存全部用<code>fill</code>进行填充。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> buf = Buffer.alloc(<span class="number">10</span>, <span class="number">11</span>);</span><br><span class="line"><span class="built_in">console</span>.log(buf); <span class="comment">// &lt;Buffer 0b 0b 0b 0b 0b 0b 0b 0b 0b 0b&gt;</span></span><br></pre></td></tr></table></figure>
+<h4 id="3-2-2-flags标示"><a href="#3-2-2-flags标示" class="headerlink" title="3.2.2 flags标示"></a>3.2.2 flags标示</h4><p><code>flags</code>用于标识默认的填充值是否为<code>0</code>，该值在javascript中设置，在c++中进行读取。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// js</span></span><br><span class="line"><span class="keyword">const</span> binding = process.binding(<span class="string">'buffer'</span>);</span><br><span class="line"><span class="keyword">const</span> bindingObj = &#123;&#125;;</span><br><span class="line">...</span><br><span class="line">binding.setupBufferJS(Buffer.prototype, bindingObj);</span><br><span class="line">...</span><br><span class="line"><span class="keyword">const</span> flags = bindingObj.flags;</span><br><span class="line"><span class="keyword">const</span> kNoZeroFill = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// c++</span></span><br><span class="line"><span class="keyword">void</span> SetupBufferJS(<span class="keyword">const</span> FunctionCallbackInfo&lt;Value&gt;&amp; args) &#123;</span><br><span class="line">  ...</span><br><span class="line">  Local&lt;<span class="built_in">Object</span>&gt; bObj = args[<span class="number">1</span>].As&lt;<span class="built_in">Object</span>&gt;();</span><br><span class="line">  ...</span><br><span class="line">  bObj-&gt;<span class="built_in">Set</span>(<span class="built_in">String</span>::NewFromUtf8(env-&gt;isolate(), <span class="string">"flags"</span>),</span><br><span class="line">    <span class="built_in">Uint32Array</span>::New(array_buffer, <span class="number">0</span>, fields_count));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="3-2-3-Uint8Array"><a href="#3-2-3-Uint8Array" class="headerlink" title="3.2.3 Uint8Array"></a>3.2.3 Uint8Array</h4><p><code>Uint8Array</code>是ES2015 TypeArray中的一种，可以在浏览器中创建二进制数据，这样就把浏览器、Node连接起来。</p>
+<h3 id="3-3-Buffer-allocUnSafe"><a href="#3-3-Buffer-allocUnSafe" class="headerlink" title="3.3 Buffer.allocUnSafe"></a>3.3 Buffer.allocUnSafe</h3><p>Buffer.allocUnSafe与Buffer.alloc的区别在于，前者是从采用<code>allocate</code>的策略，尝试从<code>buffer pool</code>中申请内存，而<code>buffer pool</code>是不会进行默认值填充的，所以这种行为是不安全的。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Buffer.allocUnsafe = <span class="function"><span class="keyword">function</span>(<span class="params">size</span>) </span>&#123;</span><br><span class="line">  assertSize(size);</span><br><span class="line">  <span class="keyword">return</span> allocate(size);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h3 id="3-4-Buffer-allocUnsafeSlow"><a href="#3-4-Buffer-allocUnsafeSlow" class="headerlink" title="3.4 Buffer.allocUnsafeSlow"></a>3.4 Buffer.allocUnsafeSlow</h3><p>Buffer.allocUnsafeSlow有两个大特点: 直接通过c++进行内存分配；不会进行旧值填充。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Buffer.allocUnsafeSlow = <span class="function"><span class="keyword">function</span>(<span class="params">size</span>) </span>&#123;</span><br><span class="line">  assertSize(size);</span><br><span class="line">  <span class="keyword">return</span> createBuffer(size, <span class="literal">true</span>);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h2 id="4-结语"><a href="#4-结语" class="headerlink" title="4. 结语"></a>4. 结语</h2><p>字符串与Buffer之间存在较大的差距，同时二者又存在编码关系。通过Node，前端工程师已经深入到网络操作、文件操作等领域，对二进制数据的操作就显得非常重要，因此理解Buffer的诸多细节十分必要。</p>
+<h2 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h2><p><a href="http://zhenhua-lee.github.io/node/buffer.html" target="_blank" rel="noopener">http://zhenhua-lee.github.io/node/buffer.html</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+  
+  <div class="tags">
+    <a href="/tags/Node-js/">Node.js</a>
+  </div>
+
+        
+  <div class="addthis addthis_toolbox addthis_default_style">
+    
+      <a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+    
+    
+      <a class="addthis_button_tweet"></a>
+    
+    
+      <a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+    
+    
+      <a class="addthis_button_pinterest_pinit" pi:pinit:layout="horizontal"></a>
+    
+    <a class="addthis_counter addthis_pill_style"></a>
+  </div>
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js"></script>
+
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">留言</h1>
+
+  
+      <div id="fb-root"></div>
+<script>
+  (function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=shouliang0816";
+    fjs.parentNode.insertBefore(js, fjs);
+  }(document, 'script', 'facebook-jssdk'));
+</script>
+
+<div class="fb-comments" data-href="https://shouliang.github.io/2018/03/25/Node.js/IO—Node源码解析_buffer/index.html" data-num-posts="5" data-width="840" data-colorscheme="light"></div>
+      
+  
+</section>
+
+</div></div>
+    <aside id="sidebar" class="alignright">
+  <div class="search">
+  <form action="//google.com/search" method="get" accept-charset="utf-8">
+    <input type="search" name="q" results="0" placeholder="搜索">
+    <input type="hidden" name="q" value="site:shouliang.github.io">
+  </form>
+</div>
+
+  
+
+  
+<div class="widget tag">
+  <h3 class="title">标签</h3>
+  <ul class="entry">
+  
+    <li><a href="/tags/Docker/">Docker</a><small>3</small></li>
+  
+    <li><a href="/tags/Git/">Git</a><small>7</small></li>
+  
+    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>5</small></li>
+  
+    <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
+  
+    <li><a href="/tags/MySQL实战/">MySQL实战</a><small>5</small></li>
+  
+    <li><a href="/tags/Node-js/">Node.js</a><small>58</small></li>
+  
+    <li><a href="/tags/Redis/">Redis</a><small>2</small></li>
+  
+    <li><a href="/tags/Unix/">Unix</a><small>4</small></li>
+  
+    <li><a href="/tags/从0开始学大数据/">从0开始学大数据</a><small>2</small></li>
+  
+    <li><a href="/tags/区块链/">区块链</a><small>1</small></li>
+  
+    <li><a href="/tags/数据分析实战/">数据分析实战</a><small>3</small></li>
+  
+    <li><a href="/tags/数据库/">数据库</a><small>2</small></li>
+  
+    <li><a href="/tags/数据结构与算法/">数据结构与算法</a><small>13</small></li>
+  
+    <li><a href="/tags/程序员的数学基础课/">程序员的数学基础课</a><small>5</small></li>
+  
+    <li><a href="/tags/网络安全/">网络安全</a><small>8</small></li>
+  
+    <li><a href="/tags/计算机网络/">计算机网络</a><small>1</small></li>
+  
+    <li><a href="/tags/趣谈网络协议/">趣谈网络协议</a><small>8</small></li>
+  
+  </ul>
+</div>
+
+</aside>
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div class="alignleft">
+  
+  &copy; 2019 shouliang
+  
+</div>
+<div class="clearfix"></div></footer>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+</body>
+</html>

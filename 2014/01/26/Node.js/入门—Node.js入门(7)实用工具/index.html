@@ -1,0 +1,228 @@
+<!DOCTYPE HTML>
+<html>
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  <title>入门—七.实用工具 | shouliang&#39;s blog</title>
+  <meta name="author" content="shouliang">
+  
+  <meta name="description" content="Node">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="入门—七.实用工具">
+  <meta property="og:site_name" content="shouliang&#39;s blog">
+
+  
+    <meta property="og:image" content>
+  
+
+  <link href="/favicon.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="shouliang&#39;s blog" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+
+</head>
+</html>
+
+<body>
+  <header id="header" class="inner"><div class="alignleft">
+  <h1><a href="/">shouliang&#39;s blog</a></h1>
+  <h2><a href="/"></a></h2>
+</div>
+<nav id="main-nav" class="alignright">
+  <ul>
+    
+      <li><a href="/">首页</a></li>
+    
+      <li><a href="/archives">归档</a></li>
+    
+      <li><a href="/about">关于</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+<div class="clearfix"></div></header>
+  <div id="content" class="inner">
+    <div id="main-col" class="alignleft"><div id="wrapper"><article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2014-01-26T12:45:23.000Z"><a href="/2014/01/26/Node.js/入门—Node.js入门(7)实用工具/">2014-01-26</a></time>
+      
+      
+  
+    <h1 class="title">入门—七.实用工具</h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-简介"><a href="#1-简介" class="headerlink" title="1.简介"></a>1.简介</h3><hr>
+<h4 id="UTIL模块的基本介绍"><a href="#UTIL模块的基本介绍" class="headerlink" title="UTIL模块的基本介绍"></a>UTIL模块的基本介绍</h4><p>util模块呢，是一个Node.js核心模块，提供常用函数的集合，用于弥补核心JavaScript的一些功能过于精简的不足。并且还提供了一系列常用工具，用来对数据的输出和验证。</p>
+<h3 id="2-转换字符串"><a href="#2-转换字符串" class="headerlink" title="2.转换字符串"></a>2.转换字符串</h3><h4 id="inspect函数的基本用法"><a href="#inspect函数的基本用法" class="headerlink" title="inspect函数的基本用法"></a>inspect函数的基本用法</h4><p>util.inspect(object,[showHidden],[depth],[colors])是一个将任意对象转换为字符串的函数，通常用于调试和错误输出。它至少接受一个参数object，即要转换的对象,我们来学习它的简单用法。使用语法如下：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> util = <span class="built_in">require</span>(<span class="string">'util'</span>);</span><br><span class="line"><span class="keyword">var</span> result = util.inspect(<span class="built_in">Object</span>);</span><br><span class="line"><span class="built_in">console</span>.log(result);</span><br></pre></td></tr></table></figure></p>
+<p>运行结果：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[<span class="built_in">Function</span>: <span class="built_in">Object</span>]</span><br></pre></td></tr></table></figure></p>
+<h3 id="3-字符串格式化"><a href="#3-字符串格式化" class="headerlink" title="3.字符串格式化"></a>3.字符串格式化</h3><hr>
+<h4 id="format函数的基本用法"><a href="#format函数的基本用法" class="headerlink" title="format函数的基本用法"></a>format函数的基本用法</h4><p>format函数根据第一个参数，返回一个格式化字符串，第一个参数是一个可包含零个或多个占位符的字符串。每一个占位符被替换为与其对应的转换后的值，支持的占位符有：”%s(字符串)”、”%d(数字&lt;整型和浮点型&gt;)”、”%j(JSON)”、”%(单独一个百分号则不作为一个参数)”。</p>
+<p>1：如果占位符没有相对应的参数，占位符将不会被替换.如示例：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> util = <span class="built_in">require</span>(<span class="string">'util'</span>);</span><br><span class="line"><span class="keyword">var</span> result = util.format(<span class="string">'%s:%s'</span>, <span class="string">'foo'</span>);</span><br><span class="line"><span class="built_in">console</span>.log(result);</span><br></pre></td></tr></table></figure>
+<p>运行结果：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">'foo:%s'</span></span><br></pre></td></tr></table></figure>
+<p>2：如果有多个参数占位符，额外的参数将会调用util.inspect()转换为字符串。这些字符串被连接在一起，并且以空格分隔。如示例：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> util = <span class="built_in">require</span>(<span class="string">'util'</span>);</span><br><span class="line"><span class="keyword">var</span> result = util.format(<span class="string">'%s:%s'</span>, <span class="string">'foo'</span>, <span class="string">'bar'</span>, <span class="string">'baz'</span>);</span><br><span class="line"><span class="built_in">console</span>.log(result);</span><br></pre></td></tr></table></figure></p>
+<p>运行结果：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">'foo:bar baz'</span></span><br></pre></td></tr></table></figure>
+<p>3：如果第一个参数是一个非格式化字符串，则会把所有的参数转成字符串并以空格隔开拼接在一块，而且返回该字符串。如示例：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> util = <span class="built_in">require</span>(<span class="string">'util'</span>);</span><br><span class="line"><span class="keyword">var</span> result = util.format(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>);</span><br><span class="line"><span class="built_in">console</span>.log(result);</span><br></pre></td></tr></table></figure></p>
+<p>运行结果：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">'1 2 3'</span></span><br></pre></td></tr></table></figure>
+<h3 id="4-数组验证"><a href="#4-数组验证" class="headerlink" title="4.数组验证"></a>4.数组验证</h3><hr>
+<h4 id="isArray函数的基本用法"><a href="#isArray函数的基本用法" class="headerlink" title="isArray函数的基本用法"></a>isArray函数的基本用法</h4><p>isArray函数可以判断对象是否为数组类型，是则返回ture,否则为false。语法如下：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> util = <span class="built_in">require</span>(<span class="string">'util'</span>);</span><br><span class="line"><span class="keyword">var</span> result = util.isArray([]);</span><br><span class="line"><span class="built_in">console</span>.log(result);</span><br></pre></td></tr></table></figure>
+<p>运行结果：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="literal">true</span></span><br></pre></td></tr></table></figure>
+<h3 id="5-日期验证"><a href="#5-日期验证" class="headerlink" title="5.日期验证"></a>5.日期验证</h3><hr>
+<h4 id="isDate函数的基本用法"><a href="#isDate函数的基本用法" class="headerlink" title="isDate函数的基本用法"></a>isDate函数的基本用法</h4><p>isDate函数可以判断对象是否为日期类型，是则返回ture,否则返回false。语法如下：</p>
+<p>例1：querystring.parse(“字符串”，”分隔符”，”分配符”)<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> util = <span class="built_in">require</span>(<span class="string">'util'</span>);</span><br><span class="line"><span class="keyword">var</span> result = util.isDate(<span class="keyword">new</span> <span class="built_in">Date</span>());</span><br><span class="line"><span class="built_in">console</span>.log(result);</span><br></pre></td></tr></table></figure></p>
+<p>运行结果：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="literal">true</span></span><br></pre></td></tr></table></figure></p>
+<h3 id="6-正则验证"><a href="#6-正则验证" class="headerlink" title="6.正则验证"></a>6.正则验证</h3><hr>
+<h4 id="isRegExp函数的基本用法"><a href="#isRegExp函数的基本用法" class="headerlink" title="isRegExp函数的基本用法"></a>isRegExp函数的基本用法</h4><p>isRegExp函数可以判断对象是否为正则类型，是则返回ture,否则返回false。语法如下：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> util = <span class="built_in">require</span>(<span class="string">'util'</span>);</span><br><span class="line"><span class="keyword">var</span> result = util.isRegExp(<span class="built_in">Object</span>);</span><br><span class="line"><span class="built_in">console</span>.log(result);</span><br></pre></td></tr></table></figure></p>
+<p>请自行验证。</p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+  
+  <div class="tags">
+    <a href="/tags/Node-js/">Node.js</a>
+  </div>
+
+        
+  <div class="addthis addthis_toolbox addthis_default_style">
+    
+      <a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+    
+    
+      <a class="addthis_button_tweet"></a>
+    
+    
+      <a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+    
+    
+      <a class="addthis_button_pinterest_pinit" pi:pinit:layout="horizontal"></a>
+    
+    <a class="addthis_counter addthis_pill_style"></a>
+  </div>
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js"></script>
+
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">留言</h1>
+
+  
+      <div id="fb-root"></div>
+<script>
+  (function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=shouliang0816";
+    fjs.parentNode.insertBefore(js, fjs);
+  }(document, 'script', 'facebook-jssdk'));
+</script>
+
+<div class="fb-comments" data-href="https://shouliang.github.io/2014/01/26/Node.js/入门—Node.js入门(7)实用工具/index.html" data-num-posts="5" data-width="840" data-colorscheme="light"></div>
+      
+  
+</section>
+
+</div></div>
+    <aside id="sidebar" class="alignright">
+  <div class="search">
+  <form action="//google.com/search" method="get" accept-charset="utf-8">
+    <input type="search" name="q" results="0" placeholder="搜索">
+    <input type="hidden" name="q" value="site:shouliang.github.io">
+  </form>
+</div>
+
+  
+
+  
+<div class="widget tag">
+  <h3 class="title">标签</h3>
+  <ul class="entry">
+  
+    <li><a href="/tags/Docker/">Docker</a><small>3</small></li>
+  
+    <li><a href="/tags/Git/">Git</a><small>7</small></li>
+  
+    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>5</small></li>
+  
+    <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
+  
+    <li><a href="/tags/MySQL实战/">MySQL实战</a><small>5</small></li>
+  
+    <li><a href="/tags/Node-js/">Node.js</a><small>58</small></li>
+  
+    <li><a href="/tags/Redis/">Redis</a><small>2</small></li>
+  
+    <li><a href="/tags/Unix/">Unix</a><small>4</small></li>
+  
+    <li><a href="/tags/从0开始学大数据/">从0开始学大数据</a><small>2</small></li>
+  
+    <li><a href="/tags/区块链/">区块链</a><small>1</small></li>
+  
+    <li><a href="/tags/数据分析实战/">数据分析实战</a><small>3</small></li>
+  
+    <li><a href="/tags/数据库/">数据库</a><small>2</small></li>
+  
+    <li><a href="/tags/数据结构与算法/">数据结构与算法</a><small>13</small></li>
+  
+    <li><a href="/tags/程序员的数学基础课/">程序员的数学基础课</a><small>5</small></li>
+  
+    <li><a href="/tags/网络安全/">网络安全</a><small>8</small></li>
+  
+    <li><a href="/tags/计算机网络/">计算机网络</a><small>1</small></li>
+  
+    <li><a href="/tags/趣谈网络协议/">趣谈网络协议</a><small>8</small></li>
+  
+  </ul>
+</div>
+
+</aside>
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div class="alignleft">
+  
+  &copy; 2019 shouliang
+  
+</div>
+<div class="clearfix"></div></footer>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+</body>
+</html>

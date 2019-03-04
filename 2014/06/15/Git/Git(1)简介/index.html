@@ -1,6 +1,6 @@
 <!DOCTYPE HTML>
 <html>
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="utf-8">
   
   <title>一.简介 | shouliang&#39;s blog</title>
@@ -11,11 +11,11 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
-  <meta property="og:title" content="一.简介"/>
-  <meta property="og:site_name" content="shouliang&#39;s blog"/>
+  <meta property="og:title" content="一.简介">
+  <meta property="og:site_name" content="shouliang&#39;s blog">
 
   
-    <meta property="og:image" content=""/>
+    <meta property="og:image" content>
   
 
   <link href="/favicon.png" rel="icon">
@@ -25,7 +25,7 @@
   
 
 </head>
-
+</html>
 
 <body>
   <header id="header" class="inner"><div class="alignleft">
@@ -72,7 +72,7 @@
 <h3 id="2-Git介绍"><a href="#2-Git介绍" class="headerlink" title="2.Git介绍"></a>2.Git介绍</h3><hr>
 <p>Git是一款免费、开源的分布式版本控制系统，用于敏捷高效地处理任何或小或大的项目。</p>
 <p>　　Git是一个开源的分布式版本控制系统，用以有效、高速的处理从很小到非常大的项目版本管理。Git 是 Linus Torvalds 为了帮助管理 Linux 内核开发而开发的一个开放源码的版本控制软件。</p>
-<p>　　最原始的版本控制是纯手工的版本控制：修改文件，保存文件副本。有时候偷懒省事，保存副本时命名比较随意，时间长了就不知道哪个是新的，哪个是老的了，即使知道新旧，可能也不知道每个版本是什么内容，相对上一版作了什么修改了，当几个版本过去后，很可能就是下面的样子了：<br>　　<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkold_version.jpg" alt=""></p>
+<p>　　最原始的版本控制是纯手工的版本控制：修改文件，保存文件副本。有时候偷懒省事，保存副本时命名比较随意，时间长了就不知道哪个是新的，哪个是老的了，即使知道新旧，可能也不知道每个版本是什么内容，相对上一版作了什么修改了，当几个版本过去后，很可能就是下面的样子了：<br>　　<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkold_version.jpg" alt></p>
 <h3 id="3-Git特点"><a href="#3-Git特点" class="headerlink" title="3.Git特点"></a>3.Git特点</h3><hr>
 <p>分布式相比于集中式的最大区别在于开发者可以提交到本地，每个开发者通过克隆（git clone），在本地机器上拷贝一个完整的Git仓库。</p>
 <ul>
@@ -81,17 +81,17 @@
 <li>时刻保持数据完整性 ：在保存到 Git 之前，所有数据都要进行内容的校验和（checksum）计算，并将此结果作为数据的唯一标识和索引。</li>
 <li>多数操作仅添加数据 ：常用的 Git 操作大多仅仅是把数据添加到数据库。<br>开发流程示意图：</li>
 </ul>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkdevelop.jpg" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkdevelop.jpg" alt></p>
 <h3 id="4-集中式"><a href="#4-集中式" class="headerlink" title="4.集中式"></a>4.集中式</h3><hr>
 <p>CVS及SVN都是集中式的版本控制系统，而Git是分布式版本控制系统。</p>
-<p>　　集中式版本控制系统，版本库是集中存放在中央服务器的，一起工作的人需要用自己的电脑从服务器上同步更新或上传自己的修改。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkfos.jpg" alt="">　　</p>
+<p>　　集中式版本控制系统，版本库是集中存放在中央服务器的，一起工作的人需要用自己的电脑从服务器上同步更新或上传自己的修改。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkfos.jpg" alt>　　</p>
 <p>但是，所有的版本数据都存在服务器上，用户的本地设备就只有自己以前所同步的版本，如果不连网的话，用户就看不到历史版本，也无法切换版本验证问题，或在不同分支工作。。</p>
 <p>　　而且，所有数据都保存在单一的服务器上，有很大的风险这个服务器会损坏，这样就会丢失所有的数据，当然可以定期备份。　　</p>
 <h3 id="5-分布式"><a href="#5-分布式" class="headerlink" title="5.分布式"></a>5.分布式</h3><hr>
 <p>那分布式版本控制系统与集中式版本控制系统有何不同呢？</p>
 <p>　分布式版本控制系统根本没有“中央服务器”，每个人的电脑上都是一个完整的版本库，不需要联网就可以工作。既然每个人电脑上都有一个完整的版本库，那多个人如何协作呢？比方说你和同事在各自电脑修改相同文件，这时，你们俩之间只需把各自的修改推送给对方，就可以互相看到对方的修改了。</p>
 <p>　　分布式版本控制系统的安全性要高很多，因为每个人电脑里都有完整的版本库。大家之间可以相互复制。</p>
-<p>　　分布式版本控制系统通常也有一台充当“中央服务器”的电脑，但这个服务器的作用仅仅是用来方便“交换”大家的修改，没有它大家也一样干活，只是交换修改不方便而已。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkdis.jpg" alt=""></p>
+<p>　　分布式版本控制系统通常也有一台充当“中央服务器”的电脑，但这个服务器的作用仅仅是用来方便“交换”大家的修改，没有它大家也一样干活，只是交换修改不方便而已。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/mkdis.jpg" alt></p>
 <h3 id="6-Git安装"><a href="#6-Git安装" class="headerlink" title="6.Git安装"></a>6.Git安装</h3><hr>
 <p>最早Git是在Linux上开发的，很长一段时间内，Git也只能在Linux和Unix系统上跑。不过，慢慢地有人把它移植到了Windows上。现在，Git可以在Linux、Unix、Mac和Windows这几大平台上正常运行了。</p>
 <p>　　在Linux上安装Git</p>
@@ -175,51 +175,21 @@
   <h3 class="title">标签</h3>
   <ul class="entry">
   
-    <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
-  
     <li><a href="/tags/Docker/">Docker</a><small>3</small></li>
   
-    <li><a href="/tags/ES6/">ES6</a><small>4</small></li>
-  
-    <li><a href="/tags/Express/">Express</a><small>2</small></li>
-  
     <li><a href="/tags/Git/">Git</a><small>7</small></li>
-  
-    <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
   
     <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>5</small></li>
   
     <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
   
-    <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
-  
     <li><a href="/tags/MySQL实战/">MySQL实战</a><small>5</small></li>
   
-    <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>4</small></li>
-  
-    <li><a href="/tags/Node-js-事件/">Node.js_事件</a><small>4</small></li>
-  
-    <li><a href="/tags/Node-js-入门/">Node.js_入门</a><small>9</small></li>
-  
-    <li><a href="/tags/Node-js-基础/">Node.js_基础</a><small>6</small></li>
-  
-    <li><a href="/tags/Node-js-异步/">Node.js_异步</a><small>3</small></li>
-  
-    <li><a href="/tags/Node-js-模块/">Node.js_模块</a><small>5</small></li>
-  
-    <li><a href="/tags/Node-js-测试/">Node.js_测试</a><small>5</small></li>
-  
-    <li><a href="/tags/Node-js-网络/">Node.js_网络</a><small>1</small></li>
-  
-    <li><a href="/tags/Node-js-进程/">Node.js_进程</a><small>2</small></li>
-  
-    <li><a href="/tags/Node-js-错误处理和调试/">Node.js_错误处理和调试</a><small>5</small></li>
+    <li><a href="/tags/Node-js/">Node.js</a><small>58</small></li>
   
     <li><a href="/tags/Redis/">Redis</a><small>2</small></li>
   
-    <li><a href="/tags/Shell/">Shell</a><small>1</small></li>
-  
-    <li><a href="/tags/Unix/">Unix</a><small>3</small></li>
+    <li><a href="/tags/Unix/">Unix</a><small>4</small></li>
   
     <li><a href="/tags/从0开始学大数据/">从0开始学大数据</a><small>2</small></li>
   

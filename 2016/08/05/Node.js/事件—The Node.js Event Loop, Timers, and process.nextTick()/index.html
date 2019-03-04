@@ -1,0 +1,292 @@
+<!DOCTYPE HTML>
+<html>
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  <title>事件—The Node.js Event Loop, Timers, and process.nextTick() | shouliang&#39;s blog</title>
+  <meta name="author" content="shouliang">
+  
+  <meta name="description" content="Node">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="事件—The Node.js Event Loop, Timers, and process.nextTick()">
+  <meta property="og:site_name" content="shouliang&#39;s blog">
+
+  
+    <meta property="og:image" content>
+  
+
+  <link href="/favicon.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="shouliang&#39;s blog" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+
+</head>
+</html>
+
+<body>
+  <header id="header" class="inner"><div class="alignleft">
+  <h1><a href="/">shouliang&#39;s blog</a></h1>
+  <h2><a href="/"></a></h2>
+</div>
+<nav id="main-nav" class="alignright">
+  <ul>
+    
+      <li><a href="/">首页</a></li>
+    
+      <li><a href="/archives">归档</a></li>
+    
+      <li><a href="/about">关于</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+<div class="clearfix"></div></header>
+  <div id="content" class="inner">
+    <div id="main-col" class="alignleft"><div id="wrapper"><article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2016-08-05T14:16:53.000Z"><a href="/2016/08/05/Node.js/事件—The Node.js Event Loop, Timers, and process.nextTick()/">2016-08-05</a></time>
+      
+      
+  
+    <h1 class="title">事件—The Node.js Event Loop, Timers, and process.nextTick()</h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h1 id="The-Node-js-Event-Loop-Timers-and-process-nextTick"><a href="#The-Node-js-Event-Loop-Timers-and-process-nextTick" class="headerlink" title="The Node.js Event Loop, Timers, and process.nextTick()"></a>The Node.js Event Loop, Timers, and <code>process.nextTick()</code></h1><h2 id="What-is-the-Event-Loop"><a href="#What-is-the-Event-Loop" class="headerlink" title="What is the Event Loop?"></a>What is the Event Loop?</h2><p>The event loop is what allows Node.js to perform non-blocking I/O operations — despite the fact that JavaScript is single-threaded — by offloading operations to the system kernel whenever possible.</p>
+<p>Since most modern kernels are <strong>multi-threaded</strong>, they can handle multiple operations executing in the background. When one of these operations completes, the kernel tells Node.js so that the appropriate callback may be added to the <strong>poll</strong> queue to eventually be executed. We’ll explain this in further detail later in this topic.</p>
+<h2 id="Event-Loop-Explained"><a href="#Event-Loop-Explained" class="headerlink" title="Event Loop Explained"></a>Event Loop Explained</h2><p>When Node.js starts, it initializes the event loop, processes the provided input script (or drops into the <a href="https://nodejs.org/api/repl.html#repl_repl" target="_blank" rel="noopener">REPL</a>, which is not covered in this document) which may make async API calls, schedule timers, or call <code>process.nextTick()</code>, then begins processing the event loop.</p>
+<p>The following diagram shows a simplified overview of the event loop’s order of operations.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">   ┌───────────────────────────┐</span><br><span class="line">┌─&gt;│           timers          │</span><br><span class="line">│  └─────────────┬─────────────┘</span><br><span class="line">│  ┌─────────────┴─────────────┐</span><br><span class="line">│  │     pending callbacks     │</span><br><span class="line">│  └─────────────┬─────────────┘</span><br><span class="line">│  ┌─────────────┴─────────────┐</span><br><span class="line">│  │       idle, prepare       │</span><br><span class="line">│  └─────────────┬─────────────┘      ┌───────────────┐</span><br><span class="line">│  ┌─────────────┴─────────────┐      │   incoming:   │</span><br><span class="line">│  │           poll            │&lt;─────┤  connections, │</span><br><span class="line">│  └─────────────┬─────────────┘      │   data, etc.  │</span><br><span class="line">│  ┌─────────────┴─────────────┐      └───────────────┘</span><br><span class="line">│  │           check           │</span><br><span class="line">│  └─────────────┬─────────────┘</span><br><span class="line">│  ┌─────────────┴─────────────┐</span><br><span class="line">└──┤      close callbacks      │</span><br><span class="line">   └───────────────────────────┘</span><br></pre></td></tr></table></figure>
+<p><em>note: each box will be referred to as a “phase” of the event loop.</em></p>
+<p>Each phase has a FIFO queue of callbacks to execute. While each phase is special in its own way, generally, when the event loop enters a given phase, it will perform any operations specific to that phase, then execute callbacks in that phase’s queue until the queue has been <strong>exhausted</strong> or the <strong>maximu</strong>m number of callbacks has executed. When the queue has been exhausted or the callback limit is reached, the event loop will move to the next phase, and so on.</p>
+<p>Since <strong>any</strong> of these operations <strong>may</strong> schedule <em>more</em> operations and new events processed in the <strong>poll</strong> phase are queued by the kernel, poll events can be queued while polling events are being processed. As a result, long running callbacks can allow the poll phase to run much longer than a timer’s threshold. See the <a href="https://nodejs.org/en/docs/guides/event-loop-timers-and-nexttick/#timers" target="_blank" rel="noopener"><strong>timers</strong></a> and <a href="https://nodejs.org/en/docs/guides/event-loop-timers-and-nexttick/#poll" target="_blank" rel="noopener"><strong>poll</strong></a> sections for more details.</p>
+<p><strong>*NOTE:</strong> There is a slight discrepancy between the Windows and the Unix/Linux implementation, but that’s not important for this demonstration. The most important parts are here. There are actually seven or eight steps, but the ones we care about — ones that Node.js actually uses - are those above.*</p>
+<h2 id="Phases-Overview"><a href="#Phases-Overview" class="headerlink" title="Phases Overview"></a>Phases Overview</h2><ul>
+<li><strong>timers</strong>: this phase executes callbacks scheduled by <code>setTimeout()</code> and <code>setInterval()</code>.</li>
+<li><strong>pending callbacks</strong>: executes I/O callbacks deferred to the next loop iteration.</li>
+<li><strong>idle, prepare</strong>: only used internally.</li>
+<li><strong>poll</strong>: retrieve new I/O events; execute I/O related callbacks (almost all with the exception of close callbacks, the ones scheduled by timers, and <code>setImmediate()</code>); node will block here when appropriate.</li>
+<li><strong>check</strong>: <code>setImmediate()</code> callbacks are invoked here.</li>
+<li><strong>close callbacks</strong>: some close callbacks, e.g. <code>socket.on(&#39;close&#39;, ...)</code>.</li>
+</ul>
+<p>Between each run of the event loop, Node.js checks if it is waiting for any asynchronous I/O or timers and shuts down cleanly if there are not any.</p>
+<h2 id="Phases-in-Detail"><a href="#Phases-in-Detail" class="headerlink" title="Phases in Detail"></a>Phases in Detail</h2><h3 id="timers"><a href="#timers" class="headerlink" title="timers"></a>timers</h3><p>A timer specifies the <strong>threshold</strong> <em>after which</em> a provided callback <em>may be executed</em> rather than the <strong>exact</strong> time a person <em>wants it to be executed</em>. Timers callbacks will run as early as they can be scheduled after the specified amount of time has passed; however, Operating System scheduling or the running of other callbacks <strong>may delay</strong> them.</p>
+<p><strong>*Note</strong>: Technically, the <strong>poll</strong> phase controls when timers are executed.*</p>
+<p>For example, say you schedule a timeout to execute after a 100 ms threshold, then your script starts asynchronously reading a file which takes 95 ms:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">const fs = require(&apos;fs&apos;);</span><br><span class="line"></span><br><span class="line">function someAsyncOperation(callback) &#123;</span><br><span class="line">  // Assume this takes 95ms to complete</span><br><span class="line">  fs.readFile(&apos;/path/to/file&apos;, callback);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">const timeoutScheduled = Date.now();</span><br><span class="line"></span><br><span class="line">setTimeout(() =&gt; &#123;</span><br><span class="line">  const delay = Date.now() - timeoutScheduled;</span><br><span class="line"></span><br><span class="line">  console.log(`$&#123;delay&#125;ms have passed since I was scheduled`);</span><br><span class="line">&#125;, 100);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">// do someAsyncOperation which takes 95 ms to complete</span><br><span class="line">someAsyncOperation(() =&gt; &#123;</span><br><span class="line">  const startCallback = Date.now();</span><br><span class="line"></span><br><span class="line">  // do something that will take 10ms...</span><br><span class="line">  while (Date.now() - startCallback &lt; 10) &#123;</span><br><span class="line">    // do nothing</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>When the event loop enters the <strong>poll</strong> phase, it has an empty queue (<code>fs.readFile()</code> has not completed), so it will wait for the number of ms remaining until the soonest timer’s threshold is reached. While it is waiting 95 ms pass, <code>fs.readFile()</code> finishes reading the file and its callback which takes 10 ms to complete is added to the <strong>poll</strong> queue and executed. When the callback finishes, there are no more callbacks in the queue, so the event loop will see that the threshold of the soonest timer has been reached then wrap back to the <strong>timers</strong> phase to execute the timer’s callback. In this example, you will see that the total delay between the timer being scheduled and its callback being executed will be 105ms.</p>
+<p>Note: To prevent the <strong>poll</strong> phase from starving the event loop, <a href="http://libuv.org/" target="_blank" rel="noopener">libuv</a> (the C library that implements the Node.js event loop and all of the asynchronous behaviors of the platform) also has a hard maximum (system dependent) before it stops polling for more events.</p>
+<h3 id="pending-callbacks"><a href="#pending-callbacks" class="headerlink" title="pending callbacks"></a>pending callbacks</h3><p>This phase executes callbacks for some system operations such as types of TCP errors. For example if a TCP socket receives <code>ECONNREFUSED</code> when attempting to connect, some *nix systems want to wait to report the error. This will be queued to execute in the <strong>pending callbacks</strong> phase.</p>
+<h3 id="poll"><a href="#poll" class="headerlink" title="poll"></a>poll</h3><p>The <strong>poll</strong> phase has two main functions:</p>
+<ol>
+<li>Calculating how long it should block and poll for I/O, then</li>
+<li>Processing events in the <strong>poll</strong> queue.</li>
+</ol>
+<p>When the event loop enters the <strong>poll</strong> phase <em>and there are no timers scheduled</em>, one of two things will happen:</p>
+<ul>
+<li><em>If the **poll<strong> queue </strong>is not empty**</em>, the event loop will iterate through its queue of callbacks executing them synchronously until either the queue has been exhausted, or the system-dependent hard limit is reached.</li>
+<li><em>If the **poll<strong> queue </strong>is empty**</em>, one of two more things will happen:<ul>
+<li>If scripts have been scheduled by <code>setImmediate()</code>, the event loop will end the <strong>poll</strong> phase and continue to the <strong>check</strong> phase to execute those scheduled scripts.</li>
+<li>If scripts <strong>have not</strong> been scheduled by <code>setImmediate()</code>, the event loop will wait for callbacks to be added to the queue, then execute them immediately.</li>
+</ul>
+</li>
+</ul>
+<p>Once the <strong>poll</strong> queue is empty the event loop will check for timers <em>whose time thresholds have been reached</em>. If one or more timers are ready, the event loop will wrap back to the <strong>timers</strong> phase to execute those timers’ callbacks.</p>
+<h3 id="check"><a href="#check" class="headerlink" title="check"></a>check</h3><p>This phase allows a person to execute callbacks immediately after the <strong>poll</strong> phase has <strong>completed</strong>. If the <strong>poll</strong> phase becomes idle and scripts have been queued with <code>setImmediate()</code>, the event loop may continue to the <strong>check</strong> phase rather than waiting.</p>
+<p><code>setImmediate()</code> is actually a special timer that runs in a separate phase of the event loop. It uses a libuv API that schedules callbacks to execute after the <strong>poll</strong> phase has completed.</p>
+<p>Generally, as the code is executed, the event loop will eventually hit the <strong>poll</strong> phase where it will wait for an incoming connection, request, etc. However, if a callback has been scheduled with <code>setImmediate()</code> and the <strong>poll</strong> phase becomes idle, it will end and continue to the <strong>check</strong> phase rather than waiting for <strong>poll</strong> events.</p>
+<h3 id="close-callbacks"><a href="#close-callbacks" class="headerlink" title="close callbacks"></a>close callbacks</h3><p>If a socket or handle is closed abruptly (e.g. <code>socket.destroy()</code>), the <code>&#39;close&#39;</code> event will be emitted in this phase. Otherwise it will be emitted via <code>process.nextTick()</code>.</p>
+<h2 id="setImmediate-vs-setTimeout"><a href="#setImmediate-vs-setTimeout" class="headerlink" title="setImmediate() vs setTimeout()"></a><code>setImmediate()</code> vs <code>setTimeout()</code></h2><p><code>setImmediate</code> and <code>setTimeout()</code> are similar, but behave in different ways depending on when they are called.</p>
+<ul>
+<li><code>setImmediate()</code> is designed to execute a script once the current <strong>poll</strong> phase <strong>completes</strong>.</li>
+<li><code>setTimeout()</code> schedules a script to be run after a minimum threshold in ms has elapsed.</li>
+</ul>
+<p>The order in which the timers are executed will vary depending on the context in which they are called. If both are called from within the main module, then timing will be bound by the performance of the process (which can be impacted by other applications running on the machine).</p>
+<p>For example, if we run the following script which is not within an I/O cycle (i.e. the main module), the order in which the two timers are executed is <strong>non-deterministic</strong>, as it is bound by the performance of the process:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">// timeout_vs_immediate.js</span><br><span class="line">setTimeout(() =&gt; &#123;</span><br><span class="line">  console.log(&apos;timeout&apos;);</span><br><span class="line">&#125;, 0);</span><br><span class="line"></span><br><span class="line">setImmediate(() =&gt; &#123;</span><br><span class="line">  console.log(&apos;immediate&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ node timeout_vs_immediate.js</span><br><span class="line">timeout</span><br><span class="line">immediate</span><br><span class="line"></span><br><span class="line">$ node timeout_vs_immediate.js</span><br><span class="line">immediate</span><br><span class="line">timeout</span><br></pre></td></tr></table></figure>
+<p>However, if you move the two calls within an I/O cycle, the immediate callback is always executed <strong>first</strong>:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">// timeout_vs_immediate.js</span><br><span class="line">const fs = require(&apos;fs&apos;);</span><br><span class="line"></span><br><span class="line">fs.readFile(__filename, () =&gt; &#123;</span><br><span class="line">  setTimeout(() =&gt; &#123;</span><br><span class="line">    console.log(&apos;timeout&apos;);</span><br><span class="line">  &#125;, 0);</span><br><span class="line">  setImmediate(() =&gt; &#123;</span><br><span class="line">    console.log(&apos;immediate&apos;);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ node timeout_vs_immediate.js</span><br><span class="line">immediate</span><br><span class="line">timeout</span><br><span class="line"></span><br><span class="line">$ node timeout_vs_immediate.js</span><br><span class="line">immediate</span><br><span class="line">timeout</span><br></pre></td></tr></table></figure>
+<p>The main advantage to using <code>setImmediate()</code> over <code>setTimeout()</code> is <code>setImmediate()</code>will always be executed before any timers if scheduled within an I/O cycle, independently of how many timers are present.</p>
+<h2 id="process-nextTick"><a href="#process-nextTick" class="headerlink" title="process.nextTick()"></a><code>process.nextTick()</code></h2><h3 id="Understanding-process-nextTick"><a href="#Understanding-process-nextTick" class="headerlink" title="Understanding process.nextTick()"></a>Understanding <code>process.nextTick()</code></h3><p>You may have noticed that <code>process.nextTick()</code> was not displayed in the diagram, even though it’s a part of the asynchronous API. This is because <code>process.nextTick()</code> is not technically part of the event loop. Instead, the <code>nextTickQueue</code> will be processed after the current operation completes, regardless of the current phase of the event loop.</p>
+<p>Looking back at our diagram, any time you call <code>process.nextTick()</code> in a given phase, all callbacks passed to <code>process.nextTick()</code> will be resolved <strong>before</strong> the event loop continues. This can create some bad situations because <strong>it allows you to “starve” your I/O by making recursive process.nextTick() calls</strong>, which prevents the event loop from reaching the <strong>poll</strong> phase.</p>
+<h3 id="Why-would-that-be-allowed"><a href="#Why-would-that-be-allowed" class="headerlink" title="Why would that be allowed?"></a>Why would that be allowed?</h3><p>Why would something like this be included in Node.js? Part of it is a design philosophy where an API should always be asynchronous even where it doesn’t have to be. Take this code snippet for example:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">function apiCall(arg, callback) &#123;</span><br><span class="line">  if (typeof arg !== &apos;string&apos;)</span><br><span class="line">    return process.nextTick(callback,</span><br><span class="line">                            new TypeError(&apos;argument should be string&apos;));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>The snippet does an argument check and if it’s not correct, it will pass the error to the callback. The API updated fairly recently to allow passing arguments to <code>process.nextTick()</code> allowing it to take any arguments passed after the callback to be propagated as the arguments to the callback so you don’t have to nest functions.</p>
+<p>What we’re doing is passing an error back to the user but only <em>after</em> we have allowed the rest of the user’s code to execute. By using <code>process.nextTick()</code> we guarantee that <code>apiCall()</code> always runs its callback <em>after</em> the rest of the user’s code and <em>before</em> the event loop is allowed to proceed. To achieve this, the JS call stack is allowed to unwind then immediately execute the provided callback which allows a person to make recursive calls to <code>process.nextTick()</code> without reaching a <code>RangeError: Maximum call stack size exceeded from v8</code>.</p>
+<p>This philosophy can lead to some potentially problematic situations. Take this snippet for example:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">let bar;</span><br><span class="line"></span><br><span class="line">// this has an asynchronous signature, but calls callback synchronously</span><br><span class="line">function someAsyncApiCall(callback) &#123; callback(); &#125;</span><br><span class="line"></span><br><span class="line">// the callback is called before `someAsyncApiCall` completes.</span><br><span class="line">someAsyncApiCall(() =&gt; &#123;</span><br><span class="line">  // since someAsyncApiCall has completed, bar hasn&apos;t been assigned any value</span><br><span class="line">  console.log(&apos;bar&apos;, bar); // undefined</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">bar = 1;</span><br></pre></td></tr></table></figure>
+<p>The user defines <code>someAsyncApiCall()</code> to have an asynchronous signature, but it actually operates synchronously. When it is called, the callback provided to <code>someAsyncApiCall()</code>is called in the same phase of the event loop because <code>someAsyncApiCall()</code> doesn’t actually do anything asynchronously. As a result, the callback tries to reference <code>bar</code> even though it may not have that variable in scope yet, because the script has not been able to run to completion.</p>
+<p>By placing the callback in a <code>process.nextTick()</code>, the script still has the ability to run to completion, allowing all the variables, functions, etc., to be initialized prior to the callback being called. It also has the advantage of not allowing the event loop to continue. It may be useful for the user to be alerted to an error before the event loop is allowed to continue. Here is the previous example using <code>process.nextTick()</code>:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">let bar;</span><br><span class="line"></span><br><span class="line">function someAsyncApiCall(callback) &#123;</span><br><span class="line">  process.nextTick(callback);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">someAsyncApiCall(() =&gt; &#123;</span><br><span class="line">  console.log(&apos;bar&apos;, bar); // 1</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">bar = 1;</span><br></pre></td></tr></table></figure>
+<p>Here’s another real world example:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">const server = net.createServer(() =&gt; &#123;&#125;).listen(8080);</span><br><span class="line"></span><br><span class="line">server.on(&apos;listening&apos;, () =&gt; &#123;&#125;);</span><br></pre></td></tr></table></figure>
+<p>When only a port is passed, the port is bound immediately. So, the <code>&#39;listening&#39;</code> callback could be called immediately. The problem is that the <code>.on(&#39;listening&#39;)</code> callback will not have been set by that time.</p>
+<p>To get around this, the <code>&#39;listening&#39;</code> event is queued in a <code>nextTick()</code> to allow the script to run to completion. This allows the user to set any event handlers they want.</p>
+<h2 id="process-nextTick-vs-setImmediate"><a href="#process-nextTick-vs-setImmediate" class="headerlink" title="process.nextTick() vs setImmediate()"></a><code>process.nextTick()</code> vs <code>setImmediate()</code></h2><p>We have two calls that are similar as far as users are concerned, but their names are confusing.</p>
+<ul>
+<li><code>process.nextTick()</code> fires immediately on the same phase</li>
+<li><code>setImmediate()</code> fires on the following iteration or ‘tick’ of the event loop</li>
+</ul>
+<p>In essence, the names should be swapped. <code>process.nextTick()</code> fires more immediately than <code>setImmediate()</code>, but this is an artifact of the past which is unlikely to change. Making this switch would break a large percentage of the packages on npm. Every day more new modules are being added, which means every day we wait, more potential breakages occur. While they are confusing, the names themselves won’t change.</p>
+<p><em>We recommend developers use setImmediate() in all cases because it’s easier to reason about (and it leads to code that’s compatible with a wider variety of environments, like browser JS.)</em></p>
+<h2 id="Why-use-process-nextTick"><a href="#Why-use-process-nextTick" class="headerlink" title="Why use process.nextTick()?"></a>Why use <code>process.nextTick()</code>?</h2><p>There are two main reasons:</p>
+<ol>
+<li>Allow users to handle errors, cleanup any then unneeded resources, or perhaps try the request again before the event loop continues.</li>
+<li>At times it’s necessary to allow a callback to run after the call stack has unwound but before the event loop continues.</li>
+</ol>
+<p>One example is to match the user’s expectations. Simple example:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">const server = net.createServer();</span><br><span class="line">server.on(&apos;connection&apos;, (conn) =&gt; &#123; &#125;);</span><br><span class="line"></span><br><span class="line">server.listen(8080);</span><br><span class="line">server.on(&apos;listening&apos;, () =&gt; &#123; &#125;);</span><br></pre></td></tr></table></figure>
+<p>Say that <code>listen()</code> is run at the beginning of the event loop, but the listening callback is placed in a <code>setImmediate()</code>. Unless a hostname is passed, binding to the port will happen immediately. For the event loop to proceed, it must hit the <strong>poll</strong> phase, which means there is a non-zero chance that a connection could have been received allowing the connection event to be fired before the listening event.</p>
+<p>Another example is running a function constructor that was to, say, inherit from <code>EventEmitter</code> and it wanted to call an event within the constructor:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">const EventEmitter = require(&apos;events&apos;);</span><br><span class="line">const util = require(&apos;util&apos;);</span><br><span class="line"></span><br><span class="line">function MyEmitter() &#123;</span><br><span class="line">  EventEmitter.call(this);</span><br><span class="line">  this.emit(&apos;event&apos;);</span><br><span class="line">&#125;</span><br><span class="line">util.inherits(MyEmitter, EventEmitter);</span><br><span class="line"></span><br><span class="line">const myEmitter = new MyEmitter();</span><br><span class="line">myEmitter.on(&apos;event&apos;, () =&gt; &#123;</span><br><span class="line">  console.log(&apos;an event occurred!&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>You can’t emit an event from the constructor immediately because the script will not have processed to the point where the user assigns a callback to that event. So, within the constructor itself, you can use <code>process.nextTick()</code> to set a callback to emit the event after the constructor has finished, which provides the expected results:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">const EventEmitter = require(&apos;events&apos;);</span><br><span class="line">const util = require(&apos;util&apos;);</span><br><span class="line"></span><br><span class="line">function MyEmitter() &#123;</span><br><span class="line">  EventEmitter.call(this);</span><br><span class="line"></span><br><span class="line">  // use nextTick to emit the event once a handler is assigned</span><br><span class="line">  process.nextTick(() =&gt; &#123;</span><br><span class="line">    this.emit(&apos;event&apos;);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br><span class="line">util.inherits(MyEmitter, EventEmitter);</span><br><span class="line"></span><br><span class="line">const myEmitter = new MyEmitter();</span><br><span class="line">myEmitter.on(&apos;event&apos;, () =&gt; &#123;</span><br><span class="line">  console.log(&apos;an event occurred!&apos;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<h3 id="原文"><a href="#原文" class="headerlink" title="原文"></a>原文</h3><p><a href="https://nodejs.org/en/docs/guides/event-loop-timers-and-nexttick/#the-node-js-event-loop-timers-and-process-nexttick" target="_blank" rel="noopener">https://nodejs.org/en/docs/guides/event-loop-timers-and-nexttick/#the-node-js-event-loop-timers-and-process-nexttick</a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+  
+  <div class="tags">
+    <a href="/tags/Node-js/">Node.js</a>
+  </div>
+
+        
+  <div class="addthis addthis_toolbox addthis_default_style">
+    
+      <a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+    
+    
+      <a class="addthis_button_tweet"></a>
+    
+    
+      <a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+    
+    
+      <a class="addthis_button_pinterest_pinit" pi:pinit:layout="horizontal"></a>
+    
+    <a class="addthis_counter addthis_pill_style"></a>
+  </div>
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js"></script>
+
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">留言</h1>
+
+  
+      <div id="fb-root"></div>
+<script>
+  (function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=shouliang0816";
+    fjs.parentNode.insertBefore(js, fjs);
+  }(document, 'script', 'facebook-jssdk'));
+</script>
+
+<div class="fb-comments" data-href="https://shouliang.github.io/2016/08/05/Node.js/事件—The Node.js Event Loop, Timers, and process.nextTick()/index.html" data-num-posts="5" data-width="840" data-colorscheme="light"></div>
+      
+  
+</section>
+
+</div></div>
+    <aside id="sidebar" class="alignright">
+  <div class="search">
+  <form action="//google.com/search" method="get" accept-charset="utf-8">
+    <input type="search" name="q" results="0" placeholder="搜索">
+    <input type="hidden" name="q" value="site:shouliang.github.io">
+  </form>
+</div>
+
+  
+
+  
+<div class="widget tag">
+  <h3 class="title">标签</h3>
+  <ul class="entry">
+  
+    <li><a href="/tags/Docker/">Docker</a><small>3</small></li>
+  
+    <li><a href="/tags/Git/">Git</a><small>7</small></li>
+  
+    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>5</small></li>
+  
+    <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
+  
+    <li><a href="/tags/MySQL实战/">MySQL实战</a><small>5</small></li>
+  
+    <li><a href="/tags/Node-js/">Node.js</a><small>58</small></li>
+  
+    <li><a href="/tags/Redis/">Redis</a><small>2</small></li>
+  
+    <li><a href="/tags/Unix/">Unix</a><small>4</small></li>
+  
+    <li><a href="/tags/从0开始学大数据/">从0开始学大数据</a><small>2</small></li>
+  
+    <li><a href="/tags/区块链/">区块链</a><small>1</small></li>
+  
+    <li><a href="/tags/数据分析实战/">数据分析实战</a><small>3</small></li>
+  
+    <li><a href="/tags/数据库/">数据库</a><small>2</small></li>
+  
+    <li><a href="/tags/数据结构与算法/">数据结构与算法</a><small>13</small></li>
+  
+    <li><a href="/tags/程序员的数学基础课/">程序员的数学基础课</a><small>5</small></li>
+  
+    <li><a href="/tags/网络安全/">网络安全</a><small>8</small></li>
+  
+    <li><a href="/tags/计算机网络/">计算机网络</a><small>1</small></li>
+  
+    <li><a href="/tags/趣谈网络协议/">趣谈网络协议</a><small>8</small></li>
+  
+  </ul>
+</div>
+
+</aside>
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div class="alignleft">
+  
+  &copy; 2019 shouliang
+  
+</div>
+<div class="clearfix"></div></footer>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+</body>
+</html>

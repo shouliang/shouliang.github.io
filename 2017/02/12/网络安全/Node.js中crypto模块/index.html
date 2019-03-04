@@ -1,6 +1,6 @@
 <!DOCTYPE HTML>
 <html>
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="utf-8">
   
   <title>Node.js中的crypto模块 | shouliang&#39;s blog</title>
@@ -11,11 +11,11 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
-  <meta property="og:title" content="Node.js中的crypto模块"/>
-  <meta property="og:site_name" content="shouliang&#39;s blog"/>
+  <meta property="og:title" content="Node.js中的crypto模块">
+  <meta property="og:site_name" content="shouliang&#39;s blog">
 
   
-    <meta property="og:image" content=""/>
+    <meta property="og:image" content>
   
 
   <link href="/favicon.png" rel="icon">
@@ -25,7 +25,7 @@
   
 
 </head>
-
+</html>
 
 <body>
   <header id="header" class="inner"><div class="alignleft">
@@ -136,11 +136,11 @@
 <p>搞清楚这三点，才会知道crypto模块对称加密API的参数代表什么含义，出了错知道如何去排查。</p>
 <h3 id="1、分组加密模式"><a href="#1、分组加密模式" class="headerlink" title="1、分组加密模式"></a>1、分组加密模式</h3><p>所谓的分组加密，就是将（较长的）明文拆分成固定长度的块，然后对拆分的块按照特定的模式进行加密。</p>
 <p>常见的分组加密模式有：ECB（不安全）、CBC（最常用）、CFB、OFB、CTR等。</p>
-<p>以最简单的ECB为例，先将消息拆分成等分的模块，然后利用秘钥进行加密。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-ECB_encryption.svg.png" alt=""><br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-ECB_decryption.svg.png" alt=""><br>更多关于分组加密模式的介绍可以参考 <a href="https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Common_modes" target="_blank" rel="noopener">wiki</a>。</p>
+<p>以最简单的ECB为例，先将消息拆分成等分的模块，然后利用秘钥进行加密。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-ECB_encryption.svg.png" alt><br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-ECB_decryption.svg.png" alt><br>更多关于分组加密模式的介绍可以参考 <a href="https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Common_modes" target="_blank" rel="noopener">wiki</a>。</p>
 <p>后面假设每个块的长度为128位</p>
 <h3 id="2、初始化向量：IV"><a href="#2、初始化向量：IV" class="headerlink" title="2、初始化向量：IV"></a>2、初始化向量：IV</h3><p>为了增强算法的安全性，部分分组加密模式（CFB、OFB、CTR）中引入了初始化向量（IV），使得加密的结果随机化。也就是说，对于同一段明文，IV不同，加密的结果不同。</p>
 <p>以CBC为例，每一个数据块，都与前一个加密块进行亦或运算后，再进行加密。对于第一个数据块，则是与IV进行亦或。</p>
-<p>IV的大小跟数据块的大小有关（128位），跟秘钥的长度无关。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-CBC_encryption.svg.png" alt=""><br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-CBC_decryption.svg.png" alt=""></p>
+<p>IV的大小跟数据块的大小有关（128位），跟秘钥的长度无关。<br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-CBC_encryption.svg.png" alt><br><img src="http://7xq1il.com1.z0.glb.clouddn.com/601px-CBC_decryption.svg.png" alt></p>
 <h3 id="3、填充：padding"><a href="#3、填充：padding" class="headerlink" title="3、填充：padding"></a>3、填充：padding</h3><p>分组加密模式需要对长度固定的块进行加密。分组拆分完后，最后一个数据块长度可能小于128位，此时需要进行填充以满足长度要求。</p>
 <p>填充方式有多重。常见的填充方式有<a href="https://tools.ietf.org/html/rfc5652#section-6.3" target="_blank" rel="noopener">PKCS7</a>。</p>
 <p>假设分组长度为k字节，最后一个分组长度为k-last，可以看到：</p>
@@ -236,51 +236,21 @@
   <h3 class="title">标签</h3>
   <ul class="entry">
   
-    <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
-  
     <li><a href="/tags/Docker/">Docker</a><small>3</small></li>
   
-    <li><a href="/tags/ES6/">ES6</a><small>4</small></li>
-  
-    <li><a href="/tags/Express/">Express</a><small>2</small></li>
-  
     <li><a href="/tags/Git/">Git</a><small>7</small></li>
-  
-    <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
   
     <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>5</small></li>
   
     <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
   
-    <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
-  
     <li><a href="/tags/MySQL实战/">MySQL实战</a><small>5</small></li>
   
-    <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>4</small></li>
-  
-    <li><a href="/tags/Node-js-事件/">Node.js_事件</a><small>4</small></li>
-  
-    <li><a href="/tags/Node-js-入门/">Node.js_入门</a><small>9</small></li>
-  
-    <li><a href="/tags/Node-js-基础/">Node.js_基础</a><small>6</small></li>
-  
-    <li><a href="/tags/Node-js-异步/">Node.js_异步</a><small>3</small></li>
-  
-    <li><a href="/tags/Node-js-模块/">Node.js_模块</a><small>5</small></li>
-  
-    <li><a href="/tags/Node-js-测试/">Node.js_测试</a><small>5</small></li>
-  
-    <li><a href="/tags/Node-js-网络/">Node.js_网络</a><small>1</small></li>
-  
-    <li><a href="/tags/Node-js-进程/">Node.js_进程</a><small>2</small></li>
-  
-    <li><a href="/tags/Node-js-错误处理和调试/">Node.js_错误处理和调试</a><small>5</small></li>
+    <li><a href="/tags/Node-js/">Node.js</a><small>58</small></li>
   
     <li><a href="/tags/Redis/">Redis</a><small>2</small></li>
   
-    <li><a href="/tags/Shell/">Shell</a><small>1</small></li>
-  
-    <li><a href="/tags/Unix/">Unix</a><small>3</small></li>
+    <li><a href="/tags/Unix/">Unix</a><small>4</small></li>
   
     <li><a href="/tags/从0开始学大数据/">从0开始学大数据</a><small>2</small></li>
   

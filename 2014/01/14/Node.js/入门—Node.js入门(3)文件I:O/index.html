@@ -1,0 +1,238 @@
+<!DOCTYPE HTML>
+<html>
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  <title>入门—三.文件I/O | shouliang&#39;s blog</title>
+  <meta name="author" content="shouliang">
+  
+  <meta name="description" content="Node">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <meta property="og:title" content="入门—三.文件I/O">
+  <meta property="og:site_name" content="shouliang&#39;s blog">
+
+  
+    <meta property="og:image" content>
+  
+
+  <link href="/favicon.png" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="shouliang&#39;s blog" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+
+</head>
+</html>
+
+<body>
+  <header id="header" class="inner"><div class="alignleft">
+  <h1><a href="/">shouliang&#39;s blog</a></h1>
+  <h2><a href="/"></a></h2>
+</div>
+<nav id="main-nav" class="alignright">
+  <ul>
+    
+      <li><a href="/">首页</a></li>
+    
+      <li><a href="/archives">归档</a></li>
+    
+      <li><a href="/about">关于</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+<div class="clearfix"></div></header>
+  <div id="content" class="inner">
+    <div id="main-col" class="alignleft"><div id="wrapper"><article class="post">
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2014-01-14T09:45:23.000Z"><a href="/2014/01/14/Node.js/入门—Node.js入门(3)文件I:O/">2014-01-14</a></time>
+      
+      
+  
+    <h1 class="title">入门—三.文件I/O</h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <h3 id="1-简介"><a href="#1-简介" class="headerlink" title="1.简介"></a>1.简介</h3><hr>
+<h4 id="fs模块的基本用法"><a href="#fs模块的基本用法" class="headerlink" title="fs模块的基本用法"></a>fs模块的基本用法</h4><p>开发中我们经常会有文件I/O的需求，node.js中提供一个名为fs的模块来支持I/O操作，fs模块的文件I/O是对标准POSIX函数的简单封装。</p>
+<h3 id="2-写入文件"><a href="#2-写入文件" class="headerlink" title="2.写入文件"></a>2.写入文件</h3><hr>
+<h4 id="writeFile函数的基本用法"><a href="#writeFile函数的基本用法" class="headerlink" title="writeFile函数的基本用法"></a>writeFile函数的基本用法</h4><p>文件I/O，写入是必修课之一。fs模块提供writeFile函数，可以异步的将数据写入一个文件, 如果文件已经存在则会被替换。用法如下：</p>
+<p>例：fs.writeFile(filename, data, callback)<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> fs= <span class="built_in">require</span>(<span class="string">"fs"</span>);</span><br><span class="line">fs.writeFile(<span class="string">'test.txt'</span>, <span class="string">'Hello Node'</span>, <span class="function"><span class="keyword">function</span> (<span class="params">err</span>) </span>&#123;</span><br><span class="line">   <span class="keyword">if</span> (err) <span class="keyword">throw</span> err;</span><br><span class="line">   <span class="built_in">console</span>.log(<span class="string">'Saved successfully'</span>); <span class="comment">//文件被保存</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>数据参数可以是string或者是Buffer,编码格式参数可选，默认为”utf8”，回调函数只有一个参数err。</p>
+<h3 id="3-追加文件"><a href="#3-追加文件" class="headerlink" title="3.追加文件"></a>3.追加文件</h3><hr>
+<h4 id="appendFile函数的基本用法"><a href="#appendFile函数的基本用法" class="headerlink" title="appendFile函数的基本用法"></a>appendFile函数的基本用法</h4><p>writeFile函数虽然可以写入文件，但是如果文件已经存在，我们只是想添加一部分内容，它就不能满足我们的需求了，很幸运，fs模块中还有appendFile函数，它可以将新的内容追加到已有的文件中，如果文件不存在，则会创建一个新的文件。使用方法如下：</p>
+<p>例：fs.appendFile(文件名,数据,编码,回调函数(err));<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> fs= <span class="built_in">require</span>(<span class="string">"fs"</span>); </span><br><span class="line">fs.appendFile(<span class="string">'test.txt'</span>, <span class="string">'data to append'</span>, <span class="function"><span class="keyword">function</span> (<span class="params">err</span>) </span>&#123;</span><br><span class="line">   <span class="keyword">if</span> (err) <span class="keyword">throw</span> err; </span><br><span class="line">    <span class="comment">//数据被添加到文件的尾部</span></span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">'The "data to append" was appended to file!'</span>); </span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>编码格式默认为”utf8”</p>
+<h3 id="4-是否存在"><a href="#4-是否存在" class="headerlink" title="4.是否存在"></a>4.是否存在</h3><hr>
+<h4 id="exists函数的基本用法"><a href="#exists函数的基本用法" class="headerlink" title="exists函数的基本用法"></a>exists函数的基本用法</h4><p>如何检查一个文件是否存在呢？我想exists函数可以帮助你，用法如下：</p>
+<p>例：fs.exists(文件，回调函数(exists));</p>
+<p>exists的回调函数只有一个参数，类型为布尔型，通过它来表示文件是否存在。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> fs= <span class="built_in">require</span>(<span class="string">"fs"</span>);</span><br><span class="line">fs.exists(<span class="string">'/etc/passwd'</span>, <span class="function"><span class="keyword">function</span> (<span class="params">exists</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(exists ? <span class="string">"存在"</span> : <span class="string">"不存在!"</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="5-修改名称"><a href="#5-修改名称" class="headerlink" title="5.修改名称"></a>5.修改名称</h3><hr>
+<h4 id="rename函数的基本用法"><a href="#rename函数的基本用法" class="headerlink" title="rename函数的基本用法"></a>rename函数的基本用法</h4><p>修改文件名称是我们经常会遇见的事情，rename函数提供修改名称服务：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> fs= <span class="built_in">require</span>(<span class="string">"fs"</span>);</span><br><span class="line">fs.rename(旧文件，新文件，回调函数(err)&#123;</span><br><span class="line">   <span class="keyword">if</span> (err) <span class="keyword">throw</span> err;</span><br><span class="line">   <span class="built_in">console</span>.log(<span class="string">'Successful modification,'</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="6-移动文件"><a href="#6-移动文件" class="headerlink" title="6.移动文件"></a>6.移动文件</h3><hr>
+<p>移动文件也是我们经常会遇见的，可是fs没有专门移动文件的函数，但是我们可以通过rename函数来达到移动文件的目的，示例如下。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> fs = <span class="built_in">require</span>(<span class="string">'fs'</span>);</span><br><span class="line">fs.rename(oldPath,newPath,<span class="function"><span class="keyword">function</span> (<span class="params">err</span>) </span>&#123;</span><br><span class="line">   <span class="keyword">if</span> (err) <span class="keyword">throw</span> err;</span><br><span class="line">   <span class="built_in">console</span>.log(<span class="string">'renamed complete'</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="7-读取文件"><a href="#7-读取文件" class="headerlink" title="7.读取文件"></a>7.读取文件</h3><hr>
+<h4 id="readFile函数的基本用法"><a href="#readFile函数的基本用法" class="headerlink" title="readFile函数的基本用法"></a>readFile函数的基本用法</h4><p>读取文件是最常用到的功能之一，使用fs模块读取文件语法如下：</p>
+<p>例：fs.readFile(文件,编码,回调函数);</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> fs = <span class="built_in">require</span>(<span class="string">'fs'</span>);</span><br><span class="line">fs.readFile(文件名, <span class="function"><span class="keyword">function</span> (<span class="params">err, data</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (err) <span class="keyword">throw</span> err;</span><br><span class="line">  <span class="built_in">console</span>.log(data);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>回调函数里面的data,就是读取的文件内容。</p>
+<h3 id="8-删除文件"><a href="#8-删除文件" class="headerlink" title="8.删除文件"></a>8.删除文件</h3><hr>
+<h4 id="unlink函数的基本用法"><a href="#unlink函数的基本用法" class="headerlink" title="unlink函数的基本用法"></a>unlink函数的基本用法</h4><p>面对一堆垃圾的文件总是有想删除的冲动，我有强迫症？你才有呢。<br>好在有unlink函数，终于得救了，示例如下：<br>例：fs.unlink(文件,回调函数(err));<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> fs = <span class="built_in">require</span>(<span class="string">'fs'</span>);</span><br><span class="line">fs.unlink(文件, <span class="function"><span class="keyword">function</span>(<span class="params">err</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (err) <span class="keyword">throw</span> err;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'successfully deleted'</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="9-创建目录"><a href="#9-创建目录" class="headerlink" title="9.创建目录"></a>9.创建目录</h3><hr>
+<h4 id="mkdir函数的基本用法"><a href="#mkdir函数的基本用法" class="headerlink" title="mkdir函数的基本用法"></a>mkdir函数的基本用法</h4><p>除了针对文件的操作，目录的创建、删除也经常遇到的，下面我们来看看node.js中如何创建目录：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fs.mkdir(路径，权限，回调函数(err));</span><br></pre></td></tr></table></figure></p>
+<p>参数</p>
+<p>1.路径：新创建的目录。<br>2.权限：可选参数，只在linux下有效，表示目录的权限，默认为0777，表示文件所有者、文件所有者所在的组的用户、所有用户，都有权限进行读、写、执行的操作。<br>3.回调函数：当发生错误时，错误信息会传递给回调函数的err参数。</p>
+<h3 id="10-删除目录"><a href="#10-删除目录" class="headerlink" title="10.删除目录"></a>10.删除目录</h3><hr>
+<h4 id="rmdir函数的基本用法"><a href="#rmdir函数的基本用法" class="headerlink" title="rmdir函数的基本用法"></a>rmdir函数的基本用法</h4><p>删除目录也是必不可少的功能，rmdir函数可以删除指定的目录：</p>
+<p>例：fs.rmdir(路径，回调函数(err));<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> fs = <span class="built_in">require</span>(<span class="string">'fs'</span>); </span><br><span class="line">fs.rmdir(path, <span class="function"><span class="keyword">function</span>(<span class="params">err</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (err) <span class="keyword">throw</span> err;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'ok'</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h3 id="11-读取目录"><a href="#11-读取目录" class="headerlink" title="11.读取目录"></a>11.读取目录</h3><hr>
+<h4 id="readdir函数的基本用法"><a href="#readdir函数的基本用法" class="headerlink" title="readdir函数的基本用法"></a>readdir函数的基本用法</h4><p>如果要读取目录下所有的文件应该怎么办呢？readdir函数可以读取到指定目录下所有的文件，示例如下：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> fs = <span class="built_in">require</span>(<span class="string">'fs'</span>);</span><br><span class="line">fs.readdir(目录,回调函数(err,files));</span><br></pre></td></tr></table></figure></p>
+<p>回调函数 (callback) 接受两个参数 (err, files) 其中 files 是一个存储目录中所包含的文件名称的数组，数组中不包括 ‘.’ 和 ‘..’。</p>
+<h3 id="12-小结"><a href="#12-小结" class="headerlink" title="12.小结"></a>12.小结</h3><hr>
+<p>文件I/O是最基本的操作，应该熟悉掌握。</p>
+<p>fs模块不但提供异步的文件操作，还提供相应的同步操作方法，需要指出的是，nodejs采用异步I/O正是为了避免I/O时的等待时间，提高CPU的利用率，所以在选择使用异步或同步方法的时候需要权衡取舍。</p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+  
+  <div class="tags">
+    <a href="/tags/Node-js/">Node.js</a>
+  </div>
+
+        
+  <div class="addthis addthis_toolbox addthis_default_style">
+    
+      <a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
+    
+    
+      <a class="addthis_button_tweet"></a>
+    
+    
+      <a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
+    
+    
+      <a class="addthis_button_pinterest_pinit" pi:pinit:layout="horizontal"></a>
+    
+    <a class="addthis_counter addthis_pill_style"></a>
+  </div>
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js"></script>
+
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+<section id="comment">
+  <h1 class="title">留言</h1>
+
+  
+      <div id="fb-root"></div>
+<script>
+  (function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=shouliang0816";
+    fjs.parentNode.insertBefore(js, fjs);
+  }(document, 'script', 'facebook-jssdk'));
+</script>
+
+<div class="fb-comments" data-href="https://shouliang.github.io/2014/01/14/Node.js/入门—Node.js入门(3)文件I:O/index.html" data-num-posts="5" data-width="840" data-colorscheme="light"></div>
+      
+  
+</section>
+
+</div></div>
+    <aside id="sidebar" class="alignright">
+  <div class="search">
+  <form action="//google.com/search" method="get" accept-charset="utf-8">
+    <input type="search" name="q" results="0" placeholder="搜索">
+    <input type="hidden" name="q" value="site:shouliang.github.io">
+  </form>
+</div>
+
+  
+
+  
+<div class="widget tag">
+  <h3 class="title">标签</h3>
+  <ul class="entry">
+  
+    <li><a href="/tags/Docker/">Docker</a><small>3</small></li>
+  
+    <li><a href="/tags/Git/">Git</a><small>7</small></li>
+  
+    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>5</small></li>
+  
+    <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
+  
+    <li><a href="/tags/MySQL实战/">MySQL实战</a><small>5</small></li>
+  
+    <li><a href="/tags/Node-js/">Node.js</a><small>58</small></li>
+  
+    <li><a href="/tags/Redis/">Redis</a><small>2</small></li>
+  
+    <li><a href="/tags/Unix/">Unix</a><small>4</small></li>
+  
+    <li><a href="/tags/从0开始学大数据/">从0开始学大数据</a><small>2</small></li>
+  
+    <li><a href="/tags/区块链/">区块链</a><small>1</small></li>
+  
+    <li><a href="/tags/数据分析实战/">数据分析实战</a><small>3</small></li>
+  
+    <li><a href="/tags/数据库/">数据库</a><small>2</small></li>
+  
+    <li><a href="/tags/数据结构与算法/">数据结构与算法</a><small>13</small></li>
+  
+    <li><a href="/tags/程序员的数学基础课/">程序员的数学基础课</a><small>5</small></li>
+  
+    <li><a href="/tags/网络安全/">网络安全</a><small>8</small></li>
+  
+    <li><a href="/tags/计算机网络/">计算机网络</a><small>1</small></li>
+  
+    <li><a href="/tags/趣谈网络协议/">趣谈网络协议</a><small>8</small></li>
+  
+  </ul>
+</div>
+
+</aside>
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div class="alignleft">
+  
+  &copy; 2019 shouliang
+  
+</div>
+<div class="clearfix"></div></footer>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+</body>
+</html>

@@ -1,6 +1,6 @@
 <!DOCTYPE HTML>
 <html>
-<head>
+<head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="utf-8">
   
   <title>详解https是如何确保安全的 | shouliang&#39;s blog</title>
@@ -11,11 +11,11 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
-  <meta property="og:title" content="详解https是如何确保安全的"/>
-  <meta property="og:site_name" content="shouliang&#39;s blog"/>
+  <meta property="og:title" content="详解https是如何确保安全的">
+  <meta property="og:site_name" content="shouliang&#39;s blog">
 
   
-    <meta property="og:image" content=""/>
+    <meta property="og:image" content>
   
 
   <link href="/favicon.png" rel="icon">
@@ -25,7 +25,7 @@
   
 
 </head>
-
+</html>
 
 <body>
   <header id="header" class="inner"><div class="alignleft">
@@ -68,7 +68,7 @@
 <h3 id="Https的劣势"><a href="#Https的劣势" class="headerlink" title="Https的劣势"></a>Https的劣势</h3><p>对数据进行加解密决定了它比http慢<br>需要进行非对称的加解密，且需要三次握手。首次连接比较慢点，当然现在也有很多的优化。<br>出于安全考虑，浏览器不会在本地保存HTTPS缓存。实际上，只要在HTTP头中使用特定命令，HTTPS是可以缓存的。Firefox默认只在内存中缓存HTTPS。但是，只要头命令中有Cache-Control: Public，缓存就会被写到硬盘上。 IE只要http头允许就可以缓存https内容，缓存策略与是否使用HTTPS协议无关。</p>
 <h3 id="HTTPS和HTTP的区别"><a href="#HTTPS和HTTP的区别" class="headerlink" title="HTTPS和HTTP的区别"></a>HTTPS和HTTP的区别</h3><p>https协议需要到CA申请证书。<br>http是超文本传输协议，信息是明文传输；https 则是具有安全性的ssl加密传输协议。<br>http和https使用的是完全不同的连接方式，用的端口也不一样，前者是80，后者是443。<br>http的连接很简单，是无状态的；HTTPS协议是由SSL+HTTP协议构建的可进行加密传输、身份认证的网络协议，比http协议安全。<br>http默认使用80端口，https默认使用443端口</p>
 <p>下面就是https的整个架构，现在的https基本都使用TLS了，因为更加安全，所以下图中的SSL应该换为<strong>SSL/TLS</strong>。</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/sslexexplation.png" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/sslexexplation.png" alt></p>
 <p>下面就上图中的知识点进行一个大概的介绍。</p>
 <h2 id="加解密相关知识"><a href="#加解密相关知识" class="headerlink" title="加解密相关知识"></a>加解密相关知识</h2><h3 id="对称加密"><a href="#对称加密" class="headerlink" title="对称加密"></a>对称加密</h3><p>对称加密(也叫私钥加密)指加密和解密使用相同密钥的加密算法。有时又叫传统密码算法，就是加密密钥能够从解密密钥中推算出来，同时解密密钥也可以从加密密钥中推算出来。而在大多数的对称算法中，加密密钥和解密密钥是相同的，所以也称这种加密算法为秘密密钥算法或单密钥算法。</p>
 <p>常见的对称加密有：DES（Data Encryption Standard）、AES（Advanced Encryption Standard）、RC4、IDEA</p>
@@ -98,7 +98,7 @@
 <p>一致证书处理：与SSLv3.0不同，TLS试图指定必须在TLS之间实现交换的证书类型。</p>
 <p>特定警报消息：TLS提供更多的特定和附加警报，以指示任一会话端点检测到的问题。TLS还对何时应该发送某些警报进行记录。</p>
 <h3 id="SSL、TLS的握手过程"><a href="#SSL、TLS的握手过程" class="headerlink" title="SSL、TLS的握手过程"></a>SSL、TLS的握手过程</h3><p>SSL与TLS握手整个过程如下图所示，下面会详细介绍每一步的具体内容：</p>
-<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/clientHello.png" alt=""></p>
+<p><img src="http://7xq1il.com1.z0.glb.clouddn.com/clientHello.png" alt></p>
 <h3 id="客户端首次发出请求"><a href="#客户端首次发出请求" class="headerlink" title="客户端首次发出请求"></a>客户端首次发出请求</h3><p>由于客户端(如浏览器)对一些加解密算法的支持程度不一样，但是在TLS协议传输过程中必须使用同一套加解密算法才能保证数据能够正常的加解密。在TLS握手阶段，客户端首先要告知服务端，自己支持哪些加密算法，所以客户端需要将本地支持的加密套件(Cipher Suite)的列表传送给服务端。除此之外，客户端还要产生一个随机数，这个随机数一方面需要在客户端保存，另一方面需要传送给服务端，客户端的随机数需要跟服务端产生的随机数结合起来产生后面要讲到的 Master Secret 。</p>
 <p>客户端需要提供如下信息：<br>支持的协议版本，比如TLS 1.0版<br>一个客户端生成的随机数，稍后用于生成”对话密钥”<br>支持的加密方法，比如RSA公钥加密<br>支持的压缩方法</p>
 <h3 id="服务端首次回应"><a href="#服务端首次回应" class="headerlink" title="服务端首次回应"></a>服务端首次回应</h3><p>服务端在接收到客户端的Client Hello之后，服务端需要确定加密协议的版本，以及加密的算法，然后也生成一个随机数，以及将自己的证书发送给客户端一并发送给客户端，这里的随机数是整个过程的第二个随机数。</p>
@@ -191,51 +191,21 @@
   <h3 class="title">标签</h3>
   <ul class="entry">
   
-    <li><a href="/tags/Angular/">Angular</a><small>1</small></li>
-  
     <li><a href="/tags/Docker/">Docker</a><small>3</small></li>
   
-    <li><a href="/tags/ES6/">ES6</a><small>4</small></li>
-  
-    <li><a href="/tags/Express/">Express</a><small>2</small></li>
-  
     <li><a href="/tags/Git/">Git</a><small>7</small></li>
-  
-    <li><a href="/tags/Gulp/">Gulp</a><small>4</small></li>
   
     <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>5</small></li>
   
     <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
   
-    <li><a href="/tags/Mongoose/">Mongoose</a><small>6</small></li>
-  
     <li><a href="/tags/MySQL实战/">MySQL实战</a><small>5</small></li>
   
-    <li><a href="/tags/Node-js-IO/">Node.js_IO</a><small>4</small></li>
-  
-    <li><a href="/tags/Node-js-事件/">Node.js_事件</a><small>4</small></li>
-  
-    <li><a href="/tags/Node-js-入门/">Node.js_入门</a><small>9</small></li>
-  
-    <li><a href="/tags/Node-js-基础/">Node.js_基础</a><small>6</small></li>
-  
-    <li><a href="/tags/Node-js-异步/">Node.js_异步</a><small>3</small></li>
-  
-    <li><a href="/tags/Node-js-模块/">Node.js_模块</a><small>5</small></li>
-  
-    <li><a href="/tags/Node-js-测试/">Node.js_测试</a><small>5</small></li>
-  
-    <li><a href="/tags/Node-js-网络/">Node.js_网络</a><small>1</small></li>
-  
-    <li><a href="/tags/Node-js-进程/">Node.js_进程</a><small>2</small></li>
-  
-    <li><a href="/tags/Node-js-错误处理和调试/">Node.js_错误处理和调试</a><small>5</small></li>
+    <li><a href="/tags/Node-js/">Node.js</a><small>58</small></li>
   
     <li><a href="/tags/Redis/">Redis</a><small>2</small></li>
   
-    <li><a href="/tags/Shell/">Shell</a><small>1</small></li>
-  
-    <li><a href="/tags/Unix/">Unix</a><small>3</small></li>
+    <li><a href="/tags/Unix/">Unix</a><small>4</small></li>
   
     <li><a href="/tags/从0开始学大数据/">从0开始学大数据</a><small>2</small></li>
   
