@@ -1,67 +1,91 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html>
 <head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="utf-8">
   
-  <title>第 4 页 | shouliang&#39;s blog</title>
-  <meta name="author" content="shouliang">
+
   
-  <meta name="description" content="Node">
-  
-  
+  <title>shouliang&#39;s blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-
+  <meta name="description" content="Node">
+<meta property="og:type" content="website">
+<meta property="og:title" content="shouliang&#39;s blog">
+<meta property="og:url" content="https://shouliang.github.io/page/4/index.html">
+<meta property="og:site_name" content="shouliang&#39;s blog">
+<meta property="og:description" content="Node">
+<meta property="og:locale" content="zh-CN">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="shouliang&#39;s blog">
+<meta name="twitter:description" content="Node">
   
-  <meta property="og:site_name" content="shouliang&#39;s blog">
-
+    <link rel="alternate" href="/atom.xml" title="shouliang&#39;s blog" type="application/atom+xml">
   
-    <meta property="og:image" content>
   
-
-  <link href="/favicon.png" rel="icon">
-  <link rel="alternate" href="/atom.xml" title="shouliang&#39;s blog" type="application/atom+xml">
-  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
-  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+    <link rel="icon" href="/favicon.png">
   
-
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 </html>
-
 <body>
-  <header id="header" class="inner"><div class="alignleft">
-  <h1><a href="/">shouliang&#39;s blog</a></h1>
-  <h2><a href="/"></a></h2>
-</div>
-<nav id="main-nav" class="alignright">
-  <ul>
-    
-      <li><a href="/">首页</a></li>
-    
-      <li><a href="/archives">归档</a></li>
-    
-      <li><a href="/about">关于</a></li>
-    
-  </ul>
-  <div class="clearfix"></div>
-</nav>
-<div class="clearfix"></div></header>
-  <div id="content" class="inner">
-    <div id="main-col" class="alignleft"><div id="wrapper">
-  <article class="post">
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">shouliang&#39;s blog</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://shouliang.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main">
   
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2018-09-26T06:45:23.000Z"><a href="/2018/09/26/数据结构与算法/03 | 复杂度分析（上）：如何分析、统计算法的执行效率和资源消耗/">2018-09-26</a></time>
-      
-      
+    <article id="post-数据结构与算法/03 | 复杂度分析（上）：如何分析、统计算法的执行效率和资源消耗" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/09/26/数据结构与算法/03 | 复杂度分析（上）：如何分析、统计算法的执行效率和资源消耗/" class="article-date">
+  <time datetime="2018-09-26T06:45:23.000Z" itemprop="datePublished">2018-09-26</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
   
-    <h1 class="title"><a href="/2018/09/26/数据结构与算法/03 | 复杂度分析（上）：如何分析、统计算法的执行效率和资源消耗/">03 | 复杂度分析（上）：如何分析、统计算法的执行效率和资源消耗</a></h1>
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/09/26/数据结构与算法/03 | 复杂度分析（上）：如何分析、统计算法的执行效率和资源消耗/">03 | 复杂度分析（上）：如何分析、统计算法的执行效率和资源消耗</a>
+    </h1>
   
 
-    </header>
-    <div class="entry">
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
       
         <p>我们都知道，数据结构和算法本身解决的是“快”和“省”的问题，即如何让代码运行得更快，如何让代码更省存储空间。所以，执行效率是算法一个非常重要的考量指标。那如何来衡量你编写的算法代码的执行效率呢？这里就要用到我们今天要讲的内容：时间、空间复杂度分析。</p>
 <p>其实，只要讲到数据结构与算法，就一定离不开时间、空间复杂度分析。而且，我个人认为，<strong>复杂度分析是整个算法学习的精髓，只要掌握了它，数据结构和算法的内容基本上就掌握了一半</strong>。</p>
@@ -150,34 +174,40 @@
 
       
     </div>
-    <footer>
+    <footer class="article-footer">
+      <a data-url="https://shouliang.github.io/2018/09/26/数据结构与算法/03 | 复杂度分析（上）：如何分析、统计算法的执行效率和资源消耗/" data-id="cjsu4ic6y00616b6frx5dhs9m" class="article-share-link">Share</a>
       
-        
-        
       
-      <div class="clearfix"></div>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/数据结构与算法/">数据结构与算法</a></li></ul>
+
     </footer>
   </div>
+  
 </article>
 
 
-
-
-  <article class="post">
   
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2018-09-24T06:45:23.000Z"><a href="/2018/09/24/数据结构与算法/02 | 如何抓住重点，系统高效地学习数据结构与算法/">2018-09-24</a></time>
-      
-      
+    <article id="post-数据结构与算法/02 | 如何抓住重点，系统高效地学习数据结构与算法" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/09/24/数据结构与算法/02 | 如何抓住重点，系统高效地学习数据结构与算法/" class="article-date">
+  <time datetime="2018-09-24T06:45:23.000Z" itemprop="datePublished">2018-09-24</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
   
-    <h1 class="title"><a href="/2018/09/24/数据结构与算法/02 | 如何抓住重点，系统高效地学习数据结构与算法/">02 | 如何抓住重点，系统高效地学习数据结构与算法</a></h1>
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/09/24/数据结构与算法/02 | 如何抓住重点，系统高效地学习数据结构与算法/">02 | 如何抓住重点，系统高效地学习数据结构与算法</a>
+    </h1>
   
 
-    </header>
-    <div class="entry">
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
       
         <p>你是否曾跟我一样，因为看不懂数据结构和算法，而一度怀疑是自己太笨？实际上，很多人在第一次接触这门课时，都会有这种感觉，觉得数据结构和算法很抽象，晦涩难懂，宛如天书。正是这个原因，让很多初学者对这门课望而却步。</p>
 <p>我个人觉得，其实真正的原因是你<strong>没有找到好的学习方法</strong>，<strong>没有抓住学习的重点</strong>。实际上，数据结构和算法的东西并不多，常用的、基础的知识点更是屈指可数。只要掌握了正确的学习方法，学起来并没有看上去那么难，更不需要什么高智商、厚底子。</p>
@@ -235,34 +265,40 @@
 
       
     </div>
-    <footer>
+    <footer class="article-footer">
+      <a data-url="https://shouliang.github.io/2018/09/24/数据结构与算法/02 | 如何抓住重点，系统高效地学习数据结构与算法/" data-id="cjsu4ic6u005y6b6fi4ke2nbs" class="article-share-link">Share</a>
       
-        
-        
       
-      <div class="clearfix"></div>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/数据结构与算法/">数据结构与算法</a></li></ul>
+
     </footer>
   </div>
+  
 </article>
 
 
-
-
-  <article class="post">
   
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2018-09-21T06:45:23.000Z"><a href="/2018/09/21/数据结构与算法/01 | 为什么要学习数据结构和算法/">2018-09-21</a></time>
-      
-      
+    <article id="post-数据结构与算法/01 | 为什么要学习数据结构和算法" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/09/21/数据结构与算法/01 | 为什么要学习数据结构和算法/" class="article-date">
+  <time datetime="2018-09-21T06:45:23.000Z" itemprop="datePublished">2018-09-21</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
   
-    <h1 class="title"><a href="/2018/09/21/数据结构与算法/01 | 为什么要学习数据结构和算法/">01 | 为什么要学习数据结构和算法</a></h1>
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/09/21/数据结构与算法/01 | 为什么要学习数据结构和算法/">01 | 为什么要学习数据结构和算法</a>
+    </h1>
   
 
-    </header>
-    <div class="entry">
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
       
         <p>你是不是觉得数据结构和算法，跟操作系统、计算机网络一样，是脱离实际工作的知识？可能除了面试，这辈子也用不着？</p>
 <p>尽管计算机相关专业的同学在大学都学过这门课程，甚至很多培训机构也会培训这方面的知识，但是据我了解，很多程序员对数据结构和算法依旧一窍不通。还有一些人也只听说过数组、链表、快排这些最最基本的数据结构和算法，稍微复杂一点的就完全没概念。</p>
@@ -295,34 +331,40 @@
 
       
     </div>
-    <footer>
+    <footer class="article-footer">
+      <a data-url="https://shouliang.github.io/2018/09/21/数据结构与算法/01 | 为什么要学习数据结构和算法/" data-id="cjsu4ic6t005w6b6fhwsnp00i" class="article-share-link">Share</a>
       
-        
-        
       
-      <div class="clearfix"></div>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/数据结构与算法/">数据结构与算法</a></li></ul>
+
     </footer>
   </div>
+  
 </article>
 
 
-
-
-  <article class="post">
   
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2018-07-02T06:45:23.000Z"><a href="/2018/07/02/趣谈网络协议/第20讲 | CDN：你去小卖部取过快递么/">2018-07-02</a></time>
-      
-      
+    <article id="post-趣谈网络协议/第20讲 | CDN：你去小卖部取过快递么" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/07/02/趣谈网络协议/第20讲 | CDN：你去小卖部取过快递么/" class="article-date">
+  <time datetime="2018-07-02T06:45:23.000Z" itemprop="datePublished">2018-07-02</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
   
-    <h1 class="title"><a href="/2018/07/02/趣谈网络协议/第20讲 | CDN：你去小卖部取过快递么/">第20讲 | CDN：你去小卖部取过快递么？</a></h1>
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/07/02/趣谈网络协议/第20讲 | CDN：你去小卖部取过快递么/">第20讲 | CDN：你去小卖部取过快递么？</a>
+    </h1>
   
 
-    </header>
-    <div class="entry">
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
       
         <p>上一节，我们看到了网站的一般访问模式。</p>
 <p>当一个用户想访问一个网站的时候，指定这个网站的域名，DNS 就会将这个域名解析为地址，然后用户请求这个地址，返回一个网页。就像你要买个东西，首先要查找商店的位置，然后去商店里面找到自己想要的东西，最后拿着东西回家。</p>
@@ -381,34 +423,40 @@
 
       
     </div>
-    <footer>
+    <footer class="article-footer">
+      <a data-url="https://shouliang.github.io/2018/07/02/趣谈网络协议/第20讲 | CDN：你去小卖部取过快递么/" data-id="cjsu4ic7p007u6b6fqqijhay4" class="article-share-link">Share</a>
       
-        
-        
       
-      <div class="clearfix"></div>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/趣谈网络协议/">趣谈网络协议</a></li></ul>
+
     </footer>
   </div>
+  
 </article>
 
 
-
-
-  <article class="post">
   
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2018-06-13T06:45:23.000Z"><a href="/2018/06/13/趣谈网络协议/第12讲 TCP协议（下）：西行必定多妖孽，恒心智慧消磨难/">2018-06-13</a></time>
-      
-      
+    <article id="post-趣谈网络协议/第12讲 TCP协议（下）：西行必定多妖孽，恒心智慧消磨难" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/06/13/趣谈网络协议/第12讲 TCP协议（下）：西行必定多妖孽，恒心智慧消磨难/" class="article-date">
+  <time datetime="2018-06-13T06:45:23.000Z" itemprop="datePublished">2018-06-13</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
   
-    <h1 class="title"><a href="/2018/06/13/趣谈网络协议/第12讲 TCP协议（下）：西行必定多妖孽，恒心智慧消磨难/">第12讲 | TCP协议（下）：西行必定多妖孽，恒心智慧消磨难</a></h1>
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/06/13/趣谈网络协议/第12讲 TCP协议（下）：西行必定多妖孽，恒心智慧消磨难/">第12讲 | TCP协议（下）：西行必定多妖孽，恒心智慧消磨难</a>
+    </h1>
   
 
-    </header>
-    <div class="entry">
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
       
         <p>  我们前面说到玄奘西行，要出网关。既然出了网关，那就是在公网上传输数据，公网往往是不可靠的，因而需要很多的机制去保证传输的可靠性，这里面需要恒心，也即各种<strong>重传的策略</strong>，还需要有智慧，也就是说，这里面包含着<strong>大量的算法</strong>。</p>
 <h2 id="如何做个靠谱的人？"><a href="#如何做个靠谱的人？" class="headerlink" title="如何做个靠谱的人？"></a>如何做个靠谱的人？</h2><p>  TCP 想成为一个成熟稳重的人，成为一个靠谱的人。那一个人怎么样才算靠谱呢？咱们工作中经常就有这样的场景，比如你交代给下属一个事情以后，下属到底能不能做到，做到什么程度，什么时候能够交付，往往就会有应答，有回复。这样，处理事情的过程中，一旦有异常，你也可以尽快知道，而不是交代完之后就石沉大海，过了一个月再问，他说，啊我不记得了。</p>
@@ -518,34 +566,40 @@
 
       
     </div>
-    <footer>
+    <footer class="article-footer">
+      <a data-url="https://shouliang.github.io/2018/06/13/趣谈网络协议/第12讲 TCP协议（下）：西行必定多妖孽，恒心智慧消磨难/" data-id="cjsu4ic7o007r6b6fhf2g2xc4" class="article-share-link">Share</a>
       
-        
-        
       
-      <div class="clearfix"></div>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/趣谈网络协议/">趣谈网络协议</a></li></ul>
+
     </footer>
   </div>
+  
 </article>
 
 
-
-
-  <article class="post">
   
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2018-06-11T06:45:23.000Z"><a href="/2018/06/11/趣谈网络协议/第11讲 TCP协议（上）：因性恶而复杂，先恶后善反轻松/">2018-06-11</a></time>
-      
-      
+    <article id="post-趣谈网络协议/第11讲 TCP协议（上）：因性恶而复杂，先恶后善反轻松" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/06/11/趣谈网络协议/第11讲 TCP协议（上）：因性恶而复杂，先恶后善反轻松/" class="article-date">
+  <time datetime="2018-06-11T06:45:23.000Z" itemprop="datePublished">2018-06-11</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
   
-    <h1 class="title"><a href="/2018/06/11/趣谈网络协议/第11讲 TCP协议（上）：因性恶而复杂，先恶后善反轻松/">第11讲 | TCP协议（上）：因性恶而复杂，先恶后善反轻松</a></h1>
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/06/11/趣谈网络协议/第11讲 TCP协议（上）：因性恶而复杂，先恶后善反轻松/">第11讲 | TCP协议（上）：因性恶而复杂，先恶后善反轻松</a>
+    </h1>
   
 
-    </header>
-    <div class="entry">
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
       
         <p>  上一节，我们讲的 UDP，基本上包括了传输层所必须的端口字段。它就像我们小时候一样简单，相信“网之初，性本善，不丢包，不乱序”。</p>
 <p>  后来呢，我们都慢慢长大，了解了社会的残酷，变得复杂而成熟，就像 TCP 协议一样。它之所以这么复杂，那是因为它秉承的是“性恶论”。它天然认为网络环境是恶劣的，丢包、乱序、重传，拥塞都是常有的事情，一言不合就可能送达不了，因而要从算法层面来保证可靠性。</p>
@@ -622,34 +676,40 @@
 
       
     </div>
-    <footer>
+    <footer class="article-footer">
+      <a data-url="https://shouliang.github.io/2018/06/11/趣谈网络协议/第11讲 TCP协议（上）：因性恶而复杂，先恶后善反轻松/" data-id="cjsu4ic7n007p6b6fnksr5a81" class="article-share-link">Share</a>
       
-        
-        
       
-      <div class="clearfix"></div>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/趣谈网络协议/">趣谈网络协议</a></li></ul>
+
     </footer>
   </div>
+  
 </article>
 
 
-
-
-  <article class="post">
   
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2018-06-08T06:45:23.000Z"><a href="/2018/06/08/趣谈网络协议/第10讲 | UDP协议：因性善而简单，难免碰到城会玩/">2018-06-08</a></time>
-      
-      
+    <article id="post-趣谈网络协议/第10讲 | UDP协议：因性善而简单，难免碰到城会玩" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/06/08/趣谈网络协议/第10讲 | UDP协议：因性善而简单，难免碰到城会玩/" class="article-date">
+  <time datetime="2018-06-08T06:45:23.000Z" itemprop="datePublished">2018-06-08</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
   
-    <h1 class="title"><a href="/2018/06/08/趣谈网络协议/第10讲 | UDP协议：因性善而简单，难免碰到城会玩/">第10讲 | UDP协议：因性善而简单，难免碰到城会玩</a></h1>
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/06/08/趣谈网络协议/第10讲 | UDP协议：因性善而简单，难免碰到城会玩/">第10讲 | UDP协议：因性善而简单，难免碰到城会玩</a>
+    </h1>
   
 
-    </header>
-    <div class="entry">
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
       
         <p>讲完了 IP 层以后，接下来我们开始讲传输层。传输层里比较重要的两个协议，一个是 TCP，一个是 UDP。对于不从事底层开发的人员来讲，或者对于开发应用的人来讲，最常用的就是这两个协议。由于面试的时候，这两个协议经常会被放在一起问，因而我在讲的时候，也会结合着来讲。</p>
 <h2 id="TCP-和-UDP-有哪些区别？"><a href="#TCP-和-UDP-有哪些区别？" class="headerlink" title="TCP 和 UDP 有哪些区别？"></a>TCP 和 UDP 有哪些区别？</h2><p>一般面试的时候我问这两个协议的区别，大部分人会回答，TCP 是面向连接的，UDP 是面向无连接的。</p>
@@ -704,34 +764,40 @@
 
       
     </div>
-    <footer>
+    <footer class="article-footer">
+      <a data-url="https://shouliang.github.io/2018/06/08/趣谈网络协议/第10讲 | UDP协议：因性善而简单，难免碰到城会玩/" data-id="cjsu4ic7m007n6b6fdxzv2o5u" class="article-share-link">Share</a>
       
-        
-        
       
-      <div class="clearfix"></div>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/趣谈网络协议/">趣谈网络协议</a></li></ul>
+
     </footer>
   </div>
+  
 </article>
 
 
-
-
-  <article class="post">
   
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2018-06-04T06:45:23.000Z"><a href="/2018/06/04/趣谈网络协议/第8讲 | 世界这么大，我想出网关：欧洲十国游与玄奘西行/">2018-06-04</a></time>
-      
-      
+    <article id="post-趣谈网络协议/第8讲 | 世界这么大，我想出网关：欧洲十国游与玄奘西行" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/06/04/趣谈网络协议/第8讲 | 世界这么大，我想出网关：欧洲十国游与玄奘西行/" class="article-date">
+  <time datetime="2018-06-04T06:45:23.000Z" itemprop="datePublished">2018-06-04</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
   
-    <h1 class="title"><a href="/2018/06/04/趣谈网络协议/第8讲 | 世界这么大，我想出网关：欧洲十国游与玄奘西行/">第8讲 | 世界这么大，我想出网关：欧洲十国游与玄奘西行</a></h1>
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/06/04/趣谈网络协议/第8讲 | 世界这么大，我想出网关：欧洲十国游与玄奘西行/">第8讲 | 世界这么大，我想出网关：欧洲十国游与玄奘西行</a>
+    </h1>
   
 
-    </header>
-    <div class="entry">
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
       
         <p>前几节，我主要跟你讲了宿舍里和办公室里用到的网络协议。你已经有了一些基础，是时候去外网逛逛了！</p>
 <h2 id="怎么在宿舍上网？"><a href="#怎么在宿舍上网？" class="headerlink" title="怎么在宿舍上网？"></a>怎么在宿舍上网？</h2><p>还记得咱们在宿舍的时候买了台交换机，几台机器组了一个局域网打游戏吗？可惜啊，只能打局域网的游戏，不能上网啊！盼啊盼啊，终于盼到大二，允许宿舍开通网络了。学校给每个宿舍的网口分配了一个 IP 地址。这个 IP 是校园网的 IP，完全由网管部门控制。宿舍网的 IP 地址多为 192.168.1.x。校园网的 IP 地址，假设是 10.10.x.x。</p>
@@ -833,34 +899,40 @@
 
       
     </div>
-    <footer>
+    <footer class="article-footer">
+      <a data-url="https://shouliang.github.io/2018/06/04/趣谈网络协议/第8讲 | 世界这么大，我想出网关：欧洲十国游与玄奘西行/" data-id="cjsu4ic7t00816b6f945i0r87" class="article-share-link">Share</a>
       
-        
-        
       
-      <div class="clearfix"></div>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/趣谈网络协议/">趣谈网络协议</a></li></ul>
+
     </footer>
   </div>
+  
 </article>
 
 
-
-
-  <article class="post">
   
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2018-05-23T06:45:23.000Z"><a href="/2018/05/23/趣谈网络协议/第3讲 | ifconfig：最熟悉又陌生的命令行/">2018-05-23</a></time>
-      
-      
+    <article id="post-趣谈网络协议/第3讲 | ifconfig：最熟悉又陌生的命令行" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/05/23/趣谈网络协议/第3讲 | ifconfig：最熟悉又陌生的命令行/" class="article-date">
+  <time datetime="2018-05-23T06:45:23.000Z" itemprop="datePublished">2018-05-23</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
   
-    <h1 class="title"><a href="/2018/05/23/趣谈网络协议/第3讲 | ifconfig：最熟悉又陌生的命令行/">第3讲 | ifconfig：最熟悉又陌生的命令行</a></h1>
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/05/23/趣谈网络协议/第3讲 | ifconfig：最熟悉又陌生的命令行/">第3讲 | ifconfig：最熟悉又陌生的命令行</a>
+    </h1>
   
 
-    </header>
-    <div class="entry">
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
       
         <p>上一节结尾给你留的一个思考题是，你知道怎么查看 IP 地址吗？</p>
 <p>当面试听到这个问题的时候，面试者常常会觉得走错了房间。我面试的是技术岗位啊，怎么问这么简单的问题？</p>
@@ -922,34 +994,40 @@
 
       
     </div>
-    <footer>
+    <footer class="article-footer">
+      <a data-url="https://shouliang.github.io/2018/05/23/趣谈网络协议/第3讲 | ifconfig：最熟悉又陌生的命令行/" data-id="cjsu4ic7s007y6b6fblcemgr4" class="article-share-link">Share</a>
       
-        
-        
       
-      <div class="clearfix"></div>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/趣谈网络协议/">趣谈网络协议</a></li></ul>
+
     </footer>
   </div>
+  
 </article>
 
 
-
-
-  <article class="post">
   
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2018-05-21T06:45:23.000Z"><a href="/2018/05/21/趣谈网络协议/第2讲 | 网络分层的真实含义是什么？/">2018-05-21</a></time>
-      
-      
+    <article id="post-趣谈网络协议/第2讲 | 网络分层的真实含义是什么？" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2018/05/21/趣谈网络协议/第2讲 | 网络分层的真实含义是什么？/" class="article-date">
+  <time datetime="2018-05-21T06:45:23.000Z" itemprop="datePublished">2018-05-21</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
   
-    <h1 class="title"><a href="/2018/05/21/趣谈网络协议/第2讲 | 网络分层的真实含义是什么？/">第2讲 | 网络分层的真实含义是什么？</a></h1>
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/05/21/趣谈网络协议/第2讲 | 网络分层的真实含义是什么？/">第2讲 | 网络分层的真实含义是什么？</a>
+    </h1>
   
 
-    </header>
-    <div class="entry">
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
       
         <p>长时间从事计算机网络相关的工作，我发现，计算机网络有一个显著的特点，就是这是一个不仅需要背诵，而且特别需要将原理烂熟于胸的学科。很多问题看起来懂了，但是就怕往细里问，一问就发现你懂得没有那么透彻。</p>
 <p>我们上一节列了之后要讲的网络协议。这些协议本来没什么稀奇，每一本教科书都会讲，并且都要求你背下来。因为考试会考，面试会问。可以这么说，毕业了去找工作还答不出这类题目的，那你的笔试基本上也就挂了。</p>
@@ -997,104 +1075,126 @@
 
       
     </div>
-    <footer>
+    <footer class="article-footer">
+      <a data-url="https://shouliang.github.io/2018/05/21/趣谈网络协议/第2讲 | 网络分层的真实含义是什么？/" data-id="cjsu4ic7r007x6b6fm07320hs" class="article-share-link">Share</a>
       
-        
-        
       
-      <div class="clearfix"></div>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/趣谈网络协议/">趣谈网络协议</a></li></ul>
+
     </footer>
   </div>
+  
 </article>
 
 
-
-
-
-<nav id="pagination">
-  
-    <a href="/page/3/" class="alignleft prev">上一页</a>
-  
-  
-    <a href="/page/5/" class="alignright next">下一页</a>
-  
-  <div class="clearfix"></div>
-</nav></div></div>
-    <aside id="sidebar" class="alignright">
-  <div class="search">
-  <form action="//google.com/search" method="get" accept-charset="utf-8">
-    <input type="search" name="q" results="0" placeholder="搜索">
-    <input type="hidden" name="q" value="site:shouliang.github.io">
-  </form>
-</div>
-
   
 
-  
-<div class="widget tag">
-  <h3 class="title">标签</h3>
-  <ul class="entry">
-  
-    <li><a href="/tags/Docker/">Docker</a><small>3</small></li>
-  
-    <li><a href="/tags/Git/">Git</a><small>7</small></li>
-  
-    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>5</small></li>
-  
-    <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
-  
-    <li><a href="/tags/MySQL实战/">MySQL实战</a><small>5</small></li>
-  
-    <li><a href="/tags/Node-js/">Node.js</a><small>58</small></li>
-  
-    <li><a href="/tags/Redis/">Redis</a><small>2</small></li>
-  
-    <li><a href="/tags/Unix/">Unix</a><small>4</small></li>
-  
-    <li><a href="/tags/从0开始学大数据/">从0开始学大数据</a><small>2</small></li>
-  
-    <li><a href="/tags/区块链/">区块链</a><small>1</small></li>
-  
-    <li><a href="/tags/数据分析实战/">数据分析实战</a><small>3</small></li>
-  
-    <li><a href="/tags/数据库/">数据库</a><small>2</small></li>
-  
-    <li><a href="/tags/数据结构与算法/">数据结构与算法</a><small>13</small></li>
-  
-    <li><a href="/tags/程序员的数学基础课/">程序员的数学基础课</a><small>5</small></li>
-  
-    <li><a href="/tags/网络安全/">网络安全</a><small>8</small></li>
-  
-    <li><a href="/tags/计算机网络/">计算机网络</a><small>1</small></li>
-  
-    <li><a href="/tags/趣谈网络协议/">趣谈网络协议</a><small>8</small></li>
-  
-  </ul>
-</div>
 
-</aside>
-    <div class="clearfix"></div>
+  <nav id="page-nav">
+    
+    <a class="extend prev" rel="prev" href="/page/3/">&laquo; 上一页</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><span class="page-number current">4</span><a class="page-number" href="/page/5/">5</a><a class="page-number" href="/page/6/">6</a><span class="space">&hellip;</span><a class="page-number" href="/page/14/">14</a><a class="extend next" rel="next" href="/page/5/">下一页 &raquo;</a>
+  </nav>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/">Docker</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Git/">Git</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Linux性能优化/">Linux性能优化</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MongoDB/">MongoDB</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MySQL实战/">MySQL实战</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Node-js/">Node.js</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Redis/">Redis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Unix/">Unix</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/从0开始学大数据/">从0开始学大数据</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/区块链/">区块链</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/数据分析实战/">数据分析实战</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/数据库/">数据库</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/数据结构与算法/">数据结构与算法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/程序员的数学基础课/">程序员的数学基础课</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/网络安全/">网络安全</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/计算机网络/">计算机网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/趣谈网络协议/">趣谈网络协议</a></li></ul>
+    </div>
   </div>
-  <footer id="footer" class="inner"><div class="alignleft">
+
+
   
-  &copy; 2019 shouliang
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/Docker/" style="font-size: 12.5px;">Docker</a> <a href="/tags/Git/" style="font-size: 16.25px;">Git</a> <a href="/tags/Linux性能优化/" style="font-size: 15px;">Linux性能优化</a> <a href="/tags/MongoDB/" style="font-size: 11.25px;">MongoDB</a> <a href="/tags/MySQL实战/" style="font-size: 15px;">MySQL实战</a> <a href="/tags/Node-js/" style="font-size: 20px;">Node.js</a> <a href="/tags/Redis/" style="font-size: 11.25px;">Redis</a> <a href="/tags/Unix/" style="font-size: 13.75px;">Unix</a> <a href="/tags/从0开始学大数据/" style="font-size: 11.25px;">从0开始学大数据</a> <a href="/tags/区块链/" style="font-size: 10px;">区块链</a> <a href="/tags/数据分析实战/" style="font-size: 12.5px;">数据分析实战</a> <a href="/tags/数据库/" style="font-size: 11.25px;">数据库</a> <a href="/tags/数据结构与算法/" style="font-size: 18.75px;">数据结构与算法</a> <a href="/tags/程序员的数学基础课/" style="font-size: 15px;">程序员的数学基础课</a> <a href="/tags/网络安全/" style="font-size: 17.5px;">网络安全</a> <a href="/tags/计算机网络/" style="font-size: 10px;">计算机网络</a> <a href="/tags/趣谈网络协议/" style="font-size: 17.5px;">趣谈网络协议</a>
+    </div>
+  </div>
+
   
-</div>
-<div class="clearfix"></div></footer>
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
-<script src="/js/jquery.imagesloaded.min.js"></script>
-<script src="/js/gallery.js"></script>
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/01/">一月 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/12/">十二月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/11/">十一月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/10/">十月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">九月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/07/">七月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/06/">六月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/05/">五月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/04/">四月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/03/">三月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/02/">二月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/01/">一月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/12/">十二月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/09/">九月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/08/">八月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/06/">六月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/02/">二月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">一月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/10/">十月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/09/">九月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/08/">八月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/07/">七月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/06/">六月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/05/">五月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/04/">四月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/11/">十一月 2015</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/06/">六月 2015</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/05/">五月 2015</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">四月 2015</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/07/">七月 2014</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/06/">六月 2014</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/05/">五月 2014</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/04/">四月 2014</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/03/">三月 2014</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/02/">二月 2014</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/01/">一月 2014</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2012/07/">七月 2012</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2019/01/23/程序员的数学基础课/18 | 总结课：数据结构、编程语句和基础算法体现了哪些数学思想/">18 | 总结课：数据结构、编程语句和基础算法体现了哪些数学思想？</a>
+          </li>
+        
+          <li>
+            <a href="/2019/01/16/Linux性能优化/03 | 基础篇：经常说的 CPU 上下文切换是什么意思？（上）/">03 | 基础篇：经常说的 CPU 上下文切换是什么意思？（上）</a>
+          </li>
+        
+          <li>
+            <a href="/2019/01/16/从0开始学大数据/预习 02 | 大数据应用发展史：从搜索引擎到人工智能/">预习 02 | 大数据应用发展史：从搜索引擎到人工智能</a>
+          </li>
+        
+          <li>
+            <a href="/2019/01/16/从0开始学大数据/预习 01 | 大数据技术发展史：大数据的前世今生/">预习 01 | 大数据技术发展史：大数据的前世今生</a>
+          </li>
+        
+          <li>
+            <a href="/2019/01/16/数据结构与算法/48 | B+树：MySQL数据库索引是如何实现的？/">48 | B+树：MySQL数据库索引是如何实现的？</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2019 shouliang<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
 
 
 
-
-<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
-<script src="/fancybox/jquery.fancybox.pack.js"></script>
-<script type="text/javascript">
-(function($){
-  $('.fancybox').fancybox();
-})(jQuery);
-</script>
-
+  </div>
 </body>
 </html>

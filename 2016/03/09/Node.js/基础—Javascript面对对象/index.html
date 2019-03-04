@@ -1,66 +1,94 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html>
 <head><meta name="generator" content="Hexo 3.8.0">
   <meta charset="utf-8">
   
+
+  
   <title>基础—Javascipt面对对象 | shouliang&#39;s blog</title>
-  <meta name="author" content="shouliang">
-  
-  <meta name="description" content="Node">
-  
-  
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-
-  <meta property="og:title" content="基础—Javascipt面对对象">
-  <meta property="og:site_name" content="shouliang&#39;s blog">
-
+  <meta name="description" content="面向对象编程是用抽象方式创建基于现实世界模型的一种编程模式，主要包括模块化、多态、和封装几种技术。 对JavaScript而言，其核心是支持面向对象的，同时它也提供了强大灵活的基于原型的面向对象编程能力。 本文将会深入的探讨有关使用JavaScript进行面向对象编程的一些核心基础知识，包括对象的创建，继承机制， 最后还会简要的介绍如何借助ES6提供的新的类机制重写传统的JavaScript面向对">
+<meta name="keywords" content="Node.js">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基础—Javascipt面对对象">
+<meta property="og:url" content="https://shouliang.github.io/2016/03/09/Node.js/基础—Javascript面对对象/index.html">
+<meta property="og:site_name" content="shouliang&#39;s blog">
+<meta property="og:description" content="面向对象编程是用抽象方式创建基于现实世界模型的一种编程模式，主要包括模块化、多态、和封装几种技术。 对JavaScript而言，其核心是支持面向对象的，同时它也提供了强大灵活的基于原型的面向对象编程能力。 本文将会深入的探讨有关使用JavaScript进行面向对象编程的一些核心基础知识，包括对象的创建，继承机制， 最后还会简要的介绍如何借助ES6提供的新的类机制重写传统的JavaScript面向对">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://7xq1il.com1.z0.glb.clouddn.com/imgprototype-graph-1.jpg">
+<meta property="og:image" content="http://7xq1il.com1.z0.glb.clouddn.com/imgprototype-chain-inheritance.jpg">
+<meta property="og:updated_time" content="2019-03-04T06:51:17.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="基础—Javascipt面对对象">
+<meta name="twitter:description" content="面向对象编程是用抽象方式创建基于现实世界模型的一种编程模式，主要包括模块化、多态、和封装几种技术。 对JavaScript而言，其核心是支持面向对象的，同时它也提供了强大灵活的基于原型的面向对象编程能力。 本文将会深入的探讨有关使用JavaScript进行面向对象编程的一些核心基础知识，包括对象的创建，继承机制， 最后还会简要的介绍如何借助ES6提供的新的类机制重写传统的JavaScript面向对">
+<meta name="twitter:image" content="http://7xq1il.com1.z0.glb.clouddn.com/imgprototype-graph-1.jpg">
   
-    <meta property="og:image" content>
+    <link rel="alternate" href="/atom.xml" title="shouliang&#39;s blog" type="application/atom+xml">
   
-
-  <link href="/favicon.png" rel="icon">
-  <link rel="alternate" href="/atom.xml" title="shouliang&#39;s blog" type="application/atom+xml">
-  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
-  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
   
-
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 </html>
-
 <body>
-  <header id="header" class="inner"><div class="alignleft">
-  <h1><a href="/">shouliang&#39;s blog</a></h1>
-  <h2><a href="/"></a></h2>
-</div>
-<nav id="main-nav" class="alignright">
-  <ul>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">shouliang&#39;s blog</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://shouliang.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-Node.js/基础—Javascript面对对象" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2016/03/09/Node.js/基础—Javascript面对对象/" class="article-date">
+  <time datetime="2016-03-09T06:45:23.000Z" itemprop="datePublished">2016-03-09</time>
+</a>
     
-      <li><a href="/">首页</a></li>
+  </div>
+  <div class="article-inner">
     
-      <li><a href="/archives">归档</a></li>
     
-      <li><a href="/about">关于</a></li>
-    
-  </ul>
-  <div class="clearfix"></div>
-</nav>
-<div class="clearfix"></div></header>
-  <div id="content" class="inner">
-    <div id="main-col" class="alignleft"><div id="wrapper"><article class="post">
+      <header class="article-header">
+        
   
-  <div class="post-content">
-    <header>
-      
-        <div class="icon"></div>
-        <time datetime="2016-03-09T06:45:23.000Z"><a href="/2016/03/09/Node.js/基础—Javascript面对对象/">2016-03-09</a></time>
-      
-      
-  
-    <h1 class="title">基础—Javascipt面对对象</h1>
+    <h1 class="article-title" itemprop="name">
+      基础—Javascipt面对对象
+    </h1>
   
 
-    </header>
-    <div class="entry">
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
       
         <p>面向对象编程是用抽象方式创建基于现实世界模型的一种编程模式，主要包括模块化、多态、和封装几种技术。 对JavaScript而言，其核心是支持面向对象的，同时它也提供了强大灵活的基于原型的面向对象编程能力。 本文将会深入的探讨有关使用JavaScript进行面向对象编程的一些核心基础知识，包括对象的创建，继承机制， 最后还会简要的介绍如何借助ES6提供的新的类机制重写传统的JavaScript面向对象代码。</p>
 <h3 id="面向对象的几个概念"><a href="#面向对象的几个概念" class="headerlink" title="面向对象的几个概念"></a>面向对象的几个概念</h3><p>在进入正题前，先了解传统的面向对象编程（例如Java）中常会涉及到的概念，大致可以包括：</p>
@@ -166,136 +194,138 @@
 
       
     </div>
-    <footer>
+    <footer class="article-footer">
+      <a data-url="https://shouliang.github.io/2016/03/09/Node.js/基础—Javascript面对对象/" data-id="cjsu4ic5v003v6b6fhdtnmeg6" class="article-share-link">Share</a>
       
-        
-        
-  
-  <div class="tags">
-    <a href="/tags/Node-js/">Node.js</a>
-  </div>
-
-        
-  <div class="addthis addthis_toolbox addthis_default_style">
-    
-      <a class="addthis_button_facebook_like" fb:like:layout="button_count"></a>
-    
-    
-      <a class="addthis_button_tweet"></a>
-    
-    
-      <a class="addthis_button_google_plusone" g:plusone:size="medium"></a>
-    
-    
-      <a class="addthis_button_pinterest_pinit" pi:pinit:layout="horizontal"></a>
-    
-    <a class="addthis_counter addthis_pill_style"></a>
-  </div>
-  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js"></script>
-
       
-      <div class="clearfix"></div>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Node-js/">Node.js</a></li></ul>
+
     </footer>
   </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2016/03/12/Node.js/基础—JavaScript中的作用域和上下文/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          基础—JavaScript中的作用域和上下文
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2015/11/08/Node.js/进程—当我们谈论cluster时我们在谈论什么/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">进程—当我们谈论 cluster 时我们在谈论什么</div>
+    </a>
+  
+</nav>
+
+  
 </article>
 
-
-<section id="comment">
-  <h1 class="title">留言</h1>
-
-  
-      <div id="fb-root"></div>
-<script>
-  (function(d, s, id) {
-    var js, fjs = d.getElementsByTagName(s)[0];
-    if (d.getElementById(id)) return;
-    js = d.createElement(s); js.id = id;
-    js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=shouliang0816";
-    fjs.parentNode.insertBefore(js, fjs);
-  }(document, 'script', 'facebook-jssdk'));
-</script>
-
-<div class="fb-comments" data-href="https://shouliang.github.io/2016/03/09/Node.js/基础—Javascript面对对象/index.html" data-num-posts="5" data-width="840" data-colorscheme="light"></div>
-      
-  
 </section>
-
-</div></div>
-    <aside id="sidebar" class="alignright">
-  <div class="search">
-  <form action="//google.com/search" method="get" accept-charset="utf-8">
-    <input type="search" name="q" results="0" placeholder="搜索">
-    <input type="hidden" name="q" value="site:shouliang.github.io">
-  </form>
-</div>
+        
+          <aside id="sidebar">
+  
+    
 
   
-
-  
-<div class="widget tag">
-  <h3 class="title">标签</h3>
-  <ul class="entry">
-  
-    <li><a href="/tags/Docker/">Docker</a><small>3</small></li>
-  
-    <li><a href="/tags/Git/">Git</a><small>7</small></li>
-  
-    <li><a href="/tags/Linux性能优化/">Linux性能优化</a><small>5</small></li>
-  
-    <li><a href="/tags/MongoDB/">MongoDB</a><small>2</small></li>
-  
-    <li><a href="/tags/MySQL实战/">MySQL实战</a><small>5</small></li>
-  
-    <li><a href="/tags/Node-js/">Node.js</a><small>58</small></li>
-  
-    <li><a href="/tags/Redis/">Redis</a><small>2</small></li>
-  
-    <li><a href="/tags/Unix/">Unix</a><small>4</small></li>
-  
-    <li><a href="/tags/从0开始学大数据/">从0开始学大数据</a><small>2</small></li>
-  
-    <li><a href="/tags/区块链/">区块链</a><small>1</small></li>
-  
-    <li><a href="/tags/数据分析实战/">数据分析实战</a><small>3</small></li>
-  
-    <li><a href="/tags/数据库/">数据库</a><small>2</small></li>
-  
-    <li><a href="/tags/数据结构与算法/">数据结构与算法</a><small>13</small></li>
-  
-    <li><a href="/tags/程序员的数学基础课/">程序员的数学基础课</a><small>5</small></li>
-  
-    <li><a href="/tags/网络安全/">网络安全</a><small>8</small></li>
-  
-    <li><a href="/tags/计算机网络/">计算机网络</a><small>1</small></li>
-  
-    <li><a href="/tags/趣谈网络协议/">趣谈网络协议</a><small>8</small></li>
-  
-  </ul>
-</div>
-
-</aside>
-    <div class="clearfix"></div>
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/">Docker</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Git/">Git</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Linux性能优化/">Linux性能优化</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MongoDB/">MongoDB</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MySQL实战/">MySQL实战</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Node-js/">Node.js</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Redis/">Redis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Unix/">Unix</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/从0开始学大数据/">从0开始学大数据</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/区块链/">区块链</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/数据分析实战/">数据分析实战</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/数据库/">数据库</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/数据结构与算法/">数据结构与算法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/程序员的数学基础课/">程序员的数学基础课</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/网络安全/">网络安全</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/计算机网络/">计算机网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/趣谈网络协议/">趣谈网络协议</a></li></ul>
+    </div>
   </div>
-  <footer id="footer" class="inner"><div class="alignleft">
+
+
   
-  &copy; 2019 shouliang
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/Docker/" style="font-size: 12.5px;">Docker</a> <a href="/tags/Git/" style="font-size: 16.25px;">Git</a> <a href="/tags/Linux性能优化/" style="font-size: 15px;">Linux性能优化</a> <a href="/tags/MongoDB/" style="font-size: 11.25px;">MongoDB</a> <a href="/tags/MySQL实战/" style="font-size: 15px;">MySQL实战</a> <a href="/tags/Node-js/" style="font-size: 20px;">Node.js</a> <a href="/tags/Redis/" style="font-size: 11.25px;">Redis</a> <a href="/tags/Unix/" style="font-size: 13.75px;">Unix</a> <a href="/tags/从0开始学大数据/" style="font-size: 11.25px;">从0开始学大数据</a> <a href="/tags/区块链/" style="font-size: 10px;">区块链</a> <a href="/tags/数据分析实战/" style="font-size: 12.5px;">数据分析实战</a> <a href="/tags/数据库/" style="font-size: 11.25px;">数据库</a> <a href="/tags/数据结构与算法/" style="font-size: 18.75px;">数据结构与算法</a> <a href="/tags/程序员的数学基础课/" style="font-size: 15px;">程序员的数学基础课</a> <a href="/tags/网络安全/" style="font-size: 17.5px;">网络安全</a> <a href="/tags/计算机网络/" style="font-size: 10px;">计算机网络</a> <a href="/tags/趣谈网络协议/" style="font-size: 17.5px;">趣谈网络协议</a>
+    </div>
+  </div>
+
   
-</div>
-<div class="clearfix"></div></footer>
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
-<script src="/js/jquery.imagesloaded.min.js"></script>
-<script src="/js/gallery.js"></script>
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/01/">一月 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/12/">十二月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/11/">十一月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/10/">十月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">九月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/07/">七月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/06/">六月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/05/">五月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/04/">四月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/03/">三月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/02/">二月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/01/">一月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/12/">十二月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/09/">九月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/08/">八月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/06/">六月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/02/">二月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">一月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/10/">十月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/09/">九月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/08/">八月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/07/">七月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/06/">六月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/05/">五月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/04/">四月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/11/">十一月 2015</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/06/">六月 2015</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/05/">五月 2015</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">四月 2015</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/07/">七月 2014</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/06/">六月 2014</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/05/">五月 2014</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/04/">四月 2014</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/03/">三月 2014</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/02/">二月 2014</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/01/">一月 2014</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2012/07/">七月 2012</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2019/01/23/程序员的数学基础课/18 | 总结课：数据结构、编程语句和基础算法体现了哪些数学思想/">18 | 总结课：数据结构、编程语句和基础算法体现了哪些数学思想？</a>
+          </li>
+        
+          <li>
+            <a href="/2019/01/16/Linux性能优化/03 | 基础篇：经常说的 CPU 上下文切换是什么意思？（上）/">03 | 基础篇：经常说的 CPU 上下文切换是什么意思？（上）</a>
+          </li>
+        
+          <li>
+            <a href="/2019/01/16/从0开始学大数据/预习 02 | 大数据应用发展史：从搜索引擎到人工智能/">预习 02 | 大数据应用发展史：从搜索引擎到人工智能</a>
+          </li>
+        
+          <li>
+            <a href="/2019/01/16/从0开始学大数据/预习 01 | 大数据技术发展史：大数据的前世今生/">预习 01 | 大数据技术发展史：大数据的前世今生</a>
+          </li>
+        
+          <li>
+            <a href="/2019/01/16/数据结构与算法/48 | B+树：MySQL数据库索引是如何实现的？/">48 | B+树：MySQL数据库索引是如何实现的？</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2019 shouliang<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
 
 
 
-
-<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
-<script src="/fancybox/jquery.fancybox.pack.js"></script>
-<script type="text/javascript">
-(function($){
-  $('.fancybox').fancybox();
-})(jQuery);
-</script>
-
+  </div>
 </body>
 </html>
