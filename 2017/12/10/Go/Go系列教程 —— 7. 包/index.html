@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+
+  
+  <title>7. 包 | shouliang&#39;s blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="什么是包，为什么使用包？到目前为止，我们看到的 Go 程序都只有一个文件，文件里包含一个 main 函数和几个其他的函数。在实际中，这种把所有源代码编写在一个文件的方法并不好用。以这种方式编写，代码的重用和维护都会很困难。而包（Package）解决了这样的问题。 包用于组织 Go 源代码，提供了更好的可重用性与可读性。由于包提供了代码的封装，因此使得 Go 应用程序易于维护。 例如，假如我们正在开">
+<meta name="keywords" content="Go系列教程">
+<meta property="og:type" content="article">
+<meta property="og:title" content="7. 包">
+<meta property="og:url" content="https://shouliang.github.io/2017/12/10/Go/Go系列教程 —— 7. 包/index.html">
+<meta property="og:site_name" content="shouliang&#39;s blog">
+<meta property="og:description" content="什么是包，为什么使用包？到目前为止，我们看到的 Go 程序都只有一个文件，文件里包含一个 main 函数和几个其他的函数。在实际中，这种把所有源代码编写在一个文件的方法并不好用。以这种方式编写，代码的重用和维护都会很困难。而包（Package）解决了这样的问题。 包用于组织 Go 源代码，提供了更好的可重用性与可读性。由于包提供了代码的封装，因此使得 Go 应用程序易于维护。 例如，假如我们正在开">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-04-16T06:34:19.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="7. 包">
+<meta name="twitter:description" content="什么是包，为什么使用包？到目前为止，我们看到的 Go 程序都只有一个文件，文件里包含一个 main 函数和几个其他的函数。在实际中，这种把所有源代码编写在一个文件的方法并不好用。以这种方式编写，代码的重用和维护都会很困难。而包（Package）解决了这样的问题。 包用于组织 Go 源代码，提供了更好的可重用性与可读性。由于包提供了代码的封装，因此使得 Go 应用程序易于维护。 例如，假如我们正在开">
+  
+    <link rel="alternate" href="/atom.xml" title="shouliang&#39;s blog" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+</html>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">shouliang&#39;s blog</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://shouliang.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-Go/Go系列教程 —— 7. 包" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/12/10/Go/Go系列教程 —— 7. 包/" class="article-date">
+  <time datetime="2017-12-10T06:45:23.000Z" itemprop="datePublished">2017-12-10</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      7. 包
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h3 id="什么是包，为什么使用包？"><a href="#什么是包，为什么使用包？" class="headerlink" title="什么是包，为什么使用包？"></a>什么是包，为什么使用包？</h3><p>到目前为止，我们看到的 Go 程序都只有一个文件，文件里包含一个 main <a href="https://studygolang.com/articles/11892" target="_blank" rel="noopener">函数</a>和几个其他的函数。在实际中，这种把所有源代码编写在一个文件的方法并不好用。以这种方式编写，代码的重用和维护都会很困难。而包（Package）解决了这样的问题。</p>
+<p><strong>包用于组织 Go 源代码，提供了更好的可重用性与可读性</strong>。由于包提供了代码的封装，因此使得 Go 应用程序易于维护。</p>
+<p>例如，假如我们正在开发一个 Go 图像处理程序，它提供了图像的裁剪、锐化、模糊和彩色增强等功能。一种组织程序的方式就是根据不同的特性，把代码放到不同的包中。比如裁剪可以是一个单独的包，而锐化是另一个包。这种方式的优点是，由于彩色增强可能需要一些锐化的功能，因此彩色增强的代码只需要简单地导入（我们会在随后讨论）锐化功能的包，就可以使用锐化的功能了。这样的方式使得代码易于重用。</p>
+<p>我们会逐步构建一个计算矩形的面积和对角线的应用程序。</p>
+<p>通过这个程序，我们会更好地理解包。</p>
+<h3 id="main-函数和-main-包"><a href="#main-函数和-main-包" class="headerlink" title="main 函数和 main 包"></a>main 函数和 main 包</h3><p>所有可执行的 Go 程序都必须包含一个 main 函数。这个函数是程序运行的入口。main 函数应该放置于 main 包中。</p>
+<p><strong>package packagename 这行代码指定了某一源文件属于一个包。它应该放在每一个源文件的第一行。</strong></p>
+<p>下面开始为我们的程序创建一个 main 函数和 main 包。<strong>在 Go 工作区内的 src 文件夹中创建一个文件夹，命名为 geometry</strong>。在 <code>geometry</code> 文件夹中创建一个 <code>geometry.go</code> 文件。</p>
+<p>在 geometry.go 中编写下面代码。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// geometry.go</span></span><br><span class="line"><span class="keyword">package</span> main </span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> <span class="string">"fmt"</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;  </span><br><span class="line">    fmt.Println(<span class="string">"Geometrical shape properties"</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>package main</code> 这一行指定该文件属于 main 包。<code>import &quot;packagename&quot;</code> 语句用于导入一个已存在的包。在这里我们导入了 <code>fmt</code>包，包内含有 Println 方法。接下来是 main 函数，它会打印 <code>Geometrical shape properties</code>。</p>
+<p>键入 <code>go install geometry</code>，编译上述程序。该命令会在 <code>geometry</code> 文件夹内搜索拥有 main 函数的文件。在这里，它找到了 <code>geometry.go</code>。接下来，它编译并产生一个名为 <code>geometry</code> （在 windows 下是 <code>geometry.exe</code>）的二进制文件，该二进制文件放置于工作区的 bin 文件夹。现在，工作区的目录结构会是这样：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">src</span><br><span class="line">    geometry</span><br><span class="line">        gemometry.go</span><br><span class="line">bin</span><br><span class="line">    geometry</span><br></pre></td></tr></table></figure>
+<p>键入 <code>workspacepath/bin/geometry</code>，运行该程序。请用你自己的 Go 工作区来替换 <code>workspacepath</code>。这个命令会执行 bin 文件夹里的 <code>geometry</code> 二进制文件。你应该会输出 <code>Geometrical shape properties</code>。</p>
+<h3 id="创建自定义的包"><a href="#创建自定义的包" class="headerlink" title="创建自定义的包"></a>创建自定义的包</h3><p>我们将组织代码，使得所有与矩形有关的功能都放入 <code>rectangle</code> 包中。</p>
+<p>我们会创建一个自定义包 <code>rectangle</code>，它有一个计算矩形的面积和对角线的函数。</p>
+<p><strong>属于某一个包的源文件都应该放置于一个单独命名的文件夹里。按照 Go 的惯例，应该用包名命名该文件夹。</strong></p>
+<p>因此，我们在 <code>geometry</code> 文件夹中，创建一个命名为 <code>rectangle</code> 的文件夹。在 <code>rectangle</code> 文件夹中，所有文件都会以 <code>package rectangle</code> 作为开头，因为它们都属于 rectangle 包。</p>
+<p>在我们之前创建的 rectangle 文件夹中，再创建一个名为 <code>rectprops.go</code> 的文件，添加下列代码。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// rectprops.go</span></span><br><span class="line"><span class="keyword">package</span> rectangle</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> <span class="string">"math"</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Area</span><span class="params">(<span class="built_in">len</span>, wid <span class="keyword">float64</span>)</span> <span class="title">float64</span></span> &#123;  </span><br><span class="line">    area := <span class="built_in">len</span> * wid</span><br><span class="line">    <span class="keyword">return</span> area</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Diagonal</span><span class="params">(<span class="built_in">len</span>, wid <span class="keyword">float64</span>)</span> <span class="title">float64</span></span> &#123;  </span><br><span class="line">    diagonal := math.Sqrt((<span class="built_in">len</span> * <span class="built_in">len</span>) + (wid * wid))</span><br><span class="line">    <span class="keyword">return</span> diagonal</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在上面的代码中，我们创建了两个函数用于计算 <code>Area</code> 和 <code>Diagonal</code>。矩形的面积是长和宽的乘积。矩形的对角线是长与宽平方和的平方根。<code>math</code> 包下面的 <code>Sqrt</code> 函数用于计算平方根。</p>
+<p>注意到函数 Area 和 Diagonal 都是以大写字母开头的。这是有必要的，我们将会很快解释为什么需要这样做。</p>
+<h3 id="导入自定义包"><a href="#导入自定义包" class="headerlink" title="导入自定义包"></a>导入自定义包</h3><p>为了使用自定义包，我们必须要先导入它。导入自定义包的语法为 <code>import path</code>。我们必须指定自定义包相对于工作区内 <code>src</code> 文件夹的相对路径。我们目前的文件夹结构是：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">src</span><br><span class="line">    geometry</span><br><span class="line">        geometry.go</span><br><span class="line">        rectangle</span><br><span class="line">            rectprops.go</span><br></pre></td></tr></table></figure>
+<p><code>import &quot;geometry/rectangle&quot;</code> 这一行会导入 rectangle 包。</p>
+<p>在 <code>geometry.go</code> 里面添加下面的代码：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// geometry.go</span></span><br><span class="line"><span class="keyword">package</span> main </span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (  </span><br><span class="line">    <span class="string">"fmt"</span></span><br><span class="line">    <span class="string">"geometry/rectangle"</span> <span class="comment">// 导入自定义包</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;  </span><br><span class="line">    <span class="keyword">var</span> rectLen, rectWidth <span class="keyword">float64</span> = <span class="number">6</span>, <span class="number">7</span></span><br><span class="line">    fmt.Println(<span class="string">"Geometrical shape properties"</span>)</span><br><span class="line">    <span class="comment">/*Area function of rectangle package used*/</span></span><br><span class="line">    fmt.Printf(<span class="string">"area of rectangle %.2f\n"</span>, rectangle.Area(rectLen, rectWidth))</span><br><span class="line">    <span class="comment">/*Diagonal function of rectangle package used*/</span></span><br><span class="line">    fmt.Printf(<span class="string">"diagonal of the rectangle %.2f "</span>, rectangle.Diagonal(rectLen, rectWidth))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面的代码导入了 <code>rectangle</code> 包，并调用了里面的 Area 和 Diagonal 函数，得到矩形的面积和对角线。Printf 内的格式说明符 <code>%.2f</code>会将浮点数截断到小数点两位。应用程序的输出为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Geometrical shape properties  </span><br><span class="line">area of rectangle 42.00  </span><br><span class="line">diagonal of the rectangle 9.22</span><br></pre></td></tr></table></figure>
+<h3 id="导出名字（Exported-Names）"><a href="#导出名字（Exported-Names）" class="headerlink" title="导出名字（Exported Names）"></a>导出名字（Exported Names）</h3><p>我们将 rectangle 包中的函数 Area 和 Diagonal 首字母大写。在 Go 中这具有特殊意义。在 Go 中，任何以大写字母开头的变量或者函数都是被导出的名字。其它包只能访问被导出的函数和变量。在这里，我们需要在 main 包中访问 Area 和 Diagonal 函数，因此会将它们的首字母大写。</p>
+<p>在 <code>rectprops.go</code> 中，如果函数名从 <code>Area(len, wid float64)</code> 变为 <code>area(len, wid float64)</code>，并且在 <code>geometry.go</code> 中， <code>rectangle.Area(rectLen, rectWidth)</code> 变为 <code>rectangle.area(rectLen, rectWidth)</code>， 则该程序运行时，编译器会抛出错误 <code>geometry.go:11: cannot refer to unexported name rectangle.area</code>。因为如果想在包外访问一个函数，它应该首字母大写。</p>
+<h3 id="init-函数"><a href="#init-函数" class="headerlink" title="init 函数"></a>init 函数</h3><p>所有包都可以包含一个 <code>init</code> 函数。init 函数不应该有任何返回值类型和参数，在我们的代码中也不能显式地调用它。init 函数的形式如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">init</span><span class="params">()</span></span> &#123;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>init 函数可用于执行初始化任务，也可用于在开始执行之前验证程序的正确性。</p>
+<p>包的初始化顺序如下：</p>
+<ol>
+<li>首先初始化包级别（Package Level）的变量</li>
+<li>紧接着调用 init 函数。包可以有多个 init 函数（在一个文件或分布于多个文件中），它们按照编译器解析它们的顺序进行调用。</li>
+</ol>
+<p>如果一个包导入了另一个包，会先初始化被导入的包。</p>
+<p>尽管一个包可能会被导入多次，但是它只会被初始化一次。</p>
+<p>为了理解 init 函数，我们接下来对程序做了一些修改。</p>
+<p>首先在 <code>rectprops.go</code> 文件中添加了一个 init 函数。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// rectprops.go</span></span><br><span class="line"><span class="keyword">package</span> rectangle</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> <span class="string">"math"</span>  </span><br><span class="line"><span class="keyword">import</span> <span class="string">"fmt"</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * init function added</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">init</span><span class="params">()</span></span> &#123;  </span><br><span class="line">    fmt.Println(<span class="string">"rectangle package initialized"</span>)</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Area</span><span class="params">(<span class="built_in">len</span>, wid <span class="keyword">float64</span>)</span> <span class="title">float64</span></span> &#123;  </span><br><span class="line">    area := <span class="built_in">len</span> * wid</span><br><span class="line">    <span class="keyword">return</span> area</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Diagonal</span><span class="params">(<span class="built_in">len</span>, wid <span class="keyword">float64</span>)</span> <span class="title">float64</span></span> &#123;  </span><br><span class="line">    diagonal := math.Sqrt((<span class="built_in">len</span> * <span class="built_in">len</span>) + (wid * wid))</span><br><span class="line">    <span class="keyword">return</span> diagonal</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们添加了一个简单的 init 函数，它仅打印 <code>rectangle package initialized</code>。</p>
+<p>现在我们来修改 main 包。我们知道矩形的长和宽都应该大于 0，我们将在 <code>geometry.go</code> 中使用 init 函数和包级别的变量来检查矩形的长和宽。</p>
+<p>修改 <code>geometry.go</code> 文件如下所示：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// geometry.go</span></span><br><span class="line"><span class="keyword">package</span> main </span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (  </span><br><span class="line">    <span class="string">"fmt"</span></span><br><span class="line">    <span class="string">"geometry/rectangle"</span> <span class="comment">// 导入自定义包</span></span><br><span class="line">    <span class="string">"log"</span></span><br><span class="line">)</span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * 1. 包级别变量</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="keyword">var</span> rectLen, rectWidth <span class="keyword">float64</span> = <span class="number">6</span>, <span class="number">7</span> </span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">*2. init 函数会检查长和宽是否大于0</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">init</span><span class="params">()</span></span> &#123;  </span><br><span class="line">    <span class="built_in">println</span>(<span class="string">"main package initialized"</span>)</span><br><span class="line">    <span class="keyword">if</span> rectLen &lt; <span class="number">0</span> &#123;</span><br><span class="line">        log.Fatal(<span class="string">"length is less than zero"</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> rectWidth &lt; <span class="number">0</span> &#123;</span><br><span class="line">        log.Fatal(<span class="string">"width is less than zero"</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;  </span><br><span class="line">    fmt.Println(<span class="string">"Geometrical shape properties"</span>)</span><br><span class="line">    fmt.Printf(<span class="string">"area of rectangle %.2f\n"</span>, rectangle.Area(rectLen, rectWidth))</span><br><span class="line">    fmt.Printf(<span class="string">"diagonal of the rectangle %.2f "</span>,rectangle.Diagonal(rectLen, rectWidth))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们对 <code>geometry.go</code> 做了如下修改：</p>
+<ol>
+<li>变量 <strong>rectLen</strong> 和 <strong>rectWidth</strong> 从 main 函数级别移到了包级别。</li>
+<li>添加了 init 函数。当 rectLen 或 rectWidth 小于 0 时，init 函数使用 <strong>log.Fatal</strong> 函数打印一条日志，并终止了程序。</li>
+</ol>
+<p>main 包的初始化顺序为：</p>
+<ol>
+<li>首先初始化被导入的包。因此，首先初始化了 rectangle 包。</li>
+<li>接着初始化了包级别的变量 <strong>rectLen</strong> 和 <strong>rectWidth</strong>。</li>
+<li>调用 init 函数。</li>
+<li>最后调用 main 函数。</li>
+</ol>
+<p>当运行该程序时，会有如下输出。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">rectangle package initialized  </span><br><span class="line">main package initialized  </span><br><span class="line">Geometrical shape properties  </span><br><span class="line">area of rectangle 42.00  </span><br><span class="line">diagonal of the rectangle 9.22</span><br></pre></td></tr></table></figure>
+<p>果然，程序会首先调用 rectangle 包的 init 函数，然后，会初始化包级别的变量 <strong>rectLen</strong> 和 <strong>rectWidth</strong>。接着调用 main 包里的 init 函数，该函数检查 rectLen 和 rectWidth 是否小于 0，如果条件为真，则终止程序。我们会在单独的教程里深入学习 if 语句。现在你可以认为 <code>if rectLen &lt; 0</code> 能够检查 <code>rectLen</code> 是否小于 0，并且如果是，则终止程序。<code>rectWidth</code> 条件的编写也是类似的。在这里两个条件都为假，因此程序继续执行。最后调用了 main 函数。</p>
+<p>让我们接着稍微修改这个程序来学习使用 init 函数。</p>
+<p>将 <code>geometry.go</code> 中的 <code>var rectLen, rectWidth float64 = 6, 7</code> 改为 <code>var rectLen, rectWidth float64 = -6, 7</code>。我们把 <code>rectLen</code> 初始化为负数。</p>
+<p>现在当运行程序时，会得到：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">rectangle package initialized  </span><br><span class="line">main package initialized  </span><br><span class="line">2017/04/04 00:28:20 length is less than zero</span><br></pre></td></tr></table></figure>
+<p>像往常一样， 会首先初始化 rectangle 包，然后是 main 包中的包级别的变量 rectLen 和 rectWidth。rectLen 为负数，因此当运行 init 函数时，程序在打印 <code>length is less than zero</code> 后终止。</p>
+<p>本代码可以在 <a href="https://github.com/golangbot/geometry" target="_blank" rel="noopener">github</a> 下载。</p>
+<h3 id="使用空白标识符（Blank-Identifier）"><a href="#使用空白标识符（Blank-Identifier）" class="headerlink" title="使用空白标识符（Blank Identifier）"></a>使用空白标识符（Blank Identifier）</h3><p>导入了包，却不在代码中使用它，这在 Go 中是非法的。当这么做时，编译器是会报错的。其原因是为了避免导入过多未使用的包，从而导致编译时间显著增加。将 <code>geometry.go</code> 中的代码替换为如下代码：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// geometry.go</span></span><br><span class="line"><span class="keyword">package</span> main </span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">    <span class="string">"geometry/rectangle"</span> <span class="comment">// 导入自定的包</span></span><br><span class="line">)</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面的程序将会抛出错误 <code>geometry.go:6: imported and not used: &quot;geometry/rectangle&quot;</code>。</p>
+<p>然而，在程序开发的活跃阶段，又常常会先导入包，而暂不使用它。遇到这种情况就可以使用空白标识符 <code>_</code>。</p>
+<p>下面的代码可以避免上述程序的错误：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (  </span><br><span class="line">    <span class="string">"geometry/rectangle"</span> </span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> _ = rectangle.Area <span class="comment">// 错误屏蔽器</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>var _ = rectangle.Area</code> 这一行屏蔽了错误。我们应该了解这些错误屏蔽器（Error Silencer）的动态，在程序开发结束时就移除它们，包括那些还没有使用过的包。由此建议在 import 语句下面的包级别范围中写上错误屏蔽器。</p>
+<p>有时候我们导入一个包，只是为了确保它进行了初始化，而无需使用包中的任何函数或变量。例如，我们或许需要确保调用了 rectangle 包的 init 函数，而不需要在代码中使用它。这种情况也可以使用空白标识符，如下所示。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main </span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">    _ <span class="string">"geometry/rectangle"</span> </span><br><span class="line">)</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>运行上面的程序，会输出 <code>rectangle package initialized</code>。尽管在所有代码里，我们都没有使用这个包，但还是成功初始化了它。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://shouliang.github.io/2017/12/10/Go/Go系列教程 —— 7. 包/" data-id="cjujf4p0j000dcp6fqhzb8cr8" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Go系列教程/">Go系列教程</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/12/11/Go/Go系列教程 —— 8. if-else 语句/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          8. if-else 语句
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/12/09/Go/Go系列教程 —— 6. 函数/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">6. 函数</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/">Docker</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Git/">Git</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Go系列教程/">Go系列教程</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Linux性能优化/">Linux性能优化</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MongoDB/">MongoDB</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MySQL实战/">MySQL实战</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Node-js/">Node.js</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Redis/">Redis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Unix/">Unix</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/从0开始学大数据/">从0开始学大数据</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/区块链/">区块链</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/数据分析实战/">数据分析实战</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/数据库/">数据库</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/数据结构与算法/">数据结构与算法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/程序员的数学基础课/">程序员的数学基础课</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/网络安全/">网络安全</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/计算机网络/">计算机网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/趣谈网络协议/">趣谈网络协议</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/Docker/" style="font-size: 12.22px;">Docker</a> <a href="/tags/Git/" style="font-size: 15.56px;">Git</a> <a href="/tags/Go系列教程/" style="font-size: 17.78px;">Go系列教程</a> <a href="/tags/Linux性能优化/" style="font-size: 14.44px;">Linux性能优化</a> <a href="/tags/MongoDB/" style="font-size: 11.11px;">MongoDB</a> <a href="/tags/MySQL实战/" style="font-size: 14.44px;">MySQL实战</a> <a href="/tags/Node-js/" style="font-size: 20px;">Node.js</a> <a href="/tags/Redis/" style="font-size: 11.11px;">Redis</a> <a href="/tags/Unix/" style="font-size: 13.33px;">Unix</a> <a href="/tags/从0开始学大数据/" style="font-size: 11.11px;">从0开始学大数据</a> <a href="/tags/区块链/" style="font-size: 10px;">区块链</a> <a href="/tags/数据分析实战/" style="font-size: 12.22px;">数据分析实战</a> <a href="/tags/数据库/" style="font-size: 11.11px;">数据库</a> <a href="/tags/数据结构与算法/" style="font-size: 18.89px;">数据结构与算法</a> <a href="/tags/程序员的数学基础课/" style="font-size: 14.44px;">程序员的数学基础课</a> <a href="/tags/网络安全/" style="font-size: 16.67px;">网络安全</a> <a href="/tags/计算机网络/" style="font-size: 10px;">计算机网络</a> <a href="/tags/趣谈网络协议/" style="font-size: 16.67px;">趣谈网络协议</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/01/">一月 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/12/">十二月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/11/">十一月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/10/">十月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">九月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/07/">七月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/06/">六月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/05/">五月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/04/">四月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/03/">三月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/02/">二月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/01/">一月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/12/">十二月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/11/">十一月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/09/">九月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/08/">八月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/06/">六月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/02/">二月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">一月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/10/">十月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/09/">九月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/08/">八月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/07/">七月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/06/">六月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/05/">五月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/04/">四月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/11/">十一月 2015</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/06/">六月 2015</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/05/">五月 2015</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">四月 2015</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/07/">七月 2014</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/06/">六月 2014</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/05/">五月 2014</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/04/">四月 2014</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/03/">三月 2014</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/02/">二月 2014</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/01/">一月 2014</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2012/07/">七月 2012</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2019/01/23/程序员的数学基础课/18 | 总结课：数据结构、编程语句和基础算法体现了哪些数学思想/">18 | 总结课：数据结构、编程语句和基础算法体现了哪些数学思想？</a>
+          </li>
+        
+          <li>
+            <a href="/2019/01/16/Linux性能优化/03 | 基础篇：经常说的 CPU 上下文切换是什么意思？（上）/">03 | 基础篇：经常说的 CPU 上下文切换是什么意思？（上）</a>
+          </li>
+        
+          <li>
+            <a href="/2019/01/16/从0开始学大数据/预习 01 | 大数据技术发展史：大数据的前世今生/">预习 01 | 大数据技术发展史：大数据的前世今生</a>
+          </li>
+        
+          <li>
+            <a href="/2019/01/16/从0开始学大数据/预习 02 | 大数据应用发展史：从搜索引擎到人工智能/">预习 02 | 大数据应用发展史：从搜索引擎到人工智能</a>
+          </li>
+        
+          <li>
+            <a href="/2019/01/16/数据结构与算法/48 | B+树：MySQL数据库索引是如何实现的？/">48 | B+树：MySQL数据库索引是如何实现的？</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2019 shouliang<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+  </div>
+</body>
+</html>

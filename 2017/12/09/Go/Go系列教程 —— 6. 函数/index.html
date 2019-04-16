@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+
+  
+  <title>6. 函数 | shouliang&#39;s blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="函数是什么？函数是一块执行特定任务的代码。一个函数是在输入源基础上，通过执行一系列的算法，生成预期的输出。 函数的声明在 Go 语言中，函数声明通用语法如下： 123func functionname(parametername type) returntype &amp;#123;      // 函数体（具体实现的功能）&amp;#125; 函数的声明以关键词 func 开始，后面紧跟自定义的函数名 func">
+<meta name="keywords" content="Go系列教程">
+<meta property="og:type" content="article">
+<meta property="og:title" content="6. 函数">
+<meta property="og:url" content="https://shouliang.github.io/2017/12/09/Go/Go系列教程 —— 6. 函数/index.html">
+<meta property="og:site_name" content="shouliang&#39;s blog">
+<meta property="og:description" content="函数是什么？函数是一块执行特定任务的代码。一个函数是在输入源基础上，通过执行一系列的算法，生成预期的输出。 函数的声明在 Go 语言中，函数声明通用语法如下： 123func functionname(parametername type) returntype &amp;#123;      // 函数体（具体实现的功能）&amp;#125; 函数的声明以关键词 func 开始，后面紧跟自定义的函数名 func">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-04-16T06:33:29.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="6. 函数">
+<meta name="twitter:description" content="函数是什么？函数是一块执行特定任务的代码。一个函数是在输入源基础上，通过执行一系列的算法，生成预期的输出。 函数的声明在 Go 语言中，函数声明通用语法如下： 123func functionname(parametername type) returntype &amp;#123;      // 函数体（具体实现的功能）&amp;#125; 函数的声明以关键词 func 开始，后面紧跟自定义的函数名 func">
+  
+    <link rel="alternate" href="/atom.xml" title="shouliang&#39;s blog" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+</html>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">shouliang&#39;s blog</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://shouliang.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-Go/Go系列教程 —— 6. 函数" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2017/12/09/Go/Go系列教程 —— 6. 函数/" class="article-date">
+  <time datetime="2017-12-09T06:45:23.000Z" itemprop="datePublished">2017-12-09</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      6. 函数
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="函数是什么？"><a href="#函数是什么？" class="headerlink" title="函数是什么？"></a>函数是什么？</h2><p>函数是一块执行特定任务的代码。一个函数是在输入源基础上，通过执行一系列的算法，生成预期的输出。</p>
+<h2 id="函数的声明"><a href="#函数的声明" class="headerlink" title="函数的声明"></a>函数的声明</h2><p>在 Go 语言中，函数声明通用语法如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">functionname</span><span class="params">(parametername <span class="keyword">type</span>)</span> <span class="title">returntype</span></span> &#123;  </span><br><span class="line">    <span class="comment">// 函数体（具体实现的功能）</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>函数的声明以关键词 <code>func</code> 开始，后面紧跟自定义的函数名 <code>functionname (函数名)</code>。函数的参数列表定义在 <code>(</code> 和 <code>)</code> 之间，返回值的类型则定义在之后的 <code>returntype (返回值类型)</code>处。声明一个参数的语法采用 <strong>参数名</strong> <strong>参数类型</strong> 的方式，任意多个参数采用类似 <code>(parameter1 type, parameter2 type) 即(参数1 参数1的类型,参数2 参数2的类型)</code>的形式指定。之后包含在 <code>{</code> 和 <code>}</code> 之间的代码，就是函数体。</p>
+<p>函数中的参数列表和返回值并非是必须的，所以下面这个函数的声明也是有效的</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">functionname</span><span class="params">()</span></span> &#123;  </span><br><span class="line">    <span class="comment">// 译注: 表示这个函数不需要输入参数，且没有返回值</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="示例函数"><a href="#示例函数" class="headerlink" title="示例函数"></a>示例函数</h2><p>我们以写一个计算商品价格的函数为例，输入参数是单件商品的价格和商品的个数，两者的乘积为商品总价，作为函数的输出值。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">calculateBill</span><span class="params">(price <span class="keyword">int</span>, no <span class="keyword">int</span>)</span> <span class="title">int</span></span> &#123;  </span><br><span class="line">    <span class="keyword">var</span> totalPrice = price * no <span class="comment">// 商品总价 = 商品单价 * 数量</span></span><br><span class="line">    <span class="keyword">return</span> totalPrice <span class="comment">// 返回总价</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上述函数有两个整型的输入 <code>price</code> 和 <code>no</code>，返回值 <code>totalPrice</code> 为 <code>price</code> 和 <code>no</code> 的乘积，也是整数类型。</p>
+<p><strong>如果有连续若干个参数，它们的类型一致，那么我们无须一一罗列，只需在最后一个参数后添加该类型。</strong> 例如，<code>price int, no int</code>可以简写为 <code>price, no int</code>，所以示例函数也可写成</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">calculateBill</span><span class="params">(price, no <span class="keyword">int</span>)</span> <span class="title">int</span></span> &#123;  </span><br><span class="line">    <span class="keyword">var</span> totalPrice = price * no</span><br><span class="line">    <span class="keyword">return</span> totalPrice</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>现在我们已经定义了一个函数，我们要在代码中尝试着调用它。调用函数的语法为 <code>functionname(parameters)</code>。调用示例函数的方法如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">calculateBill(<span class="number">10</span>, <span class="number">5</span>)</span><br></pre></td></tr></table></figure>
+<p>完成了示例函数声明和调用后，我们就能写出一个完整的程序，并把商品总价打印在控制台上：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (  </span><br><span class="line">    <span class="string">"fmt"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">calculateBill</span><span class="params">(price, no <span class="keyword">int</span>)</span> <span class="title">int</span></span> &#123;  </span><br><span class="line">    <span class="keyword">var</span> totalPrice = price * no</span><br><span class="line">    <span class="keyword">return</span> totalPrice</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;  </span><br><span class="line">    price, no := <span class="number">90</span>, <span class="number">6</span> <span class="comment">// 定义 price 和 no,默认类型为 int</span></span><br><span class="line">    totalPrice := calculateBill(price, no)</span><br><span class="line">    fmt.Println(<span class="string">"Total price is"</span>, totalPrice) <span class="comment">// 打印到控制台上</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><a href="https://play.golang.org/p/YJlW3g-VZH" target="_blank" rel="noopener">运行这个程序</a></p>
+<p>该程序在控制台上打印的结果为</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Total price is 540</span><br></pre></td></tr></table></figure>
+<h2 id="多返回值"><a href="#多返回值" class="headerlink" title="多返回值"></a>多返回值</h2><p>Go 语言支持一个函数可以有多个返回值。我们来写个以矩形的长和宽为输入参数，计算并返回矩形面积和周长的函数 <code>rectProps</code>。矩形的面积是长度和宽度的乘积, 周长是长度和宽度之和的两倍。即：</p>
+<ul>
+<li><code>面积 = 长 * 宽</code></li>
+<li><code>周长 = 2 * ( 长 + 宽 )</code></li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (  </span><br><span class="line">    <span class="string">"fmt"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">rectProps</span><span class="params">(length, width <span class="keyword">float64</span>)</span><span class="params">(<span class="keyword">float64</span>, <span class="keyword">float64</span>)</span></span> &#123;  </span><br><span class="line">    <span class="keyword">var</span> area = length * width</span><br><span class="line">    <span class="keyword">var</span> perimeter = (length + width) * <span class="number">2</span></span><br><span class="line">    <span class="keyword">return</span> area, perimeter</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;  </span><br><span class="line">    area, perimeter := rectProps(<span class="number">10.8</span>, <span class="number">5.6</span>)</span><br><span class="line">    fmt.Printf(<span class="string">"Area %f Perimeter %f"</span>, area, perimeter) </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><a href="https://play.golang.org/p/qAftE_yke_" target="_blank" rel="noopener">运行这个程序</a></p>
+<p>如果一个函数有多个返回值，那么这些返回值必须用 <code>(</code> 和 <code>)</code> 括起来。<code>func rectProps(length, width float64)(float64, float64)</code> 示例函数有两个 float64 类型的输入参数 <code>length</code> 和 <code>width</code>，并返回两个 float64 类型的值。该程序在控制台上打印结果为</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Area 60.480000 Perimeter 32.800000</span><br></pre></td></tr></table></figure>
+<h2 id="命名返回值"><a href="#命名返回值" class="headerlink" title="命名返回值"></a>命名返回值</h2><p>从函数中可以返回一个命名值。一旦命名了返回值，可以认为这些值在函数第一行就被声明为变量了。</p>
+<p>上面的 rectProps 函数也可用这个方式写成：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">rectProps</span><span class="params">(length, width <span class="keyword">float64</span>)</span><span class="params">(area, perimeter <span class="keyword">float64</span>)</span></span> &#123;  </span><br><span class="line">    area = length * width</span><br><span class="line">    perimeter = (length + width) * <span class="number">2</span></span><br><span class="line">    <span class="keyword">return</span> <span class="comment">// 不需要明确指定返回值，默认返回 area, perimeter 的值</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>请注意, 函数中的 return 语句没有显式返回任何值。由于 <strong>area</strong> 和 <strong>perimeter</strong> 在函数声明中指定为返回值, 因此当遇到 return 语句时, 它们将自动从函数返回。</p>
+<h2 id="空白符"><a href="#空白符" class="headerlink" title="空白符"></a>空白符</h2><p><strong>_</strong> 在 Go 中被用作空白符，可以用作表示任何类型的任何值。</p>
+<p>我们继续以 <code>rectProps</code> 函数为例，该函数计算的是面积和周长。假使我们只需要计算面积，而并不关心周长的计算结果，该怎么调用这个函数呢？这时，空白符 <strong>_</strong> 就上场了。</p>
+<p>下面的程序我们只用到了函数 <code>rectProps</code> 的一个返回值 <code>area</code></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (  </span><br><span class="line">    <span class="string">"fmt"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">rectProps</span><span class="params">(length, width <span class="keyword">float64</span>)</span> <span class="params">(<span class="keyword">float64</span>, <span class="keyword">float64</span>)</span></span> &#123;  </span><br><span class="line">    <span class="keyword">var</span> area = length * width</span><br><span class="line">    <span class="keyword">var</span> perimeter = (length + width) * <span class="number">2</span></span><br><span class="line">    <span class="keyword">return</span> area, perimeter</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;  </span><br><span class="line">    area, _ := rectProps(<span class="number">10.8</span>, <span class="number">5.6</span>) <span class="comment">// 返回值周长被丢弃</span></span><br><span class="line">    fmt.Printf(<span class="string">"Area %f "</span>, area)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><a href="https://play.golang.org/p/IkugSH1jIt" target="_blank" rel="noopener">运行这个程序</a></p>
+<blockquote>
+<p>在程序的 <code>area, _ := rectProps(10.8, 5.6)</code> 这一行，我们看到空白符 <code>_</code> 用来跳过不要的计算结果。</p>
+</blockquote>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://shouliang.github.io/2017/12/09/Go/Go系列教程 —— 6. 函数/" data-id="cjujf4p12000lcp6fc9qun28u" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Go系列教程/">Go系列教程</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2017/12/10/Go/Go系列教程 —— 7. 包/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          7. 包
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/12/08/Go/Go系列教程 —— 5. 常量/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">5. 常量</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/">Docker</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Git/">Git</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Go系列教程/">Go系列教程</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Linux性能优化/">Linux性能优化</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MongoDB/">MongoDB</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/MySQL实战/">MySQL实战</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Node-js/">Node.js</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Redis/">Redis</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Unix/">Unix</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/从0开始学大数据/">从0开始学大数据</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/区块链/">区块链</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/数据分析实战/">数据分析实战</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/数据库/">数据库</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/数据结构与算法/">数据结构与算法</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/程序员的数学基础课/">程序员的数学基础课</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/网络安全/">网络安全</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/计算机网络/">计算机网络</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/趣谈网络协议/">趣谈网络协议</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/Docker/" style="font-size: 12.22px;">Docker</a> <a href="/tags/Git/" style="font-size: 15.56px;">Git</a> <a href="/tags/Go系列教程/" style="font-size: 17.78px;">Go系列教程</a> <a href="/tags/Linux性能优化/" style="font-size: 14.44px;">Linux性能优化</a> <a href="/tags/MongoDB/" style="font-size: 11.11px;">MongoDB</a> <a href="/tags/MySQL实战/" style="font-size: 14.44px;">MySQL实战</a> <a href="/tags/Node-js/" style="font-size: 20px;">Node.js</a> <a href="/tags/Redis/" style="font-size: 11.11px;">Redis</a> <a href="/tags/Unix/" style="font-size: 13.33px;">Unix</a> <a href="/tags/从0开始学大数据/" style="font-size: 11.11px;">从0开始学大数据</a> <a href="/tags/区块链/" style="font-size: 10px;">区块链</a> <a href="/tags/数据分析实战/" style="font-size: 12.22px;">数据分析实战</a> <a href="/tags/数据库/" style="font-size: 11.11px;">数据库</a> <a href="/tags/数据结构与算法/" style="font-size: 18.89px;">数据结构与算法</a> <a href="/tags/程序员的数学基础课/" style="font-size: 14.44px;">程序员的数学基础课</a> <a href="/tags/网络安全/" style="font-size: 16.67px;">网络安全</a> <a href="/tags/计算机网络/" style="font-size: 10px;">计算机网络</a> <a href="/tags/趣谈网络协议/" style="font-size: 16.67px;">趣谈网络协议</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/01/">一月 2019</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/12/">十二月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/11/">十一月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/10/">十月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/09/">九月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/07/">七月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/06/">六月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/05/">五月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/04/">四月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/03/">三月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/02/">二月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/01/">一月 2018</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/12/">十二月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/11/">十一月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/09/">九月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/08/">八月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/06/">六月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/02/">二月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">一月 2017</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/10/">十月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/09/">九月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/08/">八月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/07/">七月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/06/">六月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/05/">五月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/04/">四月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/11/">十一月 2015</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/06/">六月 2015</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/05/">五月 2015</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">四月 2015</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/07/">七月 2014</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/06/">六月 2014</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/05/">五月 2014</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/04/">四月 2014</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/03/">三月 2014</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/02/">二月 2014</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2014/01/">一月 2014</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2012/07/">七月 2012</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2019/01/23/程序员的数学基础课/18 | 总结课：数据结构、编程语句和基础算法体现了哪些数学思想/">18 | 总结课：数据结构、编程语句和基础算法体现了哪些数学思想？</a>
+          </li>
+        
+          <li>
+            <a href="/2019/01/16/Linux性能优化/03 | 基础篇：经常说的 CPU 上下文切换是什么意思？（上）/">03 | 基础篇：经常说的 CPU 上下文切换是什么意思？（上）</a>
+          </li>
+        
+          <li>
+            <a href="/2019/01/16/从0开始学大数据/预习 01 | 大数据技术发展史：大数据的前世今生/">预习 01 | 大数据技术发展史：大数据的前世今生</a>
+          </li>
+        
+          <li>
+            <a href="/2019/01/16/从0开始学大数据/预习 02 | 大数据应用发展史：从搜索引擎到人工智能/">预习 02 | 大数据应用发展史：从搜索引擎到人工智能</a>
+          </li>
+        
+          <li>
+            <a href="/2019/01/16/数据结构与算法/48 | B+树：MySQL数据库索引是如何实现的？/">48 | B+树：MySQL数据库索引是如何实现的？</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2019 shouliang<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+
+
+  </div>
+</body>
+</html>
